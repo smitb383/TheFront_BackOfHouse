@@ -9,9 +9,24 @@ function getPLData() {
 }
 function savePLData(d) { localStorage.setItem(PL_KEY, JSON.stringify(d)); }
 
+var DEFAULT_FIXED_COSTS = null; // set during init, used for merging
+
 function initPLData() {
   var existing = getPLData();
-  if (existing && existing.scenarios && existing.scenarios.length) return existing;
+  if (existing && existing.scenarios && existing.scenarios.length) {
+    // Merge any new default fixed costs into existing scenarios
+    if (DEFAULT_FIXED_COSTS) {
+      existing.scenarios.forEach(function(s) {
+        var ids = {};
+        (s.fixedCosts || []).forEach(function(c) { ids[c.id] = true; });
+        DEFAULT_FIXED_COSTS.forEach(function(dc) {
+          if (!ids[dc.id]) s.fixedCosts.push(JSON.parse(JSON.stringify(dc)));
+        });
+      });
+      savePLData(existing);
+    }
+    return existing;
+  }
 
   // Pull inventory from existing revenue catalog
   var revProj = null;
@@ -39,25 +54,7 @@ function initPLData() {
     });
   }
 
-  // Pull existing fixed costs from budget
-  var budgetPopup = [];
-  try { budgetPopup = JSON.parse(localStorage.getItem('budget_popup_v1')) || []; } catch(e) {}
-
-  var fixedCosts = [];
-  budgetPopup.forEach(function(b) {
-    if (b.item) {
-      fixedCosts.push({
-        id: 'fc_' + (b.id || Date.now() + Math.random()),
-        name: b.item,
-        amount: b.amt || 0,
-        category: b.cat || 'operations',
-        note: b.note || ''
-      });
-    }
-  });
-
-  // Seed defaults — always merge missing items into existing data
-  var defaultCosts = [
+  var fixedCosts = [
       // Space
       { id: 'fc_rent', name: '334 Broome rent', amount: 3500, category: 'space', note: 'Flat fee June 18 - July 16' },
       { id: 'fc_insurance', name: 'General liability insurance', amount: 200, category: 'space', note: '$2M aggregate required — Amir Badawi + Patjen Realty as additional insureds' },
@@ -100,12 +97,7 @@ function initPLData() {
     { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
   ];
   // Merge: add any default items not already in fixedCosts
-  var existingIds = {};
-  fixedCosts.forEach(function(c) { existingIds[c.id] = true; });
-  defaultCosts.forEach(function(dc) {
-    if (!existingIds[dc.id]) fixedCosts.push(dc);
-  });
-  if (!fixedCosts.length) fixedCosts = defaultCosts;
+  DEFAULT_FIXED_COSTS = fixedCosts;
 
   var variableCosts = [
     { id: 'vc_square', name: 'Square processing fee', rate: 2.6, perTxn: 0.10, type: 'pct_of_sales', note: '2.6% + $0.10 per transaction' },
