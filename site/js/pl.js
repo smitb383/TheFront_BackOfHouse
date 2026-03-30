@@ -58,7 +58,6 @@ function initPLData() {
 
   // Seed defaults — always merge missing items into existing data
   var defaultCosts = [
-    fixedCosts = [
       // Space
       { id: 'fc_rent', name: '334 Broome rent', amount: 3500, category: 'space', note: 'Flat fee June 18 - July 16' },
       { id: 'fc_insurance', name: 'General liability insurance', amount: 200, category: 'space', note: '$2M aggregate required — Amir Badawi + Patjen Realty as additional insureds' },
