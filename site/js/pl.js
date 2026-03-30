@@ -87,6 +87,12 @@ function initPLData() {
       { id: 'fc_flyers', name: 'Opening flyers (print run)', amount: 80, category: 'marketing', note: '200-300 flyers, postcard size, for LES/SoHo/Nolita drops' },
       { id: 'fc_socialgraphics', name: 'Launch social graphics', amount: 0, category: 'marketing', note: 'Save-the-date, vendor spotlights, countdown assets' },
       { id: 'fc_pressrelease', name: 'Press release', amount: 0, category: 'marketing', note: '200-word pitch + image for Hint, Time Out, local blogs' },
+      { id: 'fc_graphicdesign', name: 'Graphic design', amount: 0, category: 'marketing', note: '' },
+      { id: 'fc_typeface', name: 'Typeface licences', amount: 0, category: 'marketing', note: 'Bebas Neue is primary font' },
+      // Business / legal
+      { id: 'fc_llc', name: 'LLC registration', amount: 0, category: 'business', note: 'NY LLC filing ~$200 via DOS' },
+      { id: 'fc_domains', name: 'Website domains', amount: 0, category: 'business', note: 'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations' },
+      { id: 'fc_hosting', name: 'Website hosting', amount: 0, category: 'business', note: '' },
       // Operations
       { id: 'fc_pos', name: 'Square POS reader', amount: 50, category: 'operations', note: 'Plus a stand if using iPad' },
       { id: 'fc_ipad', name: 'iPad / phone for checkout', amount: 0, category: 'operations', note: '' },
@@ -315,7 +321,7 @@ function renderRevenueSection(data, scenario, calc) {
   el.innerHTML = html;
 }
 
-var FC_CATEGORIES = ['space','fabrication','retail supplies','events','marketing','operations','misc'];
+var FC_CATEGORIES = ['space','fabrication','retail supplies','events','marketing','business','operations','misc'];
 
 function renderFixedCosts(scenario) {
   var el = document.getElementById('pl-fixed');
