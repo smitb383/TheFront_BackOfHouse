@@ -10,39 +10,30 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
-     PASSWORD GATE
-═══════════════════════════════════════ -->
+<!-- PASSWORD GATE -->
 <div id="password-gate" style="position:fixed; inset:0; z-index:9999; background:#0c0c0f; display:flex; justify-content:center; align-items:center; flex-direction:column; gap:16px;">
-  <div style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; color:var(--muted);">The Front</div>
-  <div style="font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); font-family:'DM Mono',monospace;">Back of House</div>
+  <div style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; color:#5c5870;">The Front</div>
+  <div style="font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:#5c5870; font-family:'DM Mono',monospace;">Back of House</div>
   <div style="margin-top:20px; display:flex; gap:8px; align-items:center;">
     <input id="pw-input" type="password" placeholder="Password" autofocus
-      style="background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:13px; padding:10px 16px; border-radius:3px; outline:none; width:200px;"
+      style="background:#141418; border:1px solid #242430; color:#edeae4; font-family:'DM Mono',monospace; font-size:13px; padding:10px 16px; border-radius:3px; outline:none; width:200px;"
       onkeydown="if(event.key==='Enter')checkPw()">
     <button onclick="checkPw()"
-      style="background:var(--front); border:none; color:#0c0c0f; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; padding:11px 18px; border-radius:3px; cursor:pointer;">Enter</button>
+      style="background:#e2c97e; border:none; color:#0c0c0f; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; padding:11px 18px; border-radius:3px; cursor:pointer;">Enter</button>
   </div>
-  <div id="pw-error" style="font-size:11px; color:var(--action); font-family:'DM Mono',monospace; opacity:0; transition:opacity 0.2s;">Wrong password</div>
+  <div id="pw-error" style="font-size:11px; color:#e0845a; font-family:'DM Mono',monospace; opacity:0; transition:opacity 0.2s;">Wrong password</div>
 </div>
 
 <div id="app-content" style="display:none;">
-
-<!-- ═══════════════════════════════════════
-     LANDING
-═══════════════════════════════════════ -->
-<!-- Landing removed — goes straight to The Front workspace -->
-
-<!-- ═══════════════════════════════════════
-     THE FRONT WORKSPACE
-═══════════════════════════════════════ -->
 <div class="page active" id="page-front">
   <div class="workspace front-ws">
     <div class="ws-topbar">
+
       <div class="ws-title ws-title-front">The Front</div>
       <div class="ws-spacer"></div>
       <div class="ws-data-btns">
         <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle light/dark mode">◐ Light</button>
+        
       </div>
     </div>
     <div class="ws-inner">
@@ -244,6 +235,7 @@
             <div class="roadmap-project-col">
               <div class="roadmap-project-header" style="color:var(--front)">The Front — NYC Retail Collective</div>
 
+              <!-- Week 1 -->
               <div class="roadmap-week-section">
                 <div class="roadmap-week-section-label">
                   Week 1 — Research & Inspiration
@@ -253,6 +245,7 @@
                 <div class="roadmap-progress-bar"><div class="roadmap-progress-fill" id="rm-prog-front-w1" style="width:0%"></div></div>
               </div>
 
+              <!-- Week 2 -->
               <div class="roadmap-week-section">
                 <div class="roadmap-week-section-label">
                   Week 2 — Synthesis & Decisions
@@ -261,6 +254,7 @@
                 <div class="roadmap-progress-bar"><div class="roadmap-progress-fill" id="rm-prog-front-w2" style="width:0%"></div></div>
               </div>
 
+              <!-- Week 3 -->
               <div class="roadmap-week-section">
                 <div class="roadmap-week-section-label">
                   Week 3 — Commit & Build
@@ -274,6 +268,7 @@
             <div class="roadmap-project-col">
               <div class="roadmap-project-header" style="color:#c9a8d4">334 Broome — Pop-Up</div>
 
+              <!-- Week 1 -->
               <div class="roadmap-week-section">
                 <div class="roadmap-week-section-label">
                   Week 1 — Outreach & Prep
@@ -282,6 +277,7 @@
                 <div class="roadmap-progress-bar"><div class="roadmap-progress-fill" id="rm-prog-popup-w1" style="width:0%"></div></div>
               </div>
 
+              <!-- Week 2 -->
               <div class="roadmap-week-section">
                 <div class="roadmap-week-section-label">
                   Week 2 — Confirm & Plan
@@ -290,6 +286,7 @@
                 <div class="roadmap-progress-bar"><div class="roadmap-progress-fill" id="rm-prog-popup-w2" style="width:0%"></div></div>
               </div>
 
+              <!-- Week 3 -->
               <div class="roadmap-week-section">
                 <div class="roadmap-week-section-label">
                   Week 3 — Execute & Logistics
@@ -352,33 +349,1873 @@
             <div class="synthesis-header"><div class="synthesis-dot" style="background:var(--front)"></div><span class="synthesis-label" style="color:var(--front)">Session Synthesis</span></div>
             <div class="synthesis-body"><div class="synthesis-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Generating your synthesis…</span></div></div>
           </div>
+          
           <div class="review-panel" id="review-front-questions">
             <div class="review-panel-header">
-              <div class="review-panel-label"><span style="background:var(--front)"></span>Review</div>
+              <div class="review-panel-label">
+                <span style="background:var(--front)"></span>Review
+              </div>
               <div class="review-scores" id="review-scores-front-questions"></div>
             </div>
-            <div class="review-panel-body"><div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div></div>
+            <div class="review-panel-body">
+              <div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div>
+            </div>
           </div>
-          <div class="submit-row">
+<div class="submit-row">
             <button class="submit-btn submit-front-q" id="btn-front-questions" onclick="submitSession('front','questions')">Archive &amp; Synthesize →</button>
             <button class="clear-btn" onclick="clearForm('front','questions')">Clear</button>
           </div>
         </div>
       </div>
 
-      <!-- The remaining workspace views are loaded from the original monolith. -->
-      <!-- Due to the massive size of the body content (~2400 lines), the complete -->
-      <!-- file was extracted from founder-workspace (18).html lines 3303-5744. -->
-      <!-- All sections preserved: Reflect, Action, Balance, Tracker, Business Plan, -->
-      <!-- Contacts, Spaces, Financials, Vendors, References, Programming, -->
-      <!-- Partnerships, Brand Identity, Visual Identity, Story, Ideas, -->
-      <!-- 334 Broome Pop-Up (dashboard, resources, budget, revenue, vendors, -->
-      <!-- events, marketing), ChaShaMa (proposal, storefront, budget, P&L), -->
-      <!-- Archive, and the complete Violets/Fog workspace. -->
+      <!-- REFLECT -->
+      <div class="ws-view" id="front-reflect">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><div class="view-title">Reflect — The Front</div><div class="view-desc">Weekly compass check on you as the builder of The Front.</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+            <button class="tab-export-btn" onclick="openDocExport('front-reflect')">Export →</button>
+            <button class="tab-export-btn" style="border-color:rgba(255,255,255,0.08)" onclick="openReview('front-reflect')">Review & Rate →</button>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <span class="progress-label">Answered</span>
+          <div class="bar-outer"><div class="bar-inner" id="bar-front-reflect" style="background:var(--front)"></div></div>
+          <span class="progress-count" id="count-front-reflect" style="color:var(--front)">0 / 10</span>
+        </div>
+        <div class="reflect-form" id="form-front-reflect">
+          <div class="section">
+            <div class="section-header"><span class="section-num">01</span><span class="section-title">What the Pop-Ups Taught You</span><span class="section-tag tag-front">The Front</span><div class="section-line"></div></div>
+            <div class="item" data-id="r1"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What was the single most surprising thing you learned from your pop-up events for The Front?</div><div class="item-prompt">Not what you hoped to learn — what actually caught you off guard about the customer, the energy, or yourself?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="r2"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What feedback or moment from a past event do you keep coming back to?</div><div class="item-prompt">A visitor reaction, a collaboration that clicked, something that didn't land — what is it still telling you?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="r3"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What did the pop-up not prove about The Front — and why does that gap matter now?</div><div class="item-prompt">Pop-ups test concept and energy, not operations or scale. What's still unproven?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span class="section-num">02</span><span class="section-title">Commitment & Fear</span><span class="section-tag tag-front">The Front</span><div class="section-line"></div></div>
+            <div class="item" data-id="r4"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What would fully committing to The Front require you to give up?</div><div class="item-prompt">Time, income, other plans, a sense of safety — what's actually on the table?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="r5"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">Is there a part of you still "researching" The Front to avoid a scarier decision?</div><div class="item-prompt">More research can be a form of procrastination. What decision are you not quite ready to make?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span class="section-num">03</span><span class="section-title">Vision & Direction</span><span class="section-tag tag-front">The Front</span><div class="section-line"></div></div>
+            <div class="item" data-id="r6"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">Describe what The Front looks like as a fully realized space in 2 years.</div><div class="item-prompt">Be specific — what does a Tuesday afternoon look like in that version of the space?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="r7"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What does your gut say about The Front right now — excitement, doubt, or both?</div><div class="item-prompt">Separate them if you can. What is each feeling actually telling you?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span class="section-num">04</span><span class="section-title">Funding Mindset</span><span class="section-tag tag-front">The Front</span><div class="section-line"></div></div>
+            <div class="item" data-id="r8"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What does "looking for funding" mean to you right now for The Front?</div><div class="item-prompt">Loan, investor, arts grant, savings — each has different implications for control and timeline. Which path feels most aligned?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="r9"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What story about money or readiness might be holding The Front back?</div><div class="item-prompt">"I need more capital first." "I don't know enough yet." What's running underneath?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="r10"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What would "enough progress" on The Front look like in the next 90 days?</div><div class="item-prompt">Not perfect, not minimal — what would feel like real, proud movement?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+          </div>
+          <div class="synthesis-panel" id="synthesis-front-reflect">
+            <div class="synthesis-header"><div class="synthesis-dot" style="background:var(--front)"></div><span class="synthesis-label" style="color:var(--front)">Session Synthesis</span></div>
+            <div class="synthesis-body"><div class="synthesis-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Generating your synthesis…</span></div></div>
+          </div>
+          
+          <div class="review-panel" id="review-front-reflect">
+            <div class="review-panel-header">
+              <div class="review-panel-label">
+                <span style="background:var(--front)"></span>Review
+              </div>
+              <div class="review-scores" id="review-scores-front-reflect"></div>
+            </div>
+            <div class="review-panel-body">
+              <div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div>
+            </div>
+          </div>
+<div class="submit-row">
+            <button class="submit-btn submit-front-r" id="btn-front-reflect" onclick="submitSession('front','reflect')">Archive &amp; Synthesize →</button>
+            <button class="clear-btn" onclick="clearForm('front','reflect')">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTION -->
+      <div class="ws-view" id="front-action">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><div class="view-title">Action — The Front</div>
+          <div class="view-desc">Weekly check-in on what actually moved forward on The Front — and one clear, specific commitment for next week. <strong>Do this every Sunday or Monday morning.</strong></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+            <button class="tab-export-btn" onclick="openDocExport('front-action')">Export →</button>
+            <button class="tab-export-btn" style="border-color:rgba(255,255,255,0.08)" onclick="openReview('front-action')">Review & Rate →</button>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <span class="progress-label">Answered</span>
+          <div class="bar-outer"><div class="bar-inner" id="bar-front-action" style="background:var(--action)"></div></div>
+          <span class="progress-count" id="count-front-action" style="color:var(--action)">0 / 6</span>
+        </div>
+        <div class="action-form" id="form-front-action">
+          <div class="section">
+            <div class="section-header"><span class="section-num">01</span><span class="section-title">Last Week</span><span class="section-tag tag-front">The Front</span><div class="section-line"></div></div>
+            <div class="item" data-id="fa1"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What actually moved forward on The Front this week — be specific.</div><div class="item-prompt">"I worked on it" doesn't count. What is concretely different today than last Monday?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="fa2"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What didn't happen that you intended to — and what got in the way?</div><div class="item-prompt">External blockers or internal? Be honest, not punishing.</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span class="section-num">02</span><span class="section-title">Next Week</span><span class="section-tag tag-front">The Front</span><div class="section-line"></div></div>
+            <div class="item" data-id="fa3"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What is your #1 priority for The Front this week — as a specific, completable deliverable?</div><div class="item-prompt">Not "work on the business plan." Something like: "Complete the revenue model section with 3 scenarios by Thursday."</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="fa4"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What decision or task have you been circling too long on The Front — can you close it this week?</div><div class="item-prompt">Two focused hours. One call. One thing you've been putting off. What is it?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="fa5"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">Is there a person you need to reach out to this week — landlord, potential collaborator, advisor, fellow founder?</div><div class="item-prompt">Most breakthroughs at this stage come from conversations. Who's the call you keep not making?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="fa6"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">Clarity score for The Front this week (1–10) — what would move it up by 2 points?</div><div class="item-prompt">Clarity comes from deciding and doing. What specific action would make things feel less uncertain?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+          </div>
+          <div class="synthesis-panel" id="synthesis-front-action">
+            <div class="synthesis-header"><div class="synthesis-dot" style="background:var(--action)"></div><span class="synthesis-label" style="color:var(--action)">Session Synthesis</span></div>
+            <div class="synthesis-body"><div class="synthesis-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Generating your synthesis…</span></div></div>
+          </div>
+          
+          <div class="review-panel" id="review-front-action">
+            <div class="review-panel-header">
+              <div class="review-panel-label">
+                <span style="background:var(--front)"></span>Review
+              </div>
+              <div class="review-scores" id="review-scores-front-action"></div>
+            </div>
+            <div class="review-panel-body">
+              <div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div>
+            </div>
+          </div>
+<div class="submit-row">
+            <button class="submit-btn submit-action" id="btn-front-action" onclick="submitSession('front','action')">Archive &amp; Synthesize →</button>
+            <button class="clear-btn" onclick="clearForm('front','action')">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BALANCE -->
+      <div class="ws-view" id="front-balance">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><div class="view-title">Balance — The Front</div>
+          <div class="view-desc">Building The Front from scratch is a lot. These questions keep you honest about your energy, pace, and whether you're building this sustainably.</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+            <button class="tab-export-btn" onclick="openDocExport('front-balance')">Export →</button>
+            <button class="tab-export-btn" style="border-color:rgba(255,255,255,0.08)" onclick="openReview('front-balance')">Review & Rate →</button>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <span class="progress-label">Answered</span>
+          <div class="bar-outer"><div class="bar-inner" id="bar-front-balance" style="background:var(--balance)"></div></div>
+          <span class="progress-count" id="count-front-balance" style="color:var(--balance)">0 / 6</span>
+        </div>
+        <div class="balance-form" id="form-front-balance">
+          <div class="section">
+            <div class="section-header"><span class="section-num">01</span><span class="section-title">Energy & Capacity</span><span class="section-tag tag-front">The Front</span><div class="section-line"></div></div>
+            <div class="item" data-id="fb1"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">Rate your motivation on The Front this week (1–10) — what's driving that number?</div><div class="item-prompt">Excitement, doubt, fatigue, a specific block — what's the honest reason?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="fb2"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What part of building The Front genuinely excites you right now?</div><div class="item-prompt">That excitement is a signal. Are you spending enough time in that zone, or mostly in the draining parts?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="fb3"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What about The Front is draining you — and is it necessary, or can it be dropped or delegated?</div><div class="item-prompt">Name the specific drain, not just "it's a lot."</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+          </div>
+          <div class="section">
+            <div class="section-header"><span class="section-num">02</span><span class="section-title">The Long View</span><span class="section-tag tag-front">The Front</span><div class="section-line"></div></div>
+            <div class="item" data-id="fb4"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What practical task on The Front have you been avoiding — and what's the real reason?</div><div class="item-prompt">Practical avoidance is usually emotional. Fear of the numbers? Not knowing where to start?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="fb5"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">What are you most proud of in how you've shown up for The Front — not the output, but you?</div><div class="item-prompt">You built something real enough to test at events. That took something. What deserves acknowledgment?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+            <div class="item" data-id="fb6"><div class="item-top"><div class="item-dot"></div><div class="item-content"><div class="item-label">If you keep your current pace on The Front for 6 more months, where do you honestly end up?</div><div class="item-prompt">Answer with the trajectory, not the hope. If you don't like it, what changes?</div></div></div><textarea class="item-input" placeholder="Write your answer…" oninput="handleInput(this,'front')"></textarea></div>
+          </div>
+          <div class="synthesis-panel" id="synthesis-front-balance">
+            <div class="synthesis-header"><div class="synthesis-dot" style="background:var(--balance)"></div><span class="synthesis-label" style="color:var(--balance)">Session Synthesis</span></div>
+            <div class="synthesis-body"><div class="synthesis-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Generating your synthesis…</span></div></div>
+          </div>
+          
+          <div class="review-panel" id="review-front-balance">
+            <div class="review-panel-header">
+              <div class="review-panel-label">
+                <span style="background:var(--front)"></span>Review
+              </div>
+              <div class="review-scores" id="review-scores-front-balance"></div>
+            </div>
+            <div class="review-panel-body">
+              <div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div>
+            </div>
+          </div>
+<div class="submit-row">
+            <button class="submit-btn submit-balance" id="btn-front-balance" onclick="submitSession('front','balance')">Archive &amp; Synthesize →</button>
+            <button class="clear-btn" onclick="clearForm('front','balance')">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TRACKER ═══ -->
+      <div class="ws-view" id="front-tracker">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><div class="view-title">Project Tracker</div></div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+            <button class="tab-export-btn" onclick="openDocExport('front-tracker')">Export →</button>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="tr-toolbar">
+          <div class="tr-view-tabs">
+            <button class="tr-view-tab active" id="tr-tab-board"   onclick="setTrackerView('board',this)">Board</button>
+            <button class="tr-view-tab"         id="tr-tab-month"  onclick="setTrackerView('month',this)">Month</button>
+            <button class="tr-view-tab"         id="tr-tab-week"   onclick="setTrackerView('week',this)">Week</button>
+            <button class="tr-view-tab"         id="tr-tab-day"    onclick="setTrackerView('day',this)">Day</button>
+            <button class="tr-view-tab"         id="tr-tab-schedule" onclick="setTrackerView('schedule',this)" style="color:#a8c4d4">📋 Schedule</button>
+          </div>
+          <div class="tr-filter-tabs">
+            <button class="tr-filter-tab active" onclick="setTrackerFilter('all',this)">All</button>
+            <button class="tr-filter-tab" onclick="setTrackerFilter('front',this)">The Front</button>
+            <button class="tr-filter-tab" onclick="setTrackerFilter('popup',this)">334 Broome</button>
+          </div>
+          <div class="tr-cal-nav" id="tr-cal-nav" style="display:none">
+            <button class="tr-nav-btn" onclick="calNav(-1)">‹</button>
+            <span class="tr-cal-label" id="tr-cal-label"></span>
+            <button class="tr-nav-btn" onclick="calNav(1)">›</button>
+            <button class="tr-today-btn" onclick="calToday()">Today</button>
+          </div>
+          <button class="add-milestone-btn" onclick="addTrackerItem()">+ Add item</button>
+        </div>
+
+        <!-- Board view -->
+        <div id="tr-view-board">
+          <div class="cat-legend" id="tracker-legend"></div>
+          <div class="tracker-board-wrap"><div class="tracker-board" id="front-tracker-board">
+            <div class="board-col" data-status="todo">
+              <div class="board-col-header" onclick="toggleColCollapse(this)" style="cursor:pointer" title="Click to collapse/expand">
+                <span class="board-col-title" style="color:#a8c4d4">To Do</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="board-col-count" id="col-count-front-todo">0</span>
+                  <button class="col-collapse-btn" onclick="event.stopPropagation();toggleColCollapse(this.closest('.board-col-header'))" title="Collapse">‹</button>
+                </div>
+              </div>
+              <div class="board-col-body" id="front-col-todo"></div>
+              <div class="board-col-add"><button class="board-col-add-btn" onclick="addMilestoneToCol('front','todo')">+</button></div>
+            </div>
+            <div class="board-col" data-status="inprogress">
+              <div class="board-col-header" onclick="toggleColCollapse(this)" style="cursor:pointer" title="Click to collapse/expand">
+                <span class="board-col-title" style="color:var(--front)">In Progress</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="board-col-count" id="col-count-front-inprogress">0</span>
+                  <button class="col-collapse-btn" onclick="event.stopPropagation();toggleColCollapse(this.closest('.board-col-header'))" title="Collapse">‹</button>
+                </div>
+              </div>
+              <div class="board-col-body" id="front-col-inprogress"></div>
+              <div class="board-col-add"><button class="board-col-add-btn" onclick="addMilestoneToCol('front','inprogress')">+</button></div>
+            </div>
+            <div class="board-col" data-status="blocked">
+              <div class="board-col-header" onclick="toggleColCollapse(this)" style="cursor:pointer" title="Click to collapse/expand">
+                <span class="board-col-title" style="color:var(--action)">Blocked</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="board-col-count" id="col-count-front-blocked">0</span>
+                  <button class="col-collapse-btn" onclick="event.stopPropagation();toggleColCollapse(this.closest('.board-col-header'))" title="Collapse">‹</button>
+                </div>
+              </div>
+              <div class="board-col-body" id="front-col-blocked"></div>
+              <div class="board-col-add"><button class="board-col-add-btn" onclick="addMilestoneToCol('front','blocked')">+</button></div>
+            </div>
+            <div class="board-col" data-status="done">
+              <div class="board-col-header" onclick="toggleColCollapse(this)" style="cursor:pointer" title="Click to collapse/expand">
+                <span class="board-col-title" style="color:#88c98a">Done</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="board-col-count" id="col-count-front-done">0</span>
+                  <button class="col-collapse-btn" onclick="event.stopPropagation();toggleColCollapse(this.closest('.board-col-header'))" title="Collapse">‹</button>
+                </div>
+              </div>
+              <div class="board-col-body" id="front-col-done"></div>
+              <div class="board-col-add"><button class="board-col-add-btn" onclick="addMilestoneToCol('front','done')">+</button></div>
+            </div>
+          </div></div>
+        </div>
+
+        <!-- Calendar views -->
+        <div id="tr-view-month" style="display:none"><div id="tr-cal-month"></div></div>
+        <div id="tr-view-week"  style="display:none"><div id="tr-cal-week"></div></div>
+        <div id="tr-view-day"   style="display:none"><div id="tr-cal-day"></div></div>
+      </div>
+
+      <!-- ═══ BUSINESS PLAN ═══ -->
+      <div class="ws-view" id="front-bizplan">
+        <div class="view-header">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+            <div>
+              <div class="view-title">Business Plan</div>
+              <div class="view-desc">Four versions of The Front's plan — each tuned for a different audience. Build the <strong>General</strong> version first; the others inherit from it and sharpen the angle.</div>
+            </div>
+<div style="display:flex;gap:6px">
+            <button class="doc-export-btn" onclick="openDocExport('bizplan')">Export document →</button>
+            <button class="tab-export-btn" onclick="showBP('general',document.querySelector('.bp-pill'));openReview('bizplan-general')">Review & Rate →</button>
+          </div>
+          </div>
+        </div>
+        <div class="bp-versions">
+          <button class="bp-pill active" onclick="showBP('general',this)">General</button>
+          <button class="bp-pill" onclick="showBP('parsons',this)">Parsons Grant</button>
+          <button class="bp-pill" onclick="showBP('grant',this)">Grant Template</button>
+          <button class="bp-pill" onclick="showBP('investor',this)">Investor / Pitch</button>
+        </div>
+
+        <!-- GENERAL -->
+        <div class="bp-panel active" id="bp-general">
+          <div class="ws-section">
+            <div class="ws-section-header"><div class="ws-section-title">Executive Summary</div><div class="ws-section-badge" style="background:#d4b896">General</div></div>
+            <div class="ws-section-sub">A tight 3–4 sentence description of what The Front is, who it serves, and why it exists now. Write this last — it summarises everything below.</div>
+          </div>
+          <div class="field-group"><div class="field-label">What is The Front? <span>2–3 sentences max</span></div><textarea class="field-textarea bp-field" data-key="gen-exec-what" placeholder="The Front is a concept-driven collective space in NYC…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Who is it for? <span>primary audience</span></div><textarea class="field-textarea bp-field" data-key="gen-exec-who" placeholder="Emerging designers, new graduates, experimental creatives…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Why does it matter now? <span>the gap it fills</span></div><textarea class="field-textarea bp-field" data-key="gen-exec-why" placeholder="Emerging artists and designers often lack spaces where experimentation…" oninput="autosaveBP(this)"></textarea></div>
+
+          <div class="ws-section" style="margin-top:36px">
+            <div class="ws-section-header"><div class="ws-section-title">The Problem & Opportunity</div></div>
+            <div class="ws-section-sub">What gap does The Front fill in NYC's creative ecosystem? Why does it need to exist as a physical space?</div>
+          </div>
+          <div class="field-group"><div class="field-label">The problem for designers</div><textarea class="field-textarea bp-field" data-key="gen-prob-designers" placeholder="New graduates have no affordable, supported entry point into the market…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">The problem for audiences / customers</div><textarea class="field-textarea bp-field" data-key="gen-prob-audience" placeholder="Collectors, fashion-forward consumers, and design enthusiasts have no space that feels…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Why now, why NYC</div><textarea class="field-textarea bp-field" data-key="gen-prob-why-nyc" placeholder="Post-pandemic NYC has an abundance of affordable retail space and a generation of designers…" oninput="autosaveBP(this)"></textarea></div>
+
+          <div class="ws-section" style="margin-top:36px">
+            <div class="ws-section-header"><div class="ws-section-title">The Model</div></div>
+            <div class="ws-section-sub">How The Front works operationally. This is where you explain the rotating format, vendor relationships, and programming logic.</div>
+          </div>
+          <div class="field-group"><div class="field-label">Core format</div><textarea class="field-textarea bp-field" data-key="gen-model-format" placeholder="The Front operates as a rotating collective space with 4–6 week programming cycles. Each cycle features…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Vendor / designer relationship</div><textarea class="field-textarea bp-field" data-key="gen-model-vendor" placeholder="Designers are invited through an open application process. The Front operates on a commission/residency model: designers pay a monthly participation fee of $X and retain Y% of sales. The Front takes Z%..." oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">What makes each cycle feel distinct</div><textarea class="field-textarea bp-field" data-key="gen-model-distinct" placeholder="Each programming cycle is anchored by a conceptual theme. Interiors, display systems, and events are all redesigned to support that theme…" oninput="autosaveBP(this)"></textarea></div>
+
+          <div class="ws-section" style="margin-top:36px">
+            <div class="ws-section-header"><div class="ws-section-title">Revenue Model</div></div>
+            <div class="ws-section-sub">With rent now a real line item (~$4k/mo example), the old 20/80 split no longer works alone. Map out all revenue streams here.</div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Revenue streams</div>
+            <div class="rev-header"><span>Stream</span><span>Model / Rate</span><span>Est. Monthly $</span></div>
+            <div id="rev-rows-bp-gen">
+              <div class="rev-row"><input placeholder="Designer participation fee" data-key="rev-gen-0-stream" oninput="autosaveRevRow(this)"><input placeholder="$X/mo × N designers" data-key="rev-gen-0-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-0-est" oninput="autosaveRevRow(this);updateRevTotal('bp-gen')"></div>
+              <div class="rev-row"><input placeholder="Commission on sales" data-key="rev-gen-1-stream" oninput="autosaveRevRow(this)"><input placeholder="30% of vendor sales" data-key="rev-gen-1-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-1-est" oninput="autosaveRevRow(this);updateRevTotal('bp-gen')"></div>
+              <div class="rev-row"><input placeholder="Event ticket / door" data-key="rev-gen-2-stream" oninput="autosaveRevRow(this)"><input placeholder="$X per event × Y events/mo" data-key="rev-gen-2-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-2-est" oninput="autosaveRevRow(this);updateRevTotal('bp-gen')"></div>
+              <div class="rev-row"><input placeholder="Branded merchandise" data-key="rev-gen-3-stream" oninput="autosaveRevRow(this)"><input placeholder="Margin on own-label product" data-key="rev-gen-3-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-3-est" oninput="autosaveRevRow(this);updateRevTotal('bp-gen')"></div>
+              <div class="rev-row"><input placeholder="Sponsorship / partnerships" data-key="rev-gen-4-stream" oninput="autosaveRevRow(this)"><input placeholder="Brand activations, co-presentations" data-key="rev-gen-4-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-4-est" oninput="autosaveRevRow(this);updateRevTotal('bp-gen')"></div>
+            </div>
+            <div class="rev-total" id="rev-total-bp-gen">Estimated monthly total: $0</div>
+          </div>
+          <div class="field-group"><div class="field-label">Monthly fixed costs</div><textarea class="field-textarea bp-field" data-key="gen-costs" style="min-height:80px" placeholder="Rent: $4,000&#10;Utilities: $300&#10;Insurance: $150&#10;POS / software: $80&#10;Your draw: $X&#10;Misc: $200" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Break-even analysis <span>what the math needs to look like</span></div><textarea class="field-textarea bp-field" data-key="gen-breakeven" placeholder="To cover $X/mo in fixed costs, The Front needs $Y in combined participation fees + commission + events. At an avg of $Z participation fee with N designers, base coverage is $…" oninput="autosaveBP(this)"></textarea></div>
+
+          <div class="ws-section" style="margin-top:36px">
+            <div class="ws-section-header"><div class="ws-section-title">Market & Competition</div></div>
+          </div>
+          <div class="field-group"><div class="field-label">Who is The Front's customer (visitor / buyer)</div><textarea class="field-textarea bp-field" data-key="gen-market-customer" placeholder="Design-literate New Yorkers aged 22–40, students and faculty of design schools, creative professionals, collectors of emerging work…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Comparable spaces / competitors — and how The Front differs</div><textarea class="field-textarea bp-field" data-key="gen-market-comp" placeholder="Opening Ceremony (closed), No. 3 (London), Dover Street Market, Printed Matter… The Front differs in that it is explicitly a platform for emerging designers, not a curated multi-brand retailer…" oninput="autosaveBP(this)"></textarea></div>
+
+          <div class="ws-section" style="margin-top:36px">
+            <div class="ws-section-header"><div class="ws-section-title">Operations & Timeline</div></div>
+          </div>
+          <div class="field-group"><div class="field-label">Key milestones (next 12 months)</div><textarea class="field-textarea bp-field" data-key="gen-milestones" placeholder="Month 1–2: Secure space, finalize vendor cohort 1&#10;Month 3: Soft launch / opening event&#10;Month 4–6: First full programming cycle&#10;Month 6: Review financials, adjust model&#10;Month 9: Apply for next grant cycle…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Legal structure / status</div><textarea class="field-textarea bp-field" data-key="gen-legal" placeholder="LLC formed / not yet formed. EIN: pending. Sales tax registration: pending. NYC DCA license: N/A / pending…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Team</div><textarea class="field-textarea bp-field" data-key="gen-team" placeholder="Founder: [Your name] — background, role. Advisors / collaborators: …" oninput="autosaveBP(this)"></textarea></div>
+
+          <div class="save-bar"><button class="save-btn" onclick="saveBPAll()">Save all →</button><span class="save-hint">Auto-saves as you type. Click to confirm.</span><span class="saved-check" id="bp-saved-check">Saved ✓</span></div>
+
+          <div class="review-panel" id="review-front-bizplan-general"><div class="review-panel-header"><div class="review-panel-label"><span style="background:#d4b896"></span>Business Plan Review</div><div class="review-scores" id="review-scores-bizplan-general"></div></div><div class="review-panel-body"><div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div></div></div>
+        </div>
+
+        <!-- PARSONS -->
+        <div class="bp-panel" id="bp-parsons">
+          <div class="ws-section">
+            <div class="ws-section-header"><div class="ws-section-title">Parsons / New School Grant</div><div class="ws-section-badge" style="background:#88c98a">Grant</div></div>
+            <div class="ws-section-sub" style="margin-top:6px">The angle: The Front as a living extension of Parsons' ecosystem — a post-graduation launchpad that gives new alumni real-world visibility and market access. The ask frames The Front as infrastructure for Parsons' mission, not just a business that happens to feature designers. <strong>Key differentiators to emphasise:</strong> Parsons alumni pipeline, cross-disciplinary convergence (fashion + object + spatial), community of practice rather than commercial gallery.</div>
+          </div>
+
+          <div class="field-group" style="margin-top:24px"><div class="field-label">Opening statement <span>how this grant application begins</span></div><textarea class="field-textarea bp-field" data-key="par-opening" placeholder="The Front is a concept-driven collective space that functions as a bridge between Parsons School of Design and the professional creative landscape of New York City. By foregrounding new alumni and emerging designers across fashion, object design, and material experimentation, The Front extends the intellectual and creative culture of Parsons beyond graduation…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">What Parsons / New School gets from supporting The Front</div><textarea class="field-textarea bp-field" data-key="par-parsons-gets" placeholder="• Ongoing visibility for recent alumni in a professional NYC context&#10;• A pipeline from studio to market that reinforces Parsons' reputation as a career-launching institution&#10;• A living proof of concept that cross-disciplinary practice (fashion + object + material + space) is commercially and culturally viable&#10;• Community programming that Parsons faculty and students can participate in…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">How The Front highlights Parsons programs specifically</div><textarea class="field-textarea bp-field" data-key="par-programs" placeholder="List the specific Parsons programs whose alumni and students you would platform: BFA Fashion Design, MFA Textiles, Strategic Design and Management, BFA Product Design, MFA Transdisciplinary Design… For each, describe how The Front specifically supports that discipline…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">What makes Parsons designers competitively distinct (use their language)</div><textarea class="field-textarea bp-field" data-key="par-edge" placeholder="Parsons graduates are trained to think across disciplines, to treat design as cultural production rather than commodity, to engage critically with materials and systems. The Front's model — rotating themes, immersive environments, cross-medium curation — is uniquely suited to showcase this kind of work because…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Grant ask + what the funds specifically enable</div><textarea class="field-textarea bp-field" data-key="par-ask" placeholder="We are requesting $X to fund: (1) first three months of space rental during the soft-launch phase, (2) build-out of the initial installation environment, (3) a stipend program for participating Parsons alumni designers… This funding removes the primary barrier to launch and allows The Front to operate in its formative phase without commercial pressure that would compromise its mission…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Long-term relationship with Parsons (beyond this grant)</div><textarea class="field-textarea bp-field" data-key="par-longterm" placeholder="The Front envisions a formal partnership with Parsons that includes: annual cohort selection in collaboration with faculty, student workshop and critique programming, potential thesis presentation opportunities, co-branded events…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Budget narrative for this grant</div><textarea class="field-textarea bp-field" data-key="par-budget" placeholder="Requested: $X&#10;Breakdown:&#10;— Space rental (3 months): $X&#10;— Build-out / installation: $X&#10;— Designer stipends (N designers × $Y): $X&#10;— Marketing / documentation: $X&#10;— Operations reserve: $X" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Notes / Parsons contacts / application deadline</div><textarea class="field-textarea bp-field" data-key="par-notes" placeholder="Contact at Parsons: …&#10;Application deadline: …&#10;Portal / link: …&#10;Previously submitted: yes / no&#10;Status: …" oninput="autosaveBP(this)"></textarea></div>
+          <div class="save-bar"><button class="save-btn" onclick="saveBPAll()">Save all →</button><span class="saved-check" id="bp-saved-check-par">Saved ✓</span></div>
+
+          <div class="review-panel" id="review-front-bizplan-parsons"><div class="review-panel-header"><div class="review-panel-label"><span style="background:#d4b896"></span>Parsons Application Review</div><div class="review-scores" id="review-scores-bizplan-parsons"></div></div><div class="review-panel-body"><div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div></div></div>
+        </div>
+
+        <!-- GRANT TEMPLATE -->
+        <div class="bp-panel" id="bp-grant">
+          <div class="ws-section">
+            <div class="ws-section-header"><div class="ws-section-title">General Grant Template</div><div class="ws-section-badge" style="background:#a8c4d4">Template</div></div>
+            <div class="ws-section-sub" style="margin-top:6px">A reusable structure you adapt for any grant. NYC has specific arts + small business funding — see the Financials tab for a curated list. This template is written to flex: swap in the funder's priorities in the highlighted fields.</div>
+          </div>
+          <div class="field-group" style="margin-top:20px"><div class="field-label">Organisation / project description <span>2–3 sentences</span></div><textarea class="field-textarea bp-field" data-key="gt-org" placeholder="The Front is a concept-driven collective retail space in New York City dedicated to emerging designers and experimental creatives…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Statement of need <span>what problem this grant helps solve</span></div><textarea class="field-textarea bp-field" data-key="gt-need" placeholder="Despite NYC's status as a global design capital, emerging designers — particularly those from under-resourced backgrounds — lack affordable, supported access to retail and exhibition space during the formative years of their practice…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Project description <span>what you will do with the funds</span></div><textarea class="field-textarea bp-field" data-key="gt-project" placeholder="With support from [FUNDER], The Front will [specific activities: open first permanent location / launch inaugural programming cycle / fund designer stipends / build out installation environment]…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Goals & measurable outcomes</div><textarea class="field-textarea bp-field" data-key="gt-outcomes" placeholder="• Platform X emerging designers in Year 1&#10;• Host X public programming events&#10;• Generate X in combined designer revenue&#10;• Reach X visitors / community members&#10;• Document and publish [output: zine / archive / exhibition record]…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">How this aligns with funder's mission <span>customise per application</span></div><textarea class="field-textarea bp-field" data-key="gt-alignment" placeholder="[FUNDER]'s commitment to [their stated priority] aligns directly with The Front's mission to [specific overlap]. Specifically…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Evaluation / how you'll measure success</div><textarea class="field-textarea bp-field" data-key="gt-eval" placeholder="The Front will track: attendance at each programming cycle, revenue generated per designer, press coverage, social reach, follow-on opportunities for participating designers (stockists, commissions, exhibitions)…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Budget (template)</div><textarea class="field-textarea bp-field" data-key="gt-budget" placeholder="Total requested: $X&#10;— Space / rent: $X&#10;— Designer support / stipends: $X&#10;— Installation / build-out: $X&#10;— Programming / events: $X&#10;— Documentation: $X&#10;— Operations: $X&#10;Other funding sources: …" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Sustainability — how The Front sustains beyond the grant</div><textarea class="field-textarea bp-field" data-key="gt-sustain" placeholder="Beyond the grant period, The Front generates revenue through designer participation fees, commission on sales, ticketed events, and brand partnerships. The grant enables us to establish the model without commercial pressure during the critical first phase…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="save-bar"><button class="save-btn" onclick="saveBPAll()">Save all →</button><span class="saved-check" id="bp-saved-check-gt">Saved ✓</span></div>
+        </div>
+
+        <!-- INVESTOR -->
+        <div class="bp-panel" id="bp-investor">
+          <div class="ws-section">
+            <div class="ws-section-header"><div class="ws-section-title">Investor / Pitch Deck Narrative</div><div class="ws-section-badge" style="background:#c9a8d4">Pitch</div></div>
+            <div class="ws-section-sub" style="margin-top:6px">For investors or financial partners, the framing shifts: The Front is a differentiated retail concept with a built-in content and community flywheel. The cultural mission is real, but the pitch needs to show commercial upside. Think: what's the exit or growth story?</div>
+          </div>
+          <div class="field-group" style="margin-top:20px"><div class="field-label">The hook <span>one sentence that makes someone lean in</span></div><textarea class="field-textarea bp-field" data-key="inv-hook" placeholder="The Front is the retail space that the next generation of designers actually needs — and the one customers can't find anywhere else in NYC." oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">The market opportunity</div><textarea class="field-textarea bp-field" data-key="inv-market" placeholder="The independent designer market in NYC represents… Consumer appetite for non-commodity, design-forward goods is growing. The closures of Opening Ceremony, Colette (Paris), and others left a gap that no one has filled with a community-first model…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Why The Front wins</div><textarea class="field-textarea bp-field" data-key="inv-moat" placeholder="The Front's competitive advantage is its rotating model — each cycle drives urgency and repeat visits that a static retail store cannot. Its community of designers becomes a self-reinforcing talent pipeline. Its programming generates press and organic reach…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Traction / proof of concept</div><textarea class="field-textarea bp-field" data-key="inv-traction" placeholder="Prior to a permanent space, The Front has operated as a series of pop-up events. Results: [X events, Y designers featured, Z visitors, $X revenue generated, press mentions]…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Business model (investor framing)</div><textarea class="field-textarea bp-field" data-key="inv-model" placeholder="Revenue: designer participation fees ($X/cycle), commission (X%), events ($X), brand activations ($X). Year 1 projected revenue: $X. Path to profitability: Month X. Potential expansion: additional locations / cities / digital layer…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">The ask + use of funds</div><textarea class="field-textarea bp-field" data-key="inv-ask" placeholder="Seeking $X in [seed / pre-seed / angel] investment for: space build-out ($X), 6-month operating runway ($X), marketing launch ($X), team ($X). In exchange: [equity / revenue share / other]…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">The vision in 3 years</div><textarea class="field-textarea bp-field" data-key="inv-vision" placeholder="By Year 3, The Front operates [1–3 locations], has supported X designers, generates $X ARR, and has become the definitive platform for emerging design in NYC — with expansion to [LA / London / online marketplace] possible…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="save-bar"><button class="save-btn" onclick="saveBPAll()">Save all →</button><span class="saved-check" id="bp-saved-check-inv">Saved ✓</span></div>
+        </div>
+      </div>
+
+
+      <!-- ═══ CONTACTS ═══ -->
+      <div class="ws-view" id="front-contacts">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div class="view-title">Contacts</div>
+            <div class="view-desc">Industry people, collaborators, fabricators, press, stakeholders. Everyone who could matter to The Front — tracked, searchable, and connected to your context. <strong>Click any row to expand full details.</strong></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+            <button class="tab-export-btn" onclick="openDocExport('front-contacts')">Export →</button>
+          </div>
+        </div>
+
+        <div class="contacts-toolbar">
+          <input class="contacts-search" id="contacts-search" placeholder="Search by name, industry, notes…" oninput="renderContacts()">
+          <select class="contacts-filter-select" id="contacts-filter-industry" onchange="renderContacts()">
+            <option value="">All industries</option>
+          </select>
+          <select class="contacts-filter-select" id="contacts-filter-group" onchange="renderContacts()">
+            <option value="">All groups</option>
+          </select>
+          <select class="contacts-filter-select" id="contacts-filter-rel" onchange="renderContacts()">
+            <option value="">All relationships</option>
+            <option value="key">Key contact</option>
+            <option value="warm">Warm</option>
+            <option value="met">Met once</option>
+            <option value="reached">Reached out</option>
+            <option value="cold">Cold</option>
+          </select>
+          <span class="contacts-count" id="contacts-count"></span>
+          <button class="contacts-add-btn" onclick="addContact()">+ Add contact</button>
+          <button class="contacts-add-btn" onclick="openIndustryManager()" style="border-color:var(--muted)">⚙ Industries</button>
+        </div>
+
+        <!-- Industry manager panel -->
+        <div id="industry-manager" style="display:none;border:1px solid var(--border);border-radius:4px;padding:18px 20px;margin-bottom:18px;background:var(--faint)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <span style="font-family:DM Mono,monospace;font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted)">Industry tags — add up to 2 groups per industry</span>
+            <button onclick="closeIndustryManager()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">×</button>
+          </div>
+          <div id="industry-tag-list"></div>
+          <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
+            <input id="new-industry-name" class="contacts-search" placeholder="New industry name…" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter')addIndustryTag()">
+            <input id="new-industry-g1" class="contacts-search" placeholder="Group 1 (e.g. Creative)" style="flex:1;min-width:0">
+            <input id="new-industry-g2" class="contacts-search" placeholder="Group 2 (e.g. NYC)" style="flex:1;min-width:0">
+            <button class="contacts-add-btn" onclick="addIndustryTag()">+ Add</button>
+          </div>
+        </div>
+
+        <div class="contacts-table-wrap">
+          <table class="contacts-table" id="contacts-table">
+            <thead>
+              <tr>
+                <th style="width:32px"></th>
+                <th onclick="sortContacts('name')" id="cth-name">Name <span class="sort-arrow">↕</span></th>
+                <th onclick="sortContacts('industry')" id="cth-industry">Industry <span class="sort-arrow">↕</span></th>
+                <th onclick="sortContacts('role')" id="cth-role">Role / Company <span class="sort-arrow">↕</span></th>
+                <th onclick="sortContacts('rel')" id="cth-rel">Relationship <span class="sort-arrow">↕</span></th>
+                <th>Notes</th>
+                <th style="width:36px"></th>
+              </tr>
+            </thead>
+            <tbody id="contacts-tbody">
+            </tbody>
+          </table>
+          <div class="contacts-empty" id="contacts-empty" style="display:none">No contacts yet — add your first one above.</div>
+        </div>
+      </div>
+
+      <!-- ═══ SPACES ═══ -->
+      <div class="ws-view" id="front-spaces">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div class="view-title">Space Leads</div>
+            <div class="view-desc">Every space you've toured — address, rent, contact, tour date, pros/cons, and AI-pulled neighbourhood context. The map updates as you add leads.</div>
+          </div>
+          <button class="tab-export-btn" onclick="openDocExport('front-spaces')">Export →</button>
+        </div>
+
+        <div class="spaces-toolbar">
+          <span class="spaces-toolbar-label">Filter</span>
+          <button class="spaces-filter-btn active" onclick="filterSpaces('all',this)">All</button>
+          <button class="spaces-filter-btn" onclick="filterSpaces('touring',this)">Touring</button>
+          <button class="spaces-filter-btn" onclick="filterSpaces('interested',this)">Interested</button>
+          <button class="spaces-filter-btn" onclick="filterSpaces('passed',this)">Passed</button>
+          <button class="spaces-filter-btn" onclick="filterSpaces('top',this)">Top pick</button>
+          <button class="add-space-btn" onclick="addSpace()">+ Add space</button>
+        </div>
+
+        <div class="spaces-layout">
+          <div id="spaces-list"></div>
+          <div class="spaces-sidebar">
+            <div class="spaces-map-wrap">
+              <div id="spaces-map-container" style="height:320px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px"><span style="font-size:22px">🗺</span><span style="font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)">Add lat/lng to see map</span></div>
+              <div class="spaces-map-legend" id="spaces-map-legend" style="display:none">
+                <div class="spaces-map-legend-title">Spaces on map</div>
+                <div id="spaces-legend-pins"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ FINANCIALS ═══ -->
+      <div class="ws-view" id="front-financials">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><div class="view-title">Financials & Funding</div>
+          <div class="view-desc">Color-coded by category. Every line item tagged — watch the pie chart update as you fill in numbers.</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+            <button class="tab-export-btn" onclick="openDocExport('front-financials')">Export →</button>
+          </div>
+        </div>
+
+        <!-- Budget sub-tabs -->
+        <div class="popup-tabs" style="margin-bottom:28px">
+          <button class="popup-tab active" onclick="showFinTab('upfront',this)">Upfront Costs</button>
+          <button class="popup-tab" onclick="showFinTab('monthly',this)">Monthly Budget</button>
+          <button class="popup-tab" onclick="showFinTab('revenue',this)">Revenue</button>
+          <button class="popup-tab" onclick="showFinTab('funding',this)">Funding Sources</button>
+        </div>
+
+        <!-- UPFRONT COSTS -->
+        <div class="fin-panel active" id="fin-panel-upfront">
+          <div class="budget-layout">
+            <div class="budget-table-col">
+              <div class="budget-cat-legend" id="fin-legend-upfront"></div>
+              <div class="budget-rows" id="budget-rows-upfront"></div>
+              <div class="budget-grand-total" id="budget-total-upfront">Total: $0</div>
+              <div class="field-group" style="margin-top:20px"><div class="field-label">How you're covering this</div><textarea class="field-textarea bp-field" data-key="fin-upfront-plan" placeholder="Personal savings: $X&#10;Grant (Parsons): $X&#10;CDFI microloan: $X&#10;Gap remaining: $X" oninput="autosaveBP(this)"></textarea></div>
+            </div>
+            <div class="budget-chart-col">
+              <div class="budget-chart-title">Spend by category</div>
+              <canvas id="pie-upfront" width="220" height="220"></canvas>
+              <div class="pie-legend" id="pie-legend-upfront"></div>
+            </div>
+          </div>
+          <div class="save-bar"><button class="save-btn green" onclick="saveBudget('upfront')">Save →</button><span class="saved-check" id="fin-saved-upfront">Saved ✓</span></div>
+        </div>
+
+        <!-- MONTHLY BUDGET -->
+        <div class="fin-panel" id="fin-panel-monthly">
+          <div class="budget-layout">
+            <div class="budget-table-col">
+              <div class="budget-cat-legend" id="fin-legend-monthly"></div>
+              <div class="budget-rows" id="budget-rows-monthly"></div>
+              <div class="budget-grand-total" id="budget-total-monthly">Total: $0 / mo</div>
+            </div>
+            <div class="budget-chart-col">
+              <div class="budget-chart-title">Monthly spend by category</div>
+              <canvas id="pie-monthly" width="220" height="220"></canvas>
+              <div class="pie-legend" id="pie-legend-monthly"></div>
+            </div>
+          </div>
+          <div class="save-bar"><button class="save-btn green" onclick="saveBudget('monthly')">Save →</button><span class="saved-check" id="fin-saved-monthly">Saved ✓</span></div>
+        </div>
+
+        <!-- REVENUE -->
+        <div class="fin-panel" id="fin-panel-revenue">
+          <div class="popup-panel-title" style="font-family:Cormorant Garamond,serif;font-size:19px;font-weight:300;margin-bottom:16px">Revenue Model & Break-Even</div>
+          <div class="field-group">
+            <div class="rev-header"><span>Revenue Stream</span><span>How it works</span><span>Est. $/month</span></div>
+            <div id="rev-rows-gen">
+              <div class="rev-row"><input value="Vendor participation fees" data-key="rev-gen-0-stream" oninput="autosaveRevRow(this)"><input placeholder="e.g. 6 vendors × $300/mo = $1,800" data-key="rev-gen-0-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-0-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
+              <div class="rev-row"><input value="Commission on vendor sales" data-key="rev-gen-1-stream" oninput="autosaveRevRow(this)"><input placeholder="e.g. 30% × $8k in vendor sales = $2,400" data-key="rev-gen-1-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-1-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
+              <div class="rev-row"><input value="Event tickets / door" data-key="rev-gen-2-stream" oninput="autosaveRevRow(this)"><input placeholder="e.g. 2 events/mo × 40 people × $20 = $1,600" data-key="rev-gen-2-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-2-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
+              <div class="rev-row"><input value="Own merchandise / branded goods" data-key="rev-gen-3-stream" oninput="autosaveRevRow(this)"><input placeholder="Tote bags, zines, printed matter" data-key="rev-gen-3-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-3-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
+              <div class="rev-row"><input value="Brand sponsorships / activations" data-key="rev-gen-4-stream" oninput="autosaveRevRow(this)"><input placeholder="Per-event brand placement, co-presentations" data-key="rev-gen-4-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-4-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
+              <div class="rev-row"><input value="Grants (amortized monthly)" data-key="rev-gen-5-stream" oninput="autosaveRevRow(this)"><input placeholder="Divide annual grant amount by 12" data-key="rev-gen-5-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-5-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
+            </div>
+            <div class="rev-total" id="rev-total-gen">Estimated monthly revenue: $0</div>
+          </div>
+          <div class="field-group"><div class="field-label">Break-even analysis</div><textarea class="field-textarea bp-field" data-key="gen-breakeven" style="min-height:120px" placeholder="Monthly costs total: $X&#10;Monthly revenue needed to break even: $X&#10;&#10;Conservative month-1 projection: $X&#10;Month-6 projection: $X&#10;The model works when: [condition]" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Commission structure decision</div><textarea class="field-textarea bp-field" data-key="fin-model-final" placeholder="Before: 20% me / 80% vendor (no rent)&#10;Now with rent:&#10;Vendors pay: $X/cycle&#10;Commission split: X% / X%&#10;Why this works:" oninput="autosaveBP(this)"></textarea></div>
+          <div class="save-bar"><button class="save-btn green" onclick="saveBPAll()">Save →</button><span class="saved-check" id="fin-saved-rev">Saved ✓</span></div>
+        </div>
+
+        <!-- FUNDING SOURCES -->
+        <div class="fin-panel" id="fin-panel-funding">
+          <div class="funding-list">
+            <div class="funding-item"><div class="funding-type">NYC Arts Grant</div><div class="funding-name">NYC Dept of Cultural Affairs (DCLA) — Cultural Development Fund</div><div class="funding-desc">Primary NYC arts funder. Strong fit for The Front's community programming angle. Nonprofits only — use fiscal sponsor if for-profit.</div><textarea class="funding-notes-input" data-key="fund-dcla" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">NYC Small Business</div><div class="funding-name">NYC Small Business Services (SBS) — Neighborhood 360°</div><div class="funding-desc">Grants, loans, free legal + financial support for NYC small businesses. Use this regardless of whether you get funding — the free resources alone are worth it.</div><textarea class="funding-notes-input" data-key="fund-sbs" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">Arts Grant</div><div class="funding-name">New York State Council on the Arts (NYSCA)</div><div class="funding-desc">State-level arts funding. Can fund for-profits via fiscal sponsorship. Apply annually once you have documented programming.</div><textarea class="funding-notes-input" data-key="fund-nysca" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">CDFI Microloan</div><div class="funding-name">Accompany Capital — Microloan ($500–$50k)</div><div class="funding-desc">NYC-based CDFI. Lower bar than banks. Good for upfront costs and operating runway.</div><textarea class="funding-notes-input" data-key="fund-accompany" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">Design / Fashion</div><div class="funding-name">CFDA Programs + Vogue Fashion Fund</div><div class="funding-desc">Grants for design-supporting organizations. The Front as a platform for emerging fashion designers is a strong fit. CFDA network also opens press doors.</div><textarea class="funding-notes-input" data-key="fund-cfda" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">Foundation</div><div class="funding-name">Jerome Foundation — Emerging Artists Program</div><div class="funding-desc">Supports orgs creating opportunity for early-career artists. Start documenting programming history now — they want track record.</div><textarea class="funding-notes-input" data-key="fund-jerome" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">University</div><div class="funding-name">Parsons / The New School — Internal Grants + Alumni Programs</div><div class="funding-desc">Seed funding for alumni ventures, Startup Studios connections. Alumni affairs office is the right first call.</div><textarea class="funding-notes-input" data-key="fund-parsons-internal" placeholder="My notes / contacts / status…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">SBA Microloan</div><div class="funding-name">SBA Microloan via Grameen America or Pursuit NYC</div><div class="funding-desc">Up to $50k, lower interest than conventional loans.</div><textarea class="funding-notes-input" data-key="fund-sba" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+          </div>
+          <div class="field-group"><div class="field-label">Other funding leads</div><textarea class="field-textarea bp-field" data-key="fin-other-funding" placeholder="Other foundations, crowdfunding, potential investors…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="save-bar"><button class="save-btn green" onclick="saveBPAll()">Save →</button><span class="saved-check" id="fin-saved-check">Saved ✓</span></div>
+        </div>
+
+      </div>
+
+      <!-- ═══ VENDORS ═══ -->
+      <div class="ws-view" id="front-vendors">
+        <div class="view-header">
+          <div class="view-title">Vendors & Designers</div>
+          <div class="view-desc">Click any name to expand and edit. Add photos to each vendor to populate the gallery view.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+          <div class="vendor-view-tabs">
+            <button class="vendor-view-tab active" id="vview-list-btn" onclick="setVendorView('list',this,'front')">List</button>
+            <button class="vendor-view-tab" id="vview-gallery-btn" onclick="setVendorView('gallery',this,'front')">Gallery</button>
+          </div>
+          <div class="vendor-cat-tabs" id="vendor-cat-tabs" style="margin-bottom:0">
+            <button class="vendor-cat-tab active" onclick="filterVendorCat('all',this)">All</button>
+            <button class="vendor-cat-tab" onclick="filterVendorCat('Clothing',this)">Clothing</button>
+            <button class="vendor-cat-tab" onclick="filterVendorCat('Accessories',this)">Accessories</button>
+            <button class="vendor-cat-tab" onclick="filterVendorCat('Jewelry',this)">Jewelry</button>
+            <button class="vendor-cat-tab" onclick="filterVendorCat('Ceramics',this)">Ceramics</button>
+            <button class="vendor-cat-tab" onclick="filterVendorCat('Textiles',this)">Textiles</button>
+            <button class="vendor-cat-tab" onclick="filterVendorCat('Objects',this)">Objects</button>
+            <button class="vendor-cat-tab" onclick="filterVendorCat('Art / Print',this)">Art / Print</button>
+            <button class="vendor-cat-tab" onclick="filterVendorCat('Other',this)">Other</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-left:auto">
+            <select id="vendor-status-filter" onchange="renderVendors()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:6px 10px;outline:none;border-radius:2px;cursor:pointer">
+              <option value="all">All statuses</option>
+              <option value="signed">Signed</option>
+              <option value="prospect">Prospect</option>
+              <option value="reached">Reached out</option>
+              <option value="past">Past</option>
+            </select>
+            <button class="add-vendor-btn" onclick="addVendor()">+ Add vendor</button>
+          </div>
+        </div>
+        <div id="vendor-list"></div>
+      </div>
+
+      <!-- ═══ REFERENCES ═══ -->
+      <div class="ws-view" id="front-references">
+        <div class="view-header">
+          <div class="view-title">Visual References</div>
+          <div class="view-desc">Paste image URLs into any board. Add notes to each image so you know what you're pulling from it — aesthetic, spatial quality, a designer's approach, a material. <strong>Organised into three boards.</strong></div>
+        </div>
+        <div class="ref-boards">
+          <button class="ref-board-btn active" onclick="showRefBoard('mood',this)">Mood & Aesthetic</button>
+          <button class="ref-board-btn" onclick="showRefBoard('spatial',this)">Spatial & Interior</button>
+          <button class="ref-board-btn" onclick="showRefBoard('designers',this)">Designer References</button>
+          <button class="ref-board-btn" onclick="showRefBoard('articles',this)">Articles & Links</button>
+        </div>
+        <div class="ref-board active" id="refboard-mood">
+          <div class="ref-add-row"><input class="ref-url-input" id="ref-url-mood" placeholder="Paste image URL…" onkeydown="if(event.key==='Enter')addRef('mood')"><button class="ref-add-btn" onclick="addRef('mood')">Add image</button></div>
+          <div class="ref-grid" id="ref-grid-mood"></div>
+          <div class="ref-empty" id="ref-empty-mood">No references yet — paste an image URL above.</div>
+        </div>
+        <div class="ref-board" id="refboard-spatial">
+          <div class="ref-add-row"><input class="ref-url-input" id="ref-url-spatial" placeholder="Paste image URL…" onkeydown="if(event.key==='Enter')addRef('spatial')"><button class="ref-add-btn" onclick="addRef('spatial')">Add image</button></div>
+          <div class="ref-grid" id="ref-grid-spatial"></div>
+          <div class="ref-empty" id="ref-empty-spatial">No references yet — paste an image URL above.</div>
+        </div>
+
+        <div class="ref-board" id="refboard-articles">
+          <div class="article-add-row">
+            <input class="article-url-input" id="ref-url-articles" placeholder="Paste article or link URL…" onkeydown="if(event.key==='Enter')addArticle()">
+            <button class="ref-add-btn" onclick="addArticle()">Add link</button>
+          </div>
+          <div class="article-grid" id="article-grid"></div>
+          <div class="article-empty" id="article-empty">No articles yet — paste a URL above.</div>
+        </div>
+        <div class="ref-board" id="refboard-designers">
+          <div class="ref-add-row"><input class="ref-url-input" id="ref-url-designers" placeholder="Paste image URL…" onkeydown="if(event.key==='Enter')addRef('designers')"><button class="ref-add-btn" onclick="addRef('designers')">Add image</button></div>
+          <div class="ref-grid" id="ref-grid-designers"></div>
+          <div class="ref-empty" id="ref-empty-designers">No references yet — paste an image URL above.</div>
+        </div>
+      </div>
+
+      <!-- ═══ PROGRAMMING ═══ -->
+      <div class="ws-view" id="front-programming">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><div class="view-title">Programming</div>
+          <div class="view-desc">The Front lives through its programming — rotating themes, activations, events. Plan upcoming cycles, document past ones, and capture ideas in development. <strong>Programming is also your grant narrative and your press story.</strong></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+            <button class="tab-export-btn" onclick="openDocExport('front-programming')">Export →</button>
+          </div>
+        </div>
+        <button class="add-prog-btn" onclick="addProgramming()">+ Add programming cycle / event</button>
+        <div id="prog-list"><div style="text-align:center;padding:40px;color:var(--muted);font-size:11px;font-family:Cormorant Garamond,serif;font-style:italic">No programming added yet.</div></div>
+      </div>
+
+      <!-- ═══ PARTNERSHIPS ═══ -->
+      <div class="ws-view" id="front-partnerships">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div><div class="view-title">Partnerships & Outreach</div>
+          <div class="view-desc">Schools, institutions, press, potential sponsors, brand collaborators. Separate from vendors — these are institutional and strategic relationships. <strong>The Parsons relationship starts here.</strong></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
+            <button class="tab-export-btn" onclick="openDocExport('front-partnerships')">Export →</button>
+          </div>
+        </div>
+        <div class="ws-section">
+          <div class="ws-section-header"><div class="ws-section-title">Schools & Academic Institutions</div></div>
+        </div>
+        <div id="partners-schools"></div>
+        <button class="add-prog-btn" style="background:#d4c8a8" onclick="addPartner('schools')">+ Add school / institution</button>
+
+        <div class="ws-section" style="margin-top:36px">
+          <div class="ws-section-header"><div class="ws-section-title">Press & Media</div></div>
+        </div>
+        <div id="partners-press"></div>
+        <button class="add-prog-btn" style="background:#d4c8a8" onclick="addPartner('press')">+ Add press contact</button>
+
+        <div class="ws-section" style="margin-top:36px">
+          <div class="ws-section-header"><div class="ws-section-title">Brand Partners & Sponsors</div></div>
+        </div>
+        <div id="partners-brands"></div>
+        <button class="add-prog-btn" style="background:#d4c8a8" onclick="addPartner('brands')">+ Add brand / sponsor</button>
+
+        <div class="ws-section" style="margin-top:36px">
+          <div class="ws-section-header"><div class="ws-section-title">Community & Arts Organizations</div></div>
+        </div>
+        <div id="partners-orgs"></div>
+        <button class="add-prog-btn" style="background:#d4c8a8;margin-bottom:0" onclick="addPartner('orgs')">+ Add organization</button>
+      </div>
+
+      <!-- ═══ STORY ═══ -->
+      <!-- ═══ BRAND IDENTITY ═══ -->
+      <div class="ws-view" id="front-brand-identity">
+        <div class="view-header">
+          <div class="view-title">Brand Identity</div>
+          <div class="view-desc">The strategic foundation — what The Front is, who it's for, and what makes it distinct. Get this clear first. Everything else flows from it.</div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">The concept</div>
+          <div class="brand-field">
+            <div class="brand-label">In one sentence, what is The Front?</div>
+            <div class="brand-hint">Not a description of what it does — what it *is*. The organizing idea.</div>
+            <textarea class="field-textarea bp-field" data-key="brand-one-sentence" placeholder="The Front is a living curatorial space that treats retail as a format for creative community — not a destination, but a practice." oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+          <div class="brand-field">
+            <div class="brand-label">What problem does it solve — and for who?</div>
+            <div class="brand-hint">For designers: what do they gain? For customers: what does it offer that nothing else does?</div>
+            <textarea class="field-textarea bp-field" data-key="brand-problem" placeholder="For emerging designers: a context that elevates their work rather than commodifies it — real visibility without the infrastructure of a gallery or the randomness of a pop-up market. For customers: something that feels discovered, not sold." oninput="autosaveBP(this)" style="min-height:80px"></textarea>
+          </div>
+          <div class="brand-field">
+            <div class="brand-label">What is The Front NOT?</div>
+            <div class="brand-hint">Defining by contrast is often more clarifying than defining by description.</div>
+            <textarea class="field-textarea bp-field" data-key="brand-not" placeholder="Not a gallery. Not a pop-up market. Not a vanity showcase. Not trend-driven. Not passive retail." oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">The audience</div>
+          <div class="brand-two-col">
+            <div class="brand-field">
+              <div class="brand-label">The designer / vendor</div>
+              <div class="brand-hint">Who specifically — career stage, aesthetic, values, what they need right now</div>
+              <textarea class="field-textarea bp-field" data-key="brand-audience-designer" placeholder="Early-career or mid-career independent designers. Fashion, object design, jewelry, print. NYC-based or NYC-adjacent. Making work that doesn't have an obvious home — too conceptual for a boutique, too commercial for a gallery." oninput="autosaveBP(this)" style="min-height:90px"></textarea>
+            </div>
+            <div class="brand-field">
+              <div class="brand-label">The customer</div>
+              <div class="brand-hint">Who walks in and immediately gets it — what do they already believe, follow, buy?</div>
+              <textarea class="field-textarea bp-field" data-key="brand-audience-customer" placeholder="Design-literate, culturally engaged. Follows designers directly on Instagram. Buys intentionally — fewer things, better provenance. Lives in or visits downtown Manhattan. Trusts editorial curation over trend." oninput="autosaveBP(this)" style="min-height:90px"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">The position</div>
+          <div class="brand-field">
+            <div class="brand-label">3 words that define The Front</div>
+            <textarea class="field-textarea bp-field" data-key="brand-three-words" placeholder="Alive. Conceptual. Communal." oninput="autosaveBP(this)" style="min-height:48px"></textarea>
+          </div>
+          <div class="brand-field">
+            <div class="brand-label">Who else is doing something adjacent — and how are you different?</div>
+            <div class="brand-hint">Honest competitive awareness. What exists, why it's not quite The Front.</div>
+            <textarea class="field-textarea bp-field" data-key="brand-competitive" placeholder="Dover Street Market: too institutional, too expensive. Beacon's Closet: different price point and model. Various pop-up markets: too market-y, no curatorial point of view. What's missing: a space that's curated like a gallery, accessible like a shop, and alive like a studio." oninput="autosaveBP(this)" style="min-height:90px"></textarea>
+          </div>
+          <div class="brand-field">
+            <div class="brand-label">What does success look like in 2 years?</div>
+            <textarea class="field-textarea bp-field" data-key="brand-success" placeholder="A permanent home. 8–12 rotating vendors at any given time. Programming that the local creative community returns to. A model that's been written about as an alternative to the gallery-retail binary." oninput="autosaveBP(this)" style="min-height:80px"></textarea>
+          </div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">Business model</div>
+          <div class="brand-two-col">
+            <div class="brand-field">
+              <div class="brand-label">Revenue streams</div>
+              <textarea class="field-textarea bp-field" data-key="brand-revenue-streams" placeholder="Vendor participation fees, commission on sales, event tickets, own merchandise, workshops, sponsorship / brand partnerships" oninput="autosaveBP(this)" style="min-height:80px"></textarea>
+            </div>
+            <div class="brand-field">
+              <div class="brand-label">How vendors are selected</div>
+              <textarea class="field-textarea bp-field" data-key="brand-vendor-selection" placeholder="Invitation and application. Curatorial criteria: craft quality, conceptual clarity, fit with current program theme. Rotating — no vendor stays indefinitely." oninput="autosaveBP(this)" style="min-height:80px"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Brand Identity action bar -->
+        <div class="brand-action-bar">
+          <button class="save-btn" onclick="saveBPAll()" style="background:var(--front)">Save →</button>
+          <button class="tab-export-btn" onclick="openReview('brand-identity')">✦ Review & Rate</button>
+          <button class="tab-export-btn" onclick="openDocExportBrand('brand-identity')">↓ Export</button>
+        </div>
+
+        <!-- Section reword buttons -->
+        <div class="brand-reword-bar">
+          <div class="brand-reword-label">Suggest rewrites for:</div>
+          <button class="csh-analyze-btn" onclick="brandReword('concept',this)">✦ Concept</button>
+          <button class="csh-analyze-btn" onclick="brandReword('audience',this)">✦ Audience</button>
+          <button class="csh-analyze-btn" onclick="brandReword('position',this)">✦ Position</button>
+          <button class="csh-analyze-btn" onclick="brandReword('model',this)">✦ Model</button>
+        </div>
+        <div class="csh-ai-panel csh-ai-full" id="brand-reword-concept" style="display:none;margin-bottom:10px"></div>
+        <div class="csh-ai-panel csh-ai-full" id="brand-reword-audience" style="display:none;margin-bottom:10px"></div>
+        <div class="csh-ai-panel csh-ai-full" id="brand-reword-position" style="display:none;margin-bottom:10px"></div>
+        <div class="csh-ai-panel csh-ai-full" id="brand-reword-model" style="display:none;margin-bottom:10px"></div>
+
+        <!-- Review panel -->
+        <div class="review-panel" id="review-brand-identity">
+          <div class="review-panel-header">
+            <div class="review-panel-label"><span style="background:var(--front)"></span>Brand Identity Review</div>
+            <div class="review-scores" id="review-scores-brand-identity"></div>
+          </div>
+          <div class="review-panel-body"><div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div></div>
+        </div>
+      </div>
+
+      <!-- ═══ VISUAL IDENTITY ═══ -->
+      <div class="ws-view" id="front-visual-identity">
+        <div class="view-header">
+          <div class="view-title">Visual Identity</div>
+          <div class="view-desc">How The Front looks and feels — the palette, type, texture, and references that make the brand visually coherent.</div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">References & direction</div>
+          <div class="brand-field">
+            <div class="brand-label">Visual references — spaces, brands, publications that get close to the feeling</div>
+            <div class="brand-hint">Not what you want to copy — what hits the right register. List them with a note on why.</div>
+            <textarea class="field-textarea bp-field" data-key="vis-references" placeholder="Kaleidoscope magazine (editorial restraint + white space). Céline under Phoebe Philo (quiet luxury, zero decoration). Printed Matter NYC (archival, serious, not precious). Various Japanese concept stores — serious about objects without being cold." oninput="autosaveBP(this)" style="min-height:90px"></textarea>
+          </div>
+          <div class="brand-field">
+            <div class="brand-label">The feeling someone should get from the visual system</div>
+            <textarea class="field-textarea bp-field" data-key="vis-feeling" placeholder="Considered. Quiet confidence. Not loud. Things are given space. Feels earned rather than designed." oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">Color</div>
+          <div class="vi-two-col" style="gap:16px">
+            <div class="brand-field">
+              <div class="brand-label">Primary palette</div>
+              <div class="brand-hint">The colors that show up everywhere — background, primary text, brand moments</div>
+              <div class="vis-swatch-row" id="vis-primary-swatches"></div>
+              <button class="vi-add-btn" onclick="visAddSwatch('primary')" style="margin-top:6px">+ Add color</button>
+            </div>
+            <div class="brand-field">
+              <div class="brand-label">Accent / secondary palette</div>
+              <div class="brand-hint">Used sparingly — for highlights, CTAs, seasonal moments</div>
+              <div class="vis-swatch-row" id="vis-accent-swatches"></div>
+              <button class="vi-add-btn" onclick="visAddSwatch('accent')" style="margin-top:6px">+ Add color</button>
+            </div>
+          </div>
+          <div class="brand-field" style="margin-top:16px">
+            <div class="brand-label">Color notes</div>
+            <textarea class="field-textarea bp-field" data-key="vis-color-notes" placeholder="Neutral ground — off-white or plaster tone for the space itself. Accent in print materials only. Text is always near-black, never pure black." oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">Typography</div>
+          <div class="brand-two-col">
+            <div class="brand-field">
+              <div class="brand-label">Primary / display typeface</div>
+              <div class="brand-hint">Headlines, brand name, large-format use</div>
+              <input class="brand-input bp-field" data-key="vis-font-display" placeholder="e.g. Cormorant Garamond, Canela, Playfair Display…" oninput="autosaveBP(this)">
+            </div>
+            <div class="brand-field">
+              <div class="brand-label">Secondary / body typeface</div>
+              <div class="brand-hint">Labels, captions, price cards, print collateral</div>
+              <input class="brand-input bp-field" data-key="vis-font-body" placeholder="e.g. DM Mono, Aperçu, Suisse Int'l…" oninput="autosaveBP(this)">
+            </div>
+          </div>
+          <div class="brand-field">
+            <div class="brand-label">Type notes — rules, combinations, what to avoid</div>
+            <textarea class="field-textarea bp-field" data-key="vis-type-notes" placeholder="Display font italic for the brand name only. Body type all lowercase in labels. No bold. No color in type — black and muted gray only." oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">Applications</div>
+          <div class="brand-two-col">
+            <div class="brand-field">
+              <div class="brand-label">Signage — exterior + interior</div>
+              <textarea class="field-textarea bp-field" data-key="vis-signage" placeholder="Condensed serif vinyl on window, all lowercase. Interior: small cards per piece, no price on display — ask at desk." oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+            </div>
+            <div class="brand-field">
+              <div class="brand-label">Packaging + collateral</div>
+              <textarea class="field-textarea bp-field" data-key="vis-packaging" placeholder="Kraft bags with debossed or stamped wordmark. Tissue. Folded insert with brand text. No logo on the outside — the bag itself should be recognizable by material and proportion." oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+            </div>
+            <div class="brand-field">
+              <div class="brand-label">Digital — social, website</div>
+              <textarea class="field-textarea bp-field" data-key="vis-digital" placeholder="Instagram: mostly product and space photography, editorial ratio. No lifestyle unless it's specific. Grid feels coherent but not over-curated." oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+            </div>
+            <div class="brand-field">
+              <div class="brand-label">What to avoid visually</div>
+              <textarea class="field-textarea bp-field" data-key="vis-avoid" placeholder="Script fonts. Anything that reads as market / craft fair. Heavy borders or decorative frames. Stock imagery. Lowercase 'the front' without intention — the name should always feel deliberate." oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-section">
+          <div class="brand-section-label">Inspiration links</div>
+          <div id="vis-links-list"></div>
+          <button class="vi-add-btn" onclick="visAddLink()" style="margin-top:8px">+ Add link</button>
+        </div>
+
+        <!-- Visual Identity action bar -->
+        <div class="brand-action-bar">
+          <button class="save-btn" onclick="saveBPAll()" style="background:var(--front)">Save →</button>
+          <button class="tab-export-btn" onclick="openReview('visual-identity')">✦ Review & Rate</button>
+          <button class="tab-export-btn" onclick="openDocExportBrand('visual-identity')">↓ Export</button>
+        </div>
+
+        <div class="brand-reword-bar">
+          <div class="brand-reword-label">Suggest rewrites for:</div>
+          <button class="csh-analyze-btn" onclick="brandReword('visref',this)">✦ References</button>
+          <button class="csh-analyze-btn" onclick="brandReword('visapply',this)">✦ Applications</button>
+        </div>
+        <div class="csh-ai-panel csh-ai-full" id="brand-reword-visref" style="display:none;margin-bottom:10px"></div>
+        <div class="csh-ai-panel csh-ai-full" id="brand-reword-visapply" style="display:none;margin-bottom:10px"></div>
+
+        <div class="review-panel" id="review-visual-identity">
+          <div class="review-panel-header">
+            <div class="review-panel-label"><span style="background:var(--front)"></span>Visual Identity Review</div>
+            <div class="review-scores" id="review-scores-visual-identity"></div>
+          </div>
+          <div class="review-panel-body"><div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div></div>
+        </div>
+      </div>
+
+      <div class="ws-view" id="front-story">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <div class="view-title">Brand Story & Voice</div>
+            <div class="view-desc">The language that makes The Front legible to the world. Develop your mission statement, brand voice, and key messaging here.</div>
+          </div>
+          <button class="doc-export-btn" onclick="openDocExport('story')">Export document →</button>
+            <button class="tab-export-btn" onclick="openReview('story')">Review & Rate →</button>
+        </div>
+
+        <div class="review-panel" id="review-front-story"><div class="review-panel-header"><div class="review-panel-label"><span style="background:var(--front)"></span>Brand Story Review</div><div class="review-scores" id="review-scores-story"></div></div><div class="review-panel-body"><div class="review-loading"><div class="pulse"><span></span><span></span><span></span></div><span>Analysing your answers…</span></div></div></div>
+        <div class="story-hint">The Front's existing language is strong — "living ecosystem," "constant renewal," "process, curiosity, and risk." Use this tab to refine and lock in the phrases that travel across every document.</div>
+        <div class="field-group"><div class="field-label">Mission statement <span>1–2 sentences, definitive</span></div><textarea class="field-textarea bp-field" data-key="story-mission" placeholder="The Front exists to build and sustain a true creative community — one rooted in shared learning, open exchange, and the freedom to take creative risks without the pressure of immediate commercial outcomes." oninput="autosaveBP(this)"></textarea></div>
+        <div class="field-group"><div class="field-label">Elevator pitch <span>30 seconds, any audience</span></div><textarea class="field-textarea bp-field" data-key="story-elevator" placeholder="The Front is a concept-driven collective space in NYC…" oninput="autosaveBP(this)"></textarea></div>
+        <div class="field-group"><div class="field-label">For a grant application <span>formal, outcomes-focused</span></div><textarea class="field-textarea bp-field" data-key="story-grant" placeholder="The Front is a concept-driven collective space that…" oninput="autosaveBP(this)"></textarea></div>
+        <div class="field-group"><div class="field-label">For a designer / vendor <span>why they should participate</span></div><textarea class="field-textarea bp-field" data-key="story-vendor" placeholder="The Front offers emerging designers something most retail can't — real visibility in a context that elevates your work rather than commodifies it…" oninput="autosaveBP(this)"></textarea></div>
+        <div class="field-group"><div class="field-label">For press / editorial <span>punchy, cultural context</span></div><textarea class="field-textarea bp-field" data-key="story-press" placeholder="In a cultural landscape that rewards speed and sameness, The Front prioritizes process, curiosity, and risk…" oninput="autosaveBP(this)"></textarea></div>
+        <div class="field-group"><div class="field-label">Instagram / short-form bio <span>under 150 characters</span></div><textarea class="field-textarea bp-field" data-key="story-bio" style="min-height:56px" placeholder="Rotating concept space for emerging designers & experimental creatives. NYC." oninput="autosaveBP(this)"></textarea></div>
+        <div class="field-group"><div class="field-label">3 words that define The Front's brand</div><textarea class="field-textarea bp-field" data-key="story-words" style="min-height:56px" placeholder="e.g. Alive. Conceptual. Communal." oninput="autosaveBP(this)"></textarea></div>
+        <div class="field-group"><div class="field-label">What The Front is NOT <span>defining by contrast is powerful</span></div><textarea class="field-textarea bp-field" data-key="story-not" placeholder="Not a gallery. Not a pop-up mall. Not a vanity showcase. Not trend-driven. Not static…" oninput="autosaveBP(this)"></textarea></div>
+        <div class="field-group"><div class="field-label">Brand voice notes <span>how The Front sounds in writing</span></div><textarea class="field-textarea bp-field" data-key="story-voice" placeholder="Direct but considered. Uses specific nouns over adjectives. Avoids startup clichés ('disruptive', 'community-first', 'reimagining'). The language reflects the work — conceptual but grounded. First-person plural (we/our) in most contexts…" oninput="autosaveBP(this)"></textarea></div>
+        <div class="save-bar"><button class="save-btn" onclick="saveBPAll()">Save all →</button><span class="saved-check" id="story-saved-check">Saved ✓</span></div>
+      </div>
+
+      <!-- ═══ IDEAS ═══ -->
+      <div class="ws-view" id="front-ideas">
+        <div class="view-header">
+          <div class="view-title">Ideas & Loose Thoughts</div>
+          <div class="view-desc">The dump tab. When something comes to you — a format, a collaborator name, a random idea for a programming theme, something you read that sparked something — put it here. Don't filter. Nothing here needs to be formed yet.</div>
+        </div>
+        <div id="ideas-list"></div>
+        <button class="add-idea-btn" onclick="addIdea()">+ New idea</button>
+      </div>
+
+      <!-- ═══ 334 BROOME POP-UP ═══ -->
+      <div class="ws-view active" id="front-popup">
+
+        <!-- DASHBOARD HEADER -->
+        <div class="ov-hero">
+          <div class="ov-hero-left">
+            <div class="ov-title">334 Broome St</div>
+            <div class="ov-sub">Pop-up proof-of-concept · The Front</div>
+          </div>
+          <button class="doc-export-btn" onclick="openDocExport('popup')" style="flex-shrink:0">Export →</button>
+        </div>
+
+        <!-- KEY DATES STRIP -->
+        <div class="ov-dates-strip">
+          <div class="ov-date-slot">
+            <div class="ov-date-label">Setup</div>
+            <input class="ov-date-input bp-field" data-key="popup-setup" placeholder="May 30" oninput="autosaveBP(this)">
+          </div>
+          <div class="ov-date-slot ov-date-accent">
+            <div class="ov-date-label">Opens</div>
+            <input class="ov-date-input bp-field" data-key="popup-open" placeholder="June 1" oninput="autosaveBP(this)">
+          </div>
+          <div class="ov-date-slot">
+            <div class="ov-date-label">Opening event</div>
+            <input class="ov-date-input bp-field" data-key="popup-opening-event" placeholder="June 5" oninput="autosaveBP(this)">
+          </div>
+          <div class="ov-date-slot">
+            <div class="ov-date-label">Mid-run activation</div>
+            <input class="ov-date-input bp-field" data-key="popup-midrun" placeholder="July 10" oninput="autosaveBP(this)">
+          </div>
+          <div class="ov-date-slot ov-date-accent">
+            <div class="ov-date-label">Closes</div>
+            <input class="ov-date-input bp-field" data-key="popup-close" placeholder="July 31" oninput="autosaveBP(this)">
+          </div>
+          <div class="ov-date-slot">
+            <div class="ov-date-label">Space confirmed</div>
+            <input class="ov-date-input bp-field" data-key="popup-confirmed" placeholder="Booked ✓" oninput="autosaveBP(this)">
+          </div>
+        </div>
+
+        <!-- STATUS CARDS -->
+        <div class="ov-status-grid" id="ov-status-grid">
+          <div class="ov-stat-card" onclick="showTab('front','popup-vendors',document.querySelector('[data-tab=popup-vendors]'))">
+            <div class="ov-stat-label">Vendors confirmed</div>
+            <div class="ov-stat-val" id="ov-vendor-count">—</div>
+            <div class="ov-stat-hint">tap to open →</div>
+          </div>
+          <div class="ov-stat-card" onclick="showTab('front','popup-resources',document.querySelector('[data-tab=popup-resources]'))">
+            <div class="ov-stat-label">Resources done</div>
+            <div class="ov-stat-val" id="ov-res-count">—</div>
+            <div class="ov-stat-hint">tap to open →</div>
+          </div>
+          <div class="ov-stat-card" onclick="showTab('front','popup-events',document.querySelector('[data-tab=popup-events]'))">
+            <div class="ov-stat-label">Events planned</div>
+            <div class="ov-stat-val" id="ov-event-count">—</div>
+            <div class="ov-stat-hint">tap to open →</div>
+          </div>
+          <div class="ov-stat-card" onclick="showTab('front','popup-marketing',document.querySelector('[data-tab=popup-marketing]'))">
+            <div class="ov-stat-label">Marketing tasks done</div>
+            <div class="ov-stat-val" id="ov-mkt-count">—</div>
+            <div class="ov-stat-hint">tap to open →</div>
+          </div>
+        </div>
+
+        <!-- THIS WEEK FOCUS -->
+        <div class="ov-week-section">
+          <div class="ov-week-label">This week — what needs to happen</div>
+          <div id="ov-week-list"></div>
+          <button class="vi-add-btn" onclick="ovAddWeekItem()" style="margin-top:6px">+ Add</button>
+        </div>
+
+        <!-- PROOF + MEASURE -->
+        <div class="ov-two-col">
+          <div>
+            <div class="ov-field-label">What this run needs to prove</div>
+            <textarea class="field-textarea bp-field" data-key="popup-goal" placeholder="Rotating designers in a curated environment drives foot traffic, real sales, community engagement. Specifically: [sales target / visitor count / vendor satisfaction / press]…" oninput="autosaveBP(this)" style="min-height:80px"></textarea>
+          </div>
+          <div>
+            <div class="ov-field-label">How you'll measure it</div>
+            <textarea class="field-textarea bp-field" data-key="popup-measure" placeholder="Sales data by designer, foot traffic count, event attendance, social reach, press mentions, photos/video, vendor feedback…" oninput="autosaveBP(this)" style="min-height:80px"></textarea>
+          </div>
+        </div>
+
+        <div class="save-bar" style="margin-top:20px">
+          <button class="save-btn" style="background:#a8c4d4" onclick="saveBPAll()">Save →</button>
+          <span class="saved-check" id="popup-saved-ov">Saved ✓</span>
+        </div>
+      </div>
+
+      <!-- ═══ RESOURCES / PROCUREMENT ═══ -->
+      <div class="ws-view" id="front-popup-resources">
+        <div class="res-topbar">
+          <div class="popup-panel-title" style="margin-bottom:4px">Resources & Procurement</div>
+          <div class="res-subtitle">Everything you need to source, make, or buy. Track what's needed, where to get it, cost, who's on it, and whether it's done.</div>
+        </div>
+
+        <!-- Summary bar -->
+        <div class="res-summary-bar">
+          <div class="res-sum-card"><div class="res-sum-label">Total items</div><div class="res-sum-val" id="res-total">0</div></div>
+          <div class="res-sum-card"><div class="res-sum-label">Done</div><div class="res-sum-val" id="res-done" style="color:#88c98a">0</div></div>
+          <div class="res-sum-card"><div class="res-sum-label">Pending</div><div class="res-sum-val" id="res-pending" style="color:#e2c97e">0</div></div>
+          <div class="res-sum-card"><div class="res-sum-label">Est. total cost</div><div class="res-sum-val" id="res-cost">$0</div></div>
+        </div>
+
+        <!-- Filter pills -->
+        <div class="res-filter-row">
+          <div class="res-filters" id="res-filters">
+            <button class="res-filter-pill active" onclick="resFilter('all',this)">All</button>
+            <button class="res-filter-pill" onclick="resFilter('space',this)">Space</button>
+            <button class="res-filter-pill" onclick="resFilter('signage',this)">Signage</button>
+            <button class="res-filter-pill" onclick="resFilter('marketing',this)">Marketing</button>
+            <button class="res-filter-pill" onclick="resFilter('fixtures',this)">Fixtures</button>
+            <button class="res-filter-pill" onclick="resFilter('packaging',this)">Packaging</button>
+            <button class="res-filter-pill" onclick="resFilter('tech',this)">Tech</button>
+            <button class="res-filter-pill" onclick="resFilter('staffing',this)">Staffing</button>
+            <button class="res-filter-pill" onclick="resFilter('operations',this)">Operations</button>
+            <button class="res-filter-pill" onclick="resFilter('other',this)">Other</button>
+          </div>
+          <button class="vi-add-btn" onclick="resAddItem()">+ Add item</button>
+        </div>
+
+        <!-- Resource list -->
+        <div id="res-item-list"></div>
+      </div>
+
+      <div class="ws-view" id="front-popup-budget">
+        <div class="popup-panel-title">Budget — 334 Broome Run</div>
+        <div class="budget-layout">
+          <div class="budget-table-col">
+            <div class="budget-cat-legend" id="fin-legend-popup"></div>
+            <div class="budget-rows" id="budget-rows-popup"></div>
+            <div class="budget-grand-total" id="budget-total-popup">Total: $0</div>
+            <div class="field-group" style="margin-top:20px"><div class="field-label">How you're covering this</div><textarea class="field-textarea bp-field" data-key="popup-funding" placeholder="Personal savings: $X&#10;Vendor fees: $X&#10;Grant / sponsorship: $X&#10;Gap: $X" oninput="autosaveBP(this)"></textarea></div>
+          </div>
+          <div class="budget-chart-col">
+            <div class="budget-chart-title">Spend by category</div>
+            <canvas id="pie-popup" width="220" height="220"></canvas>
+            <div class="pie-legend" id="pie-legend-popup"></div>
+          </div>
+        </div>
+        <div class="save-bar"><button class="save-btn" style="background:#a8c4d4" onclick="saveBudget('popup')">Save →</button><span class="saved-check" id="popup-saved-bud">Saved ✓</span></div>
+      </div>
+
+      <div class="ws-view" id="front-popup-revenue">
+
+        <!-- TAB BAR -->
+        <div class="rev-tabs">
+          <button class="rev-tab active" id="rev-tab-catalog" onclick="revShowTab('catalog',this)">Catalog</button>
+          <button class="rev-tab" id="rev-tab-log" onclick="revShowTab('log',this)">Sales Log</button>
+          <button class="rev-tab" id="rev-tab-metrics" onclick="revShowTab('metrics',this)">Metrics</button>
+        </div>
+
+        <!-- CATALOG: define vendors + items -->
+        <div class="rev-panel" id="rev-panel-catalog">
+          <p class="rev-proj-desc" style="margin-bottom:18px">Define your vendors and items with unit price and your split %.</p>
+          <div class="rev-proj-toolbar">
+            <button class="rev-add-vendor-btn" data-role="rev-add-vendor">+ Add vendor</button>
+          </div>
+          <div id="rev-proj-vendors"></div>
+        </div>
+
+        <!-- SALES LOG: log actual sales by week + day -->
+        <div class="rev-panel" id="rev-panel-log" style="display:none">
+
+          <!-- Week selector -->
+          <div class="rev-log-week-row" id="rev-log-week-row"></div>
+
+          <!-- Day selector -->
+          <div class="rev-log-day-row" id="rev-log-day-row"></div>
+
+          <!-- Item grid -->
+          <div class="rev-log-item-grid" id="rev-log-item-grid"></div>
+
+          <!-- Qty + confirm -->
+          <div class="rev-log-confirm" id="rev-log-confirm" style="display:none">
+            <span class="rev-log-confirm-label" id="rev-log-confirm-label"></span>
+            <div class="rev-log-qty-row">
+              <button class="rev-log-qty-btn" onclick="revAdjQty(-1)">−</button>
+              <span class="rev-log-qty-val" id="rev-log-qty-val">1</span>
+              <button class="rev-log-qty-btn" onclick="revAdjQty(1)">+</button>
+            </div>
+            <button class="rev-log-add-btn" onclick="revLogSale()">Log sale →</button>
+          </div>
+
+          <div id="rev-log-list"></div>
+        </div>
+
+        <!-- METRICS -->
+        <div class="rev-panel" id="rev-panel-metrics" style="display:none">
+          <div class="rev-proj-summary" id="rev-proj-summary"></div>
+          <div class="rev-metrics-grid">
+            <div class="rev-metrics-col">
+              <div class="rev-metrics-title">Revenue by Week</div>
+              <canvas id="rev-chart-weeks" height="160"></canvas>
+            </div>
+            <div class="rev-metrics-col">
+              <div class="rev-metrics-title">Revenue by Day of Week</div>
+              <canvas id="rev-chart-days" height="160"></canvas>
+            </div>
+          </div>
+          <div class="rev-metrics-grid" style="margin-top:20px">
+            <div class="rev-metrics-col">
+              <div class="rev-metrics-title">Top Items</div>
+              <div id="rev-top-items"></div>
+            </div>
+            <div class="rev-metrics-col">
+              <div class="rev-metrics-title">By Vendor</div>
+              <div id="rev-by-vendor"></div>
+            </div>
+          </div>
+          <div class="rev-metrics-grid" style="margin-top:20px">
+            <div class="rev-metrics-col">
+              <div class="rev-metrics-title">By Category</div>
+              <div id="rev-by-category"></div>
+            </div>
+            <div class="rev-metrics-col">
+              <div class="rev-metrics-title">Category — Revenue by Week</div>
+              <canvas id="rev-chart-cats" height="160"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="ws-view" id="front-popup-vendors">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <div class="vendor-view-tabs">
+              <button class="vendor-view-tab active" id="pvview-list-btn" onclick="setVendorView('list',this,'popup')">List</button>
+              <button class="vendor-view-tab" id="pvview-gallery-btn" onclick="setVendorView('gallery',this,'popup')">Gallery</button>
+            </div>
+            <div class="vendor-cat-tabs" id="pvendor-cat-tabs" style="margin-bottom:0">
+              <button class="vendor-cat-tab active" onclick="filterPopupVendorCat('all',this)">All</button>
+              <button class="vendor-cat-tab" onclick="filterPopupVendorCat('Clothing',this)">Clothing</button>
+              <button class="vendor-cat-tab" onclick="filterPopupVendorCat('Accessories',this)">Accessories</button>
+              <button class="vendor-cat-tab" onclick="filterPopupVendorCat('Objects',this)">Objects</button>
+              <button class="vendor-cat-tab" onclick="filterPopupVendorCat('Art',this)">Art</button>
+              <button class="vendor-cat-tab" onclick="filterPopupVendorCat('Other',this)">Other</button>
+            </div>
+            <div style="display:flex;gap:6px;margin-left:auto">
+              <select id="pvendor-status-filter" onchange="renderPopupVendors()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:6px 10px;outline:none;border-radius:2px;cursor:pointer">
+                <option value="all">All statuses</option>
+                <option value="signed">Confirmed</option>
+                <option value="prospect">Prospect</option>
+                <option value="reached">Reached out</option>
+                <option value="past">Past</option>
+              </select>
+              <button class="add-vendor-btn" onclick="addPopupVendor()">+ Add vendor</button>
+            </div>
+          </div>
+          <div id="popup-vendor-list"></div>
+      </div>
+
+      <!-- EVENTS PROGRAMMING -->
+      <div class="ws-view" id="front-popup-events">
+        <div class="ev-header">
+          <div class="popup-panel-title" style="margin-bottom:4px">Event Programming — 334 Broome</div>
+          <div class="ev-subtitle">Plan the full run's programming calendar. Each event builds the space's identity and drives return visits.</div>
+        </div>
+
+        <!-- Strategy fields -->
+        <div class="ev-strategy-grid">
+          <div class="ev-strat-block">
+            <div class="ev-label">Programming philosophy</div>
+            <textarea class="field-textarea bp-field" data-key="ev-philosophy" placeholder="Events should feel like extensions of the curation, not add-ons. Low-key, intimate, specific to the designers in the space…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+          </div>
+          <div class="ev-strat-block">
+            <div class="ev-label">Target audience for events</div>
+            <textarea class="field-textarea bp-field" data-key="ev-audience" placeholder="Parsons community, downtown creative scene, people who follow the designers on IG, returning visitors…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+          </div>
+        </div>
+
+        <!-- Event list -->
+        <div class="ev-list-header">
+          <div class="ev-label" style="margin-bottom:0">Event calendar</div>
+          <button class="vi-add-btn" onclick="evAddEvent()">+ Add event</button>
+        </div>
+        <div id="ev-event-list"></div>
+
+        <!-- Event type legend -->
+        <div class="ev-type-legend">
+          <div class="ev-legend-title">Event types</div>
+          <div class="ev-legend-chips">
+            <span class="ev-type-chip" style="background:#a8c4d422;color:#a8c4d4;border-color:#a8c4d444">Opening</span>
+            <span class="ev-type-chip" style="background:#e2c97e22;color:#e2c97e;border-color:#e2c97e44">Workshop</span>
+            <span class="ev-type-chip" style="background:#88c98a22;color:#88c98a;border-color:#88c98a44">Artist talk</span>
+            <span class="ev-type-chip" style="background:#c4a8d422;color:#c4a8d4;border-color:#c4a8d444">Closing</span>
+            <span class="ev-type-chip" style="background:#d4a8b822;color:#d4a8b8;border-color:#d4a8b844">Pop-in</span>
+            <span class="ev-type-chip" style="background:#f0c88822;color:#f0c888;border-color:#f0c88844">Community</span>
+            <span class="ev-type-chip" style="background:#a8d4bc22;color:#a8d4bc;border-color:#a8d4bc44">Other</span>
+          </div>
+        </div>
+
+        <div class="save-bar" style="margin-top:24px">
+          <button class="save-btn" style="background:#a8c4d4" onclick="saveBPAll()">Save →</button>
+          <span class="saved-check">Saved ✓</span>
+        </div>
+      </div>
+
+      <div class="ws-view" id="front-popup-marketing">
+
+        <!-- Channel tabs -->
+        <div class="mkt-tabs">
+          <button class="mkt-tab active" onclick="mktShowTab('overview',this)">Overview</button>
+          <button class="mkt-tab" onclick="mktShowTab('socials',this)">Socials</button>
+          <button class="mkt-tab" onclick="mktShowTab('press',this)">Press</button>
+          <button class="mkt-tab" onclick="mktShowTab('email',this)">Email</button>
+          <button class="mkt-tab" onclick="mktShowTab('physical',this)">Physical</button>
+          <button class="mkt-tab" onclick="mktShowTab('schedule',this)">Schedule</button>
+        </div>
+
+        <!-- OVERVIEW -->
+        <div class="mkt-panel" id="mkt-panel-overview">
+          <div class="mkt-overview-grid">
+            <div class="mkt-channel-card" onclick="mktShowTabByName('socials')">
+              <div class="mkt-channel-icon">📸</div>
+              <div class="mkt-channel-name">Socials</div>
+              <div class="mkt-channel-stat" id="mkt-stat-socials">0 tasks</div>
+              <div class="mkt-channel-prog-wrap"><div class="mkt-channel-prog" id="mkt-prog-socials"></div></div>
+            </div>
+            <div class="mkt-channel-card" onclick="mktShowTabByName('press')">
+              <div class="mkt-channel-icon">📰</div>
+              <div class="mkt-channel-name">Press</div>
+              <div class="mkt-channel-stat" id="mkt-stat-press">0 tasks</div>
+              <div class="mkt-channel-prog-wrap"><div class="mkt-channel-prog" id="mkt-prog-press"></div></div>
+            </div>
+            <div class="mkt-channel-card" onclick="mktShowTabByName('email')">
+              <div class="mkt-channel-icon">✉️</div>
+              <div class="mkt-channel-name">Email</div>
+              <div class="mkt-channel-stat" id="mkt-stat-email">0 tasks</div>
+              <div class="mkt-channel-prog-wrap"><div class="mkt-channel-prog" id="mkt-prog-email"></div></div>
+            </div>
+            <div class="mkt-channel-card" onclick="mktShowTabByName('physical')">
+              <div class="mkt-channel-icon">📍</div>
+              <div class="mkt-channel-name">Physical</div>
+              <div class="mkt-channel-stat" id="mkt-stat-physical">0 tasks</div>
+              <div class="mkt-channel-prog-wrap"><div class="mkt-channel-prog" id="mkt-prog-physical"></div></div>
+            </div>
+          </div>
+          <div class="mkt-strategy-section">
+            <div class="mkt-section-label">North Star — what this campaign is about</div>
+            <textarea class="field-textarea bp-field" data-key="mkt-northstar" placeholder="The mood, the message, the one thing you want people to feel or remember…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+          </div>
+          <div class="mkt-strategy-section">
+            <div class="mkt-section-label">Target audience</div>
+            <textarea class="field-textarea bp-field" data-key="mkt-audience" placeholder="Who specifically — age, taste, where they hang out online, what they already follow…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+          <div class="mkt-strategy-section">
+            <div class="mkt-section-label">Key dates</div>
+            <textarea class="field-textarea bp-field" data-key="mkt-keydates" placeholder="Soft announcement, save the date drop, press embargo lift, opening night, each week…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+        </div>
+
+        <!-- SOCIALS -->
+        <div class="mkt-panel" id="mkt-panel-socials" style="display:none">
+          <div class="mkt-channel-header">
+            <div class="mkt-section-label" style="margin-bottom:16px">Overall social strategy</div>
+            <textarea class="field-textarea bp-field" data-key="mkt-social-strategy" placeholder="Cross-platform tone, posting cadence, who's managing what…" oninput="autosaveBP(this)" style="min-height:60px;margin-bottom:20px"></textarea>
+          </div>
+          <!-- Social platform sub-tabs -->
+          <div class="mkt-social-tabs">
+            <button class="mkt-social-tab active" onclick="mktShowSocial('instagram',this)">Instagram</button>
+            <button class="mkt-social-tab" onclick="mktShowSocial('tiktok',this)">TikTok</button>
+          </div>
+          <!-- Instagram -->
+          <div class="mkt-social-panel" id="mkt-social-instagram">
+            <div class="mkt-tasks-header" style="margin-top:14px">
+              <div class="mkt-section-label">Instagram content</div>
+              <button class="mkt-add-btn" onclick="mktAddTask('instagram')">+ Add</button>
+            </div>
+            <div class="mkt-task-types">
+              <button class="mkt-type-pill active" onclick="mktFilterType('instagram','all',this)">All</button>
+              <button class="mkt-type-pill" onclick="mktFilterType('instagram','post',this)">Post</button>
+              <button class="mkt-type-pill" onclick="mktFilterType('instagram','story',this)">Story</button>
+              <button class="mkt-type-pill" onclick="mktFilterType('instagram','reel',this)">Reel</button>
+              <button class="mkt-type-pill" onclick="mktFilterType('instagram','collab',this)">Collab</button>
+            </div>
+            <div class="mkt-task-list" id="mkt-tasks-instagram"></div>
+          </div>
+          <!-- TikTok -->
+          <div class="mkt-social-panel" id="mkt-social-tiktok" style="display:none">
+            <div class="mkt-tasks-header" style="margin-top:14px">
+              <div class="mkt-section-label">TikTok content</div>
+              <button class="mkt-add-btn" onclick="mktAddTask('tiktok')">+ Add</button>
+            </div>
+            <div class="mkt-task-types">
+              <button class="mkt-type-pill active" onclick="mktFilterType('tiktok','all',this)">All</button>
+              <button class="mkt-type-pill" onclick="mktFilterType('tiktok','video',this)">Video</button>
+              <button class="mkt-type-pill" onclick="mktFilterType('tiktok','duet',this)">Duet</button>
+              <button class="mkt-type-pill" onclick="mktFilterType('tiktok','trend',this)">Trend</button>
+              <button class="mkt-type-pill" onclick="mktFilterType('tiktok','collab',this)">Collab</button>
+            </div>
+            <div class="mkt-task-list" id="mkt-tasks-tiktok"></div>
+          </div>
+        </div>
+
+        <!-- PRESS -->
+        <div class="mkt-panel" id="mkt-panel-press" style="display:none">
+          <div class="mkt-channel-header">
+            <div class="mkt-section-label" style="margin-bottom:16px">Pitch angle</div>
+            <textarea class="field-textarea bp-field" data-key="mkt-press-angle" placeholder="The hook — e.g. emerging designers, collective retail model, LES community space…" oninput="autosaveBP(this)" style="min-height:60px;margin-bottom:20px"></textarea>
+          </div>
+          <div class="mkt-tasks-header">
+            <div class="mkt-section-label">Press contacts & pitches</div>
+            <button class="mkt-add-btn" onclick="mktAddTask('press')">+ Add</button>
+          </div>
+          <div class="mkt-task-types">
+            <button class="mkt-type-pill active" onclick="mktFilterType('press','all',this)">All</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('press','magazine',this)">Magazine</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('press','blog',this)">Blog</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('press','newsletter',this)">Newsletter</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('press','podcast',this)">Podcast</button>
+          </div>
+          <div class="mkt-task-list" id="mkt-tasks-press"></div>
+        </div>
+
+        <!-- EMAIL -->
+        <div class="mkt-panel" id="mkt-panel-email" style="display:none">
+          <div class="mkt-channel-header">
+            <div class="mkt-section-label" style="margin-bottom:16px">List + approach</div>
+            <textarea class="field-textarea bp-field" data-key="mkt-email-strategy" placeholder="Who's on your list, how you'll segment it, how personal vs broadcast…" oninput="autosaveBP(this)" style="min-height:60px;margin-bottom:20px"></textarea>
+          </div>
+          <div class="mkt-tasks-header">
+            <div class="mkt-section-label">Email sends</div>
+            <button class="mkt-add-btn" onclick="mktAddTask('email')">+ Add</button>
+          </div>
+          <div class="mkt-task-types">
+            <button class="mkt-type-pill active" onclick="mktFilterType('email','all',this)">All</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('email','blast',this)">Blast</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('email','personal',this)">Personal</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('email','followup',this)">Follow-up</button>
+          </div>
+          <div class="mkt-task-list" id="mkt-tasks-email"></div>
+        </div>
+
+        <!-- PHYSICAL -->
+        <div class="mkt-panel" id="mkt-panel-physical" style="display:none">
+          <div class="mkt-channel-header">
+            <div class="mkt-section-label" style="margin-bottom:16px">Flyering + presence strategy</div>
+            <textarea class="field-textarea bp-field" data-key="mkt-physical-strategy" placeholder="Neighborhoods, specific spots, timing, who's doing the drops…" oninput="autosaveBP(this)" style="min-height:60px;margin-bottom:20px"></textarea>
+          </div>
+          <div class="mkt-tasks-header">
+            <div class="mkt-section-label">Tasks</div>
+            <button class="mkt-add-btn" onclick="mktAddTask('physical')">+ Add</button>
+          </div>
+          <div class="mkt-task-types">
+            <button class="mkt-type-pill active" onclick="mktFilterType('physical','all',this)">All</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('physical','flyer',this)">Flyer drop</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('physical','poster',this)">Poster</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('physical','partner',this)">Partnership</button>
+            <button class="mkt-type-pill" onclick="mktFilterType('physical','event',this)">Event</button>
+          </div>
+          <div class="mkt-task-list" id="mkt-tasks-physical"></div>
+        </div>
+
+        <!-- SCHEDULE -->
+        <div class="mkt-panel" id="mkt-panel-schedule" style="display:none">
+          <div class="mkt-sched-controls">
+            <div class="mkt-section-label">Content calendar — all channels</div>
+            <div class="mkt-sched-filters" id="mkt-sched-filters">
+              <button class="mkt-type-pill active" onclick="mktSchedFilter('all',this)">All</button>
+              <button class="mkt-type-pill" onclick="mktSchedFilter('instagram',this)">Instagram</button>
+              <button class="mkt-type-pill" onclick="mktSchedFilter('press',this)">Press</button>
+              <button class="mkt-type-pill" onclick="mktSchedFilter('email',this)">Email</button>
+              <button class="mkt-type-pill" onclick="mktSchedFilter('physical',this)">Physical</button>
+            </div>
+          </div>
+          <div id="mkt-schedule-board"></div>
+        </div>
+
+      </div>
+
+      <!-- ARCHIVE -->
+      <!-- CHASHAMA PROPOSAL -->
+      <div class="ws-view" id="front-chashama-proposal">
+        <div class="csh-header">
+          <div class="csh-logo-row">
+            <div class="csh-title">ChaShaMa Application</div>
+            <div class="csh-address">21 Greenwich Ave, New York NY</div>
+          </div>
+          <div class="csh-meta-row">
+            <div class="csh-meta-badge">Retail Storefront Program</div>
+            <div class="csh-progress-wrap">
+              <div class="csh-progress-label">Completion <span id="csh-pct">0%</span></div>
+              <div class="csh-progress-bar"><div class="csh-progress-fill" id="csh-fill"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 1: VISION -->
+        <div class="csh-section">
+          <div class="csh-section-num">01</div>
+          <div class="csh-section-body">
+            <div class="csh-section-title">Vision & Business Overview</div>
+
+            <div class="csh-field">
+              <div class="csh-label">Mission Statement <span class="csh-req">required</span></div>
+              <div class="csh-hint">Tell us what you envision with your own physical storefront. Where do you see your business in 5 years?</div>
+              <textarea class="field-textarea bp-field csh-watch" data-key="csh-mission" placeholder="The Front is a concept-driven collective retail space that…" oninput="autosaveBP(this);cshProgress()"></textarea>
+            </div>
+
+            <div class="csh-two-col">
+              <div class="csh-field">
+                <div class="csh-label">Business formed</div>
+                <input class="csh-input bp-field csh-watch" data-key="csh-formed" placeholder="Year / date formed" oninput="autosaveBP(this);cshProgress()">
+              </div>
+              <div class="csh-field">
+                <div class="csh-label">Website</div>
+                <input class="csh-input bp-field" data-key="csh-website" placeholder="https://…" oninput="autosaveBP(this)">
+              </div>
+              <div class="csh-field">
+                <div class="csh-label">Instagram</div>
+                <input class="csh-input bp-field" data-key="csh-instagram" placeholder="@handle" oninput="autosaveBP(this)">
+              </div>
+            </div>
+
+            <div class="csh-field" style="margin-top:4px">
+              <div class="csh-label">Business plan <span class="csh-req">required</span></div>
+              <div class="csh-hint">Paste or summarize your business plan, or describe your concept, model, and market.</div>
+              <textarea class="field-textarea bp-field csh-watch" data-key="csh-bizplan" style="min-height:120px" placeholder="Overview of the business model, revenue streams, target customer, competitive landscape…" oninput="autosaveBP(this);cshProgress()"></textarea>
+            </div>
+            <div class="csh-analyze-row">
+              <button class="csh-analyze-btn" onclick="cshAnalyze('vision',this)">✦ Analyze — Vision & Overview</button>
+              <div class="csh-ai-panel" id="csh-ai-vision" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: STOREFRONT -->
+        <div class="csh-section">
+          <div class="csh-section-num">02</div>
+          <div class="csh-section-body">
+            <div class="csh-section-title">Storefront Design & Setup</div>
+
+            <div class="csh-field">
+              <div class="csh-label">How will you design your storefront? <span class="csh-req">required</span></div>
+              <div class="csh-hint">Describe branding, signage, and product displays — what will be inside, how long will setup take, etc.</div>
+              <textarea class="field-textarea bp-field csh-watch" data-key="csh-design" style="min-height:110px" placeholder="The space will be divided into three zones: vendor displays along the perimeter, a central editorial installation updated weekly, and a checkout desk that doubles as an info station…" oninput="autosaveBP(this);cshProgress()"></textarea>
+            </div>
+
+            <div class="csh-field">
+              <div class="csh-label">Prior market / trade show / pop-up experience</div>
+              <div class="csh-hint">Have you ever participated in a market, trade show, pop-up, or another similar event?</div>
+              <textarea class="field-textarea bp-field csh-watch" data-key="csh-experience" style="min-height:80px" placeholder="334 Broome St pop-up, 5 weeks, spring 2025 — multi-vendor collective with 6 designers, avg 80 visitors/week…" oninput="autosaveBP(this);cshProgress()"></textarea>
+            </div>
+            <div class="csh-analyze-row">
+              <button class="csh-analyze-btn" onclick="cshAnalyze('storefront',this)">✦ Analyze — Storefront Design</button>
+              <div class="csh-ai-panel" id="csh-ai-storefront" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: COMMUNITY -->
+        <div class="csh-section">
+          <div class="csh-section-num">03</div>
+          <div class="csh-section-body">
+            <div class="csh-section-title">Community Outreach</div>
+
+            <div class="csh-field">
+              <div class="csh-label">Monthly community outreach proposal <span class="csh-req">required</span></div>
+              <div class="csh-hint">ChaShaMa requires 1 community activity per month. Describe what you propose and any past experience engaging the community (workshops, events, internships, etc.)</div>
+              <textarea class="field-textarea bp-field csh-watch" data-key="csh-outreach" style="min-height:110px" placeholder="Monthly programming will include: open studio visits with participating designers (first Saturday), a skills workshop series (e.g. pattern-drafting, natural dyeing), rotating artist talks…" oninput="autosaveBP(this);cshProgress()"></textarea>
+            </div>
+            <div class="csh-analyze-row">
+              <button class="csh-analyze-btn" onclick="cshAnalyze('community',this)">✦ Analyze — Community Outreach</button>
+              <div class="csh-ai-panel" id="csh-ai-community" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: PRODUCTS -->
+        <div class="csh-section">
+          <div class="csh-section-num">04</div>
+          <div class="csh-section-body">
+            <div class="csh-section-title">Products & Sourcing</div>
+
+            <div class="csh-field">
+              <div class="csh-label">Production & sourcing model <span class="csh-req">required</span></div>
+              <div class="csh-hint">Do you produce the products you sell, or source the products of other makers and small businesses? Where are your products sourced from?</div>
+              <textarea class="field-textarea bp-field csh-watch" data-key="csh-sourcing" style="min-height:90px" placeholder="The Front operates as a collective: all vendors are independent designers who produce their own work. Categories include fashion, accessories, jewelry, and objects. Sourcing is primarily NYC-based and domestic small-batch…" oninput="autosaveBP(this);cshProgress()"></textarea>
+            </div>
+
+            <div class="csh-two-col">
+              <div class="csh-field">
+                <div class="csh-label">Product category</div>
+                <div class="csh-check-group" id="csh-categories">
+                  <label class="csh-check"><input type="checkbox" data-key="csh-cat-fashion" onchange="cshSaveCheck(this)"> Fashion / Clothing</label>
+                  <label class="csh-check"><input type="checkbox" data-key="csh-cat-accessories" onchange="cshSaveCheck(this)"> Accessories</label>
+                  <label class="csh-check"><input type="checkbox" data-key="csh-cat-jewelry" onchange="cshSaveCheck(this)"> Jewelry</label>
+                  <label class="csh-check"><input type="checkbox" data-key="csh-cat-objects" onchange="cshSaveCheck(this)"> Objects / Home</label>
+                  <label class="csh-check"><input type="checkbox" data-key="csh-cat-art" onchange="cshSaveCheck(this)"> Art / Print</label>
+                  <label class="csh-check"><input type="checkbox" data-key="csh-cat-beauty" onchange="cshSaveCheck(this)"> Beauty</label>
+                  <label class="csh-check"><input type="checkbox" data-key="csh-cat-food" onchange="cshSaveCheck(this)"> Food / Beverage</label>
+                  <label class="csh-check"><input type="checkbox" data-key="csh-cat-other" onchange="cshSaveCheck(this)"> Other</label>
+                </div>
+              </div>
+              <div>
+                <div class="csh-field">
+                  <div class="csh-label">Overall product price point range</div>
+                  <div class="csh-price-row">
+                    <span class="csh-price-sym">$</span>
+                    <input class="csh-input bp-field" data-key="csh-price-low" placeholder="Low" style="width:72px" oninput="autosaveBP(this)">
+                    <span class="csh-price-dash">—</span>
+                    <span class="csh-price-sym">$</span>
+                    <input class="csh-input bp-field" data-key="csh-price-high" placeholder="High" style="width:72px" oninput="autosaveBP(this)">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="csh-analyze-row">
+              <button class="csh-analyze-btn" onclick="cshAnalyze('products',this)">✦ Analyze — Products & Sourcing</button>
+              <div class="csh-ai-panel" id="csh-ai-products" style="display:none"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 5: FINANCIALS -->
+        <div class="csh-section">
+          <div class="csh-section-num">05</div>
+          <div class="csh-section-body">
+            <div class="csh-section-title">Financials</div>
+
+            <div class="csh-three-col">
+              <div class="csh-field">
+                <div class="csh-label">Monthly customers (est.)</div>
+                <input class="csh-input bp-field csh-watch" type="number" data-key="csh-customers" placeholder="e.g. 300" oninput="autosaveBP(this);cshProgress()">
+              </div>
+              <div class="csh-field">
+                <div class="csh-label">Avg. monthly revenue (est.)</div>
+                <div class="csh-price-row"><span class="csh-price-sym">$</span>
+                <input class="csh-input bp-field csh-watch" type="number" data-key="csh-revenue" placeholder="e.g. 8000" oninput="autosaveBP(this);cshProgress()"></div>
+              </div>
+              <div class="csh-field">
+                <div class="csh-label">Financial records managed via</div>
+                <input class="csh-input bp-field" data-key="csh-records" placeholder="QuickBooks, spreadsheet, accountant…" oninput="autosaveBP(this)">
+              </div>
+            </div>
+
+            <div class="csh-two-col" style="margin-top:16px">
+              <div class="csh-upload-field">
+                <div class="csh-label">Budget forecast <span class="csh-req">required</span></div>
+                <div class="csh-hint">Projected expenses for opening + 6-month operating budget</div>
+                <div class="csh-file-drop" id="csh-drop-budget" onclick="document.getElementById('csh-file-budget').click()">
+                  <input type="file" id="csh-file-budget" accept=".pdf,.xlsx,.xls,.csv,.doc,.docx" style="display:none" onchange="cshHandleFile('budget',this)">
+                  <div class="csh-file-icon">📎</div>
+                  <div class="csh-file-label" id="csh-label-budget">Click to attach file</div>
+                  <div class="csh-file-hint">.pdf, .xlsx, .csv, .doc</div>
+                </div>
+                <div class="csh-file-note bp-field" data-key="csh-budget-note" contenteditable="true" oninput="autosaveBP(this)" data-placeholder="Or paste a summary here…"></div>
+              </div>
+              <div class="csh-upload-field">
+                <div class="csh-label">Profit & Loss statement</div>
+                <div class="csh-hint">Most recent P&L</div>
+                <div class="csh-file-drop" id="csh-drop-pl" onclick="document.getElementById('csh-file-pl').click()">
+                  <input type="file" id="csh-file-pl" accept=".pdf,.xlsx,.xls,.csv,.doc,.docx" style="display:none" onchange="cshHandleFile('pl',this)">
+                  <div class="csh-file-icon">📎</div>
+                  <div class="csh-file-label" id="csh-label-pl">Click to attach file</div>
+                  <div class="csh-file-hint">.pdf, .xlsx, .csv</div>
+                </div>
+                <div class="csh-file-note bp-field" data-key="csh-pl-note" contenteditable="true" oninput="autosaveBP(this)" data-placeholder="Or paste a summary here…"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+            <div class="csh-analyze-row" style="margin-top:20px">
+              <button class="csh-analyze-btn" onclick="cshAnalyze('financials',this)">✦ Analyze — Financials</button>
+              <div class="csh-ai-panel" id="csh-ai-financials" style="display:none"></div>
+            </div>
+
+        <!-- Full proposal critique -->
+        <div class="csh-full-analyze-row">
+          <button class="csh-full-analyze-btn" onclick="cshAnalyze('full',this)">✦ Full proposal critique — all sections</button>
+          <div class="csh-ai-panel csh-ai-full" id="csh-ai-full" style="display:none"></div>
+        </div>
+
+        <div class="csh-footer">
+          <button class="save-btn" style="background:#82bfbb" onclick="saveBPAll()">Save all →</button>
+          <span class="saved-check" id="csh-saved">Saved ✓</span>
+        </div>
+      </div>
+
+      <!-- CHASHAMA: STOREFRONT DESIGN -->
+      <div class="ws-view" id="front-chashama-storefront">
+        <div class="csh-header">
+          <div class="csh-logo-row">
+            <div class="csh-title">Storefront Design</div>
+            <div class="csh-address">21 Greenwich Ave</div>
+          </div>
+          <div class="csh-meta-row">
+            <div class="csh-meta-badge">Design Planning</div>
+          </div>
+        </div>
+
+        <div class="csf-intro">Work through these questions to develop a clear picture of your space. Then generate a polished answer for the ChaShaMa application.</div>
+
+        <div class="csf-q-grid">
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">What is the overall aesthetic language of the space?</div>
+            <div class="csf-q-hint">Think: editorial, spare, warm, maximal, gallery-like, market, domestic — how does it feel to walk in?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-aesthetic" placeholder="Quiet and editorial — white walls, natural light, sparse product density. Feels more like a working studio than a store. Objects are given room to breathe…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">How will customers move through the space?</div>
+            <div class="csf-q-hint">Flow, zones, focal points — what do they encounter first, middle, last? Where do they slow down?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-flow" placeholder="Enter into vendor wall displays (perimeter), then move toward a central installation that changes weekly, finally reach the checkout/desk area at the back…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">How will vendor/product displays be structured?</div>
+            <div class="csf-q-hint">Shelving, racks, pedestals, hanging — how are goods presented? Are they organized by vendor, category, or mood?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-displays" placeholder="Each vendor has a dedicated 4ft section with custom shelving at varying heights. Clothing hangs on a single rail. Objects on floating shelves or raw pedestals…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">What is your signage approach?</div>
+            <div class="csf-q-hint">Exterior signage, window treatment, interior wayfinding, vendor labels — fonts, materials, tone</div>
+            <textarea class="field-textarea bp-field" data-key="csf-signage" placeholder="Minimal exterior vinyl lettering in condensed serif. No price tags visible — small folded cards behind each piece. Window installation changes monthly…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">What is your branding identity in the space?</div>
+            <div class="csf-q-hint">Color palette, materials, texture, lighting — how does The Front brand manifest physically?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-branding" placeholder="Neutral ground: raw plaster or white paint, warm-toned track lighting, natural wood or steel fixtures. Brand presence is subtle — a small logo stamp on packaging, receipts, cards…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">What is the checkout / customer service experience?</div>
+            <div class="csf-q-hint">Desk setup, POS, packaging, how staff interacts with customers — what makes the transaction feel considered?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-checkout" placeholder="Small desk at the back with a Square reader. Tissue wrap and a stamped paper bag. Staff (the curator/founder) present to introduce vendors and explain pieces…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">What furniture or fixtures will you bring in?</div>
+            <div class="csf-q-hint">List key pieces — racks, shelves, tables, seating, pedestals — owned, rented, or built?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-furniture" placeholder="2 garment racks (owned), 3 raw oak floating shelf units (build), 2 plinths for objects (build/source), 1 desk (owned), folding chairs for events…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">How long will setup take and what is the process?</div>
+            <div class="csf-q-hint">Day-by-day breakdown of install — when do vendors come in, when is it photo-ready, when do you open?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-setup" placeholder="Day 1: clean + paint touch-up, install fixtures. Day 2: vendor install (vendors bring their own product). Day 3: styling, photography, final adjustments. Open Day 4…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">What changes or rotates during the run?</div>
+            <div class="csf-q-hint">Will anything shift week to week — new vendors, new product drops, window changes, central installation updates?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-rotation" placeholder="Central installation updates every 2 weeks. New vendor joins at Week 3. Window changes monthly to reflect featured designer…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+          </div>
+
+          <div class="csf-q-block">
+            <div class="csf-q-label">What is the intended customer experience in one sentence?</div>
+            <div class="csf-q-hint">The feeling someone should have when they leave — what do you want them to say about it?</div>
+            <textarea class="field-textarea bp-field" data-key="csf-experience-stmt" placeholder="It felt like discovering something that wasn't supposed to be easy to find — but was worth it." oninput="autosaveBP(this)" style="min-height:50px"></textarea>
+          </div>
+
+        </div>
+
+        <div class="csf-generate-row">
+          <div class="csf-generate-label">Ready to generate your answer?</div>
+          <div class="csf-generate-hint">Claude will read all your answers above and write a polished, specific response to ChaShaMa's question: <em>"How will you design your storefront?"</em></div>
+          <button class="csh-full-analyze-btn" onclick="csfGenerate(this)" style="margin-top:12px">✦ Generate storefront answer</button>
+          <div class="csh-ai-panel csh-ai-full" id="csf-ai-result" style="display:none;margin-top:16px"></div>
+        </div>
+      </div>
+
+      <!-- CHASHAMA: BUDGET FORECAST -->
+      <div class="ws-view" id="front-chashama-budget">
+        <div class="csh-header">
+          <div class="csh-logo-row">
+            <div class="csh-title">Budget Forecast</div>
+            <div class="csh-address">Opening costs + 6-month operating budget</div>
+          </div>
+        </div>
+
+        <div class="cshb-summary-bar">
+          <div class="cshb-sum-card"><div class="cshb-sum-label">Total opening costs</div><div class="cshb-sum-val" id="cshb-total-open">$0</div></div>
+          <div class="cshb-sum-card"><div class="cshb-sum-label">Monthly operating</div><div class="cshb-sum-val" id="cshb-total-monthly">$0</div></div>
+          <div class="cshb-sum-card"><div class="cshb-sum-label">6-month total</div><div class="cshb-sum-val" id="cshb-total-6mo">$0</div></div>
+          <div class="cshb-sum-card"><div class="cshb-sum-label">Monthly revenue (est.)</div><div class="cshb-sum-val"><input class="vi-inline-input" type="number" id="cshb-revenue-input" placeholder="0" oninput="cshbRecalc()" style="font-size:20px"></div></div>
+          <div class="cshb-sum-card"><div class="cshb-sum-label">Break-even month</div><div class="cshb-sum-val" id="cshb-breakeven">—</div></div>
+        </div>
+
+        <div class="cshb-section-title">Opening / One-Time Costs</div>
+        <div class="cshb-table-wrap">
+          <table class="cshb-table" id="cshb-open-table">
+            <thead><tr><th>Item</th><th>Category</th><th>Estimated cost</th><th>Notes</th><th></th></tr></thead>
+            <tbody id="cshb-open-rows"></tbody>
+          </table>
+        </div>
+        <button class="vi-add-btn" onclick="cshbAddRow('open')" style="margin-top:8px">+ Add item</button>
+
+        <div class="cshb-section-title" style="margin-top:32px">Monthly Operating Expenses</div>
+        <div class="cshb-table-wrap">
+          <table class="cshb-table" id="cshb-monthly-table">
+            <thead><tr><th>Item</th><th>Category</th><th>Monthly cost</th><th>Notes</th><th></th></tr></thead>
+            <tbody id="cshb-monthly-rows"></tbody>
+          </table>
+        </div>
+        <button class="vi-add-btn" onclick="cshbAddRow('monthly')" style="margin-top:8px">+ Add item</button>
+
+        <div class="cshb-notes-section">
+          <div class="csh-label" style="margin-top:28px">Assumptions & notes</div>
+          <textarea class="field-textarea bp-field" data-key="cshb-assumptions" placeholder="Key assumptions behind these numbers — e.g. rent estimate based on ChaShaMa program fee, revenue assumes 60% of inventory sells per month at avg $85…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
+        </div>
+
+        <div class="csf-generate-row" style="margin-top:24px">
+          <div class="csf-generate-label">Generate a budget narrative</div>
+          <div class="csf-generate-hint">Claude will write a clear budget summary suitable for the application based on your numbers above.</div>
+          <button class="csh-full-analyze-btn" onclick="cshbGenerateNarrative(this)" style="margin-top:10px">✦ Generate budget summary</button>
+          <div class="csh-ai-panel csh-ai-full" id="cshb-ai-result" style="display:none;margin-top:14px"></div>
+        </div>
+      </div>
+
+      <!-- CHASHAMA: P&L -->
+      <div class="ws-view" id="front-chashama-pl">
+        <div class="csh-header">
+          <div class="csh-logo-row">
+            <div class="csh-title">Profit & Loss</div>
+            <div class="csh-address">Monthly income statement</div>
+          </div>
+        </div>
+
+        <div class="cshpl-month-nav">
+          <button class="vi-cal-nav-btn" onclick="cshplNavMonth(-1)">‹</button>
+          <span class="vi-cal-nav-label" id="cshpl-month-label"></span>
+          <button class="vi-cal-nav-btn" onclick="cshplNavMonth(1)">›</button>
+          <button class="vi-cal-today-btn" onclick="cshplGoToday()">Current month</button>
+        </div>
+
+        <div class="cshb-summary-bar" style="margin-top:16px">
+          <div class="cshb-sum-card" style="border-color:rgba(136,201,138,0.3)"><div class="cshb-sum-label">Total revenue</div><div class="cshb-sum-val" style="color:#88c98a" id="cshpl-total-rev">$0</div></div>
+          <div class="cshb-sum-card" style="border-color:rgba(224,112,112,0.3)"><div class="cshb-sum-label">Total expenses</div><div class="cshb-sum-val" style="color:#e07070" id="cshpl-total-exp">$0</div></div>
+          <div class="cshb-sum-card"><div class="cshb-sum-label">Net profit / loss</div><div class="cshb-sum-val" id="cshpl-net">$0</div></div>
+          <div class="cshb-sum-card"><div class="cshb-sum-label">Margin</div><div class="cshb-sum-val" id="cshpl-margin">—</div></div>
+        </div>
+
+        <div class="cshpl-two-col">
+          <div>
+            <div class="cshb-section-title">Revenue</div>
+            <div id="cshpl-rev-rows"></div>
+            <button class="vi-add-btn" onclick="cshplAddRow('rev')" style="margin-top:6px">+ Add income line</button>
+          </div>
+          <div>
+            <div class="cshb-section-title">Expenses</div>
+            <div id="cshpl-exp-rows"></div>
+            <button class="vi-add-btn" onclick="cshplAddRow('exp')" style="margin-top:6px">+ Add expense line</button>
+          </div>
+        </div>
+
+        <div class="cshpl-history">
+          <div class="cshb-section-title" style="margin-top:32px">6-Month Overview</div>
+          <div id="cshpl-history-chart"></div>
+        </div>
+
+        <div class="csf-generate-row" style="margin-top:24px">
+          <div class="csf-generate-label">Generate a P&L narrative</div>
+          <div class="csf-generate-hint">Claude will write a clear P&L summary for the application based on this month's figures.</div>
+          <button class="csh-full-analyze-btn" onclick="cshplGenerateNarrative(this)" style="margin-top:10px">✦ Generate P&L summary</button>
+          <div class="csh-ai-panel csh-ai-full" id="cshpl-ai-result" style="display:none;margin-top:14px"></div>
+        </div>
+      </div>
+
+
+      <div class="ws-view" id="front-archive">
+        <div class="archive-header">
+          <div><div class="archive-title">The Front — Archive</div><div class="archive-count" id="archive-count-front">0 sessions</div></div>
+          <div class="archive-filters">
+            <button class="filter-btn active" onclick="filterArchive('front','all',this)">All</button>
+            <button class="filter-btn" onclick="filterArchive('front','questions',this)">Planning</button>
+            <button class="filter-btn" onclick="filterArchive('front','reflect',this)">Reflect</button>
+            <button class="filter-btn" onclick="filterArchive('front','action',this)">Action</button>
+            <button class="filter-btn" onclick="filterArchive('front','balance',this)">Balance</button>
+          </div>
+        </div>
+        <div id="archive-list-front"></div>
+      </div>
 
     </div><!-- /ws-inner -->
   </div><!-- /workspace -->
 </div><!-- /page-front -->
+
+<!-- ═══════════════════════════════════════
+     HEFT GALLERY WORKSPACE
+═══════════════════════════════════════ -->
 
 <div class="toast" id="toast"></div>
 </div><!-- /app-content -->
@@ -403,14 +2240,11 @@ function checkPw() {
     }
   });
 }
-// Auto-unlock if already authenticated
 (function() {
   var saved = localStorage.getItem('_boh_auth');
   if (saved === PW_HASH) {
     document.getElementById('password-gate').style.display = 'none';
     document.getElementById('app-content').style.display = 'block';
-  } else {
-    document.getElementById('password-gate').style.display = 'flex';
   }
 })();
 </script>
@@ -421,4 +2255,3 @@ function checkPw() {
 <script src="js/app.js"></script>
 </body>
 </html>
-<!-- deployed Mon Mar 30 15:19:03 EDT 2026 -->
