@@ -322,6 +322,8 @@ function renderRevenueSection(data, scenario, calc) {
 }
 
 var FC_CATEGORIES = ['space','fabrication','retail supplies','events','marketing','business','operations','misc'];
+var FC_STATUSES = ['needed','sourcing','ordered','done'];
+var FC_STATUS_COLORS = { needed:'#e07070', sourcing:'#e2c97e', ordered:'#a8c4d4', done:'#88c98a' };
 
 function renderFixedCosts(scenario) {
   var el = document.getElementById('pl-fixed');
@@ -346,23 +348,29 @@ function renderFixedCosts(scenario) {
 
     cats[cat].forEach(function(c) {
       var isOpen = document.getElementById('pl-cost-' + c.id) && document.getElementById('pl-cost-' + c.id).classList.contains('open');
-      var hasNote = c.note && c.note.trim();
+      var status = c.status || 'needed';
+      var statColor = FC_STATUS_COLORS[status] || 'var(--muted)';
       var catOpts = FC_CATEGORIES.map(function(fc) {
         return '<option value="' + fc + '"' + (c.category === fc ? ' selected' : '') + '>' + fc + '</option>';
       }).join('');
+      var statOpts = FC_STATUSES.map(function(s) {
+        return '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
+      }).join('');
 
       html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-cost-' + c.id + '">' +
-        '<div class="pl-cost-top" onclick="toggleCostCard(\'' + c.id + '\')">' +
-          '<div class="pl-cost-name-display">' + esc(c.name || 'Unnamed') + '</div>' +
-          '<div class="pl-cost-amt-display">$' + fmt(c.amount || 0) + '</div>' +
-          '<span class="pl-cost-chevron' + (hasNote ? ' has-note' : '') + '">›</span>' +
+        '<div class="pl-cost-top">' +
+          '<div class="pl-cost-status-dot" style="background:' + statColor + '" onclick="toggleCostCard(\'' + c.id + '\')"></div>' +
+          '<input class="pl-cost-name-inline" value="' + esc(c.name || '') + '" placeholder="Item name" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)" onclick="event.stopPropagation()">' +
+          '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
+          '<span class="pl-cost-chevron" onclick="toggleCostCard(\'' + c.id + '\')">›</span>' +
         '</div>' +
         '<div class="pl-cost-body">' +
           '<div class="pl-cost-fields">' +
-            '<div class="pl-cost-field"><div class="pl-cost-field-label">Item name</div><input class="pl-cost-field-input" value="' + esc(c.name) + '" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)"></div>' +
             '<div class="pl-cost-field"><div class="pl-cost-field-label">Category</div><select class="pl-cost-field-select" data-cost-id="' + c.id + '" data-field="category" onchange="updateFixedCost(this);renderPL()">' + catOpts + '</select></div>' +
-            '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
-            '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details, source, alternatives…" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea></div>' +
+            '<div class="pl-cost-field"><div class="pl-cost-field-label">Status</div><select class="pl-cost-status-sel" data-cost-id="' + c.id + '" data-field="status" onchange="updateFixedCost(this);renderFixedCosts(getActiveScenario())" style="border-color:' + statColor + '44;color:' + statColor + '">' + statOpts + '</select></div>' +
+            '<div class="pl-cost-field"><div class="pl-cost-field-label">Where to get it</div><input class="pl-cost-field-input" value="' + esc(c.source || '') + '" placeholder="Vendor, store, link…" data-cost-id="' + c.id + '" data-field="source" onchange="updateFixedCost(this)"></div>' +
+            '<div class="pl-cost-field"><div class="pl-cost-field-label">Who\'s responsible</div><input class="pl-cost-field-input" value="' + esc(c.who || '') + '" placeholder="Name…" data-cost-id="' + c.id + '" data-field="who" onchange="updateFixedCost(this)"></div>' +
+            '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details, alternatives…" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea></div>' +
           '</div>' +
           '<button class="pl-cost-delete-btn" onclick="deleteFixedCost(\'' + c.id + '\')">Delete item</button>' +
         '</div>' +

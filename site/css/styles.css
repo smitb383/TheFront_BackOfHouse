@@ -3613,3 +3613,31 @@ body::before {
   border-radius:3px; transition:all 0.2s;
 }
 .pl-cost-delete-btn:hover { color:var(--action); border-color:var(--action); }
+
+/* ── Budget card inline editing + status ── */
+.pl-cost-status-dot {
+  width:8px; height:8px; border-radius:50%; flex-shrink:0; cursor:pointer;
+}
+.pl-cost-name-inline {
+  flex:1; background:transparent; border:none; border-bottom:1px solid transparent;
+  color:var(--text); font-family:'Cormorant Garamond',serif; font-size:15px;
+  padding:0 4px; outline:none; min-width:0;
+}
+.pl-cost-name-inline:focus { border-bottom-color:var(--front); }
+.pl-cost-name-inline::placeholder { color:var(--muted); font-style:italic; }
+.pl-cost-amt-inline {
+  display:flex; align-items:center; font-family:'DM Mono',monospace; font-size:12px;
+  color:var(--muted); flex-shrink:0;
+}
+.pl-cost-amt-num {
+  width:60px; background:transparent; border:none; border-bottom:1px solid transparent;
+  color:var(--text); font-family:'DM Mono',monospace; font-size:12px;
+  padding:0 2px; outline:none; text-align:right;
+}
+.pl-cost-amt-num:focus { border-bottom-color:var(--front); }
+.pl-cost-status-sel {
+  background:var(--surface2); border:1px solid var(--border);
+  font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.08em;
+  padding:5px 8px; border-radius:2px; outline:none; cursor:pointer;
+  text-transform:uppercase;
+}
