@@ -56,8 +56,8 @@ function initPLData() {
     }
   });
 
-  // If no fixed costs from budget, seed defaults
-  if (!fixedCosts.length) {
+  // Seed defaults — always merge missing items into existing data
+  var defaultCosts = [
     fixedCosts = [
       // Space
       { id: 'fc_rent', name: '334 Broome rent', amount: 3500, category: 'space', note: 'Flat fee June 18 - July 16' },
@@ -98,9 +98,15 @@ function initPLData() {
       { id: 'fc_ipad', name: 'iPad / phone for checkout', amount: 0, category: 'operations', note: '' },
       { id: 'fc_strike', name: 'Strike / removal', amount: 0, category: 'operations', note: 'Labor, disposal, end of lease cleanup' },
       // Misc
-      { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
-    ];
-  }
+    { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
+  ];
+  // Merge: add any default items not already in fixedCosts
+  var existingIds = {};
+  fixedCosts.forEach(function(c) { existingIds[c.id] = true; });
+  defaultCosts.forEach(function(dc) {
+    if (!existingIds[dc.id]) fixedCosts.push(dc);
+  });
+  if (!fixedCosts.length) fixedCosts = defaultCosts;
 
   var variableCosts = [
     { id: 'vc_square', name: 'Square processing fee', rate: 2.6, perTxn: 0.10, type: 'pct_of_sales', note: '2.6% + $0.10 per transaction' },
