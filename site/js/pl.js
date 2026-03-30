@@ -9,24 +9,9 @@ function getPLData() {
 }
 function savePLData(d) { localStorage.setItem(PL_KEY, JSON.stringify(d)); }
 
-var DEFAULT_FIXED_COSTS = null; // set during init, used for merging
-
 function initPLData() {
   var existing = getPLData();
-  if (existing && existing.scenarios && existing.scenarios.length) {
-    // Merge any new default fixed costs into existing scenarios
-    if (DEFAULT_FIXED_COSTS) {
-      existing.scenarios.forEach(function(s) {
-        var ids = {};
-        (s.fixedCosts || []).forEach(function(c) { ids[c.id] = true; });
-        DEFAULT_FIXED_COSTS.forEach(function(dc) {
-          if (!ids[dc.id]) s.fixedCosts.push(JSON.parse(JSON.stringify(dc)));
-        });
-      });
-      savePLData(existing);
-    }
-    return existing;
-  }
+  if (existing && existing.scenarios && existing.scenarios.length) return existing;
 
   // Pull inventory from existing revenue catalog
   var revProj = null;
@@ -97,8 +82,6 @@ function initPLData() {
     { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
   ];
   // Merge: add any default items not already in fixedCosts
-  DEFAULT_FIXED_COSTS = fixedCosts;
-
   var variableCosts = [
     { id: 'vc_square', name: 'Square processing fee', rate: 2.6, perTxn: 0.10, type: 'pct_of_sales', note: '2.6% + $0.10 per transaction' },
     { id: 'vc_packaging', name: 'Packaging per sale', rate: 0, perTxn: 1.50, type: 'per_txn', note: 'Bag + tissue per transaction' }
