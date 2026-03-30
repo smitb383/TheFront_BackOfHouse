@@ -3664,3 +3664,13 @@ body::before {
   font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--text);
   padding:4px 0;
 }
+
+/* ── Drag and drop ── */
+.pl-drag-handle {
+  cursor:grab; color:var(--muted); font-size:10px; padding:0 4px;
+  user-select:none; opacity:0.4; transition:opacity 0.15s; flex-shrink:0;
+}
+.pl-cost-top:hover .pl-drag-handle { opacity:1; }
+.pl-dragging { opacity:0.4; }
+.pl-drag-above { border-top:2px solid var(--front) !important; }
+.pl-drag-below { border-bottom:2px solid var(--front) !important; }

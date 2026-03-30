@@ -401,8 +401,9 @@ function renderFixedCosts(scenario) {
         return '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
       }).join('');
 
-      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-cost-' + c.id + '">' +
+      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-cost-' + c.id + '" draggable="true" data-drag-id="' + c.id + '" data-drag-type="fixed" ondragstart="plDragStart(event)" ondragover="plDragOver(event)" ondrop="plDrop(event)" ondragend="plDragEnd(event)">' +
         '<div class="pl-cost-top">' +
+          '<div class="pl-drag-handle" title="Drag to reorder">⠿</div>' +
           '<div class="pl-cost-status-dot" style="background:' + statColor + '" onclick="toggleCostCard(\'' + c.id + '\')"></div>' +
           '<input class="pl-cost-name-inline" value="' + esc(c.name || '') + '" placeholder="Item name" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)" onclick="event.stopPropagation()">' +
           '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
@@ -814,6 +815,89 @@ function esc(s) {
   var d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
+}
+
+// ── Drag and Drop ──
+
+var _plDragId = null;
+var _plDragType = null;
+
+function plDragStart(e) {
+  var el = e.target.closest('[data-drag-id]');
+  if (!el) return;
+  _plDragId = el.dataset.dragId;
+  _plDragType = el.dataset.dragType;
+  el.classList.add('pl-dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', _plDragId);
+}
+
+function plDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  var target = e.target.closest('[data-drag-id]');
+  if (!target || target.dataset.dragId === _plDragId) return;
+  // Visual indicator
+  var rect = target.getBoundingClientRect();
+  var midY = rect.top + rect.height / 2;
+  target.classList.remove('pl-drag-above', 'pl-drag-below');
+  if (e.clientY < midY) {
+    target.classList.add('pl-drag-above');
+  } else {
+    target.classList.add('pl-drag-below');
+  }
+}
+
+function plDrop(e) {
+  e.preventDefault();
+  var target = e.target.closest('[data-drag-id]');
+  if (!target || !_plDragId || target.dataset.dragId === _plDragId) return;
+
+  var targetId = target.dataset.dragId;
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+
+  if (_plDragType === 'fixed') {
+    var costs = scenario.fixedCosts || [];
+    var fromIdx = costs.findIndex(function(c) { return c.id === _plDragId; });
+    var toIdx = costs.findIndex(function(c) { return c.id === targetId; });
+    if (fromIdx < 0 || toIdx < 0) return;
+
+    // Determine if dropping above or below
+    var rect = target.getBoundingClientRect();
+    var dropBelow = e.clientY > rect.top + rect.height / 2;
+
+    var item = costs.splice(fromIdx, 1)[0];
+    // Recalc toIdx after splice
+    toIdx = costs.findIndex(function(c) { return c.id === targetId; });
+    if (dropBelow) toIdx++;
+    costs.splice(toIdx, 0, item);
+
+    // Update category to match where it was dropped
+    var targetCost = costs.find(function(c) { return c.id === targetId; });
+    if (targetCost && item.category !== targetCost.category) {
+      item.category = targetCost.category;
+    }
+
+    scenario.fixedCosts = costs;
+  }
+
+  savePLData(data);
+
+  // Clean up classes
+  document.querySelectorAll('.pl-drag-above,.pl-drag-below').forEach(function(el) {
+    el.classList.remove('pl-drag-above', 'pl-drag-below');
+  });
+
+  renderPL();
+}
+
+function plDragEnd(e) {
+  _plDragId = null;
+  _plDragType = null;
+  document.querySelectorAll('.pl-dragging,.pl-drag-above,.pl-drag-below').forEach(function(el) {
+    el.classList.remove('pl-dragging', 'pl-drag-above', 'pl-drag-below');
+  });
 }
 
 // ── P&L Tab Switching ──
