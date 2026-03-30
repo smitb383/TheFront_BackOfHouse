@@ -11,6 +11,24 @@
 <body>
 
 <!-- ═══════════════════════════════════════
+     PASSWORD GATE
+═══════════════════════════════════════ -->
+<div id="password-gate" style="display:none; position:fixed; inset:0; z-index:9999; background:var(--bg); display:flex; justify-content:center; align-items:center; flex-direction:column; gap:16px;">
+  <div style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; color:var(--muted);">The Front</div>
+  <div style="font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); font-family:'DM Mono',monospace;">Back of House</div>
+  <div style="margin-top:20px; display:flex; gap:8px; align-items:center;">
+    <input id="pw-input" type="password" placeholder="Password" autofocus
+      style="background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:'DM Mono',monospace; font-size:13px; padding:10px 16px; border-radius:3px; outline:none; width:200px;"
+      onkeydown="if(event.key==='Enter')checkPw()">
+    <button onclick="checkPw()"
+      style="background:var(--front); border:none; color:#0c0c0f; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; padding:11px 18px; border-radius:3px; cursor:pointer;">Enter</button>
+  </div>
+  <div id="pw-error" style="font-size:11px; color:var(--action); font-family:'DM Mono',monospace; opacity:0; transition:opacity 0.2s;">Wrong password</div>
+</div>
+
+<div id="app-content" style="display:none;">
+
+<!-- ═══════════════════════════════════════
      LANDING
 ═══════════════════════════════════════ -->
 <div class="page active" id="page-landing">
@@ -382,6 +400,39 @@
 </div><!-- /page-front -->
 
 <div class="toast" id="toast"></div>
+</div><!-- /app-content -->
+
+<script>
+var PW_HASH = '616562069f08681a8455b2934dd4664e77dcb7123458eda674037503f1d7ee5e';
+async function hashPw(pw) {
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+function checkPw() {
+  var input = document.getElementById('pw-input').value;
+  hashPw(input).then(function(h) {
+    if (h === PW_HASH) {
+      localStorage.setItem('_boh_auth', h);
+      document.getElementById('password-gate').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+    } else {
+      document.getElementById('pw-error').style.opacity = '1';
+      document.getElementById('pw-input').value = '';
+      setTimeout(function(){ document.getElementById('pw-error').style.opacity = '0'; }, 2000);
+    }
+  });
+}
+// Auto-unlock if already authenticated
+(function() {
+  var saved = localStorage.getItem('_boh_auth');
+  if (saved === PW_HASH) {
+    document.getElementById('password-gate').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+  } else {
+    document.getElementById('password-gate').style.display = 'flex';
+  }
+})();
+</script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
