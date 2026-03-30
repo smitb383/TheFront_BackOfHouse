@@ -62,23 +62,33 @@ function initPLData() {
       // Space
       { id: 'fc_rent', name: '334 Broome rent', amount: 3500, category: 'space', note: 'Flat fee June 18 - July 16' },
       { id: 'fc_insurance', name: 'General liability insurance', amount: 200, category: 'space', note: '$2M aggregate required — Amir Badawi + Patjen Realty as additional insureds' },
+      { id: 'fc_cleaning', name: 'Cleaning supplies', amount: 30, category: 'space', note: 'Pre-install clean, weekly sweep during run' },
+      { id: 'fc_extcords', name: 'Extension cords / power strips', amount: 25, category: 'space', note: 'For lighting, iPad charger, event AV' },
       // Fabrication
-      { id: 'fc_buildout', name: 'Install / build-out', amount: 0, category: 'fabrication', note: 'Fixtures, paint, lighting, racks, plinths' },
+      { id: 'fc_buildout', name: 'Install / build-out', amount: 0, category: 'fabrication', note: 'Paint, lighting tweaks, wall prep' },
+      { id: 'fc_paint', name: 'Paint / paint supplies', amount: 0, category: 'fabrication', note: '' },
+      { id: 'fc_shelves', name: 'Floating shelves / pedestals', amount: 150, category: 'fabrication', note: '3-4 units at varying heights for objects + accessories' },
+      { id: 'fc_hangers', name: 'Hangers', amount: 0, category: 'fabrication', note: '' },
       { id: 'fc_vinyl', name: 'Window vinyl', amount: 0, category: 'fabrication', note: 'Vinyl lettering / signage on glass front' },
       { id: 'fc_exterior', name: 'Exterior sign', amount: 0, category: 'fabrication', note: 'Outside-facing sign or blade' },
-      { id: 'fc_pricelabels', name: 'Price labels', amount: 0, category: 'fabrication', note: 'Small folded card — name, price, material, vendor' },
+      { id: 'fc_pricelabels', name: 'Price labels / maker cards', amount: 30, category: 'fabrication', note: 'Small folded card — name, price, material, vendor. Per-vendor cards with handle + bio' },
       // Retail supplies
-      { id: 'fc_bags', name: 'Shopping bags', amount: 0, category: 'retail supplies', note: 'Branded bags' },
+      { id: 'fc_bags', name: 'Shopping bags', amount: 0, category: 'retail supplies', note: 'Branded stamp on plain kraft bags' },
       { id: 'fc_tags', name: 'Price tags', amount: 0, category: 'retail supplies', note: 'Hang tags for all vendors' },
-      { id: 'fc_tissue', name: 'Tissue / packaging', amount: 0, category: 'retail supplies', note: 'Branded tissue, boxes' },
+      { id: 'fc_tissue', name: 'Tissue / packaging', amount: 50, category: 'retail supplies', note: 'Branded tissue, bags' },
       // Events
-      { id: 'fc_opening', name: 'Opening event', amount: 0, category: 'events', note: 'Drinks, invitations, florals' },
+      { id: 'fc_opening', name: 'Opening night drinks / snacks', amount: 150, category: 'events', note: 'Wine + sparkling water + simple snacks for 40-60 people' },
+      { id: 'fc_photographer', name: 'Photographer — opening night', amount: 0, category: 'events', note: 'Dedicated shooter for space and crowd' },
       // Marketing
-      { id: 'fc_marketing', name: 'Marketing / promotion', amount: 0, category: 'marketing', note: 'Flyers, paid posts, photographer' },
+      { id: 'fc_flyers', name: 'Opening flyers (print run)', amount: 80, category: 'marketing', note: '200-300 flyers, postcard size, for LES/SoHo/Nolita drops' },
+      { id: 'fc_socialgraphics', name: 'Launch social graphics', amount: 0, category: 'marketing', note: 'Save-the-date, vendor spotlights, countdown assets' },
+      { id: 'fc_pressrelease', name: 'Press release', amount: 0, category: 'marketing', note: '200-word pitch + image for Hint, Time Out, local blogs' },
       // Operations
-      { id: 'fc_pos', name: 'POS equipment', amount: 50, category: 'operations', note: 'Square reader' },
+      { id: 'fc_pos', name: 'Square POS reader', amount: 50, category: 'operations', note: 'Plus a stand if using iPad' },
+      { id: 'fc_ipad', name: 'iPad / phone for checkout', amount: 0, category: 'operations', note: '' },
       { id: 'fc_strike', name: 'Strike / removal', amount: 0, category: 'operations', note: 'Labor, disposal, end of lease cleanup' },
-      { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'buffer', note: '' }
+      // Misc
+      { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
     ];
   }
 
@@ -301,6 +311,8 @@ function renderRevenueSection(data, scenario, calc) {
   el.innerHTML = html;
 }
 
+var FC_CATEGORIES = ['space','fabrication','retail supplies','events','marketing','operations','misc'];
+
 function renderFixedCosts(scenario) {
   var el = document.getElementById('pl-fixed');
   if (!el) return;
@@ -310,25 +322,39 @@ function renderFixedCosts(scenario) {
   var html = '<div class="pl-section-header"><span class="pl-section-title">Fixed Costs</span><span class="pl-section-total">$' + fmt(total) + '</span></div>';
 
   var cats = {};
+  var catOrder = [];
   (scenario.fixedCosts || []).forEach(function(c) {
-    var cat = c.category || 'other';
-    if (!cats[cat]) cats[cat] = [];
+    var cat = c.category || 'misc';
+    if (!cats[cat]) { cats[cat] = []; catOrder.push(cat); }
     cats[cat].push(c);
   });
 
-  Object.keys(cats).forEach(function(cat) {
-    html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(cat) + '</span></div>';
+  catOrder.forEach(function(cat) {
+    var catTotal = 0;
+    cats[cat].forEach(function(c) { catTotal += (c.amount || 0); });
+    html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(cat) + '</span><span class="pl-cost-cat-total">$' + fmt(catTotal) + '</span></div>';
+
     cats[cat].forEach(function(c) {
+      var isOpen = document.getElementById('pl-cost-' + c.id) && document.getElementById('pl-cost-' + c.id).classList.contains('open');
       var hasNote = c.note && c.note.trim();
-      html += '<div class="pl-cost-item" id="pl-cost-' + c.id + '">' +
-        '<div class="pl-cost-row">' +
-          '<input class="pl-cost-name-input" value="' + esc(c.name) + '" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)">' +
-          '<div class="pl-cost-amt-wrap">$<input type="number" class="pl-cost-amt-input" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
-          '<button class="pl-cost-note-toggle' + (hasNote ? ' has-note' : '') + '" onclick="toggleCostNote(\'' + c.id + '\')" title="Notes">▾</button>' +
-          '<button class="pl-row-del" data-cost-id="' + c.id + '" onclick="deleteFixedCost(this.dataset.costId)">×</button>' +
+      var catOpts = FC_CATEGORIES.map(function(fc) {
+        return '<option value="' + fc + '"' + (c.category === fc ? ' selected' : '') + '>' + fc + '</option>';
+      }).join('');
+
+      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-cost-' + c.id + '">' +
+        '<div class="pl-cost-top" onclick="toggleCostCard(\'' + c.id + '\')">' +
+          '<div class="pl-cost-name-display">' + esc(c.name || 'Unnamed') + '</div>' +
+          '<div class="pl-cost-amt-display">$' + fmt(c.amount || 0) + '</div>' +
+          '<span class="pl-cost-chevron' + (hasNote ? ' has-note' : '') + '">›</span>' +
         '</div>' +
-        '<div class="pl-cost-note-panel" id="pl-note-' + c.id + '">' +
-          '<textarea class="pl-cost-note-textarea" placeholder="Add notes…" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea>' +
+        '<div class="pl-cost-body">' +
+          '<div class="pl-cost-fields">' +
+            '<div class="pl-cost-field"><div class="pl-cost-field-label">Item name</div><input class="pl-cost-field-input" value="' + esc(c.name) + '" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)"></div>' +
+            '<div class="pl-cost-field"><div class="pl-cost-field-label">Category</div><select class="pl-cost-field-select" data-cost-id="' + c.id + '" data-field="category" onchange="updateFixedCost(this);renderPL()">' + catOpts + '</select></div>' +
+            '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
+            '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details, source, alternatives…" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea></div>' +
+          '</div>' +
+          '<button class="pl-cost-delete-btn" onclick="deleteFixedCost(\'' + c.id + '\')">Delete item</button>' +
         '</div>' +
       '</div>';
     });
@@ -402,12 +428,9 @@ function updateFixedCost(input) {
   if (header) header.textContent = '$' + fmt(total);
 }
 
-function toggleCostNote(id) {
-  var panel = document.getElementById('pl-note-' + id);
-  if (!panel) return;
-  var isOpen = panel.style.display === 'block';
-  panel.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) panel.querySelector('textarea').focus();
+function toggleCostCard(id) {
+  var card = document.getElementById('pl-cost-' + id);
+  if (card) card.classList.toggle('open');
 }
 
 function addFixedCost() {
