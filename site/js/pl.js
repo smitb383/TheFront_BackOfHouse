@@ -68,8 +68,9 @@ function initPLData() {
       { id: 'fc_flyers', name: 'Opening flyers (print run)', amount: 80, category: 'marketing', note: '200-300 flyers, postcard size, for LES/SoHo/Nolita drops' },
       { id: 'fc_socialgraphics', name: 'Launch social graphics', amount: 0, category: 'marketing', note: 'Save-the-date, vendor spotlights, countdown assets' },
       { id: 'fc_pressrelease', name: 'Press release', amount: 0, category: 'marketing', note: '200-word pitch + image for Hint, Time Out, local blogs' },
-      { id: 'fc_graphicdesign', name: 'Graphic design', amount: 0, category: 'marketing', note: '' },
-      { id: 'fc_typeface', name: 'Typeface licences', amount: 0, category: 'marketing', note: 'Bebas Neue is primary font' },
+      // Branding
+      { id: 'fc_graphicdesign', name: 'Graphic design', amount: 0, category: 'branding', note: '' },
+      { id: 'fc_typeface', name: 'Typeface licences', amount: 0, category: 'branding', note: 'Bebas Neue is primary font' },
       // Business / legal
       { id: 'fc_llc', name: 'LLC registration', amount: 0, category: 'business', note: 'NY LLC filing ~$200 via DOS' },
       { id: 'fc_domains', name: 'Website domains', amount: 0, category: 'business', note: 'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations' },
@@ -360,7 +361,7 @@ function goToInventoryItem(vendorName) {
   }, 50);
 }
 
-var FC_CATEGORIES = ['space','fit out','retail supplies','events','marketing','business','operations','misc'];
+var FC_CATEGORIES = ['space','fit out','retail supplies','events','marketing','branding','business','operations','misc'];
 var FC_STATUSES = ['needed','sourcing','ordered','done'];
 var FC_STATUS_COLORS = { needed:'#e07070', sourcing:'#e2c97e', ordered:'#a8c4d4', done:'#88c98a' };
 
