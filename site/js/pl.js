@@ -311,11 +311,17 @@ function renderFixedCosts(scenario) {
   Object.keys(cats).forEach(function(cat) {
     html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(cat) + '</span></div>';
     cats[cat].forEach(function(c) {
-      html += '<div class="pl-cost-row">' +
-        '<input class="pl-cost-name-input" value="' + esc(c.name) + '" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)">' +
-        '<input class="pl-cost-note-input" value="' + esc(c.note || '') + '" placeholder="Note…" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' +
-        '<div class="pl-cost-amt-wrap">$<input type="number" class="pl-cost-amt-input" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
-        '<button class="pl-row-del" data-cost-id="' + c.id + '" onclick="deleteFixedCost(this.dataset.costId)">×</button>' +
+      var hasNote = c.note && c.note.trim();
+      html += '<div class="pl-cost-item" id="pl-cost-' + c.id + '">' +
+        '<div class="pl-cost-row">' +
+          '<input class="pl-cost-name-input" value="' + esc(c.name) + '" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)">' +
+          '<div class="pl-cost-amt-wrap">$<input type="number" class="pl-cost-amt-input" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
+          '<button class="pl-cost-note-toggle' + (hasNote ? ' has-note' : '') + '" onclick="toggleCostNote(\'' + c.id + '\')" title="Notes">▾</button>' +
+          '<button class="pl-row-del" data-cost-id="' + c.id + '" onclick="deleteFixedCost(this.dataset.costId)">×</button>' +
+        '</div>' +
+        '<div class="pl-cost-note-panel" id="pl-note-' + c.id + '"' + (hasNote ? ' style="display:block"' : '') + '>' +
+          '<textarea class="pl-cost-note-textarea" placeholder="Add notes…" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea>' +
+        '</div>' +
       '</div>';
     });
   });
@@ -386,6 +392,14 @@ function updateFixedCost(input) {
   (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0); });
   var header = document.querySelector('#pl-fixed .pl-section-total');
   if (header) header.textContent = '$' + fmt(total);
+}
+
+function toggleCostNote(id) {
+  var panel = document.getElementById('pl-note-' + id);
+  if (!panel) return;
+  var isOpen = panel.style.display === 'block';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) panel.querySelector('textarea').focus();
 }
 
 function addFixedCost() {
