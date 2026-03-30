@@ -129,7 +129,7 @@ function calcPL(scenario, inventory) {
   var itemBreakdown = [];
 
   inventory.forEach(function(item) {
-    var sales = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 0;
+    var sales = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 1;
     var gross = sales * item.price;
     var commission = item.isInHouse ? gross : gross * (item.commissionPct / 100);
     totalRevenue += gross;
@@ -281,7 +281,7 @@ function renderRevenueSection(data, scenario, calc) {
 
     // Calculate totals first
     group.items.forEach(function(item) {
-      var qty = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 0;
+      var qty = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 1;
       var gross = qty * item.price;
       var cut = item.isInHouse ? gross : gross * (item.commissionPct / 100);
       vendorTotal += cut;
@@ -292,7 +292,7 @@ function renderRevenueSection(data, scenario, calc) {
     html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(vendorName) + ' <span class="pl-commission-tag">' + tagLabel + '</span></span><span class="pl-cost-cat-total">$' + fmt(vendorTotal) + '</span></div>';
 
     group.items.forEach(function(item) {
-      var qty = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 0;
+      var qty = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 1;
       var gross = qty * item.price;
       var cut = item.isInHouse ? gross : gross * (item.commissionPct / 100);
       var isOpen = document.getElementById('pl-rev-' + item.id) && document.getElementById('pl-rev-' + item.id).classList.contains('open');
