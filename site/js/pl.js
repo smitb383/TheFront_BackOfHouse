@@ -366,9 +366,10 @@ function renderFixedCosts(scenario) {
         '</div>' +
       '</div>';
     });
+    html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'' + esc(cat) + '\')">+ Add to ' + esc(cat) + '</button>';
   });
 
-  html += '<button class="pl-add-row-btn" onclick="addFixedCost()">+ Add fixed cost</button>';
+  html += '<button class="pl-add-row-btn" style="margin-top:12px" onclick="addFixedCost()">+ Add to new category</button>';
   el.innerHTML = html;
 }
 
@@ -441,20 +442,28 @@ function toggleCostCard(id) {
   if (card) card.classList.toggle('open');
 }
 
-function addFixedCost() {
+function addFixedCostToCat(cat) {
   var data = getPLData();
   var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
-  var cat = prompt('Category (e.g., operations, supplies, marketing, events, interior, fabrication, buffer):');
-  if (!cat) return;
+  var newId = 'fc_' + Date.now();
   scenario.fixedCosts.push({
-    id: 'fc_' + Date.now(),
+    id: newId,
     name: '',
     amount: 0,
-    category: cat.toLowerCase().trim(),
+    category: cat,
     note: ''
   });
   savePLData(data);
-  renderPL();
+  renderFixedCosts(scenario);
+  // Auto-open the new item
+  var card = document.getElementById('pl-cost-' + newId);
+  if (card) card.classList.add('open');
+}
+
+function addFixedCost() {
+  var cat = prompt('Category (e.g., space, fabrication, retail supplies, events, marketing, business, operations, misc):');
+  if (!cat) return;
+  addFixedCostToCat(cat.toLowerCase().trim());
 }
 
 function deleteFixedCost(id) {
