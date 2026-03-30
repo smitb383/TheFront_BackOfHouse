@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Front & Violets</title>
+<title>The Front — Back of House</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="css/styles.css">
@@ -13,7 +13,7 @@
 <!-- ═══════════════════════════════════════
      PASSWORD GATE
 ═══════════════════════════════════════ -->
-<div id="password-gate" style="display:none; position:fixed; inset:0; z-index:9999; background:var(--bg); display:flex; justify-content:center; align-items:center; flex-direction:column; gap:16px;">
+<div id="password-gate" style="position:fixed; inset:0; z-index:9999; background:#0c0c0f; display:flex; justify-content:center; align-items:center; flex-direction:column; gap:16px;">
   <div style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; color:var(--muted);">The Front</div>
   <div style="font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); font-family:'DM Mono',monospace;">Back of House</div>
   <div style="margin-top:20px; display:flex; gap:8px; align-items:center;">
@@ -31,29 +31,14 @@
 <!-- ═══════════════════════════════════════
      LANDING
 ═══════════════════════════════════════ -->
-<div class="page active" id="page-landing">
-  <div class="landing-half half-front" onclick="goTo('front')">
-    <div class="landing-name">The Front</div>
-    <div class="landing-sub">NYC Collective Space</div>
-    <div class="landing-arrow">Enter workspace →</div>
-  </div>
-  <div class="landing-divider">✦</div>
-  <div class="landing-half half-fog" onclick="goTo('fog')">
-    <div class="landing-name">Violets</div>
-    <div class="landing-sub">Textile + Clothing Collection</div>
-    <div class="landing-arrow">Enter workspace →</div>
-  </div>
-</div>
+<!-- Landing removed — goes straight to The Front workspace -->
 
 <!-- ═══════════════════════════════════════
      THE FRONT WORKSPACE
 ═══════════════════════════════════════ -->
-<div class="page" id="page-front">
+<div class="page active" id="page-front">
   <div class="workspace front-ws">
     <div class="ws-topbar">
-      <button class="ws-back" onclick="goTo('landing')">
-        <span class="ws-back-arrow">←</span> All projects
-      </button>
       <div class="ws-title ws-title-front">The Front</div>
       <div class="ws-spacer"></div>
       <div class="ws-data-btns">
