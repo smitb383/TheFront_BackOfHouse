@@ -4715,6 +4715,12 @@ function initNewTabs() {
 }
 initNewTabs();
 
+// Re-init after Supabase data is pulled (data.js dispatches this event)
+window.addEventListener('supabase-ready', function() {
+  console.log('[app] Supabase data ready, re-rendering...');
+  initNewTabs();
+});
+
 // ─── TOAST ────────────────────────────
 
 // ═══ ROADMAP ═════════════════════════════════════════════════════
