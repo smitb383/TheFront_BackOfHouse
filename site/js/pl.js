@@ -401,9 +401,9 @@ function renderFixedCosts(scenario) {
         return '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
       }).join('');
 
-      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-cost-' + c.id + '" draggable="true" data-drag-id="' + c.id + '" data-drag-type="fixed" ondragstart="plDragStart(event)" ondragover="plDragOver(event)" ondrop="plDrop(event)" ondragend="plDragEnd(event)">' +
+      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-cost-' + c.id + '" data-drag-id="' + c.id + '" data-drag-type="fixed" ondragover="plDragOver(event)" ondrop="plDrop(event)">' +
         '<div class="pl-cost-top">' +
-          '<div class="pl-drag-handle" title="Drag to reorder">⠿</div>' +
+          '<div class="pl-drag-handle" draggable="true" title="Drag to reorder" ondragstart="plDragStart(event)" ondragend="plDragEnd(event)">⠿</div>' +
           '<div class="pl-cost-status-dot" style="background:' + statColor + '" onclick="toggleCostCard(\'' + c.id + '\')"></div>' +
           '<input class="pl-cost-name-inline" value="' + esc(c.name || '') + '" placeholder="Item name" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)" onclick="event.stopPropagation()">' +
           '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
@@ -830,6 +830,8 @@ function plDragStart(e) {
   el.classList.add('pl-dragging');
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', _plDragId);
+  // Set the drag image to the whole card
+  e.dataTransfer.setDragImage(el, 0, 0);
 }
 
 function plDragOver(e) {
