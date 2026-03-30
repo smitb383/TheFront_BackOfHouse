@@ -3468,3 +3468,67 @@ body::before {
   border-radius:3px; transition:all 0.2s;
 }
 .res-delete-btn:hover { color:var(--action); border-color:var(--action); }
+
+/* ── Inventory table (full-featured) ── */
+.pl-inv-vendor-block { margin-bottom:28px; }
+.pl-inv-vendor-header {
+  display:flex; align-items:center; gap:10px; padding:10px 0;
+  border-bottom:1px solid var(--border); margin-bottom:8px;
+}
+.pl-inv-vendor-name-input {
+  background:transparent; border:none; color:var(--text);
+  font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:400;
+  padding:0; outline:none; flex:1;
+}
+.pl-inv-vendor-name-input:focus { border-bottom:1px solid var(--front); }
+.pl-inv-split-wrap { display:flex; align-items:center; gap:4px; margin-left:auto; }
+.pl-inv-split-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.08em; color:var(--muted); }
+.pl-inv-split-input {
+  width:40px; text-align:center; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Mono',monospace; font-size:11px;
+  padding:3px 4px; border-radius:2px; outline:none;
+}
+.pl-inv-split-pct { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); }
+.pl-inv-vendor-del {
+  background:none; border:none; color:var(--muted); cursor:pointer;
+  font-size:14px; padding:4px; transition:color 0.2s; margin-left:8px;
+}
+.pl-inv-vendor-del:hover { color:var(--action); }
+.pl-inv-table-wrap { overflow-x:auto; }
+.pl-inv-table { width:100%; border-collapse:collapse; font-size:12px; }
+.pl-inv-table th {
+  font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--muted); padding:6px 4px;
+  border-bottom:1px solid var(--border); text-align:left; white-space:nowrap;
+}
+.pl-inv-table th.num { text-align:right; min-width:65px; }
+.pl-inv-table td { padding:5px 4px; border-bottom:1px solid var(--faint); }
+.pl-inv-table td.num { text-align:right; }
+.pl-inv-name-input {
+  background:transparent; border:none; color:var(--text);
+  font-family:'Cormorant Garamond',serif; font-size:14px;
+  padding:2px 0; outline:none; width:100%;
+}
+.pl-inv-name-input:focus { border-bottom:1px solid var(--front); }
+.pl-inv-cat-select {
+  background:var(--surface2); border:1px solid var(--border);
+  color:var(--muted); font-family:'DM Mono',monospace; font-size:9px;
+  padding:4px 6px; border-radius:2px; outline:none; cursor:pointer;
+}
+.pl-dollar { color:var(--muted); font-family:'DM Mono',monospace; font-size:10px; margin-right:1px; }
+.pl-inv-price-input, .pl-inv-week-input {
+  width:55px; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Mono',monospace; font-size:11px;
+  padding:3px 5px; border-radius:2px; outline:none; text-align:right;
+}
+.pl-inv-price-input:focus, .pl-inv-week-input:focus { border-color:var(--front); }
+.pl-inv-net { font-family:'DM Mono',monospace; font-size:11px; color:var(--front); }
+.pl-inv-vendor-totals {
+  display:flex; gap:20px; padding:10px 0; font-family:'DM Mono',monospace;
+  font-size:10px; color:var(--muted); border-top:1px solid var(--border); margin-top:4px;
+}
+.pl-inv-net-highlight { color:var(--front); }
+.pl-inv-grand-total {
+  display:flex; gap:24px; padding:14px 0; margin-top:8px;
+  border-top:2px solid var(--border); font-family:'DM Mono',monospace; font-size:11px;
+}

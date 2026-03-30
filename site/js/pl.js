@@ -30,7 +30,8 @@ function initPLData() {
             price: item.price || 0,
             category: item.category || '',
             isInHouse: v.name === 'In-House' || v.split === 100,
-            commissionPct: (v.name === 'In-House' || v.split === 100) ? 100 : 30,
+            commissionPct: (v.name === 'In-House' || v.split === 100) ? 100 : parseInt(v.split) || 30,
+            weeks: item.weeks || [0,0,0,0],
             qty: 1
           });
         }
@@ -475,40 +476,106 @@ function deleteScenario() {
 }
 
 // ── Inventory Management ──
+// Mirrors Del's original catalog: vendor blocks with split %, items with
+// name, category, unit price, price-per-week columns, net totals.
+
+var INV_CATEGORIES = ['','Clothing','Accessories','Jewelry','Objects','Art / Print','Textiles','Furniture','Lighting','Other'];
 
 function renderInventory() {
   var data = getPLData() || initPLData();
   var el = document.getElementById('pl-inventory');
   if (!el) return;
+  var numWeeks = data.numWeeks || 4;
 
-  var html = '<div class="pl-section-header"><span class="pl-section-title">Inventory</span><span class="pl-section-total">' + data.inventory.length + ' items</span></div>';
-
-  // Group by vendor
-  var vendors = {};
+  // Group inventory by vendor
+  var vendorMap = {};
+  var vendorOrder = [];
   data.inventory.forEach(function(item) {
     var key = item.vendor || 'Other';
-    if (!vendors[key]) vendors[key] = [];
-    vendors[key].push(item);
+    if (!vendorMap[key]) { vendorMap[key] = { items: [], split: item.commissionPct || 30, isInHouse: item.isInHouse, vendorId: item.vendorId }; vendorOrder.push(key); }
+    vendorMap[key].items.push(item);
   });
 
-  Object.keys(vendors).forEach(function(vendorName) {
-    html += '<div class="pl-inv-vendor">';
-    html += '<div class="pl-inv-vendor-name">' + esc(vendorName) + '</div>';
-    html += '<div class="pl-inv-header"><span>Item</span><span>Price</span><span>Commission</span></div>';
-    vendors[vendorName].forEach(function(item) {
-      html += '<div class="pl-inv-row">' +
-        '<input class="pl-inv-input" value="' + esc(item.name) + '" data-inv-id="' + item.id + '" data-field="name" onchange="updateInventoryItem(this)">' +
-        '<div class="pl-inv-price-wrap">$<input type="number" class="pl-inv-price" value="' + (item.price || 0) + '" data-inv-id="' + item.id + '" data-field="price" onchange="updateInventoryItem(this)"></div>' +
-        '<span class="pl-inv-commission">' + (item.isInHouse ? '100%' : item.commissionPct + '%') + '</span>' +
-        '<button class="pl-row-del" onclick="deleteInventoryItem(\'' + item.id + '\')">×</button>' +
-      '</div>';
+  var grandGross = 0, grandNet = 0;
+  var html = '';
+
+  vendorOrder.forEach(function(vendorName) {
+    var group = vendorMap[vendorName];
+    var split = group.isInHouse ? 100 : (group.split || 30);
+
+    // Week column headers
+    var weeksHead = '';
+    for (var wi = 0; wi < numWeeks; wi++) {
+      weeksHead += '<th class="num">Wk ' + (wi+1) + ' $</th>';
+    }
+
+    var rows = '';
+    var vGross = 0, vNet = 0;
+
+    group.items.forEach(function(item) {
+      var weekCells = '';
+      var weeks = item.weeks || [];
+      for (var wi = 0; wi < numWeeks; wi++) {
+        var wVal = weeks[wi] || 0;
+        weekCells += '<td><input class="pl-inv-week-input" type="number" min="0" value="' + wVal + '" placeholder="0"' +
+          ' data-inv-id="' + item.id + '" data-week="' + wi + '" onchange="updateInvWeek(this)"></td>';
+      }
+      var totalWeekRevenue = (weeks || []).reduce(function(s,x){ return s + (parseInt(x)||0); }, 0);
+      var net = totalWeekRevenue * (split / 100);
+      vGross += totalWeekRevenue;
+      vNet += net;
+
+      var catOpts = INV_CATEGORIES.map(function(c) {
+        return '<option value="' + c + '"' + (item.category === c ? ' selected' : '') + '>' + (c || '— cat —') + '</option>';
+      }).join('');
+
+      rows += '<tr>' +
+        '<td><input class="pl-inv-name-input" value="' + esc(item.name) + '" placeholder="Item name"' +
+          ' data-inv-id="' + item.id + '" data-field="name" onchange="updateInventoryItem(this)"></td>' +
+        '<td><select class="pl-inv-cat-select" data-inv-id="' + item.id + '" data-field="category" onchange="updateInventoryItem(this)">' + catOpts + '</select></td>' +
+        '<td class="num"><span class="pl-dollar">$</span><input class="pl-inv-price-input" type="number" min="0" value="' + (item.price||0) + '" placeholder="0"' +
+          ' data-inv-id="' + item.id + '" data-field="price" onchange="updateInventoryItem(this)"></td>' +
+        weekCells +
+        '<td class="num pl-inv-net">$' + fmt(net) + '</td>' +
+        '<td><button class="pl-row-del" data-inv-id="' + item.id + '" onclick="deleteInventoryItem(this.dataset.invId)">×</button></td>' +
+      '</tr>';
     });
-    html += '<button class="pl-add-row-btn" onclick="addInventoryItem(\'' + esc(vendorName) + '\')">+ Add item</button>';
-    html += '</div>';
+
+    grandGross += vGross;
+    grandNet += vNet;
+
+    html += '<div class="pl-inv-vendor-block">' +
+      '<div class="pl-inv-vendor-header">' +
+        '<input class="pl-inv-vendor-name-input" value="' + esc(vendorName) + '" placeholder="Vendor name"' +
+          ' data-vendor="' + esc(vendorName) + '" onchange="renameInvVendor(this)">' +
+        '<div class="pl-inv-split-wrap">' +
+          '<span class="pl-inv-split-label">your split</span>' +
+          '<input type="number" min="0" max="100" class="pl-inv-split-input" value="' + split + '"' +
+            ' data-vendor="' + esc(vendorName) + '" onchange="updateInvVendorSplit(this)">' +
+          '<span class="pl-inv-split-pct">%</span>' +
+        '</div>' +
+        '<button class="pl-inv-vendor-del" data-vendor="' + esc(vendorName) + '" onclick="deleteInvVendor(this.dataset.vendor)">×</button>' +
+      '</div>' +
+      '<div class="pl-inv-table-wrap"><table class="pl-inv-table">' +
+        '<thead><tr><th>Item</th><th>Category</th><th class="num">Unit $</th>' + weeksHead + '<th class="num">Your net</th><th></th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table></div>' +
+      '<button class="pl-add-row-btn" onclick="addInventoryItem(\'' + esc(vendorName) + '\')">+ Add item</button>' +
+      '<div class="pl-inv-vendor-totals">' +
+        '<span>Gross: <strong>$' + fmt(vGross) + '</strong></span>' +
+        '<span>Your take: <strong class="pl-inv-net-highlight">$' + fmt(vNet) + '</strong></span>' +
+        '<span>Vendor payout: <strong>$' + fmt(vGross - vNet) + '</strong></span>' +
+      '</div>' +
+    '</div>';
   });
+
+  // Grand totals
+  html += '<div class="pl-inv-grand-total">' +
+    '<span>Total gross: <strong>$' + fmt(grandGross) + '</strong></span>' +
+    '<span>Total your take: <strong class="pl-inv-net-highlight">$' + fmt(grandNet) + '</strong></span>' +
+  '</div>';
 
   html += '<button class="pl-add-row-btn" style="margin-top:16px" onclick="addInventoryVendor()">+ Add vendor</button>';
-
   el.innerHTML = html;
 }
 
@@ -521,27 +588,73 @@ function updateInventoryItem(input) {
   savePLData(data);
 }
 
+function updateInvWeek(input) {
+  var data = getPLData();
+  var item = data.inventory.find(function(i) { return i.id === input.dataset.invId; });
+  if (!item) return;
+  if (!item.weeks) item.weeks = [0,0,0,0];
+  var wi = parseInt(input.dataset.week);
+  item.weeks[wi] = parseInt(input.value) || 0;
+  savePLData(data);
+  renderInventory();
+}
+
+function updateInvVendorSplit(input) {
+  var data = getPLData();
+  var vendorName = input.dataset.vendor;
+  var newSplit = parseInt(input.value) || 30;
+  data.inventory.forEach(function(item) {
+    if (item.vendor === vendorName) {
+      item.commissionPct = newSplit;
+      item.isInHouse = newSplit === 100;
+    }
+  });
+  savePLData(data);
+  renderInventory();
+}
+
+function renameInvVendor(input) {
+  var data = getPLData();
+  var oldName = input.dataset.vendor;
+  var newName = input.value.trim();
+  if (!newName || newName === oldName) return;
+  data.inventory.forEach(function(item) {
+    if (item.vendor === oldName) item.vendor = newName;
+  });
+  savePLData(data);
+  renderInventory();
+}
+
+function deleteInvVendor(vendorName) {
+  if (!confirm('Delete vendor "' + vendorName + '" and all their items?')) return;
+  var data = getPLData();
+  data.inventory = data.inventory.filter(function(i) { return i.vendor !== vendorName; });
+  savePLData(data);
+  renderInventory();
+}
+
 function deleteInventoryItem(id) {
   var data = getPLData();
   data.inventory = data.inventory.filter(function(i) { return i.id !== id; });
   savePLData(data);
   renderInventory();
-  renderPL();
 }
 
 function addInventoryItem(vendorName) {
   var data = getPLData();
   var existing = data.inventory.find(function(i) { return i.vendor === vendorName; });
-  var isInHouse = vendorName === 'In-House';
+  var isInHouse = existing ? existing.isInHouse : false;
+  var split = existing ? existing.commissionPct : 30;
   data.inventory.push({
     id: 'inv_' + Date.now(),
     name: '',
     vendor: vendorName,
-    vendorId: existing ? existing.vendorId : 0,
+    vendorId: existing ? existing.vendorId : Date.now(),
     price: 0,
     category: '',
     isInHouse: isInHouse,
-    commissionPct: isInHouse ? 100 : 30,
+    commissionPct: split,
+    weeks: [0,0,0,0],
     qty: 1
   });
   savePLData(data);
@@ -551,7 +664,8 @@ function addInventoryItem(vendorName) {
 function addInventoryVendor() {
   var name = prompt('Vendor name:');
   if (!name) return;
-  var isInHouse = confirm('Is this an in-house / your own product? (OK = yes, Cancel = vendor)');
+  var split = prompt('Your commission split % (e.g., 30 for vendors, 100 for in-house):', '30');
+  var splitNum = parseInt(split) || 30;
   var data = getPLData();
   data.inventory.push({
     id: 'inv_' + Date.now(),
@@ -560,8 +674,9 @@ function addInventoryVendor() {
     vendorId: Date.now(),
     price: 0,
     category: '',
-    isInHouse: isInHouse,
-    commissionPct: isInHouse ? 100 : 30,
+    isInHouse: splitNum === 100,
+    commissionPct: splitNum,
+    weeks: [0,0,0,0],
     qty: 1
   });
   savePLData(data);
