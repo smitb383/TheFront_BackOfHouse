@@ -266,6 +266,11 @@ function renderRevenueSection(data, scenario, calc) {
     vendorMap[key].items.push(item);
   });
 
+  // Sort items within each vendor by price descending
+  vendorOrder.forEach(function(key) {
+    vendorMap[key].items.sort(function(a, b) { return (b.price || 0) - (a.price || 0); });
+  });
+
   var html = '<div class="pl-section-header"><span class="pl-section-title">Revenue</span><span class="pl-section-total">$' + fmt(calc.ourCut) + '</span></div>';
 
   // Vendor / In-House groups as category headers (like fixed costs)
@@ -373,6 +378,11 @@ function renderFixedCosts(scenario) {
     var cat = c.category || 'misc';
     if (!cats[cat]) { cats[cat] = []; catOrder.push(cat); }
     cats[cat].push(c);
+  });
+
+  // Sort items within each category by amount descending
+  catOrder.forEach(function(cat) {
+    cats[cat].sort(function(a, b) { return (b.amount || 0) - (a.amount || 0); });
   });
 
   catOrder.forEach(function(cat) {
