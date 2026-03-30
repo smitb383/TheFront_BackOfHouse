@@ -3641,3 +3641,26 @@ body::before {
   padding:5px 8px; border-radius:2px; outline:none; cursor:pointer;
   text-transform:uppercase;
 }
+
+/* ── Revenue items (card style matching fixed costs) ── */
+.pl-rev-item-name {
+  flex:1; font-family:'Cormorant Garamond',serif; font-size:15px;
+  color:var(--text); cursor:pointer; min-width:0; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap;
+}
+.pl-rev-item-price {
+  font-family:'DM Mono',monospace; font-size:11px; color:var(--muted);
+  min-width:55px; text-align:right; flex-shrink:0;
+}
+.pl-rev-item-qty {
+  font-family:'DM Mono',monospace; font-size:11px; color:var(--muted);
+  display:flex; align-items:center; gap:2px; flex-shrink:0;
+}
+.pl-rev-item-cut {
+  font-family:'DM Mono',monospace; font-size:11px; color:var(--front);
+  min-width:55px; text-align:right; flex-shrink:0;
+}
+.pl-cost-field-val {
+  font-family:'Cormorant Garamond',serif; font-size:14px; color:var(--text);
+  padding:4px 0;
+}
