@@ -169,9 +169,19 @@ function calcPL(scenario, inventory) {
   ourCut += (scenario.merchRevenue || 0);
   totalRevenue += (scenario.eventRevenue || 0) + (scenario.merchRevenue || 0);
 
-  // Fixed costs
+  // Fixed costs — contingency auto-calculates as 10% of all other fixed costs
   var totalFixed = 0;
-  (scenario.fixedCosts || []).forEach(function(c) { totalFixed += (c.amount || 0); });
+  var nonContingencyTotal = 0;
+  (scenario.fixedCosts || []).forEach(function(c) {
+    if (c.id === 'fc_contingency' || (c.name && c.name.toLowerCase().indexOf('contingency') >= 0)) return;
+    nonContingencyTotal += (c.amount || 0);
+  });
+  (scenario.fixedCosts || []).forEach(function(c) {
+    if (c.id === 'fc_contingency' || (c.name && c.name.toLowerCase().indexOf('contingency') >= 0)) {
+      c.amount = Math.round(nonContingencyTotal * 0.10);
+    }
+    totalFixed += (c.amount || 0);
+  });
 
   // Variable costs
   var totalVariable = 0;
