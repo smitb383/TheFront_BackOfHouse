@@ -3458,3 +3458,13 @@ body::before {
   padding:4px 6px; border-radius:2px; outline:none;
 }
 .pl-inv-commission { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); }
+
+/* ── Resource delete button (inside expanded card) ── */
+.res-delete-btn {
+  display:block; margin-top:16px; padding:8px 16px;
+  background:none; border:1px solid var(--border);
+  color:var(--muted); font-family:'DM Mono',monospace; font-size:9px;
+  letter-spacing:0.12em; text-transform:uppercase; cursor:pointer;
+  border-radius:3px; transition:all 0.2s;
+}
+.res-delete-btn:hover { color:var(--action); border-color:var(--action); }

@@ -55,6 +55,7 @@
         <div class="sub-bar front-side-bar active" id="front-popup-bar">
           <button class="tab active" data-tab="popup" onclick="showTab('front','popup',this)"><span class="tab-icon">🏮</span>334 Broome</button>
           <button class="tab" data-tab="popup-pl" onclick="showTab('front','popup-pl',this)"><span class="tab-icon">💰</span>Budget & P/L</button>
+          <button class="tab" data-tab="popup-inventory" onclick="showTab('front','popup-inventory',this)"><span class="tab-icon">📦</span>Inventory</button>
           <button class="tab" data-tab="popup-resources" onclick="showTab('front','popup-resources',this)"><span class="tab-icon">📋</span>Resources</button>
           <button class="tab" data-tab="popup-vendors" onclick="showTab('front','popup-vendors',this)"><span class="tab-icon">🤝</span>Vendors</button>
           <button class="tab" data-tab="popup-marketing" onclick="showTab('front','popup-marketing',this)"><span class="tab-icon">📣</span>Marketing</button>
@@ -1451,22 +1452,20 @@
           <div class="view-desc">Unified budget with custom scenarios. Revenue pulled from inventory. 30% commission on vendor items, 100% on in-house.</div></div>
         </div>
 
-        <div class="pl-tabs">
-          <button class="pl-tab active" onclick="plShowTab('pl',this)">P&L</button>
-          <button class="pl-tab" onclick="plShowTab('inventory',this)">Inventory</button>
-        </div>
+        <div id="pl-scenario-bar" class="pl-scenario-bar"></div>
+        <div id="pl-summary"></div>
+        <div id="pl-revenue"></div>
+        <div id="pl-fixed" style="margin-top:32px"></div>
+        <div id="pl-variable" style="margin-top:32px"></div>
+      </div>
 
-        <div class="pl-panel active" id="pl-panel-pl">
-          <div id="pl-scenario-bar" class="pl-scenario-bar"></div>
-          <div id="pl-summary"></div>
-          <div id="pl-revenue"></div>
-          <div id="pl-fixed" style="margin-top:32px"></div>
-          <div id="pl-variable" style="margin-top:32px"></div>
+      <!-- ═══ INVENTORY (separate tab) ═══ -->
+      <div class="ws-view" id="front-popup-inventory">
+        <div class="view-header">
+          <div><div class="view-title">Inventory</div>
+          <div class="view-desc">All items by vendor. Prices and commission rates feed into the Budget & P/L.</div></div>
         </div>
-
-        <div class="pl-panel" id="pl-panel-inventory" style="display:none">
-          <div id="pl-inventory"></div>
-        </div>
+        <div id="pl-inventory"></div>
       </div>
 
       <!-- OLD BUDGET (hidden, kept for data compat) -->

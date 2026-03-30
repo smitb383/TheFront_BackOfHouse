@@ -1340,7 +1340,6 @@ function resRender() {
           '<div class="res-cat-badge">'+esc(item.cat)+'</div>' +
           '<div class="res-cost-badge">'+(item.cost>0?'$'+item.cost:'free')+'</div>' +
           '<span class="res-chevron" style="color:'+statColor+'">›</span>' +
-          '<button class="res-del-btn" data-resid="'+item.id+'" onclick="resDelete(event,this.dataset.resid)">✕</button>' +
         '</div>' +
         '<div class="res-item-body">' +
           '<div class="res-body-grid">' +
@@ -1353,6 +1352,7 @@ function resRender() {
             '<div class="res-field"><div class="res-field-label">Deadline / needed by</div><input class="res-input" type="date" value="'+esc(item.deadline||'')+'" data-resid="'+item.id+'" data-field="deadline" onchange="resUpdate(this)"></div>' +
             '<div class="res-field res-full"><div class="res-field-label">Notes</div><textarea class="res-notes-input" rows="2" placeholder="Details, constraints, alternatives…" data-resid="'+item.id+'" data-field="notes" oninput="resUpdate(this)">'+esc(item.notes||'')+'</textarea></div>' +
           '</div>' +
+          '<button class="res-delete-btn" data-resid="'+item.id+'" onclick="resDelete(event,this.dataset.resid)">Delete item</button>' +
         '</div>' +
       '</div>';
     });
@@ -1437,6 +1437,7 @@ function resUpdate(el) {
 }
 function resDelete(e, id) {
   e.stopPropagation();
+  if (!confirm('Delete this item? This cannot be undone.')) return;
   // Remember open cards except the deleted one
   var openIds = [];
   document.querySelectorAll('.res-item.open').forEach(function(el){
@@ -2137,6 +2138,7 @@ function showTab(project, tab, btn) {
   if (tab === 'archive') renderArchive(project);
   if (tab === 'popup-revenue') setTimeout(function(){ initRevProj(); renderRevProj(); }, 20);
   if (tab === 'popup-pl') setTimeout(function(){ initPLData(); renderPL(); }, 20);
+  if (tab === 'popup-inventory') setTimeout(function(){ initPLData(); renderInventory(); }, 20);
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
   if (tab === 'chashama-proposal') setTimeout(function(){ loadBPData(); initChaShaMa(); }, 20);
   if (tab === 'popup-events') setTimeout(function(){ initEvents(); loadBPData(); }, 20);
