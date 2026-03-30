@@ -1,0 +1,10 @@
+{
+  "name": "the-front-nyc",
+  "version": "1.0.0",
+  "description": "The Front — curated retail popup workspace",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve .",
+    "seed": "node data/seed.js"
+  }
+}
