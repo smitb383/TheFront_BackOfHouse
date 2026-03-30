@@ -50,13 +50,13 @@ function initPLData() {
       { id: 'fc_power', name: 'Power', amount: 0, category: 'space', note: 'Included with space' },
       { id: 'fc_water', name: 'Water', amount: 0, category: 'space', note: 'Included with space' },
       // Fabrication
-      { id: 'fc_buildout', name: 'Install / build-out', amount: 0, category: 'fabrication', note: 'Paint, lighting tweaks, wall prep' },
-      { id: 'fc_paint', name: 'Paint / paint supplies', amount: 0, category: 'fabrication', note: '' },
-      { id: 'fc_shelves', name: 'Floating shelves / pedestals', amount: 150, category: 'fabrication', note: '3-4 units at varying heights for objects + accessories' },
-      { id: 'fc_hangers', name: 'Hangers', amount: 0, category: 'fabrication', note: '' },
-      { id: 'fc_vinyl', name: 'Window vinyl', amount: 0, category: 'fabrication', note: 'Vinyl lettering / signage on glass front' },
-      { id: 'fc_exterior', name: 'Exterior sign', amount: 0, category: 'fabrication', note: 'Outside-facing sign or blade' },
-      { id: 'fc_pricelabels', name: 'Price labels / maker cards', amount: 30, category: 'fabrication', note: 'Small folded card — name, price, material, vendor. Per-vendor cards with handle + bio' },
+      { id: 'fc_buildout', name: 'Install / build-out', amount: 0, category: 'fit out', note: 'Paint, lighting tweaks, wall prep' },
+      { id: 'fc_paint', name: 'Paint / paint supplies', amount: 0, category: 'fit out', note: '' },
+      { id: 'fc_shelves', name: 'Floating shelves / pedestals', amount: 150, category: 'fit out', note: '3-4 units at varying heights for objects + accessories' },
+      { id: 'fc_hangers', name: 'Hangers', amount: 0, category: 'fit out', note: '' },
+      { id: 'fc_vinyl', name: 'Window vinyl', amount: 0, category: 'fit out', note: 'Vinyl lettering / signage on glass front' },
+      { id: 'fc_exterior', name: 'Exterior sign', amount: 0, category: 'fit out', note: 'Outside-facing sign or blade' },
+      { id: 'fc_pricelabels', name: 'Price labels / maker cards', amount: 30, category: 'fit out', note: 'Small folded card — name, price, material, vendor. Per-vendor cards with handle + bio' },
       // Retail supplies
       { id: 'fc_bags', name: 'Shopping bags', amount: 0, category: 'retail supplies', note: 'Branded stamp on plain kraft bags' },
       { id: 'fc_tags', name: 'Price tags', amount: 0, category: 'retail supplies', note: 'Hang tags for all vendors' },
@@ -360,7 +360,7 @@ function goToInventoryItem(vendorName) {
   }, 50);
 }
 
-var FC_CATEGORIES = ['space','fabrication','retail supplies','events','marketing','business','operations','misc'];
+var FC_CATEGORIES = ['space','fit out','retail supplies','events','marketing','business','operations','misc'];
 var FC_STATUSES = ['needed','sourcing','ordered','done'];
 var FC_STATUS_COLORS = { needed:'#e07070', sourcing:'#e2c97e', ordered:'#a8c4d4', done:'#88c98a' };
 
