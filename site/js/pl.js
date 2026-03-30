@@ -59,17 +59,25 @@ function initPLData() {
   // If no fixed costs from budget, seed defaults
   if (!fixedCosts.length) {
     fixedCosts = [
-      { id: 'fc_rent', name: 'Rent — 334 Broome', amount: 3500, category: 'operations', note: 'Flat fee June 18 - July 16' },
-      { id: 'fc_insurance', name: 'General liability insurance', amount: 0, category: 'operations', note: '$2M aggregate required' },
-      { id: 'fc_buildout', name: 'Install / build-out', amount: 0, category: 'interior', note: 'Fixtures, paint, lighting' },
-      { id: 'fc_signage', name: 'Signage', amount: 0, category: 'fabrication', note: 'Vinyl, window cling' },
-      { id: 'fc_bags', name: 'Shopping bags', amount: 0, category: 'supplies', note: 'Branded' },
-      { id: 'fc_tags', name: 'Hang tags / price tags', amount: 0, category: 'supplies', note: '' },
-      { id: 'fc_tissue', name: 'Tissue / packaging', amount: 0, category: 'supplies', note: '' },
+      // Space
+      { id: 'fc_rent', name: '334 Broome rent', amount: 3500, category: 'space', note: 'Flat fee June 18 - July 16' },
+      { id: 'fc_insurance', name: 'General liability insurance', amount: 200, category: 'space', note: '$2M aggregate required — Amir Badawi + Patjen Realty as additional insureds' },
+      // Fabrication
+      { id: 'fc_buildout', name: 'Install / build-out', amount: 0, category: 'fabrication', note: 'Fixtures, paint, lighting, racks, plinths' },
+      { id: 'fc_vinyl', name: 'Window vinyl', amount: 0, category: 'fabrication', note: 'Vinyl lettering / signage on glass front' },
+      { id: 'fc_exterior', name: 'Exterior sign', amount: 0, category: 'fabrication', note: 'Outside-facing sign or blade' },
+      { id: 'fc_pricelabels', name: 'Price labels', amount: 0, category: 'fabrication', note: 'Small folded card — name, price, material, vendor' },
+      // Retail supplies
+      { id: 'fc_bags', name: 'Shopping bags', amount: 0, category: 'retail supplies', note: 'Branded bags' },
+      { id: 'fc_tags', name: 'Price tags', amount: 0, category: 'retail supplies', note: 'Hang tags for all vendors' },
+      { id: 'fc_tissue', name: 'Tissue / packaging', amount: 0, category: 'retail supplies', note: 'Branded tissue, boxes' },
+      // Events
       { id: 'fc_opening', name: 'Opening event', amount: 0, category: 'events', note: 'Drinks, invitations, florals' },
-      { id: 'fc_marketing', name: 'Marketing / promotion', amount: 0, category: 'marketing', note: 'Flyers, paid posts' },
+      // Marketing
+      { id: 'fc_marketing', name: 'Marketing / promotion', amount: 0, category: 'marketing', note: 'Flyers, paid posts, photographer' },
+      // Operations
       { id: 'fc_pos', name: 'POS equipment', amount: 50, category: 'operations', note: 'Square reader' },
-      { id: 'fc_strike', name: 'Strike / removal', amount: 0, category: 'operations', note: '' },
+      { id: 'fc_strike', name: 'Strike / removal', amount: 0, category: 'operations', note: 'Labor, disposal, end of lease cleanup' },
       { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'buffer', note: '' }
     ];
   }
@@ -319,7 +327,7 @@ function renderFixedCosts(scenario) {
           '<button class="pl-cost-note-toggle' + (hasNote ? ' has-note' : '') + '" onclick="toggleCostNote(\'' + c.id + '\')" title="Notes">▾</button>' +
           '<button class="pl-row-del" data-cost-id="' + c.id + '" onclick="deleteFixedCost(this.dataset.costId)">×</button>' +
         '</div>' +
-        '<div class="pl-cost-note-panel" id="pl-note-' + c.id + '"' + (hasNote ? ' style="display:block"' : '') + '>' +
+        '<div class="pl-cost-note-panel" id="pl-note-' + c.id + '">' +
           '<textarea class="pl-cost-note-textarea" placeholder="Add notes…" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea>' +
         '</div>' +
       '</div>';
