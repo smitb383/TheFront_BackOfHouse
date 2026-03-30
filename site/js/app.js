@@ -2136,6 +2136,7 @@ function showTab(project, tab, btn) {
   showView(project, tab);
   if (tab === 'archive') renderArchive(project);
   if (tab === 'popup-revenue') setTimeout(function(){ initRevProj(); renderRevProj(); }, 20);
+  if (tab === 'popup-pl') setTimeout(function(){ initPLData(); renderPL(); }, 20);
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
   if (tab === 'chashama-proposal') setTimeout(function(){ loadBPData(); initChaShaMa(); }, 20);
   if (tab === 'popup-events') setTimeout(function(){ initEvents(); loadBPData(); }, 20);

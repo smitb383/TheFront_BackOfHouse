@@ -54,9 +54,8 @@
         </div>
         <div class="sub-bar front-side-bar active" id="front-popup-bar">
           <button class="tab active" data-tab="popup" onclick="showTab('front','popup',this)"><span class="tab-icon">🏮</span>334 Broome</button>
-          <button class="tab" data-tab="popup-budget" onclick="showTab('front','popup-budget',this)"><span class="tab-icon">💰</span>Budget</button>
+          <button class="tab" data-tab="popup-pl" onclick="showTab('front','popup-pl',this)"><span class="tab-icon">💰</span>Budget & P/L</button>
           <button class="tab" data-tab="popup-resources" onclick="showTab('front','popup-resources',this)"><span class="tab-icon">📋</span>Resources</button>
-          <button class="tab" data-tab="popup-revenue" onclick="showTab('front','popup-revenue',this)"><span class="tab-icon">📈</span>Revenue</button>
           <button class="tab" data-tab="popup-vendors" onclick="showTab('front','popup-vendors',this)"><span class="tab-icon">🤝</span>Vendors</button>
           <button class="tab" data-tab="popup-marketing" onclick="showTab('front','popup-marketing',this)"><span class="tab-icon">📣</span>Marketing</button>
           <button class="tab" data-tab="popup-events" onclick="showTab('front','popup-events',this)"><span class="tab-icon">🎭</span>Events</button>
@@ -1445,7 +1444,33 @@
         <div id="res-item-list"></div>
       </div>
 
-      <div class="ws-view" id="front-popup-budget">
+      <!-- ═══ NEW P&L VIEW ═══ -->
+      <div class="ws-view" id="front-popup-pl">
+        <div class="view-header">
+          <div><div class="view-title">Budget & P/L</div>
+          <div class="view-desc">Unified budget with custom scenarios. Revenue pulled from inventory. 30% commission on vendor items, 100% on in-house.</div></div>
+        </div>
+
+        <div class="pl-tabs">
+          <button class="pl-tab active" onclick="plShowTab('pl',this)">P&L</button>
+          <button class="pl-tab" onclick="plShowTab('inventory',this)">Inventory</button>
+        </div>
+
+        <div class="pl-panel active" id="pl-panel-pl">
+          <div id="pl-scenario-bar" class="pl-scenario-bar"></div>
+          <div id="pl-summary"></div>
+          <div id="pl-revenue"></div>
+          <div id="pl-fixed" style="margin-top:32px"></div>
+          <div id="pl-variable" style="margin-top:32px"></div>
+        </div>
+
+        <div class="pl-panel" id="pl-panel-inventory" style="display:none">
+          <div id="pl-inventory"></div>
+        </div>
+      </div>
+
+      <!-- OLD BUDGET (hidden, kept for data compat) -->
+      <div class="ws-view" id="front-popup-budget" style="display:none!important">
         <div class="popup-panel-title">Budget — 334 Broome Run</div>
         <div class="budget-layout">
           <div class="budget-table-col">
@@ -1850,5 +1875,6 @@ function checkPw() {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
+<script src="js/pl.js"></script>
 </body>
 </html>

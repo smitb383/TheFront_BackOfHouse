@@ -3289,3 +3289,172 @@ body::before {
 .brand-reword-label { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
 .brand-reword-option:hover { border-color: #a8c4d4 !important; }
 
+
+/* ── P&L MODULE ───────────────────────────────────────── */
+.pl-tabs { display:flex; gap:2px; margin-bottom:24px; }
+.pl-tab {
+  padding:9px 18px; border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'DM Mono',monospace; font-size:9px;
+  letter-spacing:0.12em; text-transform:uppercase; cursor:pointer;
+  border-radius:3px; transition:all 0.2s;
+}
+.pl-tab:hover { color:var(--text); border-color:var(--muted); }
+.pl-tab.active { background:var(--front); color:#0c0c0f; border-color:var(--front); }
+.pl-panel { display:none; }
+.pl-panel.active { display:block; }
+
+/* Scenario bar */
+.pl-scenario-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+.pl-scenario-pills { display:flex; gap:4px; flex-wrap:wrap; }
+.pl-scenario-pill {
+  padding:7px 14px; border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'DM Mono',monospace; font-size:9px;
+  letter-spacing:0.1em; text-transform:uppercase; cursor:pointer;
+  border-radius:3px; transition:all 0.2s;
+}
+.pl-scenario-pill:hover { color:var(--text); border-color:var(--muted); }
+.pl-scenario-pill.active { background:var(--front); color:#0c0c0f; border-color:var(--front); }
+.pl-add-scenario { border-style:dashed; }
+.pl-scenario-actions { display:flex; gap:6px; }
+.pl-small-btn {
+  background:none; border:1px solid var(--border); color:var(--muted);
+  font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.1em;
+  text-transform:uppercase; padding:4px 10px; cursor:pointer; border-radius:2px;
+}
+.pl-small-btn:hover { color:var(--text); border-color:var(--muted); }
+.pl-del-btn:hover { color:var(--action); border-color:var(--action); }
+
+/* Summary cards */
+.pl-summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:32px; }
+@media(max-width:700px) { .pl-summary-grid { grid-template-columns:repeat(2,1fr); } }
+.pl-summary-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:4px;
+  padding:16px 18px;
+}
+.pl-summary-label { font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.pl-summary-val { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300; }
+.pl-summary-sub { font-size:9px; color:var(--muted); margin-top:4px; }
+.pl-positive .pl-summary-val { color:#88c98a; }
+.pl-negative .pl-summary-val { color:var(--action); }
+
+/* Section headers */
+.pl-section-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:16px;
+}
+.pl-section-title { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:300; }
+.pl-section-total { font-family:'DM Mono',monospace; font-size:13px; color:var(--front); }
+
+/* Vendor groups in revenue */
+.pl-vendor-group { margin-bottom:24px; }
+.pl-vendor-name {
+  font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:400;
+  margin-bottom:8px; display:flex; align-items:center; gap:10px;
+}
+.pl-commission-tag {
+  font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.1em;
+  text-transform:uppercase; padding:2px 8px; border:1px solid var(--border);
+  border-radius:10px; color:var(--muted);
+}
+.pl-item-header, .pl-item-row {
+  display:grid; grid-template-columns:2fr 80px 70px 80px 80px; gap:8px;
+  align-items:center; padding:6px 0; font-size:12px;
+}
+.pl-item-header { font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); }
+.pl-item-row { border-bottom:1px solid var(--faint); }
+.pl-item-name { font-family:'Cormorant Garamond',serif; font-size:14px; }
+.pl-item-price, .pl-item-gross, .pl-item-cut { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+.pl-item-cut { color:var(--front); }
+.pl-qty-input {
+  width:50px; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Mono',monospace; font-size:11px;
+  padding:4px 6px; border-radius:2px; outline:none; text-align:center;
+}
+.pl-qty-input:focus { border-color:var(--front); }
+.pl-vendor-subtotal {
+  font-family:'DM Mono',monospace; font-size:10px; color:var(--muted);
+  text-align:right; padding:8px 0; border-top:1px solid var(--border);
+}
+
+/* Other revenue */
+.pl-other-revenue { margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+.pl-other-row { display:flex; align-items:center; gap:12px; padding:8px 0; }
+.pl-other-label { font-family:'Cormorant Garamond',serif; font-size:14px; min-width:160px; }
+.pl-other-input {
+  width:80px; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Mono',monospace; font-size:11px;
+  padding:4px 8px; border-radius:2px; outline:none;
+}
+.pl-other-note { font-size:10px; color:var(--muted); font-style:italic; }
+
+/* Cost rows */
+.pl-cost-cat { margin-top:16px; }
+.pl-cost-cat-name {
+  font-size:9px; letter-spacing:0.15em; text-transform:uppercase;
+  color:var(--muted); padding:4px 0; border-bottom:1px solid var(--faint);
+}
+.pl-cost-row {
+  display:flex; align-items:center; gap:8px; padding:6px 0;
+  border-bottom:1px solid var(--faint);
+}
+.pl-cost-name { font-family:'Cormorant Garamond',serif; font-size:14px; flex:2; }
+.pl-cost-name-input {
+  flex:2; background:transparent; border:none; border-bottom:1px solid transparent;
+  color:var(--text); font-family:'Cormorant Garamond',serif; font-size:14px;
+  padding:2px 0; outline:none;
+}
+.pl-cost-name-input:focus { border-bottom-color:var(--front); }
+.pl-cost-note, .pl-cost-note-input {
+  flex:2; font-size:11px; color:var(--muted);
+}
+.pl-cost-note-input {
+  background:transparent; border:none; border-bottom:1px solid transparent;
+  font-family:'DM Mono',monospace; padding:2px 0; outline:none; color:var(--muted);
+}
+.pl-cost-note-input:focus { border-bottom-color:var(--front); }
+.pl-cost-amt { font-family:'DM Mono',monospace; font-size:11px; min-width:70px; text-align:right; }
+.pl-cost-amt-wrap { display:flex; align-items:center; font-family:'DM Mono',monospace; font-size:11px; min-width:80px; }
+.pl-cost-amt-input {
+  width:60px; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Mono',monospace; font-size:11px;
+  padding:4px 6px; border-radius:2px; outline:none; text-align:right;
+}
+.pl-cost-amt-input:focus { border-color:var(--front); }
+.pl-row-del {
+  background:none; border:none; color:var(--muted); cursor:pointer;
+  font-size:14px; padding:2px 4px; transition:color 0.2s;
+}
+.pl-row-del:hover { color:var(--action); }
+.pl-add-row-btn {
+  background:none; border:none; color:var(--muted); font-family:'DM Mono',monospace;
+  font-size:9px; letter-spacing:0.12em; text-transform:uppercase;
+  padding:10px 0; cursor:pointer; transition:color 0.2s;
+}
+.pl-add-row-btn:hover { color:var(--front); }
+.pl-variable-note { font-size:10px; color:var(--muted); margin-bottom:12px; }
+
+/* Inventory panel */
+.pl-inv-vendor { margin-bottom:24px; }
+.pl-inv-vendor-name {
+  font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:400;
+  margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);
+}
+.pl-inv-header, .pl-inv-row {
+  display:grid; grid-template-columns:2fr 100px 80px 30px; gap:8px;
+  align-items:center; padding:5px 0;
+}
+.pl-inv-header { font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+.pl-inv-row { border-bottom:1px solid var(--faint); }
+.pl-inv-input {
+  background:transparent; border:none; border-bottom:1px solid transparent;
+  color:var(--text); font-family:'Cormorant Garamond',serif; font-size:14px;
+  padding:2px 0; outline:none;
+}
+.pl-inv-input:focus { border-bottom-color:var(--front); }
+.pl-inv-price-wrap { display:flex; align-items:center; font-family:'DM Mono',monospace; font-size:11px; }
+.pl-inv-price {
+  width:60px; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Mono',monospace; font-size:11px;
+  padding:4px 6px; border-radius:2px; outline:none;
+}
+.pl-inv-commission { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); }
