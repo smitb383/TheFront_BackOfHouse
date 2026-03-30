@@ -1,203 +1,136 @@
 // ============================================
 // THE FRONT NYC — Data Layer
 // ============================================
-// Provides Supabase-backed storage with localStorage fallback.
-// Replace SUPABASE_URL and SUPABASE_ANON_KEY with your values.
+// Intercepts localStorage so existing app.js code automatically
+// syncs with Supabase. On load, pulls all data from Supabase
+// into localStorage so the app renders with shared data.
 
 var SUPABASE_URL = 'https://ygptkypwptsrnkwwqiox.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlncHRreXB3cHRzcm5rd3dxaW94Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4OTE4NTQsImV4cCI6MjA5MDQ2Nzg1NH0.UWnRGzOxQr39Eh8nA37Peo_BOwrn_kOwbk3X0hnQyZc';
 
-var _supabase = null;
-var _supabaseReady = false;
+var _sb = null;
+var _sbReady = false;
 
-function initSupabase() {
-  if (_supabase) return _supabase;
-  if (!SUPABASE_ANON_KEY || !window.supabase) {
-    console.warn('[data] Supabase not configured — using localStorage only');
-    return null;
-  }
+// Keys that should NOT be synced to Supabase (local-only)
+var LOCAL_ONLY_KEYS = ['_boh_auth', 'ws_theme', 'loglevel'];
+
+function _initSB() {
+  if (_sb) return _sb;
+  if (!window.supabase) return null;
   try {
-    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    _supabaseReady = true;
+    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    _sbReady = true;
     console.log('[data] Supabase connected');
-    return _supabase;
+    return _sb;
   } catch (e) {
     console.error('[data] Supabase init failed:', e);
     return null;
   }
 }
 
-// ── Key-Value Store (for text fields, settings, etc.) ──
+// ── On page load: pull ALL kv_store rows into localStorage ──
+// This is the key bridge: Supabase is the source of truth,
+// localStorage is just a fast local cache that app.js reads from.
 
-function getKV(key) {
-  // Always return localStorage value immediately for fast UI
-  var local = null;
-  try { local = JSON.parse(localStorage.getItem(key)); } catch (e) {}
+function _pullAllData() {
+  var sb = _initSB();
+  if (!sb) { console.warn('[data] No Supabase, using localStorage only'); return Promise.resolve(); }
 
-  // Also fetch from Supabase in background and update if different
-  var sb = initSupabase();
-  if (sb) {
-    sb.from('kv_store').select('value').eq('key', key).single().then(function(res) {
-      if (res.data && res.data.value !== undefined) {
-        var remote = res.data.value;
-        var localStr = JSON.stringify(local);
-        var remoteStr = JSON.stringify(remote);
-        if (localStr !== remoteStr) {
-          localStorage.setItem(key, JSON.stringify(remote));
-          // Trigger a re-render if the page is showing this data
-          window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: key, value: remote } }));
-        }
-      }
-    });
-  }
-
-  return local;
-}
-
-function setKV(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-
-  var sb = initSupabase();
-  if (sb) {
-    sb.from('kv_store').upsert({ key: key, value: value }, { onConflict: 'key' }).then(function(res) {
-      if (res.error) console.error('[data] setKV error:', key, res.error);
-    });
-  }
-}
-
-// ── Table Operations (for structured data: vendors, tasks, budgets, etc.) ──
-
-function getTable(table, filters) {
-  // Return localStorage cache immediately
-  var cacheKey = '_table_' + table;
-  var local = null;
-  try { local = JSON.parse(localStorage.getItem(cacheKey)); } catch (e) {}
-
-  var sb = initSupabase();
-  if (sb) {
-    var query = sb.from(table).select('*');
-    if (filters) {
-      Object.keys(filters).forEach(function(k) {
-        query = query.eq(k, filters[k]);
-      });
+  return sb.from('kv_store').select('key,value').then(function(res) {
+    if (res.error) {
+      console.error('[data] Pull failed:', res.error);
+      return;
     }
-    query.order('created_at', { ascending: true }).then(function(res) {
-      if (res.data) {
-        localStorage.setItem(cacheKey, JSON.stringify(res.data));
-        window.dispatchEvent(new CustomEvent('table-updated', { detail: { table: table, data: res.data } }));
+    var count = 0;
+    (res.data || []).forEach(function(row) {
+      // Store value as JSON string in localStorage (matching what app.js expects)
+      var val = row.value;
+      if (typeof val === 'string') {
+        _origSetItem.call(localStorage, row.key, val);
+      } else {
+        _origSetItem.call(localStorage, row.key, JSON.stringify(val));
       }
+      count++;
     });
-  }
-
-  return local || [];
-}
-
-function upsertRow(table, row) {
-  // Update localStorage cache
-  var cacheKey = '_table_' + table;
-  var cache = [];
-  try { cache = JSON.parse(localStorage.getItem(cacheKey)) || []; } catch (e) {}
-  var idx = cache.findIndex(function(r) { return r.id === row.id; });
-  if (idx >= 0) cache[idx] = Object.assign(cache[idx], row);
-  else cache.push(row);
-  localStorage.setItem(cacheKey, JSON.stringify(cache));
-
-  var sb = initSupabase();
-  if (sb) {
-    sb.from(table).upsert(row, { onConflict: 'id' }).then(function(res) {
-      if (res.error) console.error('[data] upsert error:', table, res.error);
-    });
-  }
-}
-
-function deleteRow(table, id) {
-  var cacheKey = '_table_' + table;
-  var cache = [];
-  try { cache = JSON.parse(localStorage.getItem(cacheKey)) || []; } catch (e) {}
-  cache = cache.filter(function(r) { return r.id !== id; });
-  localStorage.setItem(cacheKey, JSON.stringify(cache));
-
-  var sb = initSupabase();
-  if (sb) {
-    sb.from(table).delete().eq('id', id).then(function(res) {
-      if (res.error) console.error('[data] delete error:', table, res.error);
-    });
-  }
-}
-
-// ── Batch Operations ──
-
-function upsertRows(table, rows) {
-  var cacheKey = '_table_' + table;
-  var cache = [];
-  try { cache = JSON.parse(localStorage.getItem(cacheKey)) || []; } catch (e) {}
-
-  rows.forEach(function(row) {
-    var idx = cache.findIndex(function(r) { return r.id === row.id; });
-    if (idx >= 0) cache[idx] = Object.assign(cache[idx], row);
-    else cache.push(row);
+    console.log('[data] Pulled ' + count + ' keys from Supabase');
   });
-  localStorage.setItem(cacheKey, JSON.stringify(cache));
-
-  var sb = initSupabase();
-  if (sb) {
-    sb.from(table).upsert(rows, { onConflict: 'id' }).then(function(res) {
-      if (res.error) console.error('[data] batch upsert error:', table, res.error);
-    });
-  }
 }
 
-// ── Real-time Subscriptions ──
-// Call this after page load to get live updates when the other founder edits
+// ── Intercept localStorage.setItem to sync writes to Supabase ──
 
-var _subscriptions = {};
+var _origSetItem = localStorage.setItem;
+var _origGetItem = localStorage.getItem;
 
-function subscribeToTable(table, callback) {
-  var sb = initSupabase();
+// Debounce writes to Supabase (batch rapid edits)
+var _writeQueue = {};
+var _writeTimer = null;
+
+function _flushWrites() {
+  var sb = _initSB();
   if (!sb) return;
-  if (_subscriptions[table]) return; // already subscribed
 
-  var channel = sb.channel('table-' + table)
-    .on('postgres_changes', { event: '*', schema: 'public', table: table }, function(payload) {
-      console.log('[realtime]', table, payload.eventType);
-      // Refresh local cache
-      getTable(table);
-      if (callback) callback(payload);
-    })
-    .subscribe();
+  var rows = [];
+  Object.keys(_writeQueue).forEach(function(key) {
+    var raw = _writeQueue[key];
+    // Try to parse as JSON for JSONB column, fallback to string
+    var val;
+    try { val = JSON.parse(raw); } catch(e) { val = raw; }
+    rows.push({ key: key, value: val });
+  });
+  _writeQueue = {};
 
-  _subscriptions[table] = channel;
+  if (rows.length === 0) return;
+
+  sb.from('kv_store').upsert(rows, { onConflict: 'key' }).then(function(res) {
+    if (res.error) console.error('[data] Sync error:', res.error.message);
+  });
 }
 
-function subscribeToKV(callback) {
-  var sb = initSupabase();
-  if (!sb) return;
-  if (_subscriptions['kv_store']) return;
+localStorage.setItem = function(key, value) {
+  // Always write to real localStorage immediately (app.js reads it)
+  _origSetItem.call(localStorage, key, value);
 
-  var channel = sb.channel('kv-changes')
+  // Skip local-only keys
+  if (LOCAL_ONLY_KEYS.indexOf(key) >= 0) return;
+  if (key.charAt(0) === '_') return; // internal keys
+
+  // Queue write to Supabase
+  _writeQueue[key] = value;
+  if (_writeTimer) clearTimeout(_writeTimer);
+  _writeTimer = setTimeout(_flushWrites, 500); // batch writes every 500ms
+};
+
+// ── Real-time: listen for changes from the other founder ──
+
+function _startRealtime() {
+  var sb = _initSB();
+  if (!sb) return;
+
+  sb.channel('kv-sync')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'kv_store' }, function(payload) {
       if (payload.new && payload.new.key) {
-        localStorage.setItem(payload.new.key, JSON.stringify(payload.new.value));
-        if (callback) callback(payload.new.key, payload.new.value);
+        var key = payload.new.key;
+        var val = payload.new.value;
+        var str = typeof val === 'string' ? val : JSON.stringify(val);
+        // Update localStorage without triggering another sync
+        _origSetItem.call(localStorage, key, str);
+        console.log('[realtime] Updated:', key);
       }
     })
     .subscribe();
-
-  _subscriptions['kv_store'] = channel;
 }
 
-// ── Compatibility Layer ──
-// These match the old localStorage API so existing code works with minimal changes
+// ── Boot sequence ──
+// 1. Init Supabase
+// 2. Pull all data from Supabase into localStorage
+// 3. Start realtime listener
+// 4. App.js will then read from localStorage as usual
 
-function getData(key) {
-  return getKV(key);
-}
-
-function saveData(key, value) {
-  setKV(key, value);
-}
-
-// ── Init on load ──
-window.addEventListener('DOMContentLoaded', function() {
-  initSupabase();
-});
+(function() {
+  _initSB();
+  _pullAllData().then(function() {
+    _startRealtime();
+    // Dispatch event so app.js can re-render if needed
+    window.dispatchEvent(new Event('supabase-ready'));
+  });
+})();
