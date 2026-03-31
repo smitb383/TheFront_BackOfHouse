@@ -334,7 +334,7 @@ function renderRevenueSection(data, scenario, calc) {
     else consignmentVendors.push(vendorName);
   });
 
-  function renderRevGroup(label, vendorList) {
+  function renderRevGroup(label, vendorList, showCommission) {
     if (!vendorList.length) return '';
     var groupTotal = 0;
     vendorList.forEach(function(vn) {
@@ -351,6 +351,17 @@ function renderRevenueSection(data, scenario, calc) {
 
     var h = '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(label) + '</span><span class="pl-cost-cat-total">$' + fmt(groupTotal) + '</span></div>';
 
+    // Spreadsheet column headers
+    h += '<div class="pl-rev-colheaders">' +
+      '<span class="pl-rev-ch-vendor">Designer</span>' +
+      '<span class="pl-rev-ch-item">Item</span>' +
+      '<span class="pl-rev-ch-num">Price</span>' +
+      '<span class="pl-rev-ch-num">Qty</span>' +
+      (showCommission ? '<span class="pl-rev-ch-num">Comm %</span>' : '') +
+      '<span class="pl-rev-ch-num">Our cut</span>' +
+      '<span class="pl-rev-ch-status"></span>' +
+    '</div>';
+
     vendorList.forEach(function(vendorName) {
       var group = vendorMap[vendorName];
       group.items.forEach(function(item, idx) {
@@ -359,42 +370,25 @@ function renderRevenueSection(data, scenario, calc) {
         var qty = sale ? sale.qty : 1;
         var gross = qty * item.price;
         var cut = item.isInHouse ? gross : gross * (item.commissionPct / 100);
-        var isOpen = document.getElementById('pl-rev-' + item.id) && document.getElementById('pl-rev-' + item.id).classList.contains('open');
         var showVendorLabel = (idx === 0);
+        var isOpen = document.getElementById('pl-rev-' + item.id) && document.getElementById('pl-rev-' + item.id).classList.contains('open');
 
-        h += '<div class="pl-rev-row-wrap">' +
-          '<div class="pl-rev-vendor-label">' + (showVendorLabel ? esc(vendorName) : '') + '</div>' +
-          '<div class="pl-cost-item' + (isOpen ? ' open' : '') + (sold ? '' : ' pl-not-sold') + '" id="pl-rev-' + item.id + '" style="flex:1">' +
-          '<div class="pl-cost-top">' +
-            '<span class="pl-rev-item-name" onclick="toggleRevCard(\'' + item.id + '\')">' + esc(item.name || '(untitled)') + '</span>' +
-            '<span class="pl-rev-item-price">$' + fmt(item.price) + '</span>' +
-            '<span class="pl-rev-item-qty" onclick="event.stopPropagation()">×<input type="number" min="0" value="' + qty + '" class="pl-cost-amt-num" style="width:40px" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
-            '<span class="pl-rev-item-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(cut) + '</span>' +
-            '<span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sold' : 'not sold') + '</span>' +
-            '<span class="pl-cost-chevron" onclick="toggleRevCard(\'' + item.id + '\')">›</span>' +
-          '</div>' +
-          '<div class="pl-cost-body">' +
-            '<div class="pl-cost-fields">' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Item</div><div class="pl-cost-field-val">' + esc(item.name) + '</div></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Vendor</div><div class="pl-cost-field-val">' + esc(item.vendor) + '</div></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Unit price</div><div class="pl-cost-field-val">$' + fmt(item.price) + '</div></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Category</div><div class="pl-cost-field-val">' + esc(item.category || '—') + '</div></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Commission</div><div class="pl-cost-field-val">' + (item.isInHouse ? '100% (in-house)' : item.commissionPct + '% to us / ' + (100 - item.commissionPct) + '% to vendor') + '</div></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Gross (qty × price)</div><div class="pl-cost-field-val">$' + fmt(gross) + '</div></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Your cut</div><div class="pl-cost-field-val" style="color:var(--front)">$' + fmt(cut) + '</div></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Vendor payout</div><div class="pl-cost-field-val">' + (item.isInHouse ? '—' : '$' + fmt(gross - cut)) + '</div></div>' +
-            '</div>' +
-            '<button class="pl-add-row-btn" onclick="goToInventoryItem(\'' + esc(item.vendor) + '\')">View in Inventory →</button>' +
-          '</div>' +
-        '</div>' +
+        h += '<div class="pl-rev-spreadrow' + (sold ? '' : ' pl-not-sold') + '" id="pl-rev-' + item.id + '">' +
+          '<span class="pl-rev-sr-vendor">' + (showVendorLabel ? esc(vendorName) : '') + '</span>' +
+          '<span class="pl-rev-sr-item" onclick="toggleRevCard(\'' + item.id + '\')">' + esc(item.name || '(untitled)') + '</span>' +
+          '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
+          '<span class="pl-rev-sr-num" onclick="event.stopPropagation()"><input type="number" min="0" value="' + qty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
+          (showCommission ? '<span class="pl-rev-sr-num" onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + (item.commissionPct || 30) + '" class="pl-rev-sr-input" data-inv-id="' + item.id + '" onchange="updateItemCommission(this)">%</span>' : '') +
+          '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(cut) + '</span>' +
+          '<span class="pl-rev-sr-status"><span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sold' : 'unsold') + '</span></span>' +
         '</div>';
       });
     });
     return h;
   }
 
-  html += renderRevGroup('Consignment', consignmentVendors);
-  html += renderRevGroup('The Front Merch', merchVendors);
+  html += renderRevGroup('Consignment', consignmentVendors, true);
+  html += renderRevGroup('The Front Merch', merchVendors, false);
 
   // Other revenue (events, merch)
   html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">other revenue</span><span class="pl-cost-cat-total">$' + fmt((scenario.eventRevenue || 0) + (scenario.merchRevenue || 0)) + '</span></div>';
@@ -571,6 +565,15 @@ function updateItemQty(input) {
   var existing = scenario.itemSales[id] || { qty: 1, sold: true };
   existing.qty = parseInt(input.value) || 0;
   scenario.itemSales[id] = existing;
+  savePLData(data);
+  renderPL();
+}
+
+function updateItemCommission(input) {
+  var data = getPLData();
+  var item = data.inventory.find(function(i) { return i.id === input.dataset.invId; });
+  if (!item) return;
+  item.commissionPct = parseInt(input.value) || 30;
   savePLData(data);
   renderPL();
 }

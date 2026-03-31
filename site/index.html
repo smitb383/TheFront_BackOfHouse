@@ -1446,17 +1446,14 @@
       </div>
 
       <!-- ═══ NEW P&L VIEW ═══ -->
-      <div class="ws-view" id="front-popup-pl">
-        <div class="view-header">
-          <div><div class="view-title">Budget & P/L</div>
-          <div class="view-desc">Unified budget with custom scenarios. Revenue pulled from inventory. 30% commission on vendor items, 100% on in-house.</div></div>
-        </div>
-
+      <div class="ws-view pl-fullwidth" id="front-popup-pl">
         <div id="pl-scenario-bar" class="pl-scenario-bar"></div>
         <div id="pl-summary"></div>
-        <div id="pl-revenue"></div>
-        <div id="pl-variable" style="margin-top:32px"></div>
-        <div id="pl-fixed" style="margin-top:32px"></div>
+        <div class="pl-columns">
+          <div class="pl-col" id="pl-revenue"></div>
+          <div class="pl-col" id="pl-variable"></div>
+          <div class="pl-col" id="pl-fixed"></div>
+        </div>
       </div>
 
       <!-- ═══ INVENTORY (separate tab) ═══ -->
