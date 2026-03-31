@@ -478,59 +478,70 @@ function renderRevenueSection(data, scenario, calc) {
     else consignmentVendors.push(vendorName);
   });
 
-  // Unified column headers (once, above both sections)
-  html += '<div class="pl-rev-colheaders">' +
-    '<span class="pl-rev-ch-vendor">Designer</span>' +
-    '<span class="pl-rev-ch-item">Item</span>' +
-    '<span class="pl-rev-ch-num">Price</span>' +
-    '<span class="pl-rev-ch-num">Qty</span>' +
-    '<span class="pl-rev-ch-num">Comm %</span>' +
-    '<span class="pl-rev-ch-num">Our cut</span>' +
-    '<span class="pl-rev-ch-status"></span>' +
-  '</div>';
-
   function renderConsignmentGroup(vendorList) {
     if (!vendorList.length) return '';
+    var groupGross = 0;
     var groupTotal = 0;
+    var currentConsignRate = 30;
     vendorList.forEach(function(vn) {
       vendorMap[vn].items.forEach(function(item) {
+        if (item.commissionPct && !item.isInHouse) currentConsignRate = item.commissionPct;
         var sale = scenario.itemSales && scenario.itemSales[item.id];
         var sold = sale ? sale.sold : true;
         if (!sold) return;
         var qty = sale ? sale.qty : 1;
-        var cut = qty * item.price * (item.commissionPct / 100);
-        groupTotal += cut;
+        var gross = qty * item.price;
+        groupGross += gross;
+        groupTotal += gross * (currentConsignRate / 100);
       });
     });
 
-    // Get current consignment rate from first item (they should all match)
-    var currentConsignRate = 30;
-    vendorList.forEach(function(vn) {
-      vendorMap[vn].items.forEach(function(item) { if (item.commissionPct) currentConsignRate = item.commissionPct; });
-    });
-
-    var h = '<div class="pl-cost-cat"><span class="pl-cost-cat-name">Consignment <span class="pl-consign-rate-wrap" onclick="event.stopPropagation()"><input type="number" min="0" max="100" class="pl-consign-rate-input" value="' + currentConsignRate + '" onchange="updateAllConsignRate(this.value)">%</span></span><span class="pl-cost-cat-total">$' + fmt(groupTotal) + '</span></div>';
+    var h = '<div class="pl-cost-cat">' +
+      '<span class="pl-cost-cat-name">Consignment <span class="pl-consign-rate-wrap" onclick="event.stopPropagation()"><input type="number" min="0" max="100" class="pl-consign-rate-input" value="' + currentConsignRate + '" onchange="updateAllConsignRate(this.value)">%</span></span>' +
+      '<span class="pl-consign-header-nums"><span class="pl-consign-gross">$' + fmt(groupGross) + '</span><span class="pl-consign-cut">$' + fmt(groupTotal) + '</span></span>' +
+    '</div>';
 
     vendorList.forEach(function(vendorName) {
       var group = vendorMap[vendorName];
-      group.items.forEach(function(item, idx) {
+      var vendorGross = 0, vendorCut = 0;
+      group.items.forEach(function(item) {
+        var sale = scenario.itemSales && scenario.itemSales[item.id];
+        var sold = sale ? sale.sold : true;
+        var qty = (sale ? sale.qty : 1);
+        if (!sold) qty = 0;
+        vendorGross += qty * item.price;
+        vendorCut += qty * item.price * (currentConsignRate / 100);
+      });
+      var isVendorOpen = document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')) &&
+        document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')).classList.contains('open');
+
+      h += '<div class="pl-vendor-collapse' + (isVendorOpen ? ' open' : '') + '" id="pl-vgroup-' + esc(vendorName.replace(/\s/g,'_')) + '">' +
+        '<div class="pl-vendor-collapse-top" onclick="toggleVendorGroup(\'' + esc(vendorName.replace(/\s/g,'_')) + '\')">' +
+          '<span class="pl-vendor-collapse-name">' + esc(vendorName) + '</span>' +
+          '<span class="pl-vendor-collapse-gross">$' + fmt(vendorGross) + '</span>' +
+          '<span class="pl-vendor-collapse-cut">$' + fmt(vendorCut) + '</span>' +
+          '<span class="pl-cost-chevron">›</span>' +
+        '</div>' +
+        '<div class="pl-vendor-collapse-body">';
+
+      group.items.forEach(function(item) {
         var sale = scenario.itemSales && scenario.itemSales[item.id];
         var sold = sale ? sale.sold : true;
         var qty = sale ? sale.qty : 1;
         var gross = qty * item.price;
-        var cut = gross * (item.commissionPct / 100);
-        var showVendorLabel = (idx === 0);
+        var cut = gross * (currentConsignRate / 100);
 
-        h += '<div class="pl-rev-spreadrow' + (sold ? '' : ' pl-not-sold') + '" id="pl-rev-' + item.id + '">' +
-          '<span class="pl-rev-sr-vendor">' + (showVendorLabel ? esc(vendorName) : '') + '</span>' +
+        h += '<div class="pl-rev-spreadrow' + (sold ? '' : ' pl-not-sold') + '">' +
           '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
           '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
           '<span class="pl-rev-sr-num" onclick="event.stopPropagation()"><input type="number" min="0" value="' + qty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
-          '<span class="pl-rev-sr-num" onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + (item.commissionPct || 30) + '" class="pl-rev-sr-input" data-inv-id="' + item.id + '" onchange="updateItemCommission(this)">%</span>' +
+          '<span class="pl-rev-sr-num">' + currentConsignRate + '%</span>' +
           '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(cut) + '</span>' +
           '<span class="pl-rev-sr-status"><span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sells' : 'won\'t sell') + '</span></span>' +
         '</div>';
       });
+
+      h += '</div></div>';
     });
     return h;
   }
@@ -757,6 +768,12 @@ function updatePLCalc() {
   if (el) {
     el.innerHTML =
       '<div class="pl-calc-sheet">' +
+        '<div class="pl-calc-sheet-header">' +
+          '<span class="pl-cs-label"></span>' +
+          '<span class="pl-cs-hdr">Gross</span>' +
+          '<span class="pl-cs-hdr">% of total sales</span>' +
+          '<span class="pl-cs-hdr">Our Cut</span>' +
+        '</div>' +
         '<div class="pl-calc-sheet-row">' +
           '<span class="pl-cs-label">Consignment</span>' +
           '<span class="pl-cs-gross">$' + fmt(consignSales) + '</span>' +
@@ -769,21 +786,20 @@ function updatePLCalc() {
           '<span class="pl-cs-pct">' + merchPct + '%</span>' +
           '<span class="pl-cs-ours">$' + fmt(merchReturn) + '</span>' +
         '</div>' +
-        '<div class="pl-calc-sheet-row pl-cs-total-row">' +
-          '<span class="pl-cs-label">Total</span>' +
-          '<span class="pl-cs-gross">$' + fmt(totalGross) + '</span>' +
-          '<span class="pl-cs-pct"></span>' +
-          '<span class="pl-cs-ours">$' + fmt(totalReturn) + '</span>' +
-        '</div>' +
-        '<div class="pl-calc-sheet-row pl-cs-costs-row">' +
-          '<span class="pl-cs-label">− Costs</span>' +
+        '<div class="pl-calc-sheet-divider"></div>' +
+        '<div class="pl-calc-sheet-row">' +
+          '<span class="pl-cs-label">Cost</span>' +
           '<span class="pl-cs-gross"></span>' +
           '<span class="pl-cs-pct"></span>' +
-          '<span class="pl-cs-ours">$' + fmt(totalCosts) + '</span>' +
+          '<span class="pl-cs-ours pl-cs-cost-val">-$' + fmt(totalCosts) + '</span>' +
         '</div>' +
-      '</div>' +
-      '<div class="pl-calc-net ' + plClass + '">' + (netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(netPL)) + '</div>' +
-      '<div class="pl-be-sub">' + (netPL >= 0 ? 'profit' : 'loss') + '</div>';
+        '<div class="pl-calc-sheet-row">' +
+          '<span class="pl-cs-label">Total</span>' +
+          '<span class="pl-cs-gross"></span>' +
+          '<span class="pl-cs-pct"></span>' +
+          '<span class="pl-cs-ours pl-cs-total-val ' + plClass + '">$' + fmt(Math.abs(netPL)) + '</span>' +
+        '</div>' +
+      '</div>';
   }
 }
 
@@ -869,6 +885,11 @@ function runProfitTarget() {
 // Run calcs after render
 function initBECalc() {
   setTimeout(function() { updateBECalc(); updatePLCalc(); }, 50);
+}
+
+function toggleVendorGroup(id) {
+  var el = document.getElementById('pl-vgroup-' + id);
+  if (el) el.classList.toggle('open');
 }
 
 function toggleRevCard(id) {
