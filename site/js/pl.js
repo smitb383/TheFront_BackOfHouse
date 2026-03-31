@@ -914,6 +914,7 @@ function renderVariableCosts(scenario, calc) {
       '<span class="pl-cost-name">' + esc(vc.name) + '</span>' +
       '<span class="pl-cost-note">' + esc(vc.note || '') + '</span>' +
       '<span class="pl-cost-amt">$' + fmt(estCost) + '</span>' +
+      '<button class="pl-row-del" onclick="deleteVariableCost(\'' + vc.id + '\')">×</button>' +
     '</div>';
   });
 
@@ -1015,6 +1016,15 @@ function deleteFixedCost(id) {
   var data = getPLData();
   var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
   scenario.fixedCosts = scenario.fixedCosts.filter(function(c) { return c.id !== id; });
+  savePLData(data);
+  renderPL();
+}
+
+function deleteVariableCost(id) {
+  if (!confirm('Delete this variable cost?')) return;
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario.variableCosts = (scenario.variableCosts || []).filter(function(vc) { return vc.id !== id; });
   savePLData(data);
   renderPL();
 }
