@@ -422,7 +422,7 @@ function goToInventoryItem(vendorName) {
   }, 50);
 }
 
-var FC_CATEGORIES = ['space','fit out','retail supplies','retail','events','marketing','branding','business','operations','misc'];
+var FC_CATEGORIES = ['space','retail','fit out','retail supplies','events','marketing','branding','business','operations','misc'];
 var FC_STATUSES = ['needed','sourcing','ordered','done'];
 var FC_STATUS_COLORS = { needed:'#e07070', sourcing:'#e2c97e', ordered:'#a8c4d4', done:'#88c98a' };
 
