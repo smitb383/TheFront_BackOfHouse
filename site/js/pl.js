@@ -235,10 +235,11 @@ function renderPL() {
   var calc = calcPL(scenario, data.inventory);
 
   renderScenarioBar(data);
-  renderPLSummary(calc);
+  renderPLSummary(calc, scenario);
   renderRevenueSection(data, scenario, calc);
   renderFixedCosts(scenario);
   renderVariableCosts(scenario, calc);
+  initBECalc();
 }
 
 function renderScenarioBar(data) {
@@ -263,7 +264,7 @@ function renderScenarioBar(data) {
   el.innerHTML = html;
 }
 
-function renderPLSummary(calc) {
+function renderPLSummary(calc, scenario) {
   var el = document.getElementById('pl-summary');
   if (!el) return;
   var netClass = calc.netPL >= 0 ? 'pl-positive' : 'pl-negative';
@@ -293,15 +294,13 @@ function renderPLSummary(calc) {
         '<div class="pl-summary-label">Net P/L</div>' +
         '<div class="pl-summary-val">' + (calc.netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(calc.netPL)) + '</div>' +
       '</div>' +
-      '<div class="pl-summary-card pl-breakeven">' +
-        '<div class="pl-summary-label">True Break-even</div>' +
-        '<div class="pl-summary-val">$' + fmt(beTrue) + '</div>' +
-        '<div class="pl-summary-sub">in gross sales at blended ' + Math.round(blendedRate * 100) + '% margin</div>' +
-      '</div>' +
-      '<div class="pl-summary-card">' +
-        '<div class="pl-summary-label">Consignment-only B/E</div>' +
-        '<div class="pl-summary-val">$' + fmt(beConsignment) + '</div>' +
-        '<div class="pl-summary-sub">if all revenue at 30% commission</div>' +
+      '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
+        '<div class="pl-summary-label">Break-even Calculator</div>' +
+        '<div class="pl-be-inputs">' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Merch / Events (100%)</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-be-owned" value="' + (scenario.beMerchPct || 20) + '" onchange="updateBECalc(this)">%</div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-be-consign" value="' + (scenario.beConsignPct || 80) + '" onchange="updateBECalc(this)">% <span class="pl-be-at">@ <input type="number" min="0" max="100" class="pl-be-input" id="pl-be-consign-rate" value="' + (scenario.beConsignRate || 30) + '" onchange="updateBECalc(this)">%</span></div>' +
+        '</div>' +
+        '<div class="pl-be-result" id="pl-be-result"></div>' +
       '</div>' +
     '</div>';
 }
@@ -419,6 +418,37 @@ function renderRevenueSection(data, scenario, calc) {
   '</div>';
 
   el.innerHTML = html;
+}
+
+function updateBECalc() {
+  var ownedPct = parseInt(document.getElementById('pl-be-owned').value) || 0;
+  var consignPct = parseInt(document.getElementById('pl-be-consign').value) || 0;
+  var consignRate = parseInt(document.getElementById('pl-be-consign-rate').value) || 30;
+
+  // Save to scenario
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario.beMerchPct = ownedPct;
+  scenario.beConsignPct = consignPct;
+  scenario.beConsignRate = consignRate;
+  savePLData(data);
+
+  // Blended margin = (owned% × 100% + consignment% × consignRate%) / 100
+  var blended = (ownedPct * 1.0 + consignPct * (consignRate / 100)) / 100;
+  var totalCosts = 0;
+  (scenario.fixedCosts || []).forEach(function(c) { totalCosts += (c.amount || 0); });
+
+  var beGross = blended > 0 ? Math.ceil(totalCosts / blended) : 0;
+  var el = document.getElementById('pl-be-result');
+  if (el) {
+    el.innerHTML = '<span class="pl-be-val">$' + fmt(beGross) + '</span>' +
+      '<span class="pl-be-sub">in gross sales at blended ' + Math.round(blended * 100) + '% margin</span>';
+  }
+}
+
+// Run BE calc after render
+function initBECalc() {
+  setTimeout(updateBECalc, 50);
 }
 
 function toggleRevCard(id) {

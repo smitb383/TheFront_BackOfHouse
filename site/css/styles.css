@@ -3776,3 +3776,23 @@ body::before {
 .pl-summary-5 { grid-template-columns:repeat(5,1fr); }
 @media(max-width:900px) { .pl-summary-5 { grid-template-columns:repeat(3,1fr); } }
 @media(max-width:600px) { .pl-summary-5 { grid-template-columns:repeat(2,1fr); } }
+
+/* ── Break-even calculator card ── */
+.pl-be-calc { grid-column:span 2; }
+.pl-be-inputs { display:flex; flex-direction:column; gap:6px; margin:8px 0; }
+.pl-be-row {
+  display:flex; align-items:center; gap:6px;
+  font-family:'DM Mono',monospace; font-size:10px; color:var(--muted);
+}
+.pl-be-lbl { min-width:120px; font-size:9px; letter-spacing:0.06em; }
+.pl-be-input {
+  width:42px; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Mono',monospace; font-size:11px;
+  padding:3px 5px; border-radius:2px; outline:none; text-align:center;
+}
+.pl-be-input:focus { border-color:var(--front); }
+.pl-be-at { display:flex; align-items:center; gap:4px; color:var(--muted); }
+.pl-be-result { margin-top:6px; display:flex; align-items:baseline; gap:8px; }
+.pl-be-val { font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--front); }
+.pl-be-sub { font-size:9px; color:var(--muted); }
+@media(max-width:600px) { .pl-be-calc { grid-column:span 1; } }
