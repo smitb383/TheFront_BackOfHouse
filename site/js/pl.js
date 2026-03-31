@@ -675,8 +675,9 @@ function updateBECalc() {
   savePLData(data);
 
   var blended = (ownedPct * 1.0 + consignPct * (consignRate / 100)) / 100;
-  var totalCosts = 0;
-  (scenario.fixedCosts || []).forEach(function(c) { totalCosts += (c.amount || 0); });
+  // Use TOTAL costs (fixed + variable) from actual calc
+  var calc = calcPL(scenario, data.inventory);
+  var totalCosts = calc.totalFixed + calc.totalVariable;
 
   var beGross = blended > 0 ? Math.ceil(totalCosts / blended) : 0;
   var merchGross = Math.ceil(beGross * (ownedPct / 100));
@@ -688,10 +689,10 @@ function updateBECalc() {
   if (el) {
     el.innerHTML =
       '<div class="pl-calc-breakdown" style="margin-top:6px">' +
-        '<div class="pl-calc-line"><span>Total to break even</span><span></span><span>$' + fmt(beGross) + '</span></div>' +
+        '<div class="pl-calc-line"><span>Costs to cover</span><span></span><span>$' + fmt(totalCosts) + '</span></div>' +
+        '<div class="pl-calc-line pl-calc-total"><span>Gross sales needed</span><span></span><span>$' + fmt(beGross) + '</span></div>' +
         '<div class="pl-calc-line"><span>Merch (' + ownedPct + '% @ 100%)</span><span>$' + fmt(merchGross) + ' gross</span><span>$' + fmt(merchTakeHome) + ' ours</span></div>' +
         '<div class="pl-calc-line"><span>Consignment (' + consignPct + '% @ ' + consignRate + '%)</span><span>$' + fmt(consignGross) + ' gross</span><span>$' + fmt(consignTakeHome) + ' ours</span></div>' +
-        '<div class="pl-calc-line pl-calc-total"><span>Total take-home</span><span></span><span>$' + fmt(merchTakeHome + consignTakeHome) + '</span></div>' +
       '</div>';
   }
 }
