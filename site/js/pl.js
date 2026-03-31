@@ -3,7 +3,7 @@
 // ============================================
 
 var PL_KEY = 'pl_data_v1';
-var PL_SEED_VERSION = 3; // bump to merge new defaults while keeping user edits
+var PL_SEED_VERSION = 4; // bump to merge new defaults while keeping user edits
 
 function getPLData() {
   try { return JSON.parse(localStorage.getItem(PL_KEY)) || null; } catch(e) { return null; }
@@ -37,13 +37,16 @@ var PL_DEFAULT_FIXED_COSTS = [
   { id: 'fc_pressrelease', name: 'Press release', amount: 0, category: 'marketing', note: '200-word pitch + image for Hint, Time Out, local blogs' },
   { id: 'fc_graphicdesign', name: 'Graphic design', amount: 0, category: 'branding', note: '' },
   { id: 'fc_typeface', name: 'Typeface licences', amount: 0, category: 'branding', note: 'Bebas Neue is primary font' },
-  { id: 'fc_llc', name: 'LLC registration', amount: 0, category: 'business', note: 'NY LLC filing ~$200 via DOS' },
-  { id: 'fc_domains', name: 'Website domains', amount: 0, category: 'business', note: 'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations' },
-  { id: 'fc_hosting', name: 'Website hosting', amount: 0, category: 'business', note: '' },
   { id: 'fc_pos', name: 'Square POS reader', amount: 50, category: 'operations', note: 'Plus a stand if using iPad' },
   { id: 'fc_ipad', name: 'iPad / phone for checkout', amount: 0, category: 'operations', note: '' },
   { id: 'fc_strike', name: 'Strike / removal', amount: 0, category: 'operations', note: 'Labor, disposal, end of lease cleanup' },
   { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
+];
+
+var PL_DEFAULT_BUSINESS_COSTS = [
+  { id: 'bc_llc', name: 'LLC registration', amount: 0, category: 'legal', note: 'NY LLC filing ~$200 via DOS' },
+  { id: 'bc_domains', name: 'Website domains', amount: 0, category: 'digital', note: 'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations' },
+  { id: 'bc_hosting', name: 'Website hosting', amount: 0, category: 'digital', note: '' }
 ];
 
 function migratePLData(existing) {
@@ -124,22 +127,33 @@ function initPLData() {
     inventory: inventory,
     scenarios: [
       {
-        id: 'working',
-        name: 'Working Budget',
+        id: 'popup',
+        name: '334 PopUp',
+        type: 'popup',
         created: new Date().toISOString().slice(0,10),
         fixedCosts: fixedCosts,
         variableCosts: variableCosts,
-        // Per-item sell assumptions: { itemId: { qty: N } }
-        // If not set, defaults to 0
         itemSales: {},
         eventRevenue: 0,
         eventNote: 'TBA',
         merchRevenue: 0,
         merchNote: '',
         notes: ''
+      },
+      {
+        id: 'business',
+        name: 'The Front Business Costs',
+        type: 'business',
+        created: new Date().toISOString().slice(0,10),
+        fixedCosts: JSON.parse(JSON.stringify(PL_DEFAULT_BUSINESS_COSTS)),
+        variableCosts: [],
+        itemSales: {},
+        eventRevenue: 0,
+        merchRevenue: 0,
+        notes: ''
       }
     ],
-    activeScenario: 'working'
+    activeScenario: 'popup'
   };
 
   savePLData(data);
@@ -245,17 +259,34 @@ function renderPL() {
 function renderScenarioBar(data) {
   var el = document.getElementById('pl-scenario-bar');
   if (!el) return;
+
+  // Permanent tabs: 334 PopUp + Business + any cloned scenarios
   var html = '<div class="pl-scenario-pills">';
+
+  // Always show popup and business first
+  var popup = data.scenarios.find(function(s) { return s.id === 'popup'; });
+  var business = data.scenarios.find(function(s) { return s.id === 'business'; });
+
+  if (popup) {
+    html += '<button class="pl-scenario-pill' + (data.activeScenario === 'popup' ? ' active' : '') + '" onclick="switchScenario(\'popup\')">' + esc(popup.name) + '</button>';
+  }
+  if (business) {
+    html += '<button class="pl-scenario-pill pl-scenario-biz' + (data.activeScenario === 'business' ? ' active' : '') + '" onclick="switchScenario(\'business\')">' + esc(business.name) + '</button>';
+  }
+
+  // Cloned scenarios
   data.scenarios.forEach(function(s) {
+    if (s.id === 'popup' || s.id === 'business') return;
     var active = s.id === data.activeScenario;
     html += '<button class="pl-scenario-pill' + (active ? ' active' : '') + '" onclick="switchScenario(\'' + s.id + '\')">' + esc(s.name) + '</button>';
   });
-  html += '<button class="pl-scenario-pill pl-add-scenario" onclick="addScenario()">+ New</button>';
+
+  html += '<button class="pl-scenario-pill pl-add-scenario" onclick="addScenario()">+ 334 Budget Scenario</button>';
   html += '</div>';
 
-  // Scenario actions
+  // Scenario actions for cloned scenarios
   var scenario = getActiveScenario();
-  if (scenario.id !== 'working') {
+  if (scenario.id !== 'popup' && scenario.id !== 'business') {
     html += '<div class="pl-scenario-actions">';
     html += '<button class="pl-small-btn" onclick="renameScenario()">Rename</button>';
     html += '<button class="pl-small-btn pl-del-btn" onclick="deleteScenario()">Delete</button>';
@@ -279,16 +310,21 @@ function renderPLSummary(calc, scenario) {
   var beTrue = totalCosts > 0 && blendedRate > 0 ? Math.ceil(totalCosts / blendedRate) : 0;
 
   el.innerHTML =
-    '<div class="pl-summary-grid pl-summary-5">' +
+    '<div class="pl-summary-grid pl-summary-6">' +
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Total Costs</div>' +
         '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
         '<div class="pl-summary-sub">Fixed: $' + fmt(calc.totalFixed) + ' · Variable: $' + fmt(calc.totalVariable) + '</div>' +
       '</div>' +
       '<div class="pl-summary-card">' +
-        '<div class="pl-summary-label">The Front Revenue</div>' +
+        '<div class="pl-summary-label">Gross Revenue</div>' +
+        '<div class="pl-summary-val">$' + fmt(calc.totalGrossRevenue) + '</div>' +
+        '<div class="pl-summary-sub">' + calc.totalTransactions + ' items sold</div>' +
+      '</div>' +
+      '<div class="pl-summary-card">' +
+        '<div class="pl-summary-label">Front\'s Revenue</div>' +
         '<div class="pl-summary-val">$' + fmt(calc.ourCut) + '</div>' +
-        '<div class="pl-summary-sub">Gross sales: $' + fmt(calc.totalGrossRevenue) + '</div>' +
+        '<div class="pl-summary-sub">Our cut after commission</div>' +
       '</div>' +
       '<div class="pl-summary-card ' + netClass + '">' +
         '<div class="pl-summary-label">Net P/L</div>' +
@@ -309,6 +345,16 @@ function renderPLSummary(calc, scenario) {
           '<div class="pl-be-row"><span class="pl-be-lbl">Merch / Event sales</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-merch" value="' + (scenario.calcMerch || 0) + '" onchange="updatePLCalc()"></div>' +
         '</div>' +
         '<div class="pl-calc-result" id="pl-calc-result"></div>' +
+      '</div>' +
+      '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
+        '<div class="pl-summary-label">Profit Target</div>' +
+        '<div class="pl-be-inputs">' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Target profit</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-profit" value="' + (scenario.targetProfit || 0) + '"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment %</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-consign-pct" value="' + (scenario.targetConsignPct || 80) + '">%</div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Commission rate</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-comm" value="' + (scenario.targetComm || 30) + '">%</div>' +
+        '</div>' +
+        '<button class="pl-target-run-btn" onclick="runProfitTarget()">Run →</button>' +
+        '<div class="pl-calc-result" id="pl-target-result"></div>' +
       '</div>' +
     '</div>';
 }
@@ -488,6 +534,48 @@ function updatePLCalc() {
   }
 }
 
+function runProfitTarget() {
+  var targetProfit = parseFloat(document.getElementById('pl-target-profit').value) || 0;
+  var consignPct = parseFloat(document.getElementById('pl-target-consign-pct').value) || 80;
+  var merchPct = 100 - consignPct;
+  var commRate = parseFloat(document.getElementById('pl-target-comm').value) || 30;
+
+  // Save to scenario
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario.targetProfit = targetProfit;
+  scenario.targetConsignPct = consignPct;
+  scenario.targetComm = commRate;
+  savePLData(data);
+
+  // Calculate: need enough revenue to cover costs + target profit
+  var totalCosts = 0;
+  (scenario.fixedCosts || []).forEach(function(c) { totalCosts += (c.amount || 0); });
+
+  var needed = totalCosts + targetProfit; // total revenue (our cut) needed
+  // Blended margin: consignPct% at commRate% + merchPct% at 100%
+  var blended = (consignPct * (commRate / 100) + merchPct * 1.0) / 100;
+  var totalGrossNeeded = blended > 0 ? Math.ceil(needed / blended) : 0;
+  var consignGross = Math.ceil(totalGrossNeeded * (consignPct / 100));
+  var merchGross = totalGrossNeeded - consignGross;
+  var consignReturn = Math.round(consignGross * (commRate / 100));
+  var merchReturn = merchGross;
+  var totalReturn = consignReturn + merchReturn;
+
+  var el = document.getElementById('pl-target-result');
+  if (el) {
+    el.innerHTML =
+      '<div class="pl-calc-breakdown">' +
+        '<div class="pl-calc-line"><span>Costs to cover</span><span></span><span>$' + fmt(totalCosts) + '</span></div>' +
+        '<div class="pl-calc-line"><span>+ Target profit</span><span></span><span>$' + fmt(targetProfit) + '</span></div>' +
+        '<div class="pl-calc-line pl-calc-total"><span>Need (our cut)</span><span></span><span>$' + fmt(needed) + '</span></div>' +
+        '<div class="pl-calc-line" style="margin-top:6px"><span>Consignment (' + consignPct + '%)</span><span>$' + fmt(consignGross) + ' gross</span><span>$' + fmt(consignReturn) + ' ours</span></div>' +
+        '<div class="pl-calc-line"><span>Merch/Events (' + merchPct + '%)</span><span>$' + fmt(merchGross) + ' gross</span><span>$' + fmt(merchReturn) + ' ours</span></div>' +
+        '<div class="pl-calc-line pl-calc-total"><span>Total sales needed</span><span></span><span>$' + fmt(totalGrossNeeded) + '</span></div>' +
+      '</div>';
+  }
+}
+
 // Run calcs after render
 function initBECalc() {
   setTimeout(function() { updateBECalc(); updatePLCalc(); }, 50);
@@ -506,7 +594,7 @@ function goToInventoryItem(vendorName) {
   }, 50);
 }
 
-var FC_CATEGORIES = ['space','retail','fit out','retail supplies','events','marketing','branding','business','operations','misc'];
+var FC_CATEGORIES = ['space','retail','fit out','retail supplies','events','marketing','branding','operations','misc'];
 var FC_STATUSES = ['needed','sourcing','ordered','done'];
 var FC_STATUS_COLORS = { needed:'#e07070', sourcing:'#e2c97e', ordered:'#a8c4d4', done:'#88c98a' };
 
@@ -733,9 +821,9 @@ function addScenario() {
   var name = prompt('Scenario name:');
   if (!name) return;
   var data = getPLData();
-  // Clone from working budget
-  var working = data.scenarios.find(function(s) { return s.id === 'working'; }) || data.scenarios[0];
-  var newScenario = JSON.parse(JSON.stringify(working));
+  // Clone from 334 PopUp
+  var popup = data.scenarios.find(function(s) { return s.id === 'popup'; }) || data.scenarios[0];
+  var newScenario = JSON.parse(JSON.stringify(popup));
   newScenario.id = 'sc_' + Date.now();
   newScenario.name = name;
   newScenario.created = new Date().toISOString().slice(0,10);
@@ -759,7 +847,7 @@ function deleteScenario() {
   if (!confirm('Delete this scenario?')) return;
   var data = getPLData();
   data.scenarios = data.scenarios.filter(function(s) { return s.id !== data.activeScenario; });
-  data.activeScenario = 'working';
+  data.activeScenario = 'popup';
   savePLData(data);
   renderPL();
 }
