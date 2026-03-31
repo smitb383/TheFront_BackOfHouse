@@ -427,8 +427,8 @@ function renderPLSummary(calc, scenario) {
           '<div class="pl-be-row"><span class="pl-be-lbl">Consignment rate</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-comm" value="' + (scenario.targetComm || 30) + '">%</div>' +
           '<div class="pl-be-row"><span class="pl-be-lbl">Merch/Other rate</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-merch-rate" value="' + (scenario.targetMerchRate || 100) + '">%</div>' +
           '<div class="pl-target-divider"></div>' +
-          '<div class="pl-be-row"><span class="pl-be-lbl">Known consignment $</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-known-consign" value="' + (scenario.targetKnownConsign || '') + '" placeholder="—"></div>' +
-          '<div class="pl-be-row"><span class="pl-be-lbl">Known merch $</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-known-merch" value="' + (scenario.targetKnownMerch || '') + '" placeholder="—"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Predicted consignment $</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-known-consign" value="' + (scenario.targetPredConsign || '') + '" placeholder="—"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Predicted merch $</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-known-merch" value="' + (scenario.targetPredMerch || '') + '" placeholder="—"></div>' +
         '</div>' +
         '<button class="pl-target-run-btn" onclick="runProfitTarget()">Run →</button>' +
         '<div class="pl-calc-result" id="pl-target-result"></div>' +
@@ -667,7 +667,6 @@ function updateBECalc() {
   var consignPct = parseInt(document.getElementById('pl-be-consign').value) || 0;
   var consignRate = parseInt(document.getElementById('pl-be-consign-rate').value) || 30;
 
-  // Save to scenario
   var data = getPLData();
   var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
   scenario.beMerchPct = ownedPct;
@@ -675,16 +674,25 @@ function updateBECalc() {
   scenario.beConsignRate = consignRate;
   savePLData(data);
 
-  // Blended margin = (owned% × 100% + consignment% × consignRate%) / 100
   var blended = (ownedPct * 1.0 + consignPct * (consignRate / 100)) / 100;
   var totalCosts = 0;
   (scenario.fixedCosts || []).forEach(function(c) { totalCosts += (c.amount || 0); });
 
   var beGross = blended > 0 ? Math.ceil(totalCosts / blended) : 0;
+  var merchGross = Math.ceil(beGross * (ownedPct / 100));
+  var consignGross = beGross - merchGross;
+  var merchTakeHome = merchGross; // 100%
+  var consignTakeHome = Math.round(consignGross * (consignRate / 100));
+
   var el = document.getElementById('pl-be-result');
   if (el) {
-    el.innerHTML = '<span class="pl-be-val">$' + fmt(beGross) + '</span>' +
-      '<span class="pl-be-sub">in gross sales at blended ' + Math.round(blended * 100) + '% margin</span>';
+    el.innerHTML =
+      '<div class="pl-calc-breakdown" style="margin-top:6px">' +
+        '<div class="pl-calc-line"><span>Total to break even</span><span></span><span>$' + fmt(beGross) + '</span></div>' +
+        '<div class="pl-calc-line"><span>Merch (' + ownedPct + '% @ 100%)</span><span>$' + fmt(merchGross) + ' gross</span><span>$' + fmt(merchTakeHome) + ' ours</span></div>' +
+        '<div class="pl-calc-line"><span>Consignment (' + consignPct + '% @ ' + consignRate + '%)</span><span>$' + fmt(consignGross) + ' gross</span><span>$' + fmt(consignTakeHome) + ' ours</span></div>' +
+        '<div class="pl-calc-line pl-calc-total"><span>Total take-home</span><span></span><span>$' + fmt(merchTakeHome + consignTakeHome) + '</span></div>' +
+      '</div>';
   }
 }
 
@@ -745,12 +753,12 @@ function runProfitTarget() {
   scenario.targetProfit = targetProfit;
   scenario.targetComm = commRate;
   scenario.targetMerchRate = merchRate;
-  scenario.targetKnownConsign = hasKnownConsign ? knownConsign : '';
-  scenario.targetKnownMerch = hasKnownMerch ? knownMerch : '';
+  scenario.targetPredConsign = hasKnownConsign ? knownConsign : '';
+  scenario.targetPredMerch = hasKnownMerch ? knownMerch : '';
   savePLData(data);
 
-  var totalCosts = 0;
-  (scenario.fixedCosts || []).forEach(function(c) { totalCosts += (c.amount || 0); });
+  var calc = calcPL(scenario, data.inventory);
+  var totalCosts = calc.totalFixed + calc.totalVariable;
   var needed = totalCosts + targetProfit;
 
   var consignGross, merchGross, consignReturn, merchReturn;
