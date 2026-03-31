@@ -296,8 +296,8 @@ function renderPL() {
     if (revEl) revEl.innerHTML = '';
     if (varEl) varEl.innerHTML = '';
   } else {
-    // Popup tabs: revenue hidden for now, variable costs shown
-    if (revEl) revEl.innerHTML = '';
+    // Popup tabs: full revenue + variable costs + calculators
+    renderRevenueSection(data, scenario, calc);
     renderVariableCosts(scenario, calc);
     initBECalc();
   }
