@@ -3975,3 +3975,14 @@ body::before {
 .pl-rev-sr-num { font-size:11px; }
 #pl-revenue .pl-cost-item .pl-cost-top { min-height:40px; }
 .pl-inv-qty-input { width:36px; }
+
+/* ── P/L calc computed totals ── */
+.pl-be-computed {
+  font-family:'DM Mono',monospace; font-size:11px; color:var(--front);
+}
+
+/* ── Summary card detail lines ── */
+.pl-summary-detail {
+  font-family:'DM Mono',monospace; font-size:10px; color:var(--muted);
+  margin-top:2px; line-height:1.5;
+}

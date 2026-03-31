@@ -203,14 +203,17 @@ function calcPL(scenario, inventory) {
   var totalSalesVolume = 0;
   var totalTransactions = 0;
   var itemBreakdown = [];
+  var consignGross = 0, consignCut = 0, merchGross = 0, merchCut = 0;
 
   inventory.forEach(function(item) {
     var sale = scenario.itemSales && scenario.itemSales[item.id];
-    var sold = sale ? sale.sold : true; // default to sold
+    var sold = sale ? sale.sold : true;
     var sales = sale ? sale.qty : 1;
-    if (!sold) sales = 0; // not sold = no revenue
+    if (!sold) sales = 0;
     var gross = sales * item.price;
     var commission = item.isInHouse ? gross : gross * (item.commissionPct / 100);
+    if (item.isInHouse) { merchGross += gross; merchCut += commission; }
+    else { consignGross += gross; consignCut += commission; }
     totalRevenue += gross;
     ourCut += commission;
     totalTransactions += sales;
@@ -277,6 +280,10 @@ function calcPL(scenario, inventory) {
   return {
     totalGrossRevenue: totalRevenue,
     ourCut: ourCut,
+    consignGross: consignGross,
+    consignCut: consignCut,
+    merchGross: merchGross,
+    merchCut: merchCut,
     totalFixed: totalFixed,
     totalVariable: totalVariable,
     netPL: netPL,
@@ -387,15 +394,20 @@ function renderPLSummary(calc, scenario) {
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Total Costs</div>' +
         '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
-        '<div class="pl-summary-sub">Fixed: $' + fmt(calc.totalFixed) + ' · Variable: $' + fmt(calc.totalVariable) + '</div>' +
+        '<div class="pl-summary-detail">Fixed: $' + fmt(calc.totalFixed) + '</div>' +
+        '<div class="pl-summary-detail">Variable: $' + fmt(calc.totalVariable) + '</div>' +
       '</div>' +
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Gross Revenue</div>' +
         '<div class="pl-summary-val">$' + fmt(calc.totalGrossRevenue) + '</div>' +
+        '<div class="pl-summary-detail">Consignment: $' + fmt(calc.consignGross) + (calc.totalGrossRevenue > 0 ? ' (' + Math.round(calc.consignGross / calc.totalGrossRevenue * 100) + '%)' : '') + '</div>' +
+        '<div class="pl-summary-detail">Merch: $' + fmt(calc.merchGross) + (calc.totalGrossRevenue > 0 ? ' (' + Math.round(calc.merchGross / calc.totalGrossRevenue * 100) + '%)' : '') + '</div>' +
       '</div>' +
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Front\'s Revenue</div>' +
         '<div class="pl-summary-val">$' + fmt(calc.ourCut) + '</div>' +
+        '<div class="pl-summary-detail">From consignment: $' + fmt(calc.consignCut) + '</div>' +
+        '<div class="pl-summary-detail">From merch: $' + fmt(calc.merchCut) + '</div>' +
       '</div>' +
       '<div class="pl-summary-card ' + netClass + '">' +
         '<div class="pl-summary-label">Net P/L</div>' +
@@ -414,8 +426,12 @@ function renderPLSummary(calc, scenario) {
       '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
         '<div class="pl-summary-label">P/L Calculator</div>' +
         '<div class="pl-be-inputs">' +
-          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment sales</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-consign" value="' + (scenario.calcConsign || 0) + '" onchange="updatePLCalc()"></div>' +
-          '<div class="pl-be-row"><span class="pl-be-lbl">Merch / Event sales</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-merch" value="' + (scenario.calcMerch || 0) + '" onchange="updatePLCalc()"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment /wk</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-consign-wk" value="' + (scenario.calcConsignWk || 0) + '" onchange="updatePLCalc()"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Merch /wk</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-merch-wk" value="' + (scenario.calcMerchWk || 0) + '" onchange="updatePLCalc()"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Weeks</span><input type="number" min="1" class="pl-be-input" id="pl-calc-weeks" value="' + (scenario.calcWeeks || 4) + '" onchange="updatePLCalc()"></div>' +
+          '<div class="pl-target-divider"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Total consignment</span><span class="pl-be-computed" id="pl-calc-consign-total">$0</span></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Total merch</span><span class="pl-be-computed" id="pl-calc-merch-total">$0</span></div>' +
         '</div>' +
         '<div class="pl-calc-result" id="pl-calc-result"></div>' +
       '</div>' +
@@ -698,14 +714,25 @@ function updateBECalc() {
 }
 
 function updatePLCalc() {
-  var consignSales = parseFloat(document.getElementById('pl-calc-consign').value) || 0;
-  var merchSales = parseFloat(document.getElementById('pl-calc-merch').value) || 0;
+  var consignWk = parseFloat(document.getElementById('pl-calc-consign-wk').value) || 0;
+  var merchWk = parseFloat(document.getElementById('pl-calc-merch-wk').value) || 0;
+  var weeks = parseInt(document.getElementById('pl-calc-weeks').value) || 4;
+
+  var consignSales = consignWk * weeks;
+  var merchSales = merchWk * weeks;
+
+  // Update computed totals
+  var ctEl = document.getElementById('pl-calc-consign-total');
+  var mtEl = document.getElementById('pl-calc-merch-total');
+  if (ctEl) ctEl.textContent = '$' + fmt(consignSales);
+  if (mtEl) mtEl.textContent = '$' + fmt(merchSales);
 
   // Save to scenario
   var data = getPLData();
   var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
-  scenario.calcConsign = consignSales;
-  scenario.calcMerch = merchSales;
+  scenario.calcConsignWk = consignWk;
+  scenario.calcMerchWk = merchWk;
+  scenario.calcWeeks = weeks;
   savePLData(data);
 
   // Calculate
@@ -718,8 +745,8 @@ function updatePLCalc() {
   var consignPct = totalGross > 0 ? Math.round((consignSales / totalGross) * 100) : 0;
   var merchPct = totalGross > 0 ? Math.round((merchSales / totalGross) * 100) : 0;
 
-  var totalCosts = 0;
-  (scenario.fixedCosts || []).forEach(function(c) { totalCosts += (c.amount || 0); });
+  var calc = calcPL(scenario, data.inventory);
+  var totalCosts = calc.totalFixed + calc.totalVariable;
   var netPL = totalReturn - totalCosts;
   var plClass = netPL >= 0 ? 'pl-positive' : 'pl-negative';
 
