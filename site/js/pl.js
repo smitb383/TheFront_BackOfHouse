@@ -195,10 +195,16 @@ function calcPL(scenario, inventory) {
     });
   });
 
-  // Add event + merch revenue
-  ourCut += (scenario.eventRevenue || 0);
-  ourCut += (scenario.merchRevenue || 0);
-  totalRevenue += (scenario.eventRevenue || 0) + (scenario.merchRevenue || 0);
+  // Add other revenue (events, branded goods, etc.)
+  (scenario.otherRevenue || []).forEach(function(r) {
+    ourCut += (r.amount || 0);
+    totalRevenue += (r.amount || 0);
+  });
+  // Legacy support
+  if (!scenario.otherRevenue) {
+    ourCut += (scenario.eventRevenue || 0) + (scenario.merchRevenue || 0);
+    totalRevenue += (scenario.eventRevenue || 0) + (scenario.merchRevenue || 0);
+  }
 
   // Fixed costs — contingency auto-calculates as 10% of all other fixed costs
   var totalFixed = 0;
@@ -496,28 +502,96 @@ function renderRevenueSection(data, scenario, calc) {
   html += renderConsignmentGroup(consignmentVendors);
   html += renderMerchGroup(merchVendors);
 
-  // Other revenue (events, merch)
-  html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">other revenue</span><span class="pl-cost-cat-total">$' + fmt((scenario.eventRevenue || 0) + (scenario.merchRevenue || 0)) + '</span></div>';
+  // Other revenue
+  if (!scenario.otherRevenue) scenario.otherRevenue = [
+    { id: 'or_events', name: 'Event revenue', amount: scenario.eventRevenue || 0, note: scenario.eventNote || 'TBA' },
+    { id: 'or_merch', name: 'Merch / branded goods', amount: scenario.merchRevenue || 0, note: '' }
+  ];
+  var otherTotal = 0;
+  scenario.otherRevenue.forEach(function(r) { otherTotal += (r.amount || 0); });
 
-  html += '<div class="pl-cost-item" id="pl-rev-events">' +
-    '<div class="pl-cost-top">' +
-      '<div class="pl-cost-status-dot" style="background:var(--muted)"></div>' +
-      '<span class="pl-rev-item-name">Event revenue</span>' +
-      '<span class="pl-rev-item-price" style="font-style:italic;color:var(--muted)">' + esc(scenario.eventNote || 'TBA') + '</span>' +
-      '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (scenario.eventRevenue || 0) + '" onchange="updateOtherRevenue(\'eventRevenue\',this.value)"></div>' +
-    '</div>' +
-  '</div>';
+  html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">Other Revenue</span><span class="pl-cost-cat-total">$' + fmt(otherTotal) + '</span></div>';
 
-  html += '<div class="pl-cost-item" id="pl-rev-merch">' +
-    '<div class="pl-cost-top">' +
-      '<div class="pl-cost-status-dot" style="background:var(--muted)"></div>' +
-      '<span class="pl-rev-item-name">Merch / branded goods</span>' +
-      '<span class="pl-rev-item-price"></span>' +
-      '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (scenario.merchRevenue || 0) + '" onchange="updateOtherRevenue(\'merchRevenue\',this.value)"></div>' +
-    '</div>' +
-  '</div>';
+  scenario.otherRevenue.forEach(function(r) {
+    var isOpen = document.getElementById('pl-other-' + r.id) && document.getElementById('pl-other-' + r.id).classList.contains('open');
+    html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-other-' + r.id + '">' +
+      '<div class="pl-cost-top" onclick="toggleOtherRevCard(\'' + r.id + '\')">' +
+        '<span class="pl-other-rev-name">' + esc(r.name || '(untitled)') + '</span>' +
+        '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (r.amount || 0) + '" data-or-id="' + r.id + '" onchange="updateOtherRevItem(this)"></div>' +
+        '<span class="pl-cost-chevron">›</span>' +
+      '</div>' +
+      '<div class="pl-cost-body">' +
+        '<div class="pl-cost-fields">' +
+          '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(r.name || '') + '" data-or-id="' + r.id + '" data-field="name" onchange="updateOtherRevField(this)"></div>' +
+          '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (r.amount || 0) + '" data-or-id="' + r.id + '" data-field="amount" onchange="updateOtherRevField(this)"></div>' +
+          '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details…" data-or-id="' + r.id + '" data-field="note" onchange="updateOtherRevField(this)">' + esc(r.note || '') + '</textarea></div>' +
+        '</div>' +
+        '<button class="pl-cost-delete-btn" onclick="deleteOtherRevItem(\'' + r.id + '\')">Delete item</button>' +
+      '</div>' +
+    '</div>';
+  });
+
+  html += '<button class="pl-add-row-btn" onclick="addOtherRevItem()">+ Add other revenue</button>';
 
   el.innerHTML = html;
+}
+
+function toggleOtherRevCard(id) {
+  var card = document.getElementById('pl-other-' + id);
+  if (card) card.classList.toggle('open');
+}
+
+function updateOtherRevItem(input) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var item = (scenario.otherRevenue || []).find(function(r) { return r.id === input.dataset.orId; });
+  if (item) {
+    item.amount = parseFloat(input.value) || 0;
+    savePLData(data);
+    // Update total without full re-render
+    var total = 0;
+    scenario.otherRevenue.forEach(function(r) { total += (r.amount || 0); });
+    var calc = calcPL(scenario, data.inventory);
+    renderPLSummary(calc, scenario);
+  }
+}
+
+function updateOtherRevField(input) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var item = (scenario.otherRevenue || []).find(function(r) { return r.id === input.dataset.orId; });
+  if (item) {
+    var field = input.dataset.field;
+    item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
+    savePLData(data);
+    if (field === 'amount') {
+      var calc = calcPL(scenario, data.inventory);
+      renderPLSummary(calc, scenario);
+    }
+  }
+}
+
+function addOtherRevItem() {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  if (!scenario.otherRevenue) scenario.otherRevenue = [];
+  var newId = 'or_' + Date.now();
+  scenario.otherRevenue.push({ id: newId, name: '', amount: 0, note: '' });
+  savePLData(data);
+  renderPL();
+  setTimeout(function() {
+    var card = document.getElementById('pl-other-' + newId);
+    if (card) card.classList.add('open');
+  }, 50);
+}
+
+function deleteOtherRevItem(id) {
+  if (!confirm('Delete this revenue item?')) return;
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario.otherRevenue = (scenario.otherRevenue || []).filter(function(r) { return r.id !== id; });
+  savePLData(data);
+  renderPL();
 }
 
 function updateBECalc() {

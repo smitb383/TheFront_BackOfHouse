@@ -3932,3 +3932,12 @@ body::before {
 
 /* ── Profit target divider ── */
 .pl-target-divider { border-top:1px solid var(--border); margin:4px 0; }
+
+/* ── Other revenue cards ── */
+.pl-other-rev-name {
+  flex:1; font-family:'Cormorant Garamond',serif; font-size:15px;
+  color:var(--text); white-space:nowrap; overflow:visible;
+}
+#pl-revenue .pl-cost-item .pl-cost-top {
+  display:flex; align-items:center; gap:8px; padding:8px 12px;
+}
