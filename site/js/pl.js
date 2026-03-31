@@ -264,14 +264,11 @@ function calcPL(scenario, inventory) {
     }
   });
 
-  // Merch COGS
+  // Merch production costs (units produced × cost per unit)
   inventory.forEach(function(item) {
     if (!item.isInHouse) return;
-    var sale = scenario.itemSales && scenario.itemSales[item.id];
-    var sold = sale ? sale.sold : true;
-    var qty = sale ? sale.qty : 1;
-    if (!sold) qty = 0;
-    totalVariable += qty * (item.costPerUnit || 0);
+    var unitsProduced = item.unitsProduced || item.qty || 1;
+    totalVariable += unitsProduced * (item.costPerUnit || 0);
   });
 
   var netPL = ourCut - totalFixed - totalVariable;
@@ -506,7 +503,13 @@ function renderRevenueSection(data, scenario, calc) {
       });
     });
 
-    var h = '<div class="pl-cost-cat"><span class="pl-cost-cat-name">Consignment</span><span class="pl-cost-cat-total">$' + fmt(groupTotal) + '</span></div>';
+    // Get current consignment rate from first item (they should all match)
+    var currentConsignRate = 30;
+    vendorList.forEach(function(vn) {
+      vendorMap[vn].items.forEach(function(item) { if (item.commissionPct) currentConsignRate = item.commissionPct; });
+    });
+
+    var h = '<div class="pl-cost-cat"><span class="pl-cost-cat-name">Consignment <span class="pl-consign-rate-wrap" onclick="event.stopPropagation()"><input type="number" min="0" max="100" class="pl-consign-rate-input" value="' + currentConsignRate + '" onchange="updateAllConsignRate(this.value)">%</span></span><span class="pl-cost-cat-total">$' + fmt(groupTotal) + '</span></div>';
 
     vendorList.forEach(function(vendorName) {
       var group = vendorMap[vendorName];
@@ -993,24 +996,19 @@ function renderVariableCosts(scenario, calc, data) {
     '</div>';
   });
 
-  // Merch COGS — linked to inventory quantities
+  // Front Merch Production Costs
   var merchItems = (data ? data.inventory : []).filter(function(i) { return i.isInHouse; });
   if (merchItems.length) {
-    html += '<div class="pl-cost-cat" style="margin-top:14px"><span class="pl-cost-cat-name">Merch COGS</span></div>';
-    var merchCOGSTotal = 0;
+    html += '<div class="pl-cost-cat" style="margin-top:14px"><span class="pl-cost-cat-name">Front Merch Production</span></div>';
     merchItems.forEach(function(item) {
-      var sale = scenario.itemSales && scenario.itemSales[item.id];
-      var sold = sale ? sale.sold : true;
-      var qty = sale ? sale.qty : 1;
-      if (!sold) qty = 0;
+      var unitsProduced = item.unitsProduced || item.qty || 1;
       var costPerUnit = item.costPerUnit || 0;
-      var totalCost = qty * costPerUnit;
-      merchCOGSTotal += totalCost;
-      html += '<div class="pl-cost-row">' +
+      var totalCost = unitsProduced * costPerUnit;
+      html += '<div class="pl-cost-row pl-merch-vc-row">' +
         '<span class="pl-cost-name">' + esc(item.name || '(untitled)') + '</span>' +
-        '<span class="pl-cost-note">$' + fmt(costPerUnit) + '/unit × ' + qty + '</span>' +
+        '<span class="pl-vc-field" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-vc-input" value="' + costPerUnit + '" placeholder="0" data-inv-id="' + item.id + '" data-field="costPerUnit" onchange="updateInventoryItem(this);renderPL()"> /unit</span>' +
+        '<span class="pl-vc-field" onclick="event.stopPropagation()">×<input type="number" min="0" class="pl-vc-input" value="' + unitsProduced + '" data-inv-id="' + item.id + '" data-field="unitsProduced" onchange="updateInventoryItem(this);renderPL()"> produced</span>' +
         '<span class="pl-cost-amt">$' + fmt(totalCost) + '</span>' +
-        '<button class="pl-row-del" style="visibility:hidden">×</button>' +
       '</div>';
     });
   }
@@ -1032,6 +1030,16 @@ function updateItemQty(input) {
   var existing = scenario.itemSales[id] || { qty: 1, sold: true };
   existing.qty = parseInt(input.value) || 0;
   scenario.itemSales[id] = existing;
+  savePLData(data);
+  renderPL();
+}
+
+function updateAllConsignRate(val) {
+  var rate = parseInt(val) || 30;
+  var data = getPLData();
+  data.inventory.forEach(function(item) {
+    if (!item.isInHouse) item.commissionPct = rate;
+  });
   savePLData(data);
   renderPL();
 }
@@ -1315,8 +1323,8 @@ function updateInventoryItem(input) {
   var item = data.inventory.find(function(i) { return i.id === input.dataset.invId; });
   if (!item) return;
   var field = input.dataset.field;
-  if (field === 'price' || field === 'qty' || field === 'costPerUnit') {
-    item[field] = field === 'qty' ? (parseInt(input.value) || 1) : (parseFloat(input.value) || 0);
+  if (field === 'price' || field === 'qty' || field === 'costPerUnit' || field === 'unitsProduced') {
+    item[field] = (field === 'qty' || field === 'unitsProduced') ? (parseInt(input.value) || 1) : (parseFloat(input.value) || 0);
   } else {
     item[field] = input.value;
   }
