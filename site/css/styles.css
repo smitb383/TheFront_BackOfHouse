@@ -3798,7 +3798,6 @@ body::before {
 @media(max-width:600px) { .pl-be-calc { grid-column:span 1; } }
 
 /* ── P&L full-width layout ── */
-.pl-fullwidth { max-width:none !important; padding:16px 24px 80px !important; }
 .pl-columns {
   display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-top:16px;
 }
@@ -3887,6 +3886,8 @@ body::before {
 .pl-fullwidth {
   width:100vw; position:relative; left:50%; right:50%;
   margin-left:-50vw; margin-right:-50vw;
-  max-width:100vw !important; padding:16px 36px 80px !important;
+  max-width:100vw !important; padding:16px 40px 80px !important;
   box-sizing:border-box;
 }
+.pl-columns { gap:32px; }
+.pl-col { overflow:visible; }
