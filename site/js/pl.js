@@ -373,7 +373,7 @@ function renderPLSummary(calc, scenario) {
   }
 
   el.innerHTML =
-    '<div class="pl-summary-grid pl-summary-6">' +
+    '<div class="pl-summary-grid">' +
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Total Costs</div>' +
         '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
@@ -391,6 +391,8 @@ function renderPLSummary(calc, scenario) {
         '<div class="pl-summary-label">Net P/L</div>' +
         '<div class="pl-summary-val">' + (calc.netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(calc.netPL)) + '</div>' +
       '</div>' +
+    '</div>' +
+    '<div class="pl-calc-row">' +
       '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
         '<div class="pl-summary-label">Break-even Calculator</div>' +
         '<div class="pl-be-inputs">' +
