@@ -1123,19 +1123,29 @@ function renderInventory() {
     // Week column headers
     var weeksHead = '';
     for (var wi = 0; wi < numWeeks; wi++) {
-      weeksHead += '<th class="num">Wk ' + (wi+1) + ' $</th>';
+      weeksHead += '<th class="num">Wk ' + (wi+1) + '</th>';
     }
 
     var rows = '';
     var vGross = 0, vNet = 0;
 
     group.items.forEach(function(item) {
+      var qty = item.qty || 1;
+      var isMulti = qty > 1;
       var weekCells = '';
       var weeks = item.weeks || [];
       for (var wi = 0; wi < numWeeks; wi++) {
         var wVal = weeks[wi] || 0;
-        weekCells += '<td><input class="pl-inv-week-input" type="number" min="0" value="' + wVal + '" placeholder="0"' +
-          ' data-inv-id="' + item.id + '" data-week="' + wi + '" onchange="updateInvWeek(this)"></td>';
+        if (isMulti) {
+          // Multi-quantity: number input for units sold that week
+          weekCells += '<td class="num"><input class="pl-inv-week-num" type="number" min="0" value="' + wVal + '" placeholder="0"' +
+            ' data-inv-id="' + item.id + '" data-week="' + wi + '" onchange="updateInvWeek(this)"></td>';
+        } else {
+          // Single item: checkbox
+          var checked = wVal > 0;
+          weekCells += '<td class="num"><input class="pl-inv-week-check" type="checkbox"' + (checked ? ' checked' : '') +
+            ' data-inv-id="' + item.id + '" data-week="' + wi + '" onchange="updateInvWeekCheck(this)"></td>';
+        }
       }
       var totalWeekQty = (weeks || []).reduce(function(s,x){ return s + (parseInt(x)||0); }, 0);
       var net = (item.price || 0) * (split / 100);
@@ -1154,6 +1164,8 @@ function renderInventory() {
         '<td><select class="pl-inv-cat-select" data-inv-id="' + item.id + '" data-field="category" onchange="updateInventoryItem(this)">' + catOpts + '</select></td>' +
         '<td class="num"><span class="pl-dollar">$</span><input class="pl-inv-price-input" type="number" min="0" value="' + (item.price||0) + '" placeholder="0"' +
           ' data-inv-id="' + item.id + '" data-field="price" onchange="updateInventoryItem(this)"></td>' +
+        '<td class="num"><input class="pl-inv-qty-input" type="number" min="1" value="' + qty + '"' +
+          ' data-inv-id="' + item.id + '" data-field="qty" onchange="updateInventoryItem(this);renderInventory()"></td>' +
         weekCells +
         '<td class="num pl-inv-net">$' + fmt(net) + '</td>' +
         '<td><button class="pl-row-del" data-inv-id="' + item.id + '" onclick="deleteInventoryItem(this.dataset.invId)">×</button></td>' +
@@ -1176,7 +1188,7 @@ function renderInventory() {
         '<button class="pl-inv-vendor-del" data-vendor="' + esc(vendorName) + '" onclick="deleteInvVendor(this.dataset.vendor)">×</button>' +
       '</div>' +
       '<div class="pl-inv-table-wrap"><table class="pl-inv-table">' +
-        '<thead><tr><th>Item</th><th>Category</th><th class="num">Unit $</th>' + weeksHead + '<th class="num">Your net</th><th></th></tr></thead>' +
+        '<thead><tr><th>Item</th><th>Category</th><th class="num">Unit $</th><th class="num">Qty</th>' + weeksHead + '<th class="num">Your net</th><th></th></tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table></div>' +
       '<button class="pl-add-row-btn" onclick="addInventoryItem(\'' + esc(vendorName) + '\')">+ Add item</button>' +
@@ -1203,7 +1215,11 @@ function updateInventoryItem(input) {
   var item = data.inventory.find(function(i) { return i.id === input.dataset.invId; });
   if (!item) return;
   var field = input.dataset.field;
-  item[field] = field === 'price' ? (parseFloat(input.value) || 0) : input.value;
+  if (field === 'price' || field === 'qty') {
+    item[field] = field === 'qty' ? (parseInt(input.value) || 1) : (parseFloat(input.value) || 0);
+  } else {
+    item[field] = input.value;
+  }
   savePLData(data);
 }
 
@@ -1214,6 +1230,17 @@ function updateInvWeek(input) {
   if (!item.weeks) item.weeks = [0,0,0,0];
   var wi = parseInt(input.dataset.week);
   item.weeks[wi] = parseInt(input.value) || 0;
+  savePLData(data);
+  renderInventory();
+}
+
+function updateInvWeekCheck(input) {
+  var data = getPLData();
+  var item = data.inventory.find(function(i) { return i.id === input.dataset.invId; });
+  if (!item) return;
+  if (!item.weeks) item.weeks = [0,0,0,0];
+  var wi = parseInt(input.dataset.week);
+  item.weeks[wi] = input.checked ? 1 : 0;
   savePLData(data);
   renderInventory();
 }
