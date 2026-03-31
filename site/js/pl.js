@@ -1137,10 +1137,12 @@ function renderInventory() {
         weekCells += '<td><input class="pl-inv-week-input" type="number" min="0" value="' + wVal + '" placeholder="0"' +
           ' data-inv-id="' + item.id + '" data-week="' + wi + '" onchange="updateInvWeek(this)"></td>';
       }
-      var totalWeekRevenue = (weeks || []).reduce(function(s,x){ return s + (parseInt(x)||0); }, 0);
-      var net = totalWeekRevenue * (split / 100);
-      vGross += totalWeekRevenue;
-      vNet += net;
+      var totalWeekQty = (weeks || []).reduce(function(s,x){ return s + (parseInt(x)||0); }, 0);
+      var net = (item.price || 0) * (split / 100);
+      var totalGrossItem = totalWeekQty * (item.price || 0);
+      var totalNetItem = totalWeekQty * net;
+      vGross += totalGrossItem;
+      vNet += totalNetItem;
 
       var catOpts = INV_CATEGORIES.map(function(c) {
         return '<option value="' + c + '"' + (item.category === c ? ' selected' : '') + '>' + (c || '— cat —') + '</option>';
