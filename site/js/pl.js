@@ -302,6 +302,14 @@ function renderPLSummary(calc, scenario) {
         '</div>' +
         '<div class="pl-be-result" id="pl-be-result"></div>' +
       '</div>' +
+      '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
+        '<div class="pl-summary-label">P/L Calculator</div>' +
+        '<div class="pl-be-inputs">' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment sales</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-consign" value="' + (scenario.calcConsign || 0) + '" onchange="updatePLCalc()"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Merch / Event sales</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-merch" value="' + (scenario.calcMerch || 0) + '" onchange="updatePLCalc()"></div>' +
+        '</div>' +
+        '<div class="pl-calc-result" id="pl-calc-result"></div>' +
+      '</div>' +
     '</div>';
 }
 
@@ -440,9 +448,49 @@ function updateBECalc() {
   }
 }
 
-// Run BE calc after render
+function updatePLCalc() {
+  var consignSales = parseFloat(document.getElementById('pl-calc-consign').value) || 0;
+  var merchSales = parseFloat(document.getElementById('pl-calc-merch').value) || 0;
+
+  // Save to scenario
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario.calcConsign = consignSales;
+  scenario.calcMerch = merchSales;
+  savePLData(data);
+
+  // Calculate
+  var consignRate = scenario.beConsignRate || 30;
+  var consignReturn = consignSales * (consignRate / 100);
+  var merchReturn = merchSales; // 100%
+  var totalGross = consignSales + merchSales;
+  var totalReturn = consignReturn + merchReturn;
+
+  var consignPct = totalGross > 0 ? Math.round((consignSales / totalGross) * 100) : 0;
+  var merchPct = totalGross > 0 ? Math.round((merchSales / totalGross) * 100) : 0;
+
+  var totalCosts = 0;
+  (scenario.fixedCosts || []).forEach(function(c) { totalCosts += (c.amount || 0); });
+  var netPL = totalReturn - totalCosts;
+  var plClass = netPL >= 0 ? 'pl-positive' : 'pl-negative';
+
+  var el = document.getElementById('pl-calc-result');
+  if (el) {
+    el.innerHTML =
+      '<div class="pl-calc-breakdown">' +
+        '<div class="pl-calc-line"><span>Consignment</span><span>' + consignPct + '% of sales</span><span>Our ' + consignRate + '% = $' + fmt(consignReturn) + '</span></div>' +
+        '<div class="pl-calc-line"><span>Merch / Events</span><span>' + merchPct + '% of sales</span><span>100% = $' + fmt(merchReturn) + '</span></div>' +
+        '<div class="pl-calc-line pl-calc-total"><span>Total revenue</span><span>$' + fmt(totalGross) + ' gross</span><span>$' + fmt(totalReturn) + ' ours</span></div>' +
+        '<div class="pl-calc-line pl-calc-total"><span>− Costs</span><span></span><span>$' + fmt(totalCosts) + '</span></div>' +
+      '</div>' +
+      '<div class="pl-calc-net ' + plClass + '">' + (netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(netPL)) + '</div>' +
+      '<div class="pl-be-sub">' + (netPL >= 0 ? 'profit' : 'loss') + '</div>';
+  }
+}
+
+// Run calcs after render
 function initBECalc() {
-  setTimeout(updateBECalc, 50);
+  setTimeout(function() { updateBECalc(); updatePLCalc(); }, 50);
 }
 
 function toggleRevCard(id) {
