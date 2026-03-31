@@ -350,8 +350,12 @@ function renderPLSummary(calc, scenario) {
         '<div class="pl-summary-label">Profit Target</div>' +
         '<div class="pl-be-inputs">' +
           '<div class="pl-be-row"><span class="pl-be-lbl">Target profit</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-profit" value="' + (scenario.targetProfit || 0) + '"></div>' +
-          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment %</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-consign-pct" value="' + (scenario.targetConsignPct || 80) + '">%</div>' +
-          '<div class="pl-be-row"><span class="pl-be-lbl">Commission rate</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-comm" value="' + (scenario.targetComm || 30) + '">%</div>' +
+          '<div class="pl-target-divider"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment rate</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-comm" value="' + (scenario.targetComm || 30) + '">%</div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Merch/Other rate</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-merch-rate" value="' + (scenario.targetMerchRate || 100) + '">%</div>' +
+          '<div class="pl-target-divider"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Known consignment $</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-known-consign" value="' + (scenario.targetKnownConsign || '') + '" placeholder="—"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Known merch $</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-known-merch" value="' + (scenario.targetKnownMerch || '') + '" placeholder="—"></div>' +
         '</div>' +
         '<button class="pl-target-run-btn" onclick="runProfitTarget()">Run →</button>' +
         '<div class="pl-calc-result" id="pl-target-result"></div>' +
@@ -584,31 +588,67 @@ function updatePLCalc() {
 
 function runProfitTarget() {
   var targetProfit = parseFloat(document.getElementById('pl-target-profit').value) || 0;
-  var consignPct = parseFloat(document.getElementById('pl-target-consign-pct').value) || 80;
-  var merchPct = 100 - consignPct;
   var commRate = parseFloat(document.getElementById('pl-target-comm').value) || 30;
+  var merchRate = parseFloat(document.getElementById('pl-target-merch-rate').value) || 100;
+  var knownConsign = document.getElementById('pl-target-known-consign').value;
+  var knownMerch = document.getElementById('pl-target-known-merch').value;
+  var hasKnownConsign = knownConsign !== '' && knownConsign !== undefined;
+  var hasKnownMerch = knownMerch !== '' && knownMerch !== undefined;
+  knownConsign = parseFloat(knownConsign) || 0;
+  knownMerch = parseFloat(knownMerch) || 0;
 
   // Save to scenario
   var data = getPLData();
   var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
   scenario.targetProfit = targetProfit;
-  scenario.targetConsignPct = consignPct;
   scenario.targetComm = commRate;
+  scenario.targetMerchRate = merchRate;
+  scenario.targetKnownConsign = hasKnownConsign ? knownConsign : '';
+  scenario.targetKnownMerch = hasKnownMerch ? knownMerch : '';
   savePLData(data);
 
-  // Calculate: need enough revenue to cover costs + target profit
   var totalCosts = 0;
   (scenario.fixedCosts || []).forEach(function(c) { totalCosts += (c.amount || 0); });
+  var needed = totalCosts + targetProfit;
 
-  var needed = totalCosts + targetProfit; // total revenue (our cut) needed
-  // Blended margin: consignPct% at commRate% + merchPct% at 100%
-  var blended = (consignPct * (commRate / 100) + merchPct * 1.0) / 100;
-  var totalGrossNeeded = blended > 0 ? Math.ceil(needed / blended) : 0;
-  var consignGross = Math.ceil(totalGrossNeeded * (consignPct / 100));
-  var merchGross = totalGrossNeeded - consignGross;
-  var consignReturn = Math.round(consignGross * (commRate / 100));
-  var merchReturn = merchGross;
+  var consignGross, merchGross, consignReturn, merchReturn;
+
+  if (hasKnownConsign && hasKnownMerch) {
+    // Both known — just calculate returns
+    consignGross = knownConsign;
+    merchGross = knownMerch;
+    consignReturn = Math.round(consignGross * (commRate / 100));
+    merchReturn = Math.round(merchGross * (merchRate / 100));
+  } else if (hasKnownMerch && !hasKnownConsign) {
+    // Merch known — how much consignment do we need?
+    merchGross = knownMerch;
+    merchReturn = Math.round(merchGross * (merchRate / 100));
+    var consignNeeded = needed - merchReturn; // our cut still needed from consignment
+    consignReturn = Math.max(0, consignNeeded);
+    consignGross = commRate > 0 ? Math.ceil(consignReturn / (commRate / 100)) : 0;
+  } else if (hasKnownConsign && !hasKnownMerch) {
+    // Consignment known — how much merch do we need?
+    consignGross = knownConsign;
+    consignReturn = Math.round(consignGross * (commRate / 100));
+    var merchNeeded = needed - consignReturn;
+    merchReturn = Math.max(0, merchNeeded);
+    merchGross = merchRate > 0 ? Math.ceil(merchReturn / (merchRate / 100)) : 0;
+  } else {
+    // Neither known — use equal split
+    var blended = 0.5 * (commRate / 100) + 0.5 * (merchRate / 100);
+    var totalGross = blended > 0 ? Math.ceil(needed / blended) : 0;
+    consignGross = Math.ceil(totalGross * 0.5);
+    merchGross = totalGross - consignGross;
+    consignReturn = Math.round(consignGross * (commRate / 100));
+    merchReturn = Math.round(merchGross * (merchRate / 100));
+  }
+
+  var totalGrossNeeded = consignGross + merchGross;
   var totalReturn = consignReturn + merchReturn;
+  var consignPct = totalGrossNeeded > 0 ? Math.round((consignGross / totalGrossNeeded) * 100) : 0;
+  var merchPct = totalGrossNeeded > 0 ? 100 - consignPct : 0;
+  var actualPL = totalReturn - totalCosts;
+  var plClass = actualPL >= targetProfit ? 'pl-positive' : 'pl-negative';
 
   var el = document.getElementById('pl-target-result');
   if (el) {
@@ -617,10 +657,11 @@ function runProfitTarget() {
         '<div class="pl-calc-line"><span>Costs to cover</span><span></span><span>$' + fmt(totalCosts) + '</span></div>' +
         '<div class="pl-calc-line"><span>+ Target profit</span><span></span><span>$' + fmt(targetProfit) + '</span></div>' +
         '<div class="pl-calc-line pl-calc-total"><span>Need (our cut)</span><span></span><span>$' + fmt(needed) + '</span></div>' +
-        '<div class="pl-calc-line" style="margin-top:6px"><span>Consignment (' + consignPct + '%)</span><span>$' + fmt(consignGross) + ' gross</span><span>$' + fmt(consignReturn) + ' ours</span></div>' +
-        '<div class="pl-calc-line"><span>Merch/Events (' + merchPct + '%)</span><span>$' + fmt(merchGross) + ' gross</span><span>$' + fmt(merchReturn) + ' ours</span></div>' +
-        '<div class="pl-calc-line pl-calc-total"><span>Total sales needed</span><span></span><span>$' + fmt(totalGrossNeeded) + '</span></div>' +
-      '</div>';
+        '<div class="pl-calc-line" style="margin-top:8px"><span>Consignment @ ' + commRate + '%</span><span>' + consignPct + '% · $' + fmt(consignGross) + ' gross</span><span>$' + fmt(consignReturn) + ' ours</span></div>' +
+        '<div class="pl-calc-line"><span>Merch/Other @ ' + merchRate + '%</span><span>' + merchPct + '% · $' + fmt(merchGross) + ' gross</span><span>$' + fmt(merchReturn) + ' ours</span></div>' +
+        '<div class="pl-calc-line pl-calc-total"><span>Total sales</span><span>$' + fmt(totalGrossNeeded) + '</span><span>$' + fmt(totalReturn) + ' ours</span></div>' +
+      '</div>' +
+      '<div class="pl-calc-net ' + plClass + '">' + (actualPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(actualPL)) + ' profit</div>';
   }
 }
 
