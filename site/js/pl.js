@@ -756,16 +756,32 @@ function updatePLCalc() {
   var el = document.getElementById('pl-calc-result');
   if (el) {
     el.innerHTML =
-      '<div class="pl-calc-big-row">' +
-        '<div class="pl-calc-big-item"><span class="pl-calc-big-val">$' + fmt(consignSales) + '</span> <span class="pl-calc-big-pct">' + consignPct + '%</span><div class="pl-calc-big-label">Consignment</div><div class="pl-calc-big-our">Our ' + consignRate + '% = <strong>$' + fmt(consignReturn) + '</strong></div></div>' +
-        '<div class="pl-calc-big-item"><span class="pl-calc-big-val">$' + fmt(merchSales) + '</span> <span class="pl-calc-big-pct">' + merchPct + '%</span><div class="pl-calc-big-label">Merch / Events</div><div class="pl-calc-big-our">100% = <strong>$' + fmt(merchReturn) + '</strong></div></div>' +
-        '<div class="pl-calc-big-item pl-calc-big-ours"><span class="pl-calc-big-val pl-calc-ours-val">$' + fmt(totalReturn) + '</span><div class="pl-calc-big-label">Ours</div></div>' +
+      '<div class="pl-calc-sheet">' +
+        '<div class="pl-calc-sheet-row">' +
+          '<span class="pl-cs-label">Consignment</span>' +
+          '<span class="pl-cs-gross">$' + fmt(consignSales) + '</span>' +
+          '<span class="pl-cs-pct">' + consignPct + '%</span>' +
+          '<span class="pl-cs-ours">$' + fmt(consignReturn) + '</span>' +
+        '</div>' +
+        '<div class="pl-calc-sheet-row">' +
+          '<span class="pl-cs-label">Merch</span>' +
+          '<span class="pl-cs-gross">$' + fmt(merchSales) + '</span>' +
+          '<span class="pl-cs-pct">' + merchPct + '%</span>' +
+          '<span class="pl-cs-ours">$' + fmt(merchReturn) + '</span>' +
+        '</div>' +
+        '<div class="pl-calc-sheet-row pl-cs-total-row">' +
+          '<span class="pl-cs-label">Total</span>' +
+          '<span class="pl-cs-gross">$' + fmt(totalGross) + '</span>' +
+          '<span class="pl-cs-pct"></span>' +
+          '<span class="pl-cs-ours">$' + fmt(totalReturn) + '</span>' +
+        '</div>' +
+        '<div class="pl-calc-sheet-row pl-cs-costs-row">' +
+          '<span class="pl-cs-label">− Costs</span>' +
+          '<span class="pl-cs-gross"></span>' +
+          '<span class="pl-cs-pct"></span>' +
+          '<span class="pl-cs-ours">$' + fmt(totalCosts) + '</span>' +
+        '</div>' +
       '</div>' +
-      '<div class="pl-calc-summary-row">' +
-        '<span>Total gross: $' + fmt(totalGross) + '</span>' +
-        '<span>Total ours: $' + fmt(totalReturn) + '</span>' +
-      '</div>' +
-      '<div class="pl-calc-deduction">− Costs: $' + fmt(totalCosts) + '</div>' +
       '<div class="pl-calc-net ' + plClass + '">' + (netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(netPL)) + '</div>' +
       '<div class="pl-be-sub">' + (netPL >= 0 ? 'profit' : 'loss') + '</div>';
   }
