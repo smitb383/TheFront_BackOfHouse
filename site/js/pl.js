@@ -162,7 +162,10 @@ function calcPL(scenario, inventory) {
   var itemBreakdown = [];
 
   inventory.forEach(function(item) {
-    var sales = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 1;
+    var sale = scenario.itemSales && scenario.itemSales[item.id];
+    var sold = sale ? sale.sold : true; // default to sold
+    var sales = sale ? sale.qty : 1;
+    if (!sold) sales = 0; // not sold = no revenue
     var gross = sales * item.price;
     var commission = item.isInHouse ? gross : gross * (item.commissionPct / 100);
     totalRevenue += gross;
@@ -173,7 +176,8 @@ function calcPL(scenario, inventory) {
       item: item,
       qtySold: sales,
       grossRevenue: gross,
-      ourCut: commission
+      ourCut: commission,
+      sold: sold
     });
   });
 
@@ -312,9 +316,12 @@ function renderRevenueSection(data, scenario, calc) {
     var vendorTotal = 0;
     var vendorGross = 0;
 
-    // Calculate totals first
+    // Calculate totals first (only sold items count)
     group.items.forEach(function(item) {
-      var qty = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 1;
+      var sale = scenario.itemSales && scenario.itemSales[item.id];
+      var sold = sale ? sale.sold : true; // default sold
+      var qty = sale ? sale.qty : 1;
+      if (!sold) return;
       var gross = qty * item.price;
       var cut = item.isInHouse ? gross : gross * (item.commissionPct / 100);
       vendorTotal += cut;
@@ -325,18 +332,20 @@ function renderRevenueSection(data, scenario, calc) {
     html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(vendorName) + ' <span class="pl-commission-tag">' + tagLabel + '</span></span><span class="pl-cost-cat-total">$' + fmt(vendorTotal) + '</span></div>';
 
     group.items.forEach(function(item) {
-      var qty = (scenario.itemSales && scenario.itemSales[item.id]) ? scenario.itemSales[item.id].qty : 1;
+      var sale = scenario.itemSales && scenario.itemSales[item.id];
+      var sold = sale ? sale.sold : true;
+      var qty = sale ? sale.qty : 1;
       var gross = qty * item.price;
       var cut = item.isInHouse ? gross : gross * (item.commissionPct / 100);
       var isOpen = document.getElementById('pl-rev-' + item.id) && document.getElementById('pl-rev-' + item.id).classList.contains('open');
 
-      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-rev-' + item.id + '">' +
+      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + (sold ? '' : ' pl-not-sold') + '" id="pl-rev-' + item.id + '">' +
         '<div class="pl-cost-top">' +
-          '<div class="pl-cost-status-dot" style="background:var(--front)" onclick="toggleRevCard(\'' + item.id + '\')"></div>' +
+          '<button class="pl-sold-toggle' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')" title="' + (sold ? 'Sold' : 'Not sold') + '">' + (sold ? 'SOLD' : 'NOT SOLD') + '</button>' +
           '<span class="pl-rev-item-name" onclick="toggleRevCard(\'' + item.id + '\')">' + esc(item.name || '(untitled)') + '</span>' +
           '<span class="pl-rev-item-price">$' + fmt(item.price) + '</span>' +
           '<span class="pl-rev-item-qty" onclick="event.stopPropagation()">×<input type="number" min="0" value="' + qty + '" class="pl-cost-amt-num" style="width:40px" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
-          '<span class="pl-rev-item-cut">$' + fmt(cut) + '</span>' +
+          '<span class="pl-rev-item-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(cut) + '</span>' +
           '<span class="pl-cost-chevron" onclick="toggleRevCard(\'' + item.id + '\')">›</span>' +
         '</div>' +
         '<div class="pl-cost-body">' +
@@ -493,7 +502,21 @@ function updateItemQty(input) {
   var data = getPLData();
   var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
   if (!scenario.itemSales) scenario.itemSales = {};
-  scenario.itemSales[input.dataset.itemId] = { qty: parseInt(input.value) || 0 };
+  var id = input.dataset.itemId;
+  var existing = scenario.itemSales[id] || { qty: 1, sold: true };
+  existing.qty = parseInt(input.value) || 0;
+  scenario.itemSales[id] = existing;
+  savePLData(data);
+  renderPL();
+}
+
+function toggleItemSold(itemId) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  if (!scenario.itemSales) scenario.itemSales = {};
+  var existing = scenario.itemSales[itemId] || { qty: 1, sold: true };
+  existing.sold = !existing.sold;
+  scenario.itemSales[itemId] = existing;
   savePLData(data);
   renderPL();
 }
