@@ -3,15 +3,16 @@
 // ============================================
 
 var PL_KEY = 'pl_data_v1';
+var PL_SEED_VERSION = 2; // bump this number to force re-seed on next load
 
 function getPLData() {
   try { return JSON.parse(localStorage.getItem(PL_KEY)) || null; } catch(e) { return null; }
 }
-function savePLData(d) { localStorage.setItem(PL_KEY, JSON.stringify(d)); }
+function savePLData(d) { d._seedVersion = PL_SEED_VERSION; localStorage.setItem(PL_KEY, JSON.stringify(d)); }
 
 function initPLData() {
   var existing = getPLData();
-  if (existing && existing.scenarios && existing.scenarios.length) return existing;
+  if (existing && existing.scenarios && existing.scenarios.length && existing._seedVersion === PL_SEED_VERSION) return existing;
 
   // Pull inventory from existing revenue catalog
   var revProj = null;
