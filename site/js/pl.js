@@ -267,25 +267,29 @@ function renderPLSummary(calc) {
   var el = document.getElementById('pl-summary');
   if (!el) return;
   var netClass = calc.netPL >= 0 ? 'pl-positive' : 'pl-negative';
+  // Break-even: total costs / 0.30 = gross sales needed at 30% commission
+  var totalCosts = calc.totalFixed + calc.totalVariable;
+  var breakEvenGross = totalCosts > 0 ? Math.ceil(totalCosts / 0.30) : 0;
   el.innerHTML =
     '<div class="pl-summary-grid">' +
       '<div class="pl-summary-card">' +
-        '<div class="pl-summary-label">Gross Revenue</div>' +
-        '<div class="pl-summary-val">$' + fmt(calc.totalGrossRevenue) + '</div>' +
-      '</div>' +
-      '<div class="pl-summary-card">' +
-        '<div class="pl-summary-label">Our Cut (commission + in-house)</div>' +
-        '<div class="pl-summary-val">$' + fmt(calc.ourCut) + '</div>' +
-      '</div>' +
-      '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Total Costs</div>' +
-        '<div class="pl-summary-val">$' + fmt(calc.totalFixed + calc.totalVariable) + '</div>' +
+        '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
         '<div class="pl-summary-sub">Fixed: $' + fmt(calc.totalFixed) + ' · Variable: $' + fmt(calc.totalVariable) + '</div>' +
+      '</div>' +
+      '<div class="pl-summary-card">' +
+        '<div class="pl-summary-label">The Front Revenue</div>' +
+        '<div class="pl-summary-val">$' + fmt(calc.ourCut) + '</div>' +
+        '<div class="pl-summary-sub">Gross sales: $' + fmt(calc.totalGrossRevenue) + '</div>' +
       '</div>' +
       '<div class="pl-summary-card ' + netClass + '">' +
         '<div class="pl-summary-label">Net P/L</div>' +
-        '<div class="pl-summary-val">' + (calc.netPL >= 0 ? '+' : '') + '$' + fmt(calc.netPL) + '</div>' +
-        '<div class="pl-summary-sub">Break-even at $' + fmt(calc.breakeven) + ' in revenue</div>' +
+        '<div class="pl-summary-val">' + (calc.netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(calc.netPL)) + '</div>' +
+      '</div>' +
+      '<div class="pl-summary-card pl-breakeven">' +
+        '<div class="pl-summary-label">Break-even (at 30%)</div>' +
+        '<div class="pl-summary-val">$' + fmt(breakEvenGross) + '</div>' +
+        '<div class="pl-summary-sub">in total sales needed to cover all costs</div>' +
       '</div>' +
     '</div>';
 }
@@ -341,8 +345,9 @@ function renderRevenueSection(data, scenario, calc) {
 
       html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + (sold ? '' : ' pl-not-sold') + '" id="pl-rev-' + item.id + '">' +
         '<div class="pl-cost-top">' +
-          '<button class="pl-sold-toggle' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')" title="' + (sold ? 'Sold' : 'Not sold') + '">' + (sold ? 'SOLD' : 'NOT SOLD') + '</button>' +
+          '<div class="pl-sold-dot' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')" title="' + (sold ? 'Sold — click to mark unsold' : 'Not sold — click to mark sold') + '"></div>' +
           '<span class="pl-rev-item-name" onclick="toggleRevCard(\'' + item.id + '\')">' + esc(item.name || '(untitled)') + '</span>' +
+          '<span class="pl-rev-item-vendor">' + esc(item.vendor) + '</span>' +
           '<span class="pl-rev-item-price">$' + fmt(item.price) + '</span>' +
           '<span class="pl-rev-item-qty" onclick="event.stopPropagation()">×<input type="number" min="0" value="' + qty + '" class="pl-cost-amt-num" style="width:40px" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
           '<span class="pl-rev-item-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(cut) + '</span>' +
