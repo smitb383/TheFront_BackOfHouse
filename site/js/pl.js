@@ -285,7 +285,9 @@ function renderPL() {
 
   renderScenarioBar(data);
   renderPLSummary(calc, scenario);
-  renderRevenueSection(data, scenario, calc);
+  // Revenue items hidden for now
+  var revEl = document.getElementById('pl-revenue');
+  if (revEl) revEl.innerHTML = '';
   renderFixedCosts(scenario);
   renderVariableCosts(scenario, calc);
   initBECalc();
