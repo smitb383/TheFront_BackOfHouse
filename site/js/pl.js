@@ -435,12 +435,15 @@ function renderFixedCosts(scenario) {
   var html = '<div class="pl-section-header"><span class="pl-section-title">Fixed Costs</span><span class="pl-section-total">$' + fmt(total) + '</span></div>';
 
   var cats = {};
-  var catOrder = [];
   (scenario.fixedCosts || []).forEach(function(c) {
     var cat = c.category || 'misc';
-    if (!cats[cat]) { cats[cat] = []; catOrder.push(cat); }
+    if (!cats[cat]) cats[cat] = [];
     cats[cat].push(c);
   });
+  // Sort categories by FC_CATEGORIES order
+  var catOrder = FC_CATEGORIES.filter(function(c) { return cats[c]; });
+  // Add any categories not in FC_CATEGORIES at the end
+  Object.keys(cats).forEach(function(c) { if (catOrder.indexOf(c) < 0) catOrder.push(c); });
 
   // Sort items within each category by amount descending
   catOrder.forEach(function(cat) {
