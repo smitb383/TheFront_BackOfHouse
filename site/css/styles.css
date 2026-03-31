@@ -3891,3 +3891,21 @@ body::before {
 }
 .pl-columns { gap:32px; }
 .pl-col { overflow:visible; }
+
+/* ── Revenue + Variable costs match Fixed cost card styling ── */
+.pl-rev-spreadrow {
+  background:var(--surface); border:1px solid var(--border); border-radius:4px;
+  margin-bottom:2px; padding:8px 12px;
+}
+.pl-rev-spreadrow:hover { background:var(--faint); }
+
+.pl-cost-row {
+  background:var(--surface); border:1px solid var(--border); border-radius:4px;
+  margin-bottom:2px; padding:8px 12px;
+}
+.pl-cost-row:hover { background:var(--faint); }
+
+/* Variable cost items in cards */
+#pl-variable .pl-cost-row {
+  display:flex; align-items:center; gap:8px;
+}
