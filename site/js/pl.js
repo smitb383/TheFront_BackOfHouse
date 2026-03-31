@@ -388,7 +388,18 @@ function renderRevenueSection(data, scenario, calc) {
     else consignmentVendors.push(vendorName);
   });
 
-  function renderRevGroup(label, vendorList, showCommission) {
+  // Unified column headers (once, above both sections)
+  html += '<div class="pl-rev-colheaders">' +
+    '<span class="pl-rev-ch-vendor">Designer</span>' +
+    '<span class="pl-rev-ch-item">Item</span>' +
+    '<span class="pl-rev-ch-num">Price</span>' +
+    '<span class="pl-rev-ch-num">Qty</span>' +
+    '<span class="pl-rev-ch-num">Comm %</span>' +
+    '<span class="pl-rev-ch-num">Our cut</span>' +
+    '<span class="pl-rev-ch-status"></span>' +
+  '</div>';
+
+  function renderConsignmentGroup(vendorList) {
     if (!vendorList.length) return '';
     var groupTotal = 0;
     vendorList.forEach(function(vn) {
@@ -397,24 +408,12 @@ function renderRevenueSection(data, scenario, calc) {
         var sold = sale ? sale.sold : true;
         if (!sold) return;
         var qty = sale ? sale.qty : 1;
-        var gross = qty * item.price;
-        var cut = item.isInHouse ? gross : gross * (item.commissionPct / 100);
+        var cut = qty * item.price * (item.commissionPct / 100);
         groupTotal += cut;
       });
     });
 
-    var h = '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(label) + '</span><span class="pl-cost-cat-total">$' + fmt(groupTotal) + '</span></div>';
-
-    // Spreadsheet column headers
-    h += '<div class="pl-rev-colheaders">' +
-      '<span class="pl-rev-ch-vendor">Designer</span>' +
-      '<span class="pl-rev-ch-item">Item</span>' +
-      '<span class="pl-rev-ch-num">Price</span>' +
-      '<span class="pl-rev-ch-num">Qty</span>' +
-      (showCommission ? '<span class="pl-rev-ch-num">Comm %</span>' : '') +
-      '<span class="pl-rev-ch-num">Our cut</span>' +
-      '<span class="pl-rev-ch-status"></span>' +
-    '</div>';
+    var h = '<div class="pl-cost-cat"><span class="pl-cost-cat-name">Consignment</span><span class="pl-cost-cat-total">$' + fmt(groupTotal) + '</span></div>';
 
     vendorList.forEach(function(vendorName) {
       var group = vendorMap[vendorName];
@@ -423,26 +422,75 @@ function renderRevenueSection(data, scenario, calc) {
         var sold = sale ? sale.sold : true;
         var qty = sale ? sale.qty : 1;
         var gross = qty * item.price;
-        var cut = item.isInHouse ? gross : gross * (item.commissionPct / 100);
+        var cut = gross * (item.commissionPct / 100);
         var showVendorLabel = (idx === 0);
-        var isOpen = document.getElementById('pl-rev-' + item.id) && document.getElementById('pl-rev-' + item.id).classList.contains('open');
 
         h += '<div class="pl-rev-spreadrow' + (sold ? '' : ' pl-not-sold') + '" id="pl-rev-' + item.id + '">' +
           '<span class="pl-rev-sr-vendor">' + (showVendorLabel ? esc(vendorName) : '') + '</span>' +
-          '<span class="pl-rev-sr-item" onclick="toggleRevCard(\'' + item.id + '\')">' + esc(item.name || '(untitled)') + '</span>' +
+          '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
           '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
           '<span class="pl-rev-sr-num" onclick="event.stopPropagation()"><input type="number" min="0" value="' + qty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
-          (showCommission ? '<span class="pl-rev-sr-num" onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + (item.commissionPct || 30) + '" class="pl-rev-sr-input" data-inv-id="' + item.id + '" onchange="updateItemCommission(this)">%</span>' : '') +
+          '<span class="pl-rev-sr-num" onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + (item.commissionPct || 30) + '" class="pl-rev-sr-input" data-inv-id="' + item.id + '" onchange="updateItemCommission(this)">%</span>' +
           '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(cut) + '</span>' +
-          '<span class="pl-rev-sr-status"><span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sold' : 'unsold') + '</span></span>' +
+          '<span class="pl-rev-sr-status"><span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sells' : 'won\'t sell') + '</span></span>' +
         '</div>';
       });
     });
     return h;
   }
 
-  html += renderRevGroup('Consignment', consignmentVendors, true);
-  html += renderRevGroup('The Front Merch', merchVendors, false);
+  function renderMerchGroup(vendorList) {
+    if (!vendorList.length) return '';
+    var groupTotal = 0;
+    vendorList.forEach(function(vn) {
+      vendorMap[vn].items.forEach(function(item) {
+        var sale = scenario.itemSales && scenario.itemSales[item.id];
+        var sold = sale ? sale.sold : true;
+        if (!sold) return;
+        var qty = sale ? sale.qty : 1;
+        groupTotal += qty * item.price;
+      });
+    });
+
+    var h = '<div class="pl-cost-cat"><span class="pl-cost-cat-name">The Front Merch</span><span class="pl-cost-cat-total">$' + fmt(groupTotal) + '</span></div>';
+
+    vendorList.forEach(function(vendorName) {
+      var group = vendorMap[vendorName];
+      group.items.forEach(function(item, idx) {
+        var sale = scenario.itemSales && scenario.itemSales[item.id];
+        var sold = sale ? sale.sold : true;
+        var qty = sale ? sale.qty : 1;
+        var gross = qty * item.price;
+        var isOpen = document.getElementById('pl-merch-' + item.id) && document.getElementById('pl-merch-' + item.id).classList.contains('open');
+
+        h += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + (sold ? '' : ' pl-not-sold') + '" id="pl-merch-' + item.id + '">' +
+          '<div class="pl-cost-top">' +
+            '<span class="pl-rev-item-name" onclick="toggleMerchCard(\'' + item.id + '\')">' + esc(item.name || '(untitled)') + '</span>' +
+            '<span class="pl-rev-item-price">$' + fmt(item.price) + '</span>' +
+            '<span class="pl-rev-item-qty" onclick="event.stopPropagation()">×<input type="number" min="0" value="' + qty + '" class="pl-cost-amt-num" style="width:40px" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
+            '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(gross) + '</span>' +
+            '<span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sells' : 'won\'t sell') + '</span>' +
+            '<span class="pl-cost-chevron" onclick="toggleMerchCard(\'' + item.id + '\')">›</span>' +
+          '</div>' +
+          '<div class="pl-cost-body">' +
+            '<div class="pl-cost-fields">' +
+              '<div class="pl-cost-field"><div class="pl-cost-field-label">Item name</div><input class="pl-cost-field-input" value="' + esc(item.name) + '" data-inv-id="' + item.id + '" data-field="name" onchange="updateInventoryItem(this)"></div>' +
+              '<div class="pl-cost-field"><div class="pl-cost-field-label">Price ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (item.price || 0) + '" data-inv-id="' + item.id + '" data-field="price" onchange="updateInventoryItem(this);renderPL()"></div>' +
+              '<div class="pl-cost-field"><div class="pl-cost-field-label">Category</div><input class="pl-cost-field-input" value="' + esc(item.category || '') + '" placeholder="e.g. tote bag, zine…" data-inv-id="' + item.id + '" data-field="category" onchange="updateInventoryItem(this)"></div>' +
+              '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Description, cost to produce, etc." data-inv-id="' + item.id + '" data-field="notes" onchange="updateInventoryItem(this)">' + esc(item.notes || '') + '</textarea></div>' +
+            '</div>' +
+            '<button class="pl-cost-delete-btn" onclick="deleteMerchItem(\'' + item.id + '\')">Delete item</button>' +
+          '</div>' +
+        '</div>';
+      });
+    });
+
+    h += '<button class="pl-add-row-btn" onclick="addMerchItem()">+ Add merch item</button>';
+    return h;
+  }
+
+  html += renderConsignmentGroup(consignmentVendors);
+  html += renderMerchGroup(merchVendors);
 
   // Other revenue (events, merch)
   html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">other revenue</span><span class="pl-cost-cat-total">$' + fmt((scenario.eventRevenue || 0) + (scenario.merchRevenue || 0)) + '</span></div>';
@@ -584,6 +632,44 @@ function initBECalc() {
 function toggleRevCard(id) {
   var card = document.getElementById('pl-rev-' + id);
   if (card) card.classList.toggle('open');
+}
+
+function toggleMerchCard(id) {
+  var card = document.getElementById('pl-merch-' + id);
+  if (card) card.classList.toggle('open');
+}
+
+function addMerchItem() {
+  var data = getPLData();
+  var newId = 'inv_merch_' + Date.now();
+  data.inventory.push({
+    id: newId,
+    name: '',
+    vendor: 'In-House',
+    vendorId: 3,
+    price: 0,
+    category: '',
+    isInHouse: true,
+    commissionPct: 100,
+    weeks: [0,0,0,0],
+    qty: 1,
+    notes: ''
+  });
+  savePLData(data);
+  renderPL();
+  // Auto-open the new card
+  setTimeout(function() {
+    var card = document.getElementById('pl-merch-' + newId);
+    if (card) card.classList.add('open');
+  }, 50);
+}
+
+function deleteMerchItem(id) {
+  if (!confirm('Delete this merch item?')) return;
+  var data = getPLData();
+  data.inventory = data.inventory.filter(function(i) { return i.id !== id; });
+  savePLData(data);
+  renderPL();
 }
 
 function goToInventoryItem(vendorName) {
