@@ -261,6 +261,16 @@ function calcPL(scenario, inventory) {
     }
   });
 
+  // Merch COGS
+  inventory.forEach(function(item) {
+    if (!item.isInHouse) return;
+    var sale = scenario.itemSales && scenario.itemSales[item.id];
+    var sold = sale ? sale.sold : true;
+    var qty = sale ? sale.qty : 1;
+    if (!sold) qty = 0;
+    totalVariable += qty * (item.costPerUnit || 0);
+  });
+
   var netPL = ourCut - totalFixed - totalVariable;
   var breakeven = totalFixed + totalVariable;
 
@@ -298,7 +308,7 @@ function renderPL() {
   } else {
     // Popup tabs: full revenue + variable costs + calculators
     renderRevenueSection(data, scenario, calc);
-    renderVariableCosts(scenario, calc);
+    renderVariableCosts(scenario, calc, data);
     initBECalc();
   }
 
@@ -542,7 +552,8 @@ function renderRevenueSection(data, scenario, calc) {
           '<div class="pl-cost-body">' +
             '<div class="pl-cost-fields">' +
               '<div class="pl-cost-field"><div class="pl-cost-field-label">Item name</div><input class="pl-cost-field-input" value="' + esc(item.name) + '" data-inv-id="' + item.id + '" data-field="name" onchange="updateInventoryItem(this)"></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Price ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (item.price || 0) + '" data-inv-id="' + item.id + '" data-field="price" onchange="updateInventoryItem(this);renderPL()"></div>' +
+              '<div class="pl-cost-field"><div class="pl-cost-field-label">Sell price ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (item.price || 0) + '" data-inv-id="' + item.id + '" data-field="price" onchange="updateInventoryItem(this);renderPL()"></div>' +
+              '<div class="pl-cost-field"><div class="pl-cost-field-label">Cost per unit ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (item.costPerUnit || 0) + '" data-inv-id="' + item.id + '" data-field="costPerUnit" onchange="updateInventoryItem(this);renderPL()"></div>' +
               '<div class="pl-cost-field"><div class="pl-cost-field-label">Category</div><input class="pl-cost-field-input" value="' + esc(item.category || '') + '" placeholder="e.g. tote bag, zine…" data-inv-id="' + item.id + '" data-field="category" onchange="updateInventoryItem(this)"></div>' +
               '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Description, cost to produce, etc." data-inv-id="' + item.id + '" data-field="notes" onchange="updateInventoryItem(this)">' + esc(item.notes || '') + '</textarea></div>' +
             '</div>' +
@@ -923,7 +934,7 @@ function renderFixedCosts(scenario) {
   el.innerHTML = html;
 }
 
-function renderVariableCosts(scenario, calc) {
+function renderVariableCosts(scenario, calc, data) {
   var el = document.getElementById('pl-variable');
   if (!el) return;
   var total = calc.totalVariable;
@@ -946,9 +957,34 @@ function renderVariableCosts(scenario, calc) {
     '</div>';
   });
 
+  // Merch COGS — linked to inventory quantities
+  var merchItems = (data ? data.inventory : []).filter(function(i) { return i.isInHouse; });
+  if (merchItems.length) {
+    html += '<div class="pl-cost-cat" style="margin-top:14px"><span class="pl-cost-cat-name">Merch COGS</span></div>';
+    var merchCOGSTotal = 0;
+    merchItems.forEach(function(item) {
+      var sale = scenario.itemSales && scenario.itemSales[item.id];
+      var sold = sale ? sale.sold : true;
+      var qty = sale ? sale.qty : 1;
+      if (!sold) qty = 0;
+      var costPerUnit = item.costPerUnit || 0;
+      var totalCost = qty * costPerUnit;
+      merchCOGSTotal += totalCost;
+      html += '<div class="pl-cost-row">' +
+        '<span class="pl-cost-name">' + esc(item.name || '(untitled)') + '</span>' +
+        '<span class="pl-cost-note">$' + fmt(costPerUnit) + '/unit × ' + qty + '</span>' +
+        '<span class="pl-cost-amt">$' + fmt(totalCost) + '</span>' +
+        '<button class="pl-row-del" style="visibility:hidden">×</button>' +
+      '</div>';
+    });
+  }
+
   html += '<button class="pl-add-row-btn" onclick="addVariableCost()">+ Add variable cost</button>';
   el.innerHTML = html;
 }
+
+// Store reference to data for variable costs merch COGS
+var _plRenderData = null;
 
 // ── Actions ──
 
@@ -1243,7 +1279,7 @@ function updateInventoryItem(input) {
   var item = data.inventory.find(function(i) { return i.id === input.dataset.invId; });
   if (!item) return;
   var field = input.dataset.field;
-  if (field === 'price' || field === 'qty') {
+  if (field === 'price' || field === 'qty' || field === 'costPerUnit') {
     item[field] = field === 'qty' ? (parseInt(input.value) || 1) : (parseFloat(input.value) || 0);
   } else {
     item[field] = input.value;

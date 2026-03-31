@@ -3965,3 +3965,13 @@ body::before {
 }
 .pl-calc-row .pl-be-calc { grid-column:span 1; }
 @media(max-width:900px) { .pl-calc-row { grid-template-columns:1fr; } }
+
+/* ── Revenue cards match fixed cost card sizing ── */
+.pl-rev-spreadrow {
+  padding:8px 12px; font-size:13px; min-height:40px; align-items:center;
+}
+.pl-rev-sr-item { font-size:15px; }
+.pl-rev-sr-vendor { font-size:13px; }
+.pl-rev-sr-num { font-size:11px; }
+#pl-revenue .pl-cost-item .pl-cost-top { min-height:40px; }
+.pl-inv-qty-input { width:36px; }
