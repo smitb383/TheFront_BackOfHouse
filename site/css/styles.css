@@ -4011,3 +4011,35 @@ body::before {
   padding:1px 2px; outline:none; text-align:center;
 }
 .pl-consign-rate-input:focus { border-bottom-color:var(--front); }
+
+/* ── P/L Calculator big display ── */
+.pl-calc-big-row {
+  display:flex; gap:12px; align-items:flex-start; margin-top:10px;
+}
+.pl-calc-big-item { flex:1; }
+.pl-calc-big-val {
+  font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:300; color:var(--text);
+}
+.pl-calc-big-pct {
+  font-family:'DM Mono',monospace; font-size:9px; color:var(--muted);
+  vertical-align:middle;
+}
+.pl-calc-big-label {
+  font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--muted); margin-top:1px;
+}
+.pl-calc-big-our {
+  font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); margin-top:2px;
+}
+.pl-calc-big-our strong { color:var(--text); }
+.pl-calc-big-ours { text-align:right; }
+.pl-calc-ours-val { color:#88c98a !important; }
+.pl-calc-summary-row {
+  display:flex; justify-content:space-between; margin-top:10px; padding-top:8px;
+  border-top:1px solid var(--border);
+  font-family:'DM Mono',monospace; font-size:10px; color:var(--muted);
+}
+.pl-calc-deduction {
+  font-family:'DM Mono',monospace; font-size:10px; color:var(--muted);
+  margin-top:4px; text-align:right;
+}

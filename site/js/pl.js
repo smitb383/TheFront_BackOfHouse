@@ -756,12 +756,16 @@ function updatePLCalc() {
   var el = document.getElementById('pl-calc-result');
   if (el) {
     el.innerHTML =
-      '<div class="pl-calc-breakdown">' +
-        '<div class="pl-calc-line"><span>Consignment</span><span>' + consignPct + '% of sales</span><span>Our ' + consignRate + '% = $' + fmt(consignReturn) + '</span></div>' +
-        '<div class="pl-calc-line"><span>Merch / Events</span><span>' + merchPct + '% of sales</span><span>100% = $' + fmt(merchReturn) + '</span></div>' +
-        '<div class="pl-calc-line pl-calc-total"><span>Total revenue</span><span>$' + fmt(totalGross) + ' gross</span><span>$' + fmt(totalReturn) + ' ours</span></div>' +
-        '<div class="pl-calc-line pl-calc-total"><span>− Costs</span><span></span><span>$' + fmt(totalCosts) + '</span></div>' +
+      '<div class="pl-calc-big-row">' +
+        '<div class="pl-calc-big-item"><span class="pl-calc-big-val">$' + fmt(consignSales) + '</span> <span class="pl-calc-big-pct">' + consignPct + '%</span><div class="pl-calc-big-label">Consignment</div><div class="pl-calc-big-our">Our ' + consignRate + '% = <strong>$' + fmt(consignReturn) + '</strong></div></div>' +
+        '<div class="pl-calc-big-item"><span class="pl-calc-big-val">$' + fmt(merchSales) + '</span> <span class="pl-calc-big-pct">' + merchPct + '%</span><div class="pl-calc-big-label">Merch / Events</div><div class="pl-calc-big-our">100% = <strong>$' + fmt(merchReturn) + '</strong></div></div>' +
+        '<div class="pl-calc-big-item pl-calc-big-ours"><span class="pl-calc-big-val pl-calc-ours-val">$' + fmt(totalReturn) + '</span><div class="pl-calc-big-label">Ours</div></div>' +
       '</div>' +
+      '<div class="pl-calc-summary-row">' +
+        '<span>Total gross: $' + fmt(totalGross) + '</span>' +
+        '<span>Total ours: $' + fmt(totalReturn) + '</span>' +
+      '</div>' +
+      '<div class="pl-calc-deduction">− Costs: $' + fmt(totalCosts) + '</div>' +
       '<div class="pl-calc-net ' + plClass + '">' + (netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(netPL)) + '</div>' +
       '<div class="pl-be-sub">' + (netPL >= 0 ? 'profit' : 'loss') + '</div>';
   }
