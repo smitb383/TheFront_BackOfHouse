@@ -267,11 +267,18 @@ function renderPLSummary(calc) {
   var el = document.getElementById('pl-summary');
   if (!el) return;
   var netClass = calc.netPL >= 0 ? 'pl-positive' : 'pl-negative';
-  // Break-even: total costs / 0.30 = gross sales needed at 30% commission
   var totalCosts = calc.totalFixed + calc.totalVariable;
-  var breakEvenGross = totalCosts > 0 ? Math.ceil(totalCosts / 0.30) : 0;
+
+  // Consignment-only break-even: if all revenue were 30% commission
+  var beConsignment = totalCosts > 0 ? Math.ceil(totalCosts / 0.30) : 0;
+
+  // True break-even: uses actual blended margin from current inventory mix
+  // Blended margin = our cut / gross revenue (accounts for 100% in-house + 30% consignment)
+  var blendedRate = calc.totalGrossRevenue > 0 ? (calc.ourCut / calc.totalGrossRevenue) : 0.30;
+  var beTrue = totalCosts > 0 && blendedRate > 0 ? Math.ceil(totalCosts / blendedRate) : 0;
+
   el.innerHTML =
-    '<div class="pl-summary-grid">' +
+    '<div class="pl-summary-grid pl-summary-5">' +
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Total Costs</div>' +
         '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
@@ -287,9 +294,14 @@ function renderPLSummary(calc) {
         '<div class="pl-summary-val">' + (calc.netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(calc.netPL)) + '</div>' +
       '</div>' +
       '<div class="pl-summary-card pl-breakeven">' +
-        '<div class="pl-summary-label">Break-even (at 30%)</div>' +
-        '<div class="pl-summary-val">$' + fmt(breakEvenGross) + '</div>' +
-        '<div class="pl-summary-sub">in total sales needed to cover all costs</div>' +
+        '<div class="pl-summary-label">True Break-even</div>' +
+        '<div class="pl-summary-val">$' + fmt(beTrue) + '</div>' +
+        '<div class="pl-summary-sub">in gross sales at blended ' + Math.round(blendedRate * 100) + '% margin</div>' +
+      '</div>' +
+      '<div class="pl-summary-card">' +
+        '<div class="pl-summary-label">Consignment-only B/E</div>' +
+        '<div class="pl-summary-val">$' + fmt(beConsignment) + '</div>' +
+        '<div class="pl-summary-sub">if all revenue at 30% commission</div>' +
       '</div>' +
     '</div>';
 }

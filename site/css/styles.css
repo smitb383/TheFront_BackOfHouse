@@ -3771,3 +3771,8 @@ body::before {
 }
 .pl-rev-cat-tag { display:none; }
 @media(max-width:600px) { .pl-rev-vendor-label { width:70px; font-size:12px; } }
+
+/* ── 5-column summary grid ── */
+.pl-summary-5 { grid-template-columns:repeat(5,1fr); }
+@media(max-width:900px) { .pl-summary-5 { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:600px) { .pl-summary-5 { grid-template-columns:repeat(2,1fr); } }
