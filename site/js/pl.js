@@ -3,16 +3,89 @@
 // ============================================
 
 var PL_KEY = 'pl_data_v1';
-var PL_SEED_VERSION = 2; // bump this number to force re-seed on next load
+var PL_SEED_VERSION = 3; // bump to merge new defaults while keeping user edits
 
 function getPLData() {
   try { return JSON.parse(localStorage.getItem(PL_KEY)) || null; } catch(e) { return null; }
 }
 function savePLData(d) { d._seedVersion = PL_SEED_VERSION; localStorage.setItem(PL_KEY, JSON.stringify(d)); }
 
+// Default fixed costs — defined here so migratePLData can reference them
+var PL_DEFAULT_FIXED_COSTS = [
+  { id: 'fc_rent', name: '334 Broome rent', amount: 3500, category: 'space', note: 'Flat fee June 18 - July 16' },
+  { id: 'fc_insurance', name: 'General liability insurance', amount: 200, category: 'space', note: '$2M aggregate required — Amir Badawi + Patjen Realty as additional insureds' },
+  { id: 'fc_cleaning', name: 'Cleaning supplies', amount: 30, category: 'space', note: 'Pre-install clean, weekly sweep during run' },
+  { id: 'fc_extcords', name: 'Extension cords / power strips', amount: 25, category: 'space', note: 'For lighting, iPad charger, event AV' },
+  { id: 'fc_ac', name: 'AC repair', amount: 0, category: 'space', note: 'AC does not work — landlord open to splitting repair cost. Talk to Mike. Amount TBD' },
+  { id: 'fc_internet', name: 'Internet', amount: 0, category: 'space', note: 'Included with space' },
+  { id: 'fc_power', name: 'Power', amount: 0, category: 'space', note: 'Included with space' },
+  { id: 'fc_water', name: 'Water', amount: 0, category: 'space', note: 'Included with space' },
+  { id: 'fc_buildout', name: 'Install / build-out', amount: 0, category: 'fit out', note: 'Paint, lighting tweaks, wall prep' },
+  { id: 'fc_paint', name: 'Paint / paint supplies', amount: 0, category: 'fit out', note: '' },
+  { id: 'fc_shelves', name: 'Floating shelves / pedestals', amount: 150, category: 'fit out', note: '3-4 units at varying heights for objects + accessories' },
+  { id: 'fc_hangers', name: 'Hangers', amount: 0, category: 'fit out', note: '' },
+  { id: 'fc_vinyl', name: 'Window vinyl', amount: 0, category: 'fit out', note: 'Vinyl lettering / signage on glass front' },
+  { id: 'fc_exterior', name: 'Exterior sign', amount: 0, category: 'fit out', note: 'Outside-facing sign or blade' },
+  { id: 'fc_pricelabels', name: 'Price labels / maker cards', amount: 30, category: 'fit out', note: 'Small folded card — name, price, material, vendor. Per-vendor cards with handle + bio' },
+  { id: 'fc_bags', name: 'Shopping bags', amount: 0, category: 'retail supplies', note: 'Branded stamp on plain kraft bags' },
+  { id: 'fc_tags', name: 'Price tags', amount: 0, category: 'retail supplies', note: 'Hang tags for all vendors' },
+  { id: 'fc_tissue', name: 'Tissue / packaging', amount: 50, category: 'retail supplies', note: 'Branded tissue, bags' },
+  { id: 'fc_opening', name: 'Opening night drinks / snacks', amount: 150, category: 'events', note: 'Wine + sparkling water + simple snacks for 40-60 people' },
+  { id: 'fc_photographer', name: 'Photographer — opening night', amount: 0, category: 'events', note: 'Dedicated shooter for space and crowd' },
+  { id: 'fc_flyers', name: 'Opening flyers (print run)', amount: 80, category: 'marketing', note: '200-300 flyers, postcard size, for LES/SoHo/Nolita drops' },
+  { id: 'fc_socialgraphics', name: 'Launch social graphics', amount: 0, category: 'marketing', note: 'Save-the-date, vendor spotlights, countdown assets' },
+  { id: 'fc_pressrelease', name: 'Press release', amount: 0, category: 'marketing', note: '200-word pitch + image for Hint, Time Out, local blogs' },
+  { id: 'fc_graphicdesign', name: 'Graphic design', amount: 0, category: 'branding', note: '' },
+  { id: 'fc_typeface', name: 'Typeface licences', amount: 0, category: 'branding', note: 'Bebas Neue is primary font' },
+  { id: 'fc_llc', name: 'LLC registration', amount: 0, category: 'business', note: 'NY LLC filing ~$200 via DOS' },
+  { id: 'fc_domains', name: 'Website domains', amount: 0, category: 'business', note: 'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations' },
+  { id: 'fc_hosting', name: 'Website hosting', amount: 0, category: 'business', note: '' },
+  { id: 'fc_pos', name: 'Square POS reader', amount: 50, category: 'operations', note: 'Plus a stand if using iPad' },
+  { id: 'fc_ipad', name: 'iPad / phone for checkout', amount: 0, category: 'operations', note: '' },
+  { id: 'fc_strike', name: 'Strike / removal', amount: 0, category: 'operations', note: 'Labor, disposal, end of lease cleanup' },
+  { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
+];
+
+function migratePLData(existing) {
+  // Merge new default items into existing data, preserving all user edits
+  existing.scenarios.forEach(function(s) {
+    var existingIds = {};
+    (s.fixedCosts || []).forEach(function(c) { existingIds[c.id] = true; });
+
+    // Add any new default items that don't exist yet
+    PL_DEFAULT_FIXED_COSTS.forEach(function(dc) {
+      if (!existingIds[dc.id]) {
+        s.fixedCosts.push(JSON.parse(JSON.stringify(dc)));
+      }
+    });
+
+    // Update categories for existing items if the default category changed
+    // (e.g. "fabrication" → "fit out", "marketing" → "branding")
+    var defaultMap = {};
+    PL_DEFAULT_FIXED_COSTS.forEach(function(dc) { defaultMap[dc.id] = dc; });
+    s.fixedCosts.forEach(function(c) {
+      if (defaultMap[c.id] && defaultMap[c.id].category !== c.category) {
+        // Only update category if user hasn't manually changed it to something else
+        // We check if the old category matches any previous default category
+        c.category = defaultMap[c.id].category;
+      }
+    });
+  });
+
+  existing._seedVersion = PL_SEED_VERSION;
+  savePLData(existing);
+  console.log('[pl] Migrated PL data to version ' + PL_SEED_VERSION);
+  return existing;
+}
+
 function initPLData() {
   var existing = getPLData();
+  // If data exists and is current version, return as-is
   if (existing && existing.scenarios && existing.scenarios.length && existing._seedVersion === PL_SEED_VERSION) return existing;
+  // If data exists but old version, merge new defaults into it (preserve user edits)
+  if (existing && existing.scenarios && existing.scenarios.length && existing._seedVersion !== PL_SEED_VERSION) {
+    return migratePLData(existing);
+  }
 
   // Pull inventory from existing revenue catalog
   var revProj = null;
@@ -40,50 +113,8 @@ function initPLData() {
     });
   }
 
-  var fixedCosts = [
-      // Space
-      { id: 'fc_rent', name: '334 Broome rent', amount: 3500, category: 'space', note: 'Flat fee June 18 - July 16' },
-      { id: 'fc_insurance', name: 'General liability insurance', amount: 200, category: 'space', note: '$2M aggregate required — Amir Badawi + Patjen Realty as additional insureds' },
-      { id: 'fc_cleaning', name: 'Cleaning supplies', amount: 30, category: 'space', note: 'Pre-install clean, weekly sweep during run' },
-      { id: 'fc_extcords', name: 'Extension cords / power strips', amount: 25, category: 'space', note: 'For lighting, iPad charger, event AV' },
-      { id: 'fc_ac', name: 'AC repair', amount: 0, category: 'space', note: 'AC does not work — landlord open to splitting repair cost. Talk to Mike. Amount TBD' },
-      { id: 'fc_internet', name: 'Internet', amount: 0, category: 'space', note: 'Included with space' },
-      { id: 'fc_power', name: 'Power', amount: 0, category: 'space', note: 'Included with space' },
-      { id: 'fc_water', name: 'Water', amount: 0, category: 'space', note: 'Included with space' },
-      // Fabrication
-      { id: 'fc_buildout', name: 'Install / build-out', amount: 0, category: 'fit out', note: 'Paint, lighting tweaks, wall prep' },
-      { id: 'fc_paint', name: 'Paint / paint supplies', amount: 0, category: 'fit out', note: '' },
-      { id: 'fc_shelves', name: 'Floating shelves / pedestals', amount: 150, category: 'fit out', note: '3-4 units at varying heights for objects + accessories' },
-      { id: 'fc_hangers', name: 'Hangers', amount: 0, category: 'fit out', note: '' },
-      { id: 'fc_vinyl', name: 'Window vinyl', amount: 0, category: 'fit out', note: 'Vinyl lettering / signage on glass front' },
-      { id: 'fc_exterior', name: 'Exterior sign', amount: 0, category: 'fit out', note: 'Outside-facing sign or blade' },
-      { id: 'fc_pricelabels', name: 'Price labels / maker cards', amount: 30, category: 'fit out', note: 'Small folded card — name, price, material, vendor. Per-vendor cards with handle + bio' },
-      // Retail supplies
-      { id: 'fc_bags', name: 'Shopping bags', amount: 0, category: 'retail supplies', note: 'Branded stamp on plain kraft bags' },
-      { id: 'fc_tags', name: 'Price tags', amount: 0, category: 'retail supplies', note: 'Hang tags for all vendors' },
-      { id: 'fc_tissue', name: 'Tissue / packaging', amount: 50, category: 'retail supplies', note: 'Branded tissue, bags' },
-      // Events
-      { id: 'fc_opening', name: 'Opening night drinks / snacks', amount: 150, category: 'events', note: 'Wine + sparkling water + simple snacks for 40-60 people' },
-      { id: 'fc_photographer', name: 'Photographer — opening night', amount: 0, category: 'events', note: 'Dedicated shooter for space and crowd' },
-      // Marketing
-      { id: 'fc_flyers', name: 'Opening flyers (print run)', amount: 80, category: 'marketing', note: '200-300 flyers, postcard size, for LES/SoHo/Nolita drops' },
-      { id: 'fc_socialgraphics', name: 'Launch social graphics', amount: 0, category: 'marketing', note: 'Save-the-date, vendor spotlights, countdown assets' },
-      { id: 'fc_pressrelease', name: 'Press release', amount: 0, category: 'marketing', note: '200-word pitch + image for Hint, Time Out, local blogs' },
-      // Branding
-      { id: 'fc_graphicdesign', name: 'Graphic design', amount: 0, category: 'branding', note: '' },
-      { id: 'fc_typeface', name: 'Typeface licences', amount: 0, category: 'branding', note: 'Bebas Neue is primary font' },
-      // Business / legal
-      { id: 'fc_llc', name: 'LLC registration', amount: 0, category: 'business', note: 'NY LLC filing ~$200 via DOS' },
-      { id: 'fc_domains', name: 'Website domains', amount: 0, category: 'business', note: 'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations' },
-      { id: 'fc_hosting', name: 'Website hosting', amount: 0, category: 'business', note: '' },
-      // Operations
-      { id: 'fc_pos', name: 'Square POS reader', amount: 50, category: 'operations', note: 'Plus a stand if using iPad' },
-      { id: 'fc_ipad', name: 'iPad / phone for checkout', amount: 0, category: 'operations', note: '' },
-      { id: 'fc_strike', name: 'Strike / removal', amount: 0, category: 'operations', note: 'Labor, disposal, end of lease cleanup' },
-      // Misc
-    { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
-  ];
-  // Merge: add any default items not already in fixedCosts
+  var fixedCosts = JSON.parse(JSON.stringify(PL_DEFAULT_FIXED_COSTS));
+
   var variableCosts = [
     { id: 'vc_square', name: 'Square processing fee', rate: 2.6, perTxn: 0.10, type: 'pct_of_sales', note: '2.6% + $0.10 per transaction' },
     { id: 'vc_packaging', name: 'Packaging per sale', rate: 0, perTxn: 1.50, type: 'per_txn', note: 'Bag + tissue per transaction' }
