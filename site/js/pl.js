@@ -283,14 +283,26 @@ function renderPL() {
   var scenario = getActiveScenario();
   var calc = calcPL(scenario, data.inventory);
 
+  var isBusiness = scenario.id === 'business';
+
   renderScenarioBar(data);
   renderPLSummary(calc, scenario);
-  // Revenue items hidden for now
+
   var revEl = document.getElementById('pl-revenue');
-  if (revEl) revEl.innerHTML = '';
+  var varEl = document.getElementById('pl-variable');
+
+  if (isBusiness) {
+    // Business tab: no revenue, no variable costs
+    if (revEl) revEl.innerHTML = '';
+    if (varEl) varEl.innerHTML = '';
+  } else {
+    // Popup tabs: revenue hidden for now, variable costs shown
+    if (revEl) revEl.innerHTML = '';
+    renderVariableCosts(scenario, calc);
+    initBECalc();
+  }
+
   renderFixedCosts(scenario);
-  renderVariableCosts(scenario, calc);
-  initBECalc();
 }
 
 function renderScenarioBar(data) {
@@ -346,8 +358,22 @@ function renderPLSummary(calc, scenario) {
   var blendedRate = calc.totalGrossRevenue > 0 ? (calc.ourCut / calc.totalGrossRevenue) : 0.30;
   var beTrue = totalCosts > 0 && blendedRate > 0 ? Math.ceil(totalCosts / blendedRate) : 0;
 
+  var isBusiness = scenario.id === 'business';
+
+  if (isBusiness) {
+    // Business tab: just total costs
+    el.innerHTML =
+      '<div class="pl-summary-grid">' +
+        '<div class="pl-summary-card">' +
+          '<div class="pl-summary-label">Total Business Costs</div>' +
+          '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
+        '</div>' +
+      '</div>';
+    return;
+  }
+
   el.innerHTML =
-    '<div class="pl-summary-grid">' +
+    '<div class="pl-summary-grid pl-summary-6">' +
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Total Costs</div>' +
         '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
@@ -364,6 +390,36 @@ function renderPLSummary(calc, scenario) {
       '<div class="pl-summary-card ' + netClass + '">' +
         '<div class="pl-summary-label">Net P/L</div>' +
         '<div class="pl-summary-val">' + (calc.netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(calc.netPL)) + '</div>' +
+      '</div>' +
+      '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
+        '<div class="pl-summary-label">Break-even Calculator</div>' +
+        '<div class="pl-be-inputs">' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Merch / Events (100%)</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-be-owned" value="' + (scenario.beMerchPct || 20) + '" onchange="updateBECalc(this)">%</div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-be-consign" value="' + (scenario.beConsignPct || 80) + '" onchange="updateBECalc(this)">% <span class="pl-be-at">@ <input type="number" min="0" max="100" class="pl-be-input" id="pl-be-consign-rate" value="' + (scenario.beConsignRate || 30) + '" onchange="updateBECalc(this)">%</span></div>' +
+        '</div>' +
+        '<div class="pl-be-result" id="pl-be-result"></div>' +
+      '</div>' +
+      '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
+        '<div class="pl-summary-label">P/L Calculator</div>' +
+        '<div class="pl-be-inputs">' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment sales</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-consign" value="' + (scenario.calcConsign || 0) + '" onchange="updatePLCalc()"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Merch / Event sales</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-calc-merch" value="' + (scenario.calcMerch || 0) + '" onchange="updatePLCalc()"></div>' +
+        '</div>' +
+        '<div class="pl-calc-result" id="pl-calc-result"></div>' +
+      '</div>' +
+      '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
+        '<div class="pl-summary-label">Profit Target</div>' +
+        '<div class="pl-be-inputs">' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Target profit</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-profit" value="' + (scenario.targetProfit || 0) + '"></div>' +
+          '<div class="pl-target-divider"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Consignment rate</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-comm" value="' + (scenario.targetComm || 30) + '">%</div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Merch/Other rate</span><input type="number" min="0" max="100" class="pl-be-input" id="pl-target-merch-rate" value="' + (scenario.targetMerchRate || 100) + '">%</div>' +
+          '<div class="pl-target-divider"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Known consignment $</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-known-consign" value="' + (scenario.targetKnownConsign || '') + '" placeholder="—"></div>' +
+          '<div class="pl-be-row"><span class="pl-be-lbl">Known merch $</span>$<input type="number" min="0" class="pl-be-input pl-be-input-wide" id="pl-target-known-merch" value="' + (scenario.targetKnownMerch || '') + '" placeholder="—"></div>' +
+        '</div>' +
+        '<button class="pl-target-run-btn" onclick="runProfitTarget()">Run →</button>' +
+        '<div class="pl-calc-result" id="pl-target-result"></div>' +
       '</div>' +
     '</div>';
 }
