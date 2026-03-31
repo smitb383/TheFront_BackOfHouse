@@ -3,7 +3,7 @@
 // ============================================
 
 var PL_KEY = 'pl_data_v1';
-var PL_SEED_VERSION = 4; // bump to merge new defaults while keeping user edits
+var PL_SEED_VERSION = 5; // bump to merge new defaults while keeping user edits
 
 function getPLData() {
   try { return JSON.parse(localStorage.getItem(PL_KEY)) || null; } catch(e) { return null; }
@@ -50,30 +50,59 @@ var PL_DEFAULT_BUSINESS_COSTS = [
 ];
 
 function migratePLData(existing) {
-  // Merge new default items into existing data, preserving all user edits
+  // Rename 'working' scenario to 'popup' / '334 PopUp'
   existing.scenarios.forEach(function(s) {
+    if (s.id === 'working') {
+      s.id = 'popup';
+      s.name = '334 PopUp';
+      s.type = 'popup';
+    }
+  });
+  if (existing.activeScenario === 'working') existing.activeScenario = 'popup';
+
+  // Merge new default items into popup scenarios
+  existing.scenarios.forEach(function(s) {
+    if (s.type === 'business') return;
     var existingIds = {};
     (s.fixedCosts || []).forEach(function(c) { existingIds[c.id] = true; });
 
-    // Add any new default items that don't exist yet
     PL_DEFAULT_FIXED_COSTS.forEach(function(dc) {
       if (!existingIds[dc.id]) {
         s.fixedCosts.push(JSON.parse(JSON.stringify(dc)));
       }
     });
 
-    // Update categories for existing items if the default category changed
-    // (e.g. "fabrication" → "fit out", "marketing" → "branding")
+    // Update categories
     var defaultMap = {};
     PL_DEFAULT_FIXED_COSTS.forEach(function(dc) { defaultMap[dc.id] = dc; });
     s.fixedCosts.forEach(function(c) {
       if (defaultMap[c.id] && defaultMap[c.id].category !== c.category) {
-        // Only update category if user hasn't manually changed it to something else
-        // We check if the old category matches any previous default category
         c.category = defaultMap[c.id].category;
       }
     });
+
+    // Remove business items from popup budget (they go to the business tab)
+    s.fixedCosts = s.fixedCosts.filter(function(c) {
+      return c.category !== 'business' && c.id !== 'fc_llc' && c.id !== 'fc_domains' && c.id !== 'fc_hosting';
+    });
   });
+
+  // Add business scenario if not present
+  var hasBusiness = existing.scenarios.some(function(s) { return s.id === 'business'; });
+  if (!hasBusiness) {
+    existing.scenarios.push({
+      id: 'business',
+      name: 'The Front Business Costs',
+      type: 'business',
+      created: new Date().toISOString().slice(0,10),
+      fixedCosts: JSON.parse(JSON.stringify(PL_DEFAULT_BUSINESS_COSTS)),
+      variableCosts: [],
+      itemSales: {},
+      eventRevenue: 0,
+      merchRevenue: 0,
+      notes: ''
+    });
+  }
 
   existing._seedVersion = PL_SEED_VERSION;
   savePLData(existing);
