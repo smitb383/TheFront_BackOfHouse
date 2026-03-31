@@ -3882,3 +3882,11 @@ body::before {
 }
 .pl-calc-net.pl-positive { color:#88c98a; }
 .pl-calc-net.pl-negative { color:var(--action); }
+
+/* ── P&L break out of ws-inner container ── */
+.pl-fullwidth {
+  width:100vw; position:relative; left:50%; right:50%;
+  margin-left:-50vw; margin-right:-50vw;
+  max-width:100vw !important; padding:16px 36px 80px !important;
+  box-sizing:border-box;
+}
