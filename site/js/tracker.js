@@ -1074,41 +1074,62 @@
 
     tasks.forEach(function(t) {
       if (!t.deps || !t.deps.length) return;
+      if (t.isMajorMilestone) return; // milestones don't draw dep lines from themselves
       var to = barPositions[t.id];
       if (!to) return;
-      var toWsColor = (WORKSTREAMS[t.workstream] || {}).dot || '#888';
 
       t.deps.forEach(function(depId) {
         var from = barPositions[depId];
         if (!from) return;
+        var fromTask = getTask(depId);
+        var fromWsColor = (WORKSTREAMS[(fromTask || {}).workstream] || {}).dot || '#888';
 
         if (from.isMajorMilestone) {
-          // Horizontal line from task bar to the milestone's vertical line
+          // Milestone is the dependency (source)
+          // Draw horizontal line at THIS task's y-level from milestone vertical to task bar
           var milestoneX = from.left + labelWidth;
           var taskX = to.left + labelWidth;
           var y = to.cy;
-          // Line goes from task start horizontally to the milestone vertical
-          var lineX1 = Math.min(milestoneX, taskX);
-          var lineX2 = Math.max(milestoneX, taskX);
 
           var line = document.createElementNS(svgNS, 'line');
-          line.setAttribute('x1', String(lineX1));
+          line.setAttribute('x1', String(milestoneX));
           line.setAttribute('y1', String(y));
-          line.setAttribute('x2', String(lineX2));
+          line.setAttribute('x2', String(taskX));
           line.setAttribute('y2', String(y));
           line.setAttribute('stroke', 'rgba(226,201,126,0.5)');
           line.setAttribute('stroke-width', '2');
           svg.appendChild(line);
 
-          // Circle at intersection with milestone vertical
+          // Gold circle at intersection with milestone vertical
           var circle = document.createElementNS(svgNS, 'circle');
           circle.setAttribute('cx', String(milestoneX));
           circle.setAttribute('cy', String(y));
           circle.setAttribute('r', '4');
           circle.setAttribute('fill', 'rgba(226,201,126,0.8)');
           svg.appendChild(circle);
+        } else if (to.isMajorMilestone) {
+          // This task feeds into a milestone — horizontal line from task end to milestone vertical
+          var taskEndX = from.right + labelWidth;
+          var milestoneX2 = to.left + labelWidth;
+          var y2 = from.cy;
+
+          var line2 = document.createElementNS(svgNS, 'line');
+          line2.setAttribute('x1', String(taskEndX));
+          line2.setAttribute('y1', String(y2));
+          line2.setAttribute('x2', String(milestoneX2));
+          line2.setAttribute('y2', String(y2));
+          line2.setAttribute('stroke', 'rgba(226,201,126,0.5)');
+          line2.setAttribute('stroke-width', '2');
+          svg.appendChild(line2);
+
+          var circle2 = document.createElementNS(svgNS, 'circle');
+          circle2.setAttribute('cx', String(milestoneX2));
+          circle2.setAttribute('cy', String(y2));
+          circle2.setAttribute('r', '4');
+          circle2.setAttribute('fill', 'rgba(226,201,126,0.8)');
+          svg.appendChild(circle2);
         } else {
-          var fromWsColor = (WORKSTREAMS[(getTask(depId) || {}).workstream] || {}).dot || '#888';
+          // Regular task-to-task: color by SOURCE task's workstream
           var x1 = from.right + labelWidth;
           var y1 = from.cy;
           var x2 = to.left + labelWidth;
@@ -1117,18 +1138,18 @@
 
           var path = document.createElementNS(svgNS, 'path');
           path.setAttribute('d', 'M' + x1 + ',' + y1 + ' C' + midX + ',' + y1 + ' ' + midX + ',' + y2 + ' ' + x2 + ',' + y2);
-          path.setAttribute('stroke', toWsColor);
+          path.setAttribute('stroke', fromWsColor);
           path.setAttribute('stroke-width', '1.5');
           path.setAttribute('stroke-opacity', '0.4');
           path.setAttribute('fill', 'none');
           svg.appendChild(path);
 
-          // Small circle at the end (where it meets the target task)
+          // Small circle at endpoint in source color
           var endCircle = document.createElementNS(svgNS, 'circle');
           endCircle.setAttribute('cx', String(x2));
           endCircle.setAttribute('cy', String(y2));
           endCircle.setAttribute('r', '3');
-          endCircle.setAttribute('fill', toWsColor);
+          endCircle.setAttribute('fill', fromWsColor);
           endCircle.setAttribute('fill-opacity', '0.5');
           svg.appendChild(endCircle);
         }
