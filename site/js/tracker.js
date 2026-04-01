@@ -16,9 +16,9 @@
     'Planning':              { bg: '#B5D4F4', dot: '#378ADD' },
     '334 Rent':              { bg: '#F5C4B3', dot: '#D85A30' },
     'Brand':                 { bg: '#F4C0D1', dot: '#D4537E' },
+    'Merch':                 { bg: '#FAEEDA', dot: '#EF9F27' },
     'Vendors':               { bg: '#9FE1CB', dot: '#1D9E75' },
     'Fit Out':               { bg: '#FAC775', dot: '#BA7517' },
-    'Merch':                 { bg: '#FAEEDA', dot: '#EF9F27' },
     'Marketing & Events':  { bg: '#CECBF6', dot: '#7F77DD' },
   };
 
