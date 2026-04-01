@@ -228,7 +228,12 @@
   }
 
   function saveTasks() {
-    _isSeeded = false; // user made a change, this is now real data
+    if (_isSeeded) {
+      // SAFETY: don't save seed data — it would overwrite real data in Supabase.
+      // Show a warning if user tries to edit before Supabase loads.
+      console.warn('[tracker] Waiting for data sync — edit not saved yet. Refresh in a moment.');
+      return;
+    }
     var payload = { _seedVersion: TRACKER_SEED_VERSION, tasks: tasks };
     localStorage.setItem(LS_KEY, JSON.stringify(payload));
   }
