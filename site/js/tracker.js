@@ -1103,7 +1103,7 @@
       dw.appendChild(h('input', {
         className:'trk-input', type:'date', value: t[pair[1]] || '',
         style:{ fontFamily:"'DM Mono',monospace", fontSize:'10px' },
-        onChange: function(e){ t[pair[1]] = e.target.value; saveTasks(); }
+        onChange: function(e){ t[pair[1]] = e.target.value; saveTasks(); renderTracker(); }
       }));
       dateGrid.appendChild(dw);
     });
