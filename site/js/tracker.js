@@ -22,14 +22,52 @@
     'Marketing & Events':  { bg: '#CECBF6', dot: '#7F77DD' },
   };
 
-  var PHASES = [
-    { name: 'Foundation',        start: '2026-03-30', end: '2026-04-13', color: '#378ADD' },
-    { name: 'Design & Outreach', start: '2026-04-14', end: '2026-05-31', color: '#D4537E' },
-    { name: 'Pre-Launch',        start: '2026-06-01', end: '2026-06-17', color: '#BA7517' },
-    { name: 'Install',           start: '2026-06-20', end: '2026-06-24', color: '#D85A30' },
-    { name: 'Open',              start: '2026-06-25', end: '2026-07-19', color: '#1D9E75' },
-    { name: 'Close',             start: '2026-07-20', end: '2026-07-22', color: '#7F77DD' },
-  ];
+  // Phases derived from opening date. Foundation is fixed. Others adjust.
+  var OPENING_DATE = '2026-06-25';
+  var FOUNDATION_START = '2026-03-30';
+  var FOUNDATION_END = '2026-04-13';
+
+  function buildPhases() {
+    var open = parseD(OPENING_DATE);
+
+    // Install: 5 days before opening (day before opening through 4 days before)
+    var installEnd = new Date(open); installEnd.setDate(installEnd.getDate() - 1);
+    var installStart = new Date(open); installStart.setDate(installStart.getDate() - 5);
+
+    // Pre-Launch: ends day before install starts
+    var preLaunchEnd = new Date(installStart); preLaunchEnd.setDate(preLaunchEnd.getDate() - 1);
+
+    // Foundation is fixed
+    var foundEnd = parseD(FOUNDATION_END);
+
+    // Design & Outreach: day after foundation ends through day before pre-launch
+    // Split remaining time: Design & Outreach gets from foundation end to pre-launch start
+    // Pre-Launch gets 3 weeks before install
+    var preLaunchStart = new Date(preLaunchEnd); preLaunchStart.setDate(preLaunchStart.getDate() - 18); // ~19 days
+
+    var designStart = new Date(foundEnd); designStart.setDate(designStart.getDate() + 1);
+    var designEnd = new Date(preLaunchStart); designEnd.setDate(designEnd.getDate() - 1);
+
+    // Open: opening day through last day (24 days for a ~25 day run)
+    var openEnd = new Date(open); openEnd.setDate(openEnd.getDate() + 24);
+
+    // Close: 3 days after open ends
+    var closeStart = new Date(openEnd); closeStart.setDate(closeStart.getDate() + 1);
+    var closeEnd = new Date(closeStart); closeEnd.setDate(closeEnd.getDate() + 2);
+
+    function fmt(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+    return [
+      { name: 'Foundation',        start: FOUNDATION_START, end: FOUNDATION_END, color: '#378ADD' },
+      { name: 'Design & Outreach', start: fmt(designStart), end: fmt(designEnd), color: '#D4537E' },
+      { name: 'Pre-Launch',        start: fmt(preLaunchStart), end: fmt(preLaunchEnd), color: '#BA7517' },
+      { name: 'Install',           start: fmt(installStart), end: fmt(installEnd), color: '#D85A30' },
+      { name: 'Open',              start: fmt(open), end: fmt(openEnd), color: '#1D9E75' },
+      { name: 'Close',             start: fmt(closeStart), end: fmt(closeEnd), color: '#7F77DD' },
+    ];
+  }
+
+  var PHASES = buildPhases();
 
   var MILESTONE_IDS = [9, 3, 41, 10, 14, 13, 42, 23, 24, 20, 15, 29, 34, 35, 36, 49, 55, 56];
   var MAJOR_MILESTONE_IDS = [35, 36, 49, 55, 56]; // Opening, Close, Deinstall, Turnover, Get Access — extra prominent
@@ -429,6 +467,7 @@
 
     var keyDates = [
       { label:'Deposit Due', date:'May 15', days:daysUntil('2026-05-15') },
+      { label:'Rent Due', date:'Jun 14', days:daysUntil('2026-06-14') },
       { label:'Install Begins', date:'Jun 20', days:daysUntil('2026-06-20') },
       { label:'Opening', date:'Jun 25', days:daysUntil('2026-06-25') },
       { label:'Closing', date:'Jul 19', days:daysUntil('2026-07-19') },
@@ -808,7 +847,7 @@
     wrap.appendChild(zoomRow);
 
     var projStart = '2026-03-30';
-    var projEnd = '2026-07-25';
+    var projEnd = PHASES[PHASES.length - 1].end;
     var totalDays = daysBetween(projStart, projEnd);
     var labelWidth = 150;
 
