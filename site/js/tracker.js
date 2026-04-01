@@ -1395,25 +1395,52 @@
       depList.appendChild(row);
     });
     panel.appendChild(depList);
-    // Add dependency
-    var addDepRow = h('div', { style:{ display:'flex', gap:'4px' } });
-    var depSelect = h('select', { className:'trk-select', style:{ flex:'1', fontSize:'10px' } });
-    depSelect.appendChild(h('option', { value:'' }, '+ Add dependency...'));
-    tasks.filter(function(other) { return other.id !== t.id && (t.deps || []).indexOf(other.id) === -1; })
-      .sort(function(a,b){ return a.id - b.id; })
-      .forEach(function(other) {
-        depSelect.appendChild(h('option', { value:String(other.id) }, '#' + other.id + ' ' + other.title));
-      });
-    depSelect.addEventListener('change', function() {
-      var val = parseInt(depSelect.value);
-      if (!val) return;
-      if (!t.deps) t.deps = [];
-      t.deps.push(val);
-      saveTasks();
-      showDetail(t.id);
+    // Add dependency — searchable
+    var addDepWrap = h('div', { style:{ position:'relative' } });
+    var depInput = h('input', {
+      className:'trk-input', type:'text', placeholder:'Search to add dependency...',
+      style:{ fontSize:'10px', width:'100%' }
     });
-    addDepRow.appendChild(depSelect);
-    panel.appendChild(addDepRow);
+    var depDropdown = h('div', { style:{ display:'none', position:'absolute', top:'100%', left:'0', right:'0', maxHeight:'150px', overflowY:'auto', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'4px', zIndex:'20', boxShadow:'0 4px 12px rgba(0,0,0,0.2)' } });
+    var availableDeps = tasks.filter(function(other) { return other.id !== t.id && (t.deps || []).indexOf(other.id) === -1; })
+      .sort(function(a,b){ return a.id - b.id; });
+
+    function renderDepResults(query) {
+      depDropdown.innerHTML = '';
+      var q = (query || '').toLowerCase();
+      var matches = availableDeps.filter(function(other) {
+        return !q || other.title.toLowerCase().indexOf(q) !== -1 || String(other.id).indexOf(q) !== -1 || (other.workstream || '').toLowerCase().indexOf(q) !== -1;
+      }).slice(0, 15);
+      if (!matches.length) {
+        depDropdown.style.display = 'none';
+        return;
+      }
+      depDropdown.style.display = 'block';
+      matches.forEach(function(other) {
+        var opt = h('div', {
+          style:{ padding:'6px 10px', cursor:'pointer', fontSize:'11px', fontFamily:"'DM Mono',monospace", borderBottom:'1px solid var(--faint)', display:'flex', alignItems:'center', gap:'6px' },
+          onMouseDown: function(e) {
+            e.preventDefault();
+            if (!t.deps) t.deps = [];
+            t.deps.push(other.id);
+            saveTasks();
+            showDetail(t.id);
+          }
+        });
+        opt.addEventListener('mouseenter', function(){ opt.style.background = 'var(--faint)'; });
+        opt.addEventListener('mouseleave', function(){ opt.style.background = 'transparent'; });
+        opt.appendChild(wsDot(other.workstream, 6));
+        opt.appendChild(document.createTextNode('#' + other.id + ' ' + other.title));
+        depDropdown.appendChild(opt);
+      });
+    }
+
+    depInput.addEventListener('focus', function() { renderDepResults(depInput.value); });
+    depInput.addEventListener('input', function() { renderDepResults(depInput.value); });
+    depInput.addEventListener('blur', function() { setTimeout(function(){ depDropdown.style.display = 'none'; }, 200); });
+    addDepWrap.appendChild(depInput);
+    addDepWrap.appendChild(depDropdown);
+    panel.appendChild(addDepWrap);
 
     // Blocks — removable (removes this task from the other task's deps)
     var blocks = taskBlocks(id);
