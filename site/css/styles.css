@@ -3231,7 +3231,7 @@ body::before {
 .ov-date-label { font-family: 'DM Mono', monospace; font-size: 7px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
 .ov-date-input { width: 100%; background: none; border: none; color: var(--text); font-family: 'Cormorant Garamond', serif; font-size: 15px; outline: none; padding: 0; }
 .ov-date-input::placeholder { color: var(--border); font-style: italic; }
-.ov-date-value { color: var(--text); font-family: 'Cormorant Garamond', serif; font-size: 15px; }
+.ov-date-value { color: var(--front); font-family: 'Cormorant Garamond', serif; font-size: 15px; }
 
 /* Status cards */
 .ov-status-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 24px; }
