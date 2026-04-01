@@ -1310,16 +1310,28 @@
     addDepRow.appendChild(depSelect);
     panel.appendChild(addDepRow);
 
-    // Blocks (read-only, derived)
+    // Blocks — removable (removes this task from the other task's deps)
     var blocks = taskBlocks(id);
     if (blocks.length) {
       panel.appendChild(h('label', { style:{ marginTop:'8px' } }, 'Blocks'));
       var blockList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'2px' } });
       blocks.forEach(function(bl) {
-        blockList.appendChild(h('span', {
+        var row = h('div', { style:{ display:'flex', alignItems:'center', gap:'4px' } });
+        row.appendChild(h('span', {
           className:'trk-dep-link',
+          style:{ flex:'1' },
           onClick: function(){ showDetail(bl.id); }
         }, '#' + bl.id + ' ' + bl.title));
+        row.appendChild(h('button', {
+          className:'trk-subtask-del',
+          title:'Remove — this task will no longer block #' + bl.id,
+          onClick: function() {
+            bl.deps = (bl.deps || []).filter(function(d){ return d !== id; });
+            saveTasks();
+            showDetail(t.id);
+          }
+        }, '\u2715'));
+        blockList.appendChild(row);
       });
       panel.appendChild(blockList);
     }
