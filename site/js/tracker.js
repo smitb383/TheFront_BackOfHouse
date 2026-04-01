@@ -1612,6 +1612,13 @@
   window.initTracker = initTracker;
   window.renderTracker = renderTracker;
 
+  // Populate overview dates on page load (not just when Schedule tab opens)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', populateOverviewDates);
+  } else {
+    populateOverviewDates();
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTracker);
   } else {
