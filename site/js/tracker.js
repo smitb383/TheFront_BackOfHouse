@@ -1074,7 +1074,6 @@
 
     tasks.forEach(function(t) {
       if (!t.deps || !t.deps.length) return;
-      if (t.isMajorMilestone) return; // milestones don't draw dep lines from themselves
       var to = barPositions[t.id];
       if (!to) return;
 
@@ -1084,50 +1083,31 @@
         var fromTask = getTask(depId);
         var fromWsColor = (WORKSTREAMS[(fromTask || {}).workstream] || {}).dot || '#888';
 
-        if (from.isMajorMilestone) {
-          // Milestone is the dependency (source)
-          // Draw horizontal line at THIS task's y-level from milestone vertical to task bar
-          var milestoneX = from.left + labelWidth;
-          var taskX = to.left + labelWidth;
-          var y = to.cy;
+        if (from.isMajorMilestone || to.isMajorMilestone) {
+          // One side is a milestone — draw horizontal gold line at the regular task's y
+          var milestonePos = from.isMajorMilestone ? from : to;
+          var taskPos = from.isMajorMilestone ? to : from;
+          var milestoneX = milestonePos.left + labelWidth;
+          var taskY = taskPos.cy;
+          // Line from task bar edge to milestone vertical, horizontally
+          var taskEdgeX = from.isMajorMilestone ? taskPos.left + labelWidth : taskPos.right + labelWidth;
 
-          var line = document.createElementNS(svgNS, 'line');
-          line.setAttribute('x1', String(milestoneX));
-          line.setAttribute('y1', String(y));
-          line.setAttribute('x2', String(taskX));
-          line.setAttribute('y2', String(y));
-          line.setAttribute('stroke', 'rgba(226,201,126,0.5)');
-          line.setAttribute('stroke-width', '2');
-          svg.appendChild(line);
+          var mLine = document.createElementNS(svgNS, 'line');
+          mLine.setAttribute('x1', String(Math.min(milestoneX, taskEdgeX)));
+          mLine.setAttribute('y1', String(taskY));
+          mLine.setAttribute('x2', String(Math.max(milestoneX, taskEdgeX)));
+          mLine.setAttribute('y2', String(taskY));
+          mLine.setAttribute('stroke', 'rgba(226,201,126,0.5)');
+          mLine.setAttribute('stroke-width', '2');
+          svg.appendChild(mLine);
 
           // Gold circle at intersection with milestone vertical
-          var circle = document.createElementNS(svgNS, 'circle');
-          circle.setAttribute('cx', String(milestoneX));
-          circle.setAttribute('cy', String(y));
-          circle.setAttribute('r', '4');
-          circle.setAttribute('fill', 'rgba(226,201,126,0.8)');
-          svg.appendChild(circle);
-        } else if (to.isMajorMilestone) {
-          // This task feeds into a milestone — horizontal line from task end to milestone vertical
-          var taskEndX = from.right + labelWidth;
-          var milestoneX2 = to.left + labelWidth;
-          var y2 = from.cy;
-
-          var line2 = document.createElementNS(svgNS, 'line');
-          line2.setAttribute('x1', String(taskEndX));
-          line2.setAttribute('y1', String(y2));
-          line2.setAttribute('x2', String(milestoneX2));
-          line2.setAttribute('y2', String(y2));
-          line2.setAttribute('stroke', 'rgba(226,201,126,0.5)');
-          line2.setAttribute('stroke-width', '2');
-          svg.appendChild(line2);
-
-          var circle2 = document.createElementNS(svgNS, 'circle');
-          circle2.setAttribute('cx', String(milestoneX2));
-          circle2.setAttribute('cy', String(y2));
-          circle2.setAttribute('r', '4');
-          circle2.setAttribute('fill', 'rgba(226,201,126,0.8)');
-          svg.appendChild(circle2);
+          var mCircle = document.createElementNS(svgNS, 'circle');
+          mCircle.setAttribute('cx', String(milestoneX));
+          mCircle.setAttribute('cy', String(taskY));
+          mCircle.setAttribute('r', '4');
+          mCircle.setAttribute('fill', 'rgba(226,201,126,0.8)');
+          svg.appendChild(mCircle);
         } else {
           // Regular task-to-task: color by SOURCE task's workstream
           var x1 = from.right + labelWidth;
