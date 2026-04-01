@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
-   THE FRONT — Project Tracker v2
+   THE FRONT — Project Tracker v3
    Renders into #front-schedule
-   localStorage key: tracker_data_v1  (TRACKER_SEED_VERSION = 2)
+   localStorage key: tracker_data_v1  (TRACKER_SEED_VERSION = 3)
    ═══════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -9,7 +9,8 @@
 
   /* ── Constants ── */
   var LS_KEY = 'tracker_data_v1';
-  var TRACKER_SEED_VERSION = 2;
+  var LS_FOCUS_KEY = 'tracker_focus_v1';
+  var TRACKER_SEED_VERSION = 3;
 
   var WORKSTREAMS = {
     'Planning':              { bg: '#B5D4F4', dot: '#378ADD' },
@@ -35,60 +36,60 @@
   /* ── Seed Data (all 54 tasks) ── */
   function buildSeedTasks() {
     var raw = [
-      { id:1, title:'Get AC repair quote from Amir / 334 Broome', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-04', startDate:'2026-03-30', endDate:'2026-04-04', deps:[], notes:'Landlord open to splitting cost. Use as leverage for lease extension + deinstall days.' },
-      { id:2, title:'Negotiate AC cost split + lease extension + deinstall days', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-06', startDate:'2026-04-04', endDate:'2026-04-06', deps:[1], notes:'Negotiate all together: AC cost split, install access Jun 20\u201324 (5 days before launch), deinstall days Jul 20\u201321 (2 days after close Jul 19). AC contribution is leverage for the extras.' },
-      { id:3, title:'Sign lease contract (updated terms)', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-08', endDate:'2026-04-13', deps:[51], notes:'Sign within 2 weeks. Must reflect: open Jun 25, close Jul 19, install Jun 20\u201324, deinstall Jul 20\u201321, AC cost split.' },
+      { id:1, title:'Get AC repair quote', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-04', startDate:'2026-03-30', endDate:'2026-04-04', deps:[], notes:'Landlord open to splitting cost. Use as leverage for lease extension + deinstall days.' },
+      { id:2, title:'Finalize lease terms', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-06', startDate:'2026-04-04', endDate:'2026-04-06', deps:[1], notes:'Negotiate all together: AC cost split, install access Jun 20\u201324 (5 days before launch), deinstall days Jul 20\u201321 (2 days after close Jul 19). AC contribution is leverage for the extras.' },
+      { id:3, title:'Sign lease', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-08', endDate:'2026-04-13', deps:[51], notes:'Sign within 2 weeks. Must reflect: open Jun 25, close Jul 19, install Jun 20\u201324, deinstall Jul 20\u201321, AC cost split.' },
       { id:4, title:'Secure domain names', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-04', startDate:'2026-03-30', endDate:'2026-04-04', deps:[], notes:'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations.' },
-      { id:5, title:'Preliminary budget \u2014 costs + revenue model', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Upfront costs, P&L, commission revenue projections. Inform business plan.' },
-      { id:6, title:'Preliminary project timeline', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Launch Jun 25 (Thu). Turnover Jun 15. Fabrication May 28\u2013Jun 14.' },
-      { id:7, title:'Set up project base (repo, Supabase, Vercel, tracker)', workstream:'Planning', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'GitHub: smitb383/TheFront_BackOfHouse. Migrate tasks to Supabase.' },
-      { id:8, title:'Loop in Caroline Zimbalist', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Key contact \u2014 bring in early.' },
+      { id:5, title:'Draft budget & P/L', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Upfront costs, P&L, commission revenue projections. Inform business plan.' },
+      { id:6, title:'Draft project timeline', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Launch Jun 25 (Thu). Turnover Jun 15. Fabrication May 28\u2013Jun 14.' },
+      { id:7, title:'Set up project tools', workstream:'Planning', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'GitHub: smitb383/TheFront_BackOfHouse. Migrate tasks to Supabase.' },
+      { id:8, title:'Connect with Caroline', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Key contact \u2014 bring in early.' },
       { id:9, title:'Register LLC', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Lease currently in Del\u2019s personal name \u2014 must reassign to LLC.' },
       { id:10, title:'Get EIN', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-06', endDate:'2026-04-13', deps:[9], notes:'Required for sales tax cert and vendor agreements.' },
-      { id:11, title:'Reassign lease from Del \u2192 LLC', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-04-13', endDate:'2026-04-20', deps:[3,9], notes:'Coordinate with Amir Badawi / Patjen Realty Corp.' },
-      { id:12, title:'Apply for NY Sales Tax Certificate of Authority', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-13', endDate:'2026-05-01', deps:[10], notes:'20-day lead time. Must be active before opening.' },
-      { id:13, title:'Secure General Liability Insurance ($2M)', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-10', startDate:'2026-04-20', endDate:'2026-05-10', deps:[9,10], notes:'Additional insureds: Amir Badawi (334 Broome St Apt 16) + Patjen Realty Corp (151 Hester St).' },
-      { id:14, title:'Pay deposit \u2014 $1,750 to Amir', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-05-15', endDate:'2026-05-15', deps:[13], notes:'Non-refundable. Cash / Venmo @amir-H-Badawi / Zelle (713) 410-9531 / PayPal amir.h.badawi@gmail.com' },
-      { id:15, title:'Pay full rent \u2014 $3,500 to Amir', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-14', startDate:'2026-06-14', endDate:'2026-06-14', deps:[14], notes:'Due June 14. $300/day overtime if overstayed beyond agreed end date.' },
-      { id:16, title:'Brand identity \u2014 tagline, visual language, type system', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-03-30', endDate:'2026-04-20', deps:[], notes:'Bebas Neue confirmed. Tagline TBD. Loop Hannah Witner for graphic work.' },
-      { id:17, title:'Social accounts set up + content strategy', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[42], notes:'Instagram primary. Social templates must be produced before content goes live. Content cadence tied to launch countdown.' },
-      { id:18, title:'Design window vinyl signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[41], notes:'Full glass window front. Part of graphic production phase. Must be ordered with enough lead time to arrive before Jun 15.' },
-      { id:19, title:'Order + receive window vinyl signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-10', startDate:'2026-05-15', endDate:'2026-06-10', deps:[18], notes:'Must arrive before Jun 15 so it\u2019s ready for install week.' },
-      { id:20, title:'Build + launch website', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-01', startDate:'2026-04-20', endDate:'2026-06-01', deps:[16,4], notes:'GitHub \u2192 Vercel. Vanilla HTML/CSS/JS. Supabase backend.' },
-      { id:21, title:'Press outreach \u2014 Megan Prives (WGSN) + others', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-10', startDate:'2026-06-01', endDate:'2026-06-10', deps:[20], notes:'Website should be live before pitching press.' },
-      { id:22, title:'Launch marketing push \u2014 posts, invites, event page', workstream:'Marketing & Outreach', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-20', startDate:'2026-06-10', endDate:'2026-06-20', deps:[17,21], notes:'Build to Jun 25 launch. Invites, Instagram, event listings.' },
-      { id:23, title:'Finalize vendor roster \u2014 outreach + confirmation', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', endDate:'2026-05-15', deps:[40], notes:'Deck already out by this point. Follow up with all targets, confirm who\u2019s in. Verconiik + Harlot Hands confirmed.' },
-      { id:24, title:'Vendor consignment agreements signed', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-01', startDate:'2026-05-25', endDate:'2026-06-01', deps:[54], notes:'All vendors signed before product comes in. Agreement includes agreed item list, 70/30 split, Square POS, payment within 7 days of close.' },
-      { id:25, title:'Order small print items \u2014 tags, cards, bags, tissue, hangers', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-05-30', startDate:'2026-05-15', endDate:'2026-05-30', deps:[42], notes:'Graphic production must be done before ordering. Must arrive before Jun 14. Merch: temp tattoos, stickers, fans, lighters.' },
-      { id:26, title:'Assemble tags, bags, packaging \u2014 fully done before install', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-14', startDate:'2026-06-01', endDate:'2026-06-14', deps:[25], notes:'Everything pre-assembled so no time is spent on this in the space.' },
-      { id:27, title:'Space design plan \u2014 layout, zones, fixture list', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-01', endDate:'2026-05-01', deps:[16], notes:'Clothing area, nook shelving, plinths, dressing room zone. Drives fabrication scope.' },
-      { id:28, title:'Source + purchase all build materials', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-28', startDate:'2026-05-01', endDate:'2026-05-28', deps:[27], notes:'Paint, hardware, shelving materials, plinth materials. Everything in hand before fabrication starts.' },
-      { id:29, title:'Fabrication \u2014 clothing racks, shelves, plinths, dressing room', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-14', startDate:'2026-05-28', endDate:'2026-06-14', deps:[28], notes:'2.5 weeks offsite. Everything built before we enter the space Jun 15.' },
-      { id:30, title:'Coordinate large item deliveries \u2014 mirrors, lights, furniture', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-15', startDate:'2026-06-01', endDate:'2026-06-15', deps:[29], notes:'Schedule delivery for Jun 22\u201323, after hard install done and paint dry.' },
-      { id:31, title:'INSTALL: Painting \u2014 2 days', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-21', startDate:'2026-06-20', endDate:'2026-06-21', deps:[15,29], notes:'Jun 20\u201321 (Sat\u2013Sun). First thing in install window. AJ leads. 5-day buffer after Jun 15 turnover used here.' },
-      { id:32, title:'INSTALL: Hard install \u2014 shelves, built items \u2014 1 day', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-22', startDate:'2026-06-22', endDate:'2026-06-22', deps:[31], notes:'Jun 22 (Mon). All fabricated pieces go up. AJ leads.' },
-      { id:33, title:'INSTALL: Large item delivery + placement', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-23', startDate:'2026-06-22', endDate:'2026-06-23', deps:[32,30], notes:'Jun 22\u201323 (Mon\u2013Tue). Mirrors, lighting fixtures, furniture in after paint is dry.' },
-      { id:34, title:'INSTALL: Decorative styling, signage + final touches', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-24', startDate:'2026-06-23', endDate:'2026-06-24', deps:[33,19,26], notes:'Jun 23\u201324 (Tue\u2013Wed). Vinyl signage up, vendor product placed, tags on, everything dressed. Space ready for Thu open.' },
-      { id:35, title:'LAUNCH \u2014 Opening event, Thu Jun 25', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-25', startDate:'2026-06-25', endDate:'2026-06-25', deps:[34,22,24], notes:'Thu Jun 25. Operating Tue\u2013Sun. Run through Sun Jul 19.' },
-      { id:36, title:'CLOSE \u2014 Last day of run, Sun Jul 19', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-19', startDate:'2026-07-19', endDate:'2026-07-19', deps:[35], notes:'Full day Jul 19. End of ~25-day run.' },
-      { id:37, title:'General business plan \u2014 all sections', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[5], notes:'Full business plan. Parsons grant version adapted from this.' },
-      { id:38, title:'Parsons grant version of business plan', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-10', startDate:'2026-04-06', endDate:'2026-04-10', deps:[37], notes:'Adapted from general plan.' },
-      { id:39, title:'Finalize vendor deck', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-10', startDate:'2026-04-06', endDate:'2026-04-10', deps:[37], notes:'Deck communicates concept, terms (70/30), space, programming. Should feel on-brand even if identity isn\u2019t fully locked yet.' },
-      { id:40, title:'Begin sending vendor deck \u2014 outreach to targets', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-10', endDate:'2026-04-13', deps:[39], notes:'Confirmed: Verconiik, Harlot Hands. Identify and reach all new targets this week.' },
-      { id:41, title:'Brand identity complete \u2014 gate for all graphic production', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-04-06', endDate:'2026-04-20', deps:[16], notes:'Full identity locked: logo, type, color, tagline. Nothing goes to print, to social, or to vendors until this is done.' },
-      { id:42, title:'Graphic production \u2014 social templates, print assets, packaging', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[41], notes:'Lead time before anything prints or goes live. Includes: social templates, signage files, tag/bag/packaging design, merch graphics. All assets must clear production before ordering or releasing.' },
-      { id:43, title:'Merch ideation \u2014 concepts, items, quantities', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-04-30', startDate:'2026-04-20', endDate:'2026-04-30', deps:[41], notes:'Contingent on graphic identity being locked. Define what we\u2019re making: temp tattoos, stickers, fans, lighters, totes, etc.' },
-      { id:44, title:'Merch design \u2014 artwork files for each item', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-05-10', startDate:'2026-04-30', endDate:'2026-05-10', deps:[43,42], notes:'Design files must meet vendor specs (bleed, resolution, format). One round of revisions built in.' },
-      { id:45, title:'Merch costing \u2014 get quotes per item, build cost model', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-05-10', startDate:'2026-04-30', endDate:'2026-05-10', deps:[43], notes:'Get unit costs + MOQs for each item. Build into budget model \u2014 retail price, margin, breakeven quantity.' },
-      { id:46, title:'Merch final approval \u2014 items, designs, quantities confirmed', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-15', startDate:'2026-05-10', endDate:'2026-05-15', deps:[44,45], notes:'Both design and cost must be approved before ordering. No changes after this.' },
+      { id:11, title:'Transfer lease to LLC', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-04-13', endDate:'2026-04-20', deps:[3,9], notes:'Coordinate with Amir Badawi / Patjen Realty Corp.' },
+      { id:12, title:'Apply for sales tax cert', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-13', endDate:'2026-05-01', deps:[10], notes:'20-day lead time. Must be active before opening.' },
+      { id:13, title:'Get liability insurance', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-10', startDate:'2026-04-20', endDate:'2026-05-10', deps:[9,10], notes:'Additional insureds: Amir Badawi (334 Broome St Apt 16) + Patjen Realty Corp (151 Hester St).' },
+      { id:14, title:'Pay deposit ($1,750)', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-05-15', endDate:'2026-05-15', deps:[13], notes:'Non-refundable. Cash / Venmo @amir-H-Badawi / Zelle (713) 410-9531 / PayPal amir.h.badawi@gmail.com' },
+      { id:15, title:'Pay rent ($3,500)', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-14', startDate:'2026-06-14', endDate:'2026-06-14', deps:[14], notes:'Due June 14. $300/day overtime if overstayed beyond agreed end date.' },
+      { id:16, title:'Define brand identity', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-03-30', endDate:'2026-04-20', deps:[], notes:'Bebas Neue confirmed. Tagline TBD. Loop Hannah Witner for graphic work.' },
+      { id:17, title:'Set up social accounts', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[42], notes:'Instagram primary. Social templates must be produced before content goes live. Content cadence tied to launch countdown.' },
+      { id:18, title:'Design window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[41], notes:'Full glass window front. Part of graphic production phase. Must be ordered with enough lead time to arrive before Jun 15.' },
+      { id:19, title:'Order window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-10', startDate:'2026-05-15', endDate:'2026-06-10', deps:[18], notes:'Must arrive before Jun 15 so it\u2019s ready for install week.' },
+      { id:20, title:'Launch website', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-01', startDate:'2026-04-20', endDate:'2026-06-01', deps:[16,4], notes:'GitHub \u2192 Vercel. Vanilla HTML/CSS/JS. Supabase backend.' },
+      { id:21, title:'Press outreach', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-10', startDate:'2026-06-01', endDate:'2026-06-10', deps:[20], notes:'Website should be live before pitching press.' },
+      { id:22, title:'Launch marketing push', workstream:'Marketing & Outreach', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-20', startDate:'2026-06-10', endDate:'2026-06-20', deps:[17,21], notes:'Build to Jun 25 launch. Invites, Instagram, event listings.' },
+      { id:23, title:'Confirm vendor roster', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', endDate:'2026-05-15', deps:[40], notes:'Deck already out by this point. Follow up with all targets, confirm who\u2019s in. Verconiik + Harlot Hands confirmed.' },
+      { id:24, title:'Sign vendor agreements', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-01', startDate:'2026-05-25', endDate:'2026-06-01', deps:[54], notes:'All vendors signed before product comes in. Agreement includes agreed item list, 70/30 split, Square POS, payment within 7 days of close.' },
+      { id:25, title:'Order tags, bags & packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-05-30', startDate:'2026-05-15', endDate:'2026-05-30', deps:[42], notes:'Graphic production must be done before ordering. Must arrive before Jun 14. Merch: temp tattoos, stickers, fans, lighters.' },
+      { id:26, title:'Assemble packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-14', startDate:'2026-06-01', endDate:'2026-06-14', deps:[25], notes:'Everything pre-assembled so no time is spent on this in the space.' },
+      { id:27, title:'Design space layout', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-01', endDate:'2026-05-01', deps:[16], notes:'Clothing area, nook shelving, plinths, dressing room zone. Drives fabrication scope.' },
+      { id:28, title:'Purchase build materials', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-28', startDate:'2026-05-01', endDate:'2026-05-28', deps:[27], notes:'Paint, hardware, shelving materials, plinth materials. Everything in hand before fabrication starts.' },
+      { id:29, title:'Fabrication', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-14', startDate:'2026-05-28', endDate:'2026-06-14', deps:[28], notes:'2.5 weeks offsite. Everything built before we enter the space Jun 15.' },
+      { id:30, title:'Schedule deliveries', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-15', startDate:'2026-06-01', endDate:'2026-06-15', deps:[29], notes:'Schedule delivery for Jun 22\u201323, after hard install done and paint dry.' },
+      { id:31, title:'Painting', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-21', startDate:'2026-06-20', endDate:'2026-06-21', deps:[15,29], notes:'Jun 20\u201321 (Sat\u2013Sun). First thing in install window. AJ leads. 5-day buffer after Jun 15 turnover used here.' },
+      { id:32, title:'Hard install', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-22', startDate:'2026-06-22', endDate:'2026-06-22', deps:[31], notes:'Jun 22 (Mon). All fabricated pieces go up. AJ leads.' },
+      { id:33, title:'Delivery & placement', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-23', startDate:'2026-06-22', endDate:'2026-06-23', deps:[32,30], notes:'Jun 22\u201323 (Mon\u2013Tue). Mirrors, lighting fixtures, furniture in after paint is dry.' },
+      { id:34, title:'Styling & final touches', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-24', startDate:'2026-06-23', endDate:'2026-06-24', deps:[33,19,26], notes:'Jun 23\u201324 (Tue\u2013Wed). Vinyl signage up, vendor product placed, tags on, everything dressed. Space ready for Thu open.' },
+      { id:35, title:'Opening night', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-25', startDate:'2026-06-25', endDate:'2026-06-25', deps:[34,22,24], notes:'Thu Jun 25. Operating Tue\u2013Sun. Run through Sun Jul 19.' },
+      { id:36, title:'Last day', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-19', startDate:'2026-07-19', endDate:'2026-07-19', deps:[35], notes:'Full day Jul 19. End of ~25-day run.' },
+      { id:37, title:'Write business plan', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[5], notes:'Full business plan. Parsons grant version adapted from this.' },
+      { id:38, title:'Parsons grant application', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-10', startDate:'2026-04-06', endDate:'2026-04-10', deps:[37], notes:'Adapted from general plan.' },
+      { id:39, title:'Create vendor deck', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-10', startDate:'2026-04-06', endDate:'2026-04-10', deps:[37], notes:'Deck communicates concept, terms (70/30), space, programming. Should feel on-brand even if identity isn\u2019t fully locked yet.' },
+      { id:40, title:'Send vendor deck', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-10', endDate:'2026-04-13', deps:[39], notes:'Confirmed: Verconiik, Harlot Hands. Identify and reach all new targets this week.' },
+      { id:41, title:'Brand identity locked', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-04-06', endDate:'2026-04-20', deps:[16], notes:'Full identity locked: logo, type, color, tagline. Nothing goes to print, to social, or to vendors until this is done.' },
+      { id:42, title:'Graphic production', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[41], notes:'Lead time before anything prints or goes live. Includes: social templates, signage files, tag/bag/packaging design, merch graphics. All assets must clear production before ordering or releasing.' },
+      { id:43, title:'Merch ideation', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-04-30', startDate:'2026-04-20', endDate:'2026-04-30', deps:[41], notes:'Contingent on graphic identity being locked. Define what we\u2019re making: temp tattoos, stickers, fans, lighters, totes, etc.' },
+      { id:44, title:'Merch design files', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-05-10', startDate:'2026-04-30', endDate:'2026-05-10', deps:[43,42], notes:'Design files must meet vendor specs (bleed, resolution, format). One round of revisions built in.' },
+      { id:45, title:'Merch costing & quotes', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-05-10', startDate:'2026-04-30', endDate:'2026-05-10', deps:[43], notes:'Get unit costs + MOQs for each item. Build into budget model \u2014 retail price, margin, breakeven quantity.' },
+      { id:46, title:'Approve merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-15', startDate:'2026-05-10', endDate:'2026-05-15', deps:[44,45], notes:'Both design and cost must be approved before ordering. No changes after this.' },
       { id:47, title:'Place merch orders', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-20', startDate:'2026-05-15', endDate:'2026-05-20', deps:[46], notes:'1 month production + shipping lead time. Must order by May 20 to arrive before Jun 20.' },
-      { id:48, title:'Merch received + QC checked', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-20', startDate:'2026-06-10', endDate:'2026-06-20', deps:[47], notes:'Arrives ~Jun 10\u201320. Check all items against order. Any issues need time to resolve before launch.' },
-      { id:49, title:'DEINSTALL \u2014 2 days, Jul 20\u201321', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-21', startDate:'2026-07-20', endDate:'2026-07-21', deps:[36], notes:'Jul 20 (Mon) \u2013 Jul 21 (Tue). Space must be returned in original condition. Negotiate these 2 days into the lease.' },
-      { id:50, title:'Compile contract term changes \u2014 dates, AC, deinstall, extensions', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-04-04', endDate:'2026-04-06', deps:[2], notes:'Document all requested changes before the call with Amir: open Jun 25 (Thu), close Jul 19 (Sun), install access Jun 20\u201324, deinstall Jul 20\u201321, AC cost split terms.' },
-      { id:51, title:'Call / meet with Amir + Patjen Realty to align on terms', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-08', startDate:'2026-04-06', endDate:'2026-04-08', deps:[50], notes:'Verify all changes verbally before the contract is revised. Confirm: updated dates, install + deinstall access, AC agreement, deposit and rent amounts unchanged.' },
-      { id:52, title:'Draft vendor consignment agreement template', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-20', startDate:'2026-04-10', endDate:'2026-04-20', deps:[9], notes:'Terms: 70% vendor / 30% The Front. Vendor fills in: item list, descriptions, quantities, sale prices. Square POS (2.6% fee). Includes liability, pickup terms, payment schedule.' },
-      { id:53, title:'Collect item lists from confirmed vendors', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[40,52], notes:'Each vendor provides full inventory: item name, description, qty, proposed sale price. We review and agree before agreement is countersigned. Verconiik + Harlot Hands first.' },
-      { id:54, title:'Review + agree on inventory + pricing per vendor', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-25', startDate:'2026-05-15', endDate:'2026-05-25', deps:[53], notes:'Go through each vendor\u2019s item list. Confirm pricing makes sense for the space and customer. Flag anything to negotiate. This informs how we set up Square and the floor plan.' },
+      { id:48, title:'Receive & QC merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-20', startDate:'2026-06-10', endDate:'2026-06-20', deps:[47], notes:'Arrives ~Jun 10\u201320. Check all items against order. Any issues need time to resolve before launch.' },
+      { id:49, title:'Deinstall', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-21', startDate:'2026-07-20', endDate:'2026-07-21', deps:[36], notes:'Jul 20 (Mon) \u2013 Jul 21 (Tue). Space must be returned in original condition. Negotiate these 2 days into the lease.' },
+      { id:50, title:'Compile lease changes', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-04-04', endDate:'2026-04-06', deps:[2], notes:'Document all requested changes before the call with Amir: open Jun 25 (Thu), close Jul 19 (Sun), install access Jun 20\u201324, deinstall Jul 20\u201321, AC cost split terms.' },
+      { id:51, title:'Meet with landlord', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-08', startDate:'2026-04-06', endDate:'2026-04-08', deps:[50], notes:'Verify all changes verbally before the contract is revised. Confirm: updated dates, install + deinstall access, AC agreement, deposit and rent amounts unchanged.' },
+      { id:52, title:'Draft vendor agreement', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-20', startDate:'2026-04-10', endDate:'2026-04-20', deps:[9], notes:'Terms: 70% vendor / 30% The Front. Vendor fills in: item list, descriptions, quantities, sale prices. Square POS (2.6% fee). Includes liability, pickup terms, payment schedule.' },
+      { id:53, title:'Collect vendor inventory', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[40,52], notes:'Each vendor provides full inventory: item name, description, qty, proposed sale price. We review and agree before agreement is countersigned. Verconiik + Harlot Hands first.' },
+      { id:54, title:'Approve vendor pricing', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-25', startDate:'2026-05-15', endDate:'2026-05-25', deps:[53], notes:'Go through each vendor\u2019s item list. Confirm pricing makes sense for the space and customer. Flag anything to negotiate. This informs how we set up Square and the floor plan.' },
     ];
     return raw.map(function(t) {
       t.subtasks = [];
@@ -106,6 +107,16 @@
   function fmtShort(s) { if (!s) return ''; var d = parseD(s); return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
   function weekStart(d) { var dt = typeof d === 'string' ? parseD(d) : new Date(d); var day = dt.getDay(); var diff = dt.getDate() - day + (day === 0 ? -6 : 1); return new Date(dt.getFullYear(), dt.getMonth(), diff); }
   function sameWeek(a, b) { return weekStart(a).getTime() === weekStart(b).getTime(); }
+
+  /* ── Current Phase ── */
+  function getCurrentPhase() {
+    var today = todayStr();
+    for (var i = 0; i < PHASES.length; i++) {
+      if (today >= PHASES[i].start && today <= PHASES[i].end) return PHASES[i];
+    }
+    if (today < PHASES[0].start) return PHASES[0];
+    return PHASES[PHASES.length - 1];
+  }
 
   /* ── State ── */
   var tasks = [];
@@ -137,6 +148,18 @@
     var payload = { _seedVersion: TRACKER_SEED_VERSION, tasks: tasks };
     localStorage.setItem(LS_KEY, JSON.stringify(payload));
     if (typeof window.onTrackerSave === 'function') window.onTrackerSave(payload);
+  }
+
+  /* ── Focus persistence ── */
+  function loadFocusData() {
+    try {
+      var raw = localStorage.getItem(LS_FOCUS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    return { customFocus: [], customBeginning: [] };
+  }
+  function saveFocusData(data) {
+    localStorage.setItem(LS_FOCUS_KEY, JSON.stringify(data));
   }
 
   /* ── Task Helpers ── */
@@ -227,6 +250,8 @@
       '.trk-stat-item { display:flex; flex-direction:column; gap:2px; }',
       '.trk-stat-label { font-family:"DM Mono",monospace; font-size:8px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }',
       '.trk-stat-value { font-family:"Cormorant Garamond",serif; font-size:18px; color:var(--text); }',
+      '.trk-stat-date { font-family:"Cormorant Garamond",serif; font-size:22px; color:var(--text); font-weight:600; }',
+      '.trk-stat-days { font-family:"Cormorant Garamond",serif; font-size:15px; color:var(--front); margin-left:4px; }',
       '.trk-board { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }',
       '.trk-col-header { font-family:"DM Mono",monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:8px 0; border-bottom:1px solid var(--border); margin-bottom:8px; }',
       '.trk-task-card { padding:10px 12px; margin-bottom:8px; cursor:pointer; transition:border-color 0.15s; }',
@@ -252,7 +277,8 @@
       '.trk-timeline-milestone.selected { background:var(--front); }',
       '.trk-timeline-today { position:absolute; top:0; bottom:0; width:2px; background:#E24B4A; z-index:4; pointer-events:none; }',
       '.trk-timeline-dep { stroke:var(--muted); stroke-width:1; fill:none; opacity:0.4; }',
-      '.trk-timeline-ws-label { font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:140px; min-width:140px; padding:0 8px; display:flex; align-items:center; gap:6px; height:28px; }',
+      '.trk-timeline-ws-label { font-family:"DM Mono",monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:140px; min-width:140px; padding:4px 8px; display:flex; align-items:center; gap:8px; height:32px; }',
+      '.trk-timeline-ws-row { background:var(--surface2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }',
       '.trk-phase-band { position:absolute; top:0; bottom:0; opacity:0.06; pointer-events:none; }',
       '.trk-detail { position:fixed; top:0; right:0; width:380px; height:100vh; background:var(--surface); border-left:1px solid var(--border); z-index:100; overflow-y:auto; padding:20px; box-shadow:-4px 0 20px rgba(0,0,0,0.3); }',
       '.trk-detail-close { position:absolute; top:12px; right:12px; background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px 8px; }',
@@ -269,10 +295,24 @@
       '.trk-focus-list { list-style:none; padding:0; margin:4px 0 0 0; }',
       '.trk-focus-list li { font-family:"Cormorant Garamond",serif; font-size:14px; color:var(--text); padding:2px 0; display:flex; align-items:center; gap:6px; }',
       '.trk-focus-list li::before { content:"\\2022"; color:var(--front); }',
+      '.trk-focus-input { background:transparent; border:none; border-bottom:1px solid transparent; color:var(--text); font-family:"Cormorant Garamond",serif; font-size:14px; padding:2px 4px; outline:none; flex:1; min-width:0; }',
+      '.trk-focus-input:hover { border-bottom-color:var(--border); }',
+      '.trk-focus-input:focus { border-bottom-color:var(--front); }',
+      '.trk-focus-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:11px; padding:0 2px; opacity:0; transition:opacity 0.15s; }',
+      '.trk-focus-list li:hover .trk-focus-del { opacity:1; }',
+      '.trk-focus-del:hover { color:#E24B4A; }',
+      '.trk-focus-add { background:none; border:1px dashed var(--border); color:var(--muted); font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; padding:3px 10px; cursor:pointer; border-radius:2px; margin-top:6px; transition:all 0.15s; }',
+      '.trk-focus-add:hover { border-color:var(--front); color:var(--front); }',
       '.trk-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }',
       '.trk-pill { font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; padding:4px 10px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; }',
       '.trk-pill:hover { border-color:var(--muted); color:var(--text); }',
       '.trk-pill.active { border-color:var(--front); color:var(--front); background:var(--front-dim); }',
+      '.trk-ws-pill { font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; padding:4px 10px; border-radius:12px; border:1px solid; cursor:pointer; transition:all 0.15s; }',
+      '.trk-ws-pill:hover { opacity:0.85; }',
+      '.trk-ws-pill.active { color:#fff !important; }',
+      '.trk-due-item { font-family:"Cormorant Garamond",serif; font-size:14px; color:var(--text); padding:3px 0; display:flex; align-items:center; gap:6px; cursor:pointer; transition:color 0.15s; }',
+      '.trk-due-item:hover { color:var(--front); }',
+      '.trk-due-item::before { content:"\\2022"; color:var(--front); }',
       '@media (max-width:900px) { .trk-board { grid-template-columns:1fr; } .trk-detail { width:100%; } }',
     ].join('\n');
     var style = document.createElement('style');
@@ -292,6 +332,7 @@
 
     root.appendChild(renderStatsBar());
     root.appendChild(renderFocusSection());
+    root.appendChild(renderWorkstreamFilters());
     root.appendChild(renderViewSwitcher());
 
     if (currentView === 'timeline') root.appendChild(renderTimeline());
@@ -305,31 +346,46 @@
   function renderStatsBar() {
     var openDays = daysUntil('2026-06-25');
     var depDays = daysUntil('2026-05-15');
+    var closeDays = daysUntil('2026-07-19');
     var dueCount = dueThisWeek().length;
-    var doneCount = tasks.filter(function(t){ return t.status === 'DONE'; }).length;
+    var phase = getCurrentPhase();
 
     function sep() { return h('div', { style:{ width:'1px', height:'28px', background:'var(--border)' } }); }
 
     return h('div', { className:'trk-card', style:{ marginBottom:'12px' } },
       h('div', { className:'trk-stats' },
         h('div', { className:'trk-stat-item' },
+          h('span', { className:'trk-stat-label' }, 'Current Phase'),
+          h('span', { className:'trk-stat-value', style:{ color:phase.color } }, phase.name)
+        ),
+        sep(),
+        h('div', { className:'trk-stat-item' },
           h('span', { className:'trk-stat-label' }, 'Opening'),
-          h('span', { className:'trk-stat-value' }, 'Jun 25 \u2014 ' + openDays + ' days')
+          h('span', null,
+            h('span', { className:'trk-stat-date' }, 'Jun 25'),
+            h('span', { className:'trk-stat-days' }, '(' + openDays + ' days)')
+          )
         ),
         sep(),
         h('div', { className:'trk-stat-item' },
           h('span', { className:'trk-stat-label' }, 'Deposit'),
-          h('span', { className:'trk-stat-value' }, 'May 15 \u2014 ' + depDays + ' days')
+          h('span', null,
+            h('span', { className:'trk-stat-date' }, 'May 15'),
+            h('span', { className:'trk-stat-days' }, '(' + depDays + ' days)')
+          )
+        ),
+        sep(),
+        h('div', { className:'trk-stat-item' },
+          h('span', { className:'trk-stat-label' }, 'Closing'),
+          h('span', null,
+            h('span', { className:'trk-stat-date' }, 'Jul 19'),
+            h('span', { className:'trk-stat-days' }, '(' + closeDays + ' days)')
+          )
         ),
         sep(),
         h('div', { className:'trk-stat-item' },
           h('span', { className:'trk-stat-label' }, 'Due This Week'),
           h('span', { className:'trk-stat-value' }, String(dueCount))
-        ),
-        sep(),
-        h('div', { className:'trk-stat-item' },
-          h('span', { className:'trk-stat-label' }, 'Progress'),
-          h('span', { className:'trk-stat-value' }, doneCount + ' / ' + tasks.length)
         )
       )
     );
@@ -339,29 +395,182 @@
   function renderFocusSection() {
     var focusBullets = currentFocusBullets();
     var beginItems = beginningThisWeek();
+    var dueItems = dueThisWeek();
+    var focusData = loadFocusData();
 
     var wrap = h('div', { style:{ display:'flex', gap:'16px', marginBottom:'12px', flexWrap:'wrap' } });
 
-    wrap.appendChild(
-      h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } },
-        h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Current Focus'),
-        h('ul', { className:'trk-focus-list' }, focusBullets.map(function(b){ return h('li', null, b); }))
-      )
-    );
+    // Current Focus — editable
+    var focusCard = h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } });
+    focusCard.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Current Focus'));
+    var focusList = h('ul', { className:'trk-focus-list' });
 
-    if (beginItems.length) {
-      wrap.appendChild(
-        h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } },
-          h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Beginning This Week'),
-          h('ul', { className:'trk-focus-list' }, beginItems.slice(0, 8).map(function(t) {
-            return h('li', { style:{ cursor:'pointer' }, onClick: function(){ selectedTaskId = t.id; renderTracker(); } },
-              wsDot(t.workstream, 6), ' ', t.title
-            );
-          }))
-        )
-      );
+    // Auto-populated items rendered as editable inputs
+    focusBullets.forEach(function(b, i) {
+      var li = h('li');
+      var inp = h('input', {
+        className:'trk-focus-input',
+        type:'text',
+        value: b
+      });
+      li.appendChild(inp);
+      focusList.appendChild(li);
+    });
+
+    // Custom focus items
+    (focusData.customFocus || []).forEach(function(item, i) {
+      var li = h('li');
+      var inp = h('input', {
+        className:'trk-focus-input',
+        type:'text',
+        value: item,
+        onInput: function(e) {
+          var fd = loadFocusData();
+          fd.customFocus[i] = e.target.value;
+          saveFocusData(fd);
+        }
+      });
+      var del = h('button', {
+        className:'trk-focus-del',
+        onClick: function() {
+          var fd = loadFocusData();
+          fd.customFocus.splice(i, 1);
+          saveFocusData(fd);
+          renderTracker();
+        }
+      }, '\u2715');
+      li.appendChild(inp);
+      li.appendChild(del);
+      focusList.appendChild(li);
+    });
+
+    focusCard.appendChild(focusList);
+    focusCard.appendChild(h('button', {
+      className:'trk-focus-add',
+      onClick: function() {
+        var fd = loadFocusData();
+        if (!fd.customFocus) fd.customFocus = [];
+        fd.customFocus.push('');
+        saveFocusData(fd);
+        renderTracker();
+      }
+    }, '+ Add'));
+    wrap.appendChild(focusCard);
+
+    // Beginning This Week — editable
+    if (beginItems.length || (focusData.customBeginning && focusData.customBeginning.length)) {
+      var beginCard = h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } });
+      beginCard.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Beginning This Week'));
+      var beginList = h('ul', { className:'trk-focus-list' });
+
+      beginItems.slice(0, 8).forEach(function(t) {
+        var li = h('li', { style:{ cursor:'pointer' }, onClick: function(){ selectedTaskId = t.id; renderTracker(); } });
+        var inp = h('input', {
+          className:'trk-focus-input',
+          type:'text',
+          value: t.title,
+          style:{ cursor:'pointer' }
+        });
+        inp.readOnly = true;
+        li.appendChild(wsDot(t.workstream, 6));
+        li.appendChild(inp);
+        beginList.appendChild(li);
+      });
+
+      // Custom beginning items
+      (focusData.customBeginning || []).forEach(function(item, i) {
+        var li = h('li');
+        var inp = h('input', {
+          className:'trk-focus-input',
+          type:'text',
+          value: item,
+          onInput: function(e) {
+            var fd = loadFocusData();
+            fd.customBeginning[i] = e.target.value;
+            saveFocusData(fd);
+          }
+        });
+        var del = h('button', {
+          className:'trk-focus-del',
+          onClick: function() {
+            var fd = loadFocusData();
+            fd.customBeginning.splice(i, 1);
+            saveFocusData(fd);
+            renderTracker();
+          }
+        }, '\u2715');
+        li.appendChild(inp);
+        li.appendChild(del);
+        beginList.appendChild(li);
+      });
+
+      beginCard.appendChild(beginList);
+      beginCard.appendChild(h('button', {
+        className:'trk-focus-add',
+        onClick: function() {
+          var fd = loadFocusData();
+          if (!fd.customBeginning) fd.customBeginning = [];
+          fd.customBeginning.push('');
+          saveFocusData(fd);
+          renderTracker();
+        }
+      }, '+ Add'));
+      wrap.appendChild(beginCard);
     }
+
+    // Due This Week section
+    if (dueItems.length) {
+      var dueCard = h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } });
+      dueCard.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Due This Week'));
+      var dueList = h('div');
+      dueItems.sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); }).forEach(function(t) {
+        dueList.appendChild(h('div', {
+          className:'trk-due-item',
+          onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+        },
+          wsDot(t.workstream, 6),
+          h('span', null, t.title),
+          h('span', { className:'trk-mono', style:{ color:'var(--muted)', fontSize:'8px', marginLeft:'auto' } }, fmtShort(t.dueDate))
+        ));
+      });
+      dueCard.appendChild(dueList);
+      wrap.appendChild(dueCard);
+    }
+
     return wrap;
+  }
+
+  /* ── Workstream Filter Buttons ── */
+  function renderWorkstreamFilters() {
+    var pills = h('div', { className:'trk-pills', style:{ marginBottom:'8px' } });
+
+    // ALL button
+    var allBtn = h('button', {
+      className: 'trk-ws-pill' + (filterWorkstream === 'ALL' ? ' active' : ''),
+      style: {
+        borderColor: 'var(--border)',
+        color: filterWorkstream === 'ALL' ? '#fff' : 'var(--muted)',
+        background: filterWorkstream === 'ALL' ? 'var(--front)' : 'transparent'
+      },
+      onClick: function(){ filterWorkstream = 'ALL'; renderTracker(); }
+    }, 'All');
+    pills.appendChild(allBtn);
+
+    Object.keys(WORKSTREAMS).forEach(function(ws) {
+      var wsData = WORKSTREAMS[ws];
+      var isActive = filterWorkstream === ws;
+      pills.appendChild(h('button', {
+        className: 'trk-ws-pill' + (isActive ? ' active' : ''),
+        style: {
+          borderColor: wsData.dot,
+          color: isActive ? '#fff' : wsData.dot,
+          background: isActive ? wsData.dot : 'transparent'
+        },
+        onClick: function(){ filterWorkstream = ws; renderTracker(); }
+      }, ws));
+    });
+
+    return pills;
   }
 
   /* ── View Switcher ── */
@@ -394,8 +603,9 @@
 
     statuses.forEach(function(status) {
       var col = h('div');
-      var colTasks = tasks.filter(function(t){ return t.status === status; })
-        .sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); });
+      var colTasks = tasks.filter(function(t){
+        return t.status === status && (filterWorkstream === 'ALL' || t.workstream === filterWorkstream);
+      }).sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); });
       var count = colTasks.length;
       col.appendChild(h('div', { className:'trk-col-header' }, status + ' (' + count + ')'));
 
@@ -450,17 +660,6 @@
   ═══════════════════════════════════════════ */
   function renderList() {
     var wrap = h('div');
-
-    // Filter pills
-    var pills = h('div', { className:'trk-pills' });
-    var allWs = ['ALL'].concat(Object.keys(WORKSTREAMS));
-    allWs.forEach(function(ws) {
-      pills.appendChild(h('button', {
-        className: 'trk-pill' + (filterWorkstream === ws ? ' active' : ''),
-        onClick: function(){ filterWorkstream = ws; renderTracker(); }
-      }, ws));
-    });
-    wrap.appendChild(pills);
 
     // Search
     var searchInput = h('input', {
@@ -560,28 +759,46 @@
     var container = h('div', { className:'trk-card', style:{ overflow:'hidden' } });
     var scrollArea = h('div', { className:'trk-timeline-wrap', style:{ overflowX:'auto', position:'relative' } });
 
-    // Phase header
-    var phaseHeader = h('div', { style:{ display:'flex', height:'22px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative' } });
+    // Phase header — full width with dates
+    var phaseHeader = h('div', { style:{ display:'flex', height:'30px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative' } });
     PHASES.forEach(function(phase) {
       var left = Math.max(0, daysBetween(projStart, phase.start)) * dayWidth;
       var width = daysBetween(phase.start, phase.end) * dayWidth;
-      phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:left+'px', width:width+'px', height:'100%', background:phase.color, opacity:'0.15', borderRadius:'2px' } }));
-      if (width > 40) {
-        phaseHeader.appendChild(h('div', { className:'trk-mono', style:{ position:'absolute', left:(left+4)+'px', top:'5px', fontSize:'8px', color:phase.color, whiteSpace:'nowrap', pointerEvents:'none' } }, phase.name));
+      phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:left+'px', width:width+'px', height:'100%', background:phase.color, opacity:'0.2', borderRadius:'2px' } }));
+      var phaseStartFmt = fmtShort(phase.start);
+      var phaseEndFmt = fmtShort(phase.end);
+      if (width > 60) {
+        phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:(left+6)+'px', top:'4px', fontSize:'11px', fontFamily:"'DM Mono',monospace", fontWeight:'700', letterSpacing:'0.08em', textTransform:'uppercase', color:phase.color, whiteSpace:'nowrap', pointerEvents:'none', lineHeight:'1' } },
+          phase.name
+        ));
+        if (width > 120) {
+          phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:(left+6)+'px', top:'17px', fontSize:'8px', fontFamily:"'DM Mono',monospace", letterSpacing:'0.06em', color:phase.color, opacity:'0.7', whiteSpace:'nowrap', pointerEvents:'none' } },
+            phaseStartFmt + ' \u2013 ' + phaseEndFmt
+          ));
+        }
       }
     });
     scrollArea.appendChild(phaseHeader);
 
-    // Month header
+    // Date markers header — more frequent markers
     var monthHeader = h('div', { style:{ display:'flex', height:'18px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative', borderBottom:'1px solid var(--border)' } });
-    var curMonth = '';
+    var lastLabel = -999;
     for (var d = 0; d < totalDays; d++) {
       var dt = new Date(parseD(projStart)); dt.setDate(dt.getDate() + d);
-      var ml = dt.toLocaleDateString('en-US', { month:'short' });
-      if (ml !== curMonth) {
-        curMonth = ml;
-        monthHeader.appendChild(h('div', { className:'trk-mono', style:{ position:'absolute', left:(d*dayWidth)+'px', top:'3px', fontSize:'8px', color:'var(--muted)', whiteSpace:'nowrap' } }, ml + ' ' + dt.getDate()));
+      var dayOfMonth = dt.getDate();
+
+      // Show label on 1st and 15th of each month, or every Monday if zoomed in
+      var showLabel = false;
+      if (dayOfMonth === 1 || dayOfMonth === 15) showLabel = true;
+      if (timelineZoom >= 1.5 && dt.getDay() === 1) showLabel = true;
+      if (timelineZoom >= 2.5 && (dayOfMonth % 3 === 1)) showLabel = true;
+
+      if (showLabel && (d - lastLabel) * dayWidth > 30) {
+        var ml = dt.toLocaleDateString('en-US', { month:'short' });
+        monthHeader.appendChild(h('div', { className:'trk-mono', style:{ position:'absolute', left:(d*dayWidth)+'px', top:'3px', fontSize:'8px', color:'var(--muted)', whiteSpace:'nowrap' } }, ml + ' ' + dayOfMonth));
+        lastLabel = d;
       }
+
       if (dt.getDay() === 1) {
         monthHeader.appendChild(h('div', { style:{ position:'absolute', left:(d*dayWidth)+'px', bottom:'0', width:'1px', height:'6px', background:'var(--border)' } }));
       }
@@ -610,14 +827,19 @@
     var wsOrder = Object.keys(WORKSTREAMS);
 
     wsOrder.forEach(function(ws) {
+      // Apply workstream filter
+      if (filterWorkstream !== 'ALL' && filterWorkstream !== ws) return;
+
       var wsTasks = tasks.filter(function(t){ return t.workstream === ws; })
         .sort(function(a,b){ return parseD(a.startDate) - parseD(b.startDate); });
       if (!wsTasks.length) return;
 
-      // Workstream label row
-      var labelRow = h('div', { style:{ display:'flex', alignItems:'center', height:'28px' } });
-      labelRow.appendChild(h('div', { className:'trk-timeline-ws-label' }, wsDot(ws, 6), ws));
-      labelRow.appendChild(h('div', { style:{ flex:'1', height:'1px', background:'var(--border)' } }));
+      // Workstream label row — more prominent
+      var wsColor = (WORKSTREAMS[ws] || {}).dot || '#888';
+      var wsBg = (WORKSTREAMS[ws] || {}).bg || '#eee';
+      var labelRow = h('div', { className:'trk-timeline-ws-row', style:{ display:'flex', alignItems:'center', height:'32px', background:wsBg, opacity:'0.9' } });
+      labelRow.appendChild(h('div', { className:'trk-timeline-ws-label', style:{ color:wsColor } }, wsDot(ws, 10), ws));
+      labelRow.appendChild(h('div', { style:{ flex:'1', height:'1px', background:wsColor, opacity:'0.3' } }));
       body.appendChild(labelRow);
       rowIndex++;
 
@@ -640,18 +862,18 @@
         var endOff = daysBetween(projStart, t.endDate);
         var barLeft = startOff * dayWidth;
         var barWidth = Math.max(dayWidth, (endOff - startOff + 1) * dayWidth);
-        var wsColor = (WORKSTREAMS[t.workstream] || {}).dot || '#888';
+        var taskWsColor = (WORKSTREAMS[t.workstream] || {}).dot || '#888';
 
         if (t.isMilestone && startOff === endOff) {
           barArea.appendChild(h('div', {
             className: 'trk-timeline-milestone' + (selectedTaskId === t.id ? ' selected' : ''),
-            style:{ left:(barLeft + barWidth/2 - 6)+'px', top:'8px', background:wsColor },
+            style:{ left:(barLeft + barWidth/2 - 6)+'px', top:'8px', background:taskWsColor },
             onClick: function(){ selectedTaskId = t.id; renderTracker(); }
           }));
         } else {
           var bar = h('div', {
             className: 'trk-timeline-bar' + (selectedTaskId === t.id ? ' selected' : ''),
-            style:{ left:barLeft+'px', width:barWidth+'px', top:'7px', background:wsColor },
+            style:{ left:barLeft+'px', width:barWidth+'px', top:'7px', background:taskWsColor },
             title: t.title + ' (' + fmtShort(t.startDate) + ' \u2013 ' + fmtShort(t.endDate) + ')',
             onClick: function(){ selectedTaskId = t.id; renderTracker(); }
           });
