@@ -212,7 +212,7 @@
       var raw = localStorage.getItem(LS_KEY);
       if (raw) {
         var data = JSON.parse(raw);
-        if (data._seedVersion >= 8 && Array.isArray(data.tasks)) {
+        if (data._seedVersion >= 7 && Array.isArray(data.tasks)) {
           // Migrate workstream names if needed
           tasks = data.tasks.map(function(t) {
             if (t.workstream === 'Space') {
@@ -974,6 +974,9 @@
     // Rows by workstream
     var barPositions = {};
     var rowIndex = 0;
+    var pixelY = 0; // track actual pixel position
+    var WS_ROW_HEIGHT = 32;
+    var TASK_ROW_HEIGHT = 28;
     var wsOrder = Object.keys(WORKSTREAMS);
 
     wsOrder.forEach(function(ws) {
@@ -997,6 +1000,7 @@
       labelRow.appendChild(h('span', { className:'trk-mono', style:{ marginLeft:'8px', fontSize:'9px', color:wsColor, opacity:'0.6' } }, wsTasks.length + ' tasks'));
       labelRow.appendChild(h('div', { style:{ flex:'1', height:'1px', background:wsColor, opacity:'0.3' } }));
       body.appendChild(labelRow);
+      pixelY += WS_ROW_HEIGHT;
       rowIndex++;
 
       if (isCollapsed) return; // skip task rows if collapsed
@@ -1051,7 +1055,8 @@
         row.appendChild(barArea);
         body.appendChild(row);
 
-        barPositions[t.id] = { row: rowIndex, left: barLeft, right: barLeft + barWidth, cy: rowIndex * 28 + 14 };
+        barPositions[t.id] = { row: rowIndex, left: barLeft, right: barLeft + barWidth, cy: pixelY + TASK_ROW_HEIGHT / 2 };
+        pixelY += TASK_ROW_HEIGHT;
         rowIndex++;
       });
     });
@@ -1065,7 +1070,7 @@
       barPositions[mt.id] = { row: 0, left: mLeft, right: mLeft, cy: 14, isMajorMilestone: true };
     });
 
-    var totalHeight = (rowIndex + 1) * 28;
+    var totalHeight = pixelY + 28;
     var svgNS = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('width', String(chartWidth + labelWidth));
