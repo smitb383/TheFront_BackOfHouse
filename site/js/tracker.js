@@ -513,10 +513,10 @@
     var dueItems = dueNext7Days();
     var focusData = loadFocusData();
 
-    var wrap = h('div', { style:{ display:'flex', gap:'16px', marginBottom:'12px', flexWrap:'wrap' } });
+    var wrap = h('div', { style:{ display:'flex', gap:'12px', marginBottom:'12px', flexWrap:'wrap' } });
 
-    // Current Focus — editable
-    var focusCard = h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } });
+    // Current Focus — narrower
+    var focusCard = h('div', { className:'trk-card', style:{ flex:'0 0 220px', minWidth:'180px', padding:'12px 16px' } });
     focusCard.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Current Focus'));
     var focusList = h('ul', { className:'trk-focus-list' });
 
@@ -574,7 +574,7 @@
 
     // Helper: render two-column assignee split
     function renderTwoColTasks(items, title) {
-      var card = h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } });
+      var card = h('div', { className:'trk-card', style:{ flex:'2', minWidth:'300px', padding:'12px 16px' } });
       card.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, title));
       var cols = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px' } });
 
@@ -590,13 +590,14 @@
           col.appendChild(h('div', { style:{ fontSize:'11px', color:'var(--muted)', fontStyle:'italic' } }, 'None'));
         }
         myItems.forEach(function(t) {
+          var isDone = t.status === 'DONE';
           col.appendChild(h('div', {
-            className:'trk-due-item',
+            className:'trk-due-item' + (isDone ? ' trk-done-item' : ''),
             onClick: function(){ showDetail(t.id); }
           },
             wsDot(t.workstream, 6),
-            h('span', null, t.title),
-            h('span', { className:'trk-mono', style:{ color:'var(--muted)', fontSize:'8px', marginLeft:'auto' } }, fmtShort(t.dueDate))
+            h('span', { style: isDone ? { textDecoration:'line-through', opacity:'0.4' } : {} }, t.title),
+            h('span', { className:'trk-mono', style:{ color:'var(--muted)', fontSize:'8px', marginLeft:'auto', opacity: isDone ? '0.3' : '1' } }, fmtShort(t.dueDate))
           ));
         });
         cols.appendChild(col);
@@ -617,7 +618,77 @@
       wrap.appendChild(renderTwoColTasks(dueItems2, 'Due in Next 7 Days'));
     }
 
-    return wrap;
+    // Second row: Meeting items, Action items, Open questions
+    var row2 = h('div', { style:{ display:'flex', gap:'12px', marginBottom:'12px', flexWrap:'wrap' } });
+
+    function renderEditableList(title, dataKey) {
+      var card = h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } });
+      card.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, title));
+      var fd = loadFocusData();
+      var items = fd[dataKey] || [];
+      var list = h('div', { style:{ display:'flex', flexDirection:'column', gap:'2px' } });
+
+      items.forEach(function(item, i) {
+        var isDone = item.done;
+        var row = h('div', { style:{ display:'flex', alignItems:'center', gap:'6px', opacity: isDone ? '0.4' : '1' } });
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = isDone;
+        cb.style.accentColor = 'var(--front)';
+        cb.style.cursor = 'pointer';
+        cb.addEventListener('change', function() {
+          var fd2 = loadFocusData();
+          fd2[dataKey][i].done = !fd2[dataKey][i].done;
+          saveFocusData(fd2);
+          renderTracker();
+        });
+        row.appendChild(cb);
+        var inp = h('input', {
+          className:'trk-focus-input',
+          type:'text',
+          value: item.text || '',
+          style: isDone ? { textDecoration:'line-through', color:'var(--muted)' } : {},
+          onInput: function(e) {
+            var fd2 = loadFocusData();
+            fd2[dataKey][i].text = e.target.value;
+            saveFocusData(fd2);
+          }
+        });
+        row.appendChild(inp);
+        row.appendChild(h('button', {
+          className:'trk-focus-del',
+          onClick: function() {
+            var fd2 = loadFocusData();
+            fd2[dataKey].splice(i, 1);
+            saveFocusData(fd2);
+            renderTracker();
+          }
+        }, '\u2715'));
+        list.appendChild(row);
+      });
+
+      card.appendChild(list);
+      card.appendChild(h('button', {
+        className:'trk-focus-add',
+        onClick: function() {
+          var fd2 = loadFocusData();
+          if (!fd2[dataKey]) fd2[dataKey] = [];
+          fd2[dataKey].push({ text: '', done: false });
+          saveFocusData(fd2);
+          renderTracker();
+        }
+      }, '+ Add'));
+      return card;
+    }
+
+    row2.appendChild(renderEditableList('Items for Next Meeting', 'meetingItems'));
+    row2.appendChild(renderEditableList('New Action Items', 'actionItems'));
+    row2.appendChild(renderEditableList('Open Questions', 'openQuestions'));
+
+    var outer = h('div');
+    outer.appendChild(wrap);
+    outer.appendChild(row2);
+    return outer;
   }
 
   /* ── Workstream Filter Buttons ── */
