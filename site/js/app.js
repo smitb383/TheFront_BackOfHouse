@@ -4402,11 +4402,13 @@ function seedTrackerIfEmpty() {
   nextThursday.setDate(today.getDate() + daysUntilThursday);
   const thu = nextThursday.toISOString().slice(0,10);
 
-  // June 1 for popup items
-  const jun1 = '2025-06-01';
-  const may15 = '2025-05-15';
-  const may25 = '2025-05-25';
-  const may30 = '2025-05-30';
+  // Popup run: June 18 – July 16, 2026
+  const jun18 = '2026-06-18';
+  const jun20 = '2026-06-20';
+  const jun1  = '2026-06-01';
+  const may15 = '2026-05-15';
+  const may25 = '2026-05-25';
+  const jun17 = '2026-06-17';
 
   const seeds = [
     { id: Date.now()+1,  title: 'Complete general business plan (all sections)', notes: 'Executive summary, model, revenue, market, operations', cat: 'build', due: thu, done: false },
@@ -4418,9 +4420,9 @@ function seedTrackerIfEmpty() {
     { id: Date.now()+7,  title: 'Order bags, tags, tissue paper for pop-up', notes: 'Lead time is usually 2–3 weeks minimum', cat: 'brand', due: may15, done: false },
     { id: Date.now()+8,  title: 'Design + order signage for pop-up', notes: 'Vinyl, window graphics — need install lead time', cat: 'brand', due: may25, done: false },
     { id: Date.now()+9,  title: 'Pop-up marketing push — posts, invites, press outreach', notes: 'Start at least 2–3 weeks before opening', cat: 'brand', due: may25, done: false },
-    { id: Date.now()+10, title: 'Install / build-out at 334 Broome', notes: '', cat: 'space', due: may30, done: false },
-    { id: Date.now()+11, title: '334 Broome opening event', notes: 'Invites, drinks, photographer', cat: 'build', due: jun1, done: false },
-    { id: Date.now()+12, title: 'Form LLC + get EIN', notes: 'NY LLC filing ~$200 via DOS', cat: 'legal', due: '2025-04-30', done: false },
+    { id: Date.now()+10, title: 'Install / build-out at 334 Broome', notes: '', cat: 'space', due: jun17, done: false },
+    { id: Date.now()+11, title: '334 Broome opening event', notes: 'Invites, drinks, photographer', cat: 'build', due: jun20, done: false },
+    { id: Date.now()+12, title: 'Form LLC + get EIN', notes: 'NY LLC filing ~$200 via DOS', cat: 'legal', due: '2026-04-30', done: false },
     { id: Date.now()+13, title: 'Research Parsons grant application portal + deadline', notes: 'Contact alumni affairs office', cat: 'money', due: thu, done: false },
   ];
   saveMilestones('front', seeds);
