@@ -1,1022 +1,941 @@
-// ============================================
-// THE FRONT NYC — Project Tracker Module
-// ============================================
-// Vanilla JS — stores in localStorage key 'tracker_data_v1'
-// which syncs to Supabase automatically via data.js layer.
+/* ═══════════════════════════════════════════════════════════════
+   THE FRONT — Project Tracker v2
+   Renders into #front-schedule
+   localStorage key: tracker_data_v1  (TRACKER_SEED_VERSION = 2)
+   ═══════════════════════════════════════════════════════════════ */
 
-var TRACKER_KEY = 'tracker_data_v1';
-var TRACKER_SEED_VERSION = 1;
+(function () {
+  'use strict';
 
-// ── Categories with JSX-matching colors ──
-var TR_CATEGORIES = {
-  'BUILD / PLAN':     { color: '#B5D4F4', text: '#0C447C', dot: '#378ADD' },
-  'LEGAL':            { color: '#C0DD97', text: '#27500A', dot: '#639922' },
-  'MONEY / FUNDING':  { color: '#FAC775', text: '#633806', dot: '#BA7517' },
-  'SPACE / VENUE':    { color: '#F5C4B3', text: '#712B13', dot: '#D85A30' },
-  'BRAND / STORY':    { color: '#F4C0D1', text: '#72243E', dot: '#D4537E' },
-  'PEOPLE / VENDORS': { color: '#CECBF6', text: '#3C3489', dot: '#7F77DD' },
-  'PRODUCT':          { color: '#9FE1CB', text: '#085041', dot: '#1D9E75' },
-  'THE FRONT MERCH':  { color: '#FAEEDA', text: '#633806', dot: '#EF9F27' },
-  'OTHER':            { color: '#D3D1C7', text: '#444441', dot: '#888780' }
-};
+  /* ── Constants ── */
+  var LS_KEY = 'tracker_data_v1';
+  var TRACKER_SEED_VERSION = 2;
 
-var TR_STATUS_COLORS = {
-  'TODO':        '#888780',
-  'IN PROGRESS': '#378ADD',
-  'BLOCKED':     '#E24B4A',
-  'DONE':        '#1D9E75'
-};
+  var WORKSTREAMS = {
+    'Planning':              { bg: '#B5D4F4', dot: '#378ADD' },
+    'Space':                 { bg: '#F5C4B3', dot: '#D85A30' },
+    'Finance':               { bg: '#FAC775', dot: '#BA7517' },
+    'Brand':                 { bg: '#F4C0D1', dot: '#D4537E' },
+    'Marketing & Outreach':  { bg: '#CECBF6', dot: '#7F77DD' },
+    'Vendors':               { bg: '#9FE1CB', dot: '#1D9E75' },
+    'Merch':                 { bg: '#FAEEDA', dot: '#EF9F27' },
+  };
 
-var TR_PRIORITY_ORDER = { HIGH: 0, MED: 1, LOW: 2 };
-var TR_STATUS_ORDER   = { 'TODO': 0, 'IN PROGRESS': 1, 'BLOCKED': 2, 'DONE': 3 };
-
-// ── All 54 seed tasks from the JSX ──
-var TRACKER_SEED_TASKS = [
-  {
-    id: 1, title: "Get AC repair quote from Amir / 334 Broome",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-04",
-    startDate: "2026-03-30", endDate: "2026-04-04",
-    deps: [], notes: "Landlord open to splitting cost. Use as leverage for lease extension + deinstall days."
-  },
-  {
-    id: 2, title: "Negotiate AC cost split + lease extension + deinstall days",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-06",
-    startDate: "2026-04-04", endDate: "2026-04-06",
-    deps: [1], notes: "Negotiate all together: AC cost split, install access Jun 20\u201324 (5 days before launch), deinstall days Jul 20\u201321 (2 days after close Jul 19). AC contribution is leverage for the extras."
-  },
-  {
-    id: 3, title: "Sign lease contract (updated terms)",
-    category: "LEGAL", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-13",
-    startDate: "2026-04-08", endDate: "2026-04-13",
-    deps: [51], notes: "Sign within 2 weeks. Must reflect: open Jun 25, close Jul 19, install Jun 20\u201324, deinstall Jul 20\u201321, AC cost split."
-  },
-  {
-    id: 4, title: "Secure domain names",
-    category: "BRAND / STORY", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-04-04",
-    startDate: "2026-03-30", endDate: "2026-04-04",
-    deps: [], notes: "thefrontny, frontnyc, thefrontgallery, thefrontstore + variations."
-  },
-  {
-    id: 5, title: "Preliminary budget \u2014 costs + revenue model",
-    category: "MONEY / FUNDING", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-04-06",
-    startDate: "2026-03-30", endDate: "2026-04-06",
-    deps: [], notes: "Upfront costs, P&L, commission revenue projections. Inform business plan."
-  },
-  {
-    id: 6, title: "Preliminary project timeline",
-    category: "BUILD / PLAN", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-04-06",
-    startDate: "2026-03-30", endDate: "2026-04-06",
-    deps: [], notes: "Launch Jun 25 (Thu). Turnover Jun 15. Fabrication May 28\u2013Jun 14."
-  },
-  {
-    id: 7, title: "Set up project base (repo, Supabase, Vercel, tracker)",
-    category: "BUILD / PLAN", status: "TODO", priority: "MED",
-    assignee: "Brooke", dueDate: "2026-04-06",
-    startDate: "2026-03-30", endDate: "2026-04-06",
-    deps: [], notes: "GitHub: smitb383/TheFront_BackOfHouse. Migrate tasks to Supabase."
-  },
-  {
-    id: 8, title: "Loop in Caroline Zimbalist",
-    category: "PEOPLE / VENDORS", status: "TODO", priority: "MED",
-    assignee: "Brooke", dueDate: "2026-04-06",
-    startDate: "2026-03-30", endDate: "2026-04-06",
-    deps: [], notes: "Key contact \u2014 bring in early."
-  },
-  {
-    id: 9, title: "Register LLC",
-    category: "LEGAL", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-06",
-    startDate: "2026-03-30", endDate: "2026-04-06",
-    deps: [], notes: "Lease currently in Del\u2019s personal name \u2014 must reassign to LLC."
-  },
-  {
-    id: 10, title: "Get EIN",
-    category: "LEGAL", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-13",
-    startDate: "2026-04-06", endDate: "2026-04-13",
-    deps: [9], notes: "Required for sales tax cert and vendor agreements."
-  },
-  {
-    id: 11, title: "Reassign lease from Del \u2192 LLC",
-    category: "LEGAL", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-20",
-    startDate: "2026-04-13", endDate: "2026-04-20",
-    deps: [3, 9], notes: "Coordinate with Amir Badawi / Patjen Realty Corp."
-  },
-  {
-    id: 12, title: "Apply for NY Sales Tax Certificate of Authority",
-    category: "LEGAL", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-01",
-    startDate: "2026-04-13", endDate: "2026-05-01",
-    deps: [10], notes: "20-day lead time. Must be active before opening."
-  },
-  {
-    id: 13, title: "Secure General Liability Insurance ($2M)",
-    category: "LEGAL", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-10",
-    startDate: "2026-04-20", endDate: "2026-05-10",
-    deps: [9, 10], notes: "Additional insureds: Amir Badawi (334 Broome St Apt 16) + Patjen Realty Corp (151 Hester St)."
-  },
-  {
-    id: 14, title: "Pay deposit \u2014 $1,750 to Amir",
-    category: "MONEY / FUNDING", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-15",
-    startDate: "2026-05-15", endDate: "2026-05-15",
-    deps: [13], notes: "Non-refundable. Cash / Venmo @amir-H-Badawi / Zelle (713) 410-9531 / PayPal amir.h.badawi@gmail.com"
-  },
-  {
-    id: 15, title: "Pay full rent \u2014 $3,500 to Amir",
-    category: "MONEY / FUNDING", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-14",
-    startDate: "2026-06-14", endDate: "2026-06-14",
-    deps: [14], notes: "Due June 14. $300/day overtime if overstayed beyond agreed end date."
-  },
-  {
-    id: 16, title: "Brand identity \u2014 tagline, visual language, type system",
-    category: "BRAND / STORY", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-20",
-    startDate: "2026-03-30", endDate: "2026-04-20",
-    deps: [], notes: "Bebas Neue confirmed. Tagline TBD. Loop Hannah Witner for graphic work."
-  },
-  {
-    id: 17, title: "Social accounts set up + content strategy",
-    category: "BRAND / STORY", status: "TODO", priority: "MED",
-    assignee: "Del", dueDate: "2026-05-15",
-    startDate: "2026-04-20", endDate: "2026-05-15",
-    deps: [42], notes: "Instagram primary. Social templates must be produced before content goes live. Content cadence tied to launch countdown."
-  },
-  {
-    id: 18, title: "Design window vinyl signage",
-    category: "BRAND / STORY", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-15",
-    startDate: "2026-04-20", endDate: "2026-05-15",
-    deps: [41], notes: "Full glass window front. Part of graphic production phase. Must be ordered with enough lead time to arrive before Jun 15."
-  },
-  {
-    id: 19, title: "Order + receive window vinyl signage",
-    category: "BRAND / STORY", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-10",
-    startDate: "2026-05-15", endDate: "2026-06-10",
-    deps: [18], notes: "Must arrive before Jun 15 so it\u2019s ready for install week."
-  },
-  {
-    id: 20, title: "Build + launch website",
-    category: "BRAND / STORY", status: "TODO", priority: "MED",
-    assignee: "Brooke", dueDate: "2026-06-01",
-    startDate: "2026-04-20", endDate: "2026-06-01",
-    deps: [16, 4], notes: "GitHub \u2192 Vercel. Vanilla HTML/CSS/JS. Supabase backend."
-  },
-  {
-    id: 21, title: "Press outreach \u2014 Megan Prives (WGSN) + others",
-    category: "BRAND / STORY", status: "TODO", priority: "MED",
-    assignee: "Brooke", dueDate: "2026-06-10",
-    startDate: "2026-06-01", endDate: "2026-06-10",
-    deps: [20], notes: "Website should be live before pitching press."
-  },
-  {
-    id: 22, title: "Launch marketing push \u2014 posts, invites, event page",
-    category: "BRAND / STORY", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-20",
-    startDate: "2026-06-10", endDate: "2026-06-20",
-    deps: [17, 21], notes: "Build to Jun 25 launch. Invites, Instagram, event listings."
-  },
-  {
-    id: 23, title: "Finalize vendor roster \u2014 outreach + confirmation",
-    category: "PEOPLE / VENDORS", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-15",
-    startDate: "2026-04-15", endDate: "2026-05-15",
-    deps: [40], notes: "Deck already out by this point. Follow up with all targets, confirm who\u2019s in. Verconiik + Harlot Hands confirmed."
-  },
-  {
-    id: 24, title: "Vendor consignment agreements signed",
-    category: "PEOPLE / VENDORS", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-06-01",
-    startDate: "2026-05-25", endDate: "2026-06-01",
-    deps: [54], notes: "All vendors signed before product comes in. Agreement includes agreed item list, 70/30 split, Square POS, payment within 7 days of close."
-  },
-  {
-    id: 25, title: "Order small print items \u2014 tags, cards, bags, tissue, hangers",
-    category: "PRODUCT", status: "TODO", priority: "MED",
-    assignee: "Brooke", dueDate: "2026-05-30",
-    startDate: "2026-05-15", endDate: "2026-05-30",
-    deps: [42], notes: "Graphic production must be done before ordering. Must arrive before Jun 14. Merch: temp tattoos, stickers, fans, lighters."
-  },
-  {
-    id: 26, title: "Assemble tags, bags, packaging \u2014 fully done before install",
-    category: "PRODUCT", status: "TODO", priority: "MED",
-    assignee: "Brooke", dueDate: "2026-06-14",
-    startDate: "2026-06-01", endDate: "2026-06-14",
-    deps: [25], notes: "Everything pre-assembled so no time is spent on this in the space."
-  },
-  {
-    id: 27, title: "Space design plan \u2014 layout, zones, fixture list",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-01",
-    startDate: "2026-04-01", endDate: "2026-05-01",
-    deps: [16], notes: "Clothing area, nook shelving, plinths, dressing room zone. Drives fabrication scope."
-  },
-  {
-    id: 28, title: "Source + purchase all build materials",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-05-28",
-    startDate: "2026-05-01", endDate: "2026-05-28",
-    deps: [27], notes: "Paint, hardware, shelving materials, plinth materials. Everything in hand before fabrication starts."
-  },
-  {
-    id: 29, title: "Fabrication \u2014 clothing racks, shelves, plinths, dressing room",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-14",
-    startDate: "2026-05-28", endDate: "2026-06-14",
-    deps: [28], notes: "2.5 weeks offsite. Everything built before we enter the space Jun 15."
-  },
-  {
-    id: 30, title: "Coordinate large item deliveries \u2014 mirrors, lights, furniture",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-15",
-    startDate: "2026-06-01", endDate: "2026-06-15",
-    deps: [29], notes: "Schedule delivery for Jun 22\u201323, after hard install done and paint dry."
-  },
-  {
-    id: 31, title: "INSTALL: Painting \u2014 2 days",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-21",
-    startDate: "2026-06-20", endDate: "2026-06-21",
-    deps: [15, 29], notes: "Jun 20\u201321 (Sat\u2013Sun). First thing in install window. AJ leads. 5-day buffer after Jun 15 turnover used here."
-  },
-  {
-    id: 32, title: "INSTALL: Hard install \u2014 shelves, built items \u2014 1 day",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-22",
-    startDate: "2026-06-22", endDate: "2026-06-22",
-    deps: [31], notes: "Jun 22 (Mon). All fabricated pieces go up. AJ leads."
-  },
-  {
-    id: 33, title: "INSTALL: Large item delivery + placement",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-23",
-    startDate: "2026-06-22", endDate: "2026-06-23",
-    deps: [32, 30], notes: "Jun 22\u201323 (Mon\u2013Tue). Mirrors, lighting fixtures, furniture in after paint is dry."
-  },
-  {
-    id: 34, title: "INSTALL: Decorative styling, signage + final touches",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-06-24",
-    startDate: "2026-06-23", endDate: "2026-06-24",
-    deps: [33, 19, 26], notes: "Jun 23\u201324 (Tue\u2013Wed). Vinyl signage up, vendor product placed, tags on, everything dressed. Space ready for Thu open."
-  },
-  {
-    id: 35, title: "LAUNCH \u2014 Opening event, Thu Jun 25",
-    category: "BUILD / PLAN", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-06-25",
-    startDate: "2026-06-25", endDate: "2026-06-25",
-    deps: [34, 22, 24], notes: "Thu Jun 25. Operating Tue\u2013Sun. Run through Sun Jul 19."
-  },
-  {
-    id: 36, title: "CLOSE \u2014 Last day of run, Sun Jul 19",
-    category: "BUILD / PLAN", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-07-19",
-    startDate: "2026-07-19", endDate: "2026-07-19",
-    deps: [35], notes: "Full day Jul 19. End of ~25-day run."
-  },
-  {
-    id: 37, title: "General business plan \u2014 all sections",
-    category: "BUILD / PLAN", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-04-06",
-    startDate: "2026-03-30", endDate: "2026-04-06",
-    deps: [5], notes: "Full business plan. Parsons grant version adapted from this."
-  },
-  {
-    id: 38, title: "Parsons grant version of business plan",
-    category: "BUILD / PLAN", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-04-10",
-    startDate: "2026-04-06", endDate: "2026-04-10",
-    deps: [37], notes: "Adapted from general plan."
-  },
-  {
-    id: 39, title: "Finalize vendor deck",
-    category: "PEOPLE / VENDORS", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-10",
-    startDate: "2026-04-06", endDate: "2026-04-10",
-    deps: [37], notes: "Deck communicates concept, terms (70/30), space, programming. Should feel on-brand even if identity isn\u2019t fully locked yet."
-  },
-  {
-    id: 40, title: "Begin sending vendor deck \u2014 outreach to targets",
-    category: "PEOPLE / VENDORS", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-13",
-    startDate: "2026-04-10", endDate: "2026-04-13",
-    deps: [39], notes: "Confirmed: Verconiik, Harlot Hands. Identify and reach all new targets this week."
-  },
-  {
-    id: 41, title: "Brand identity complete \u2014 gate for all graphic production",
-    category: "BRAND / STORY", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-20",
-    startDate: "2026-04-06", endDate: "2026-04-20",
-    deps: [16], notes: "Full identity locked: logo, type, color, tagline. Nothing goes to print, to social, or to vendors until this is done."
-  },
-  {
-    id: 42, title: "Graphic production \u2014 social templates, print assets, packaging",
-    category: "BRAND / STORY", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-15",
-    startDate: "2026-04-20", endDate: "2026-05-15",
-    deps: [41], notes: "Lead time before anything prints or goes live. Includes: social templates, signage files, tag/bag/packaging design, merch graphics. All assets must clear production before ordering or releasing."
-  },
-  {
-    id: 43, title: "Merch ideation \u2014 concepts, items, quantities",
-    category: "THE FRONT MERCH", status: "TODO", priority: "MED",
-    assignee: "Del", dueDate: "2026-04-30",
-    startDate: "2026-04-20", endDate: "2026-04-30",
-    deps: [41], notes: "Contingent on graphic identity being locked. Define what we\u2019re making: temp tattoos, stickers, fans, lighters, totes, etc. Think about what makes sense for a summer pop-up with no AC."
-  },
-  {
-    id: 44, title: "Merch design \u2014 artwork files for each item",
-    category: "THE FRONT MERCH", status: "TODO", priority: "MED",
-    assignee: "Del", dueDate: "2026-05-10",
-    startDate: "2026-04-30", endDate: "2026-05-10",
-    deps: [43, 42], notes: "Design files must meet vendor specs (bleed, resolution, format). One round of revisions built in."
-  },
-  {
-    id: 45, title: "Merch costing \u2014 get quotes per item, build cost model",
-    category: "THE FRONT MERCH", status: "TODO", priority: "MED",
-    assignee: "Brooke", dueDate: "2026-05-10",
-    startDate: "2026-04-30", endDate: "2026-05-10",
-    deps: [43], notes: "Get unit costs + MOQs for each item. Build into budget model \u2014 retail price, margin, breakeven quantity."
-  },
-  {
-    id: 46, title: "Merch final approval \u2014 items, designs, quantities confirmed",
-    category: "THE FRONT MERCH", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-05-15",
-    startDate: "2026-05-10", endDate: "2026-05-15",
-    deps: [44, 45], notes: "Both design and cost must be approved before ordering. No changes after this."
-  },
-  {
-    id: 47, title: "Place merch orders",
-    category: "THE FRONT MERCH", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-05-20",
-    startDate: "2026-05-15", endDate: "2026-05-20",
-    deps: [46], notes: "1 month production + shipping lead time. Must order by May 20 to arrive before Jun 20."
-  },
-  {
-    id: 48, title: "Merch received + QC checked",
-    category: "THE FRONT MERCH", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-06-20",
-    startDate: "2026-06-10", endDate: "2026-06-20",
-    deps: [47], notes: "Arrives ~Jun 10\u201320. Check all items against order. Any issues need time to resolve before launch."
-  },
-  {
-    id: 49, title: "DEINSTALL \u2014 2 days, Jul 20\u201321",
-    category: "SPACE / VENUE", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-07-21",
-    startDate: "2026-07-20", endDate: "2026-07-21",
-    deps: [36], notes: "Jul 20 (Mon) \u2013 Jul 21 (Tue). Space must be returned in original condition. Negotiate these 2 days into the lease."
-  },
-  {
-    id: 50, title: "Compile contract term changes \u2014 dates, AC, deinstall, extensions",
-    category: "LEGAL", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-04-06",
-    startDate: "2026-04-04", endDate: "2026-04-06",
-    deps: [2], notes: "Document all requested changes before the call with Amir: open Jun 25 (Thu), close Jul 19 (Sun), install access Jun 20\u201324, deinstall Jul 20\u201321, AC cost split terms. Have everything written out so nothing gets missed."
-  },
-  {
-    id: 51, title: "Call / meet with Amir + Patjen Realty to align on terms",
-    category: "LEGAL", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-04-08",
-    startDate: "2026-04-06", endDate: "2026-04-08",
-    deps: [50], notes: "Verify all changes verbally before the contract is revised. Confirm: updated dates, install + deinstall access, AC agreement, deposit and rent amounts unchanged."
-  },
-  {
-    id: 52, title: "Draft vendor consignment agreement template",
-    category: "PEOPLE / VENDORS", status: "TODO", priority: "HIGH",
-    assignee: "Brooke", dueDate: "2026-04-20",
-    startDate: "2026-04-10", endDate: "2026-04-20",
-    deps: [9], notes: "Terms: 70% vendor / 30% The Front. Vendor fills in: item list, descriptions, quantities, sale prices. We agree on each item before signing. Square POS (2.6% fee). Includes liability, pickup terms, payment schedule."
-  },
-  {
-    id: 53, title: "Collect item lists from confirmed vendors",
-    category: "PEOPLE / VENDORS", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-15",
-    startDate: "2026-04-20", endDate: "2026-05-15",
-    deps: [40, 52], notes: "Each vendor provides full inventory: item name, description, qty, proposed sale price. We review and agree before agreement is countersigned. Verconiik + Harlot Hands first."
-  },
-  {
-    id: 54, title: "Review + agree on inventory + pricing per vendor",
-    category: "PEOPLE / VENDORS", status: "TODO", priority: "HIGH",
-    assignee: "Del", dueDate: "2026-05-25",
-    startDate: "2026-05-15", endDate: "2026-05-25",
-    deps: [53], notes: "Go through each vendor\u2019s item list. Confirm pricing makes sense for the space and customer. Flag anything to negotiate. This informs how we set up Square and the floor plan."
-  }
-];
-
-// ── State ──
-var _trState = {
-  tasks: [],
-  view: 'board',       // board | timeline | log
-  filterCat: 'ALL',
-  filterStatus: 'ALL',
-  search: '',
-  selectedId: null,
-  sortField: 'priority', // for log view
-  sortDir: 1
-};
-
-// ── Data helpers ──
-function getTrackerData() {
-  try { return JSON.parse(localStorage.getItem(TRACKER_KEY)) || null; } catch(e) { return null; }
-}
-function saveTrackerData(d) {
-  d._seedVersion = TRACKER_SEED_VERSION;
-  localStorage.setItem(TRACKER_KEY, JSON.stringify(d));
-}
-
-function migrateTrackerData(existing) {
-  // Future migrations go here based on _seedVersion
-  // For now, merge any missing seed tasks
-  var existingIds = {};
-  existing.tasks.forEach(function(t) { existingIds[t.id] = true; });
-  TRACKER_SEED_TASKS.forEach(function(seed) {
-    if (!existingIds[seed.id]) {
-      existing.tasks.push(JSON.parse(JSON.stringify(seed)));
-    }
-  });
-  return existing;
-}
-
-function loadTrackerTasks() {
-  var data = getTrackerData();
-  if (!data) {
-    // First run — seed
-    data = { tasks: JSON.parse(JSON.stringify(TRACKER_SEED_TASKS)), _seedVersion: TRACKER_SEED_VERSION };
-    saveTrackerData(data);
-  } else if ((data._seedVersion || 0) < TRACKER_SEED_VERSION) {
-    data = migrateTrackerData(data);
-    saveTrackerData(data);
-  }
-  return data.tasks;
-}
-
-function persistTasks() {
-  saveTrackerData({ tasks: _trState.tasks });
-}
-
-// ── Date helpers ──
-function trParseDate(s) { return new Date(s + 'T00:00:00'); }
-function trFmtDate(s) {
-  if (!s) return '\u2014';
-  var d = trParseDate(s);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-function trDaysDiff(a, b) { return Math.round((trParseDate(b) - trParseDate(a)) / 86400000); }
-function trToday() {
-  var d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-function trDaysFromToday(s) { return trDaysDiff(trToday(), s); }
-
-function trUrgency(task) {
-  if (task.status === 'DONE') return 'ok';
-  var d = trDaysFromToday(task.dueDate);
-  if (d < 0) return 'overdue';
-  if (d <= 3) return 'urgent';
-  if (d <= 14) return 'soon';
-  return 'ok';
-}
-var TR_URGENCY_COLOR = { overdue: '#E24B4A', urgent: '#EF9F27', soon: '#BA7517', ok: '#888780' };
-function trUrgencyLabel(task) {
-  if (task.status === 'DONE') return 'done';
-  var d = trDaysFromToday(task.dueDate);
-  if (d < 0) return Math.abs(d) + 'd overdue';
-  if (d === 0) return 'due today';
-  return 'due in ' + d + 'd';
-}
-
-// ── Escape HTML ──
-function trEsc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-// ── Filter tasks ──
-function trFilteredTasks() {
-  var tasks = _trState.tasks;
-  var fc = _trState.filterCat;
-  var fs = _trState.filterStatus;
-  var search = (_trState.search || '').toLowerCase();
-  return tasks.filter(function(t) {
-    if (fc !== 'ALL' && t.category !== fc) return false;
-    if (fs !== 'ALL' && t.status !== fs) return false;
-    if (search && t.title.toLowerCase().indexOf(search) === -1 &&
-        (t.notes||'').toLowerCase().indexOf(search) === -1 &&
-        (t.assignee||'').toLowerCase().indexOf(search) === -1) return false;
-    return true;
-  });
-}
-
-function trByStatus(status) {
-  return trFilteredTasks().filter(function(t) { return t.status === status; })
-    .sort(function(a,b) { return (TR_PRIORITY_ORDER[a.priority]||9) - (TR_PRIORITY_ORDER[b.priority]||9); });
-}
-
-// ── Next available ID ──
-function trNextId() {
-  var max = 0;
-  _trState.tasks.forEach(function(t) { if (t.id > max) max = t.id; });
-  return max + 1;
-}
-
-// ═══════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════
-function initTracker() {
-  _trState.tasks = loadTrackerTasks();
-  renderTracker();
-}
-
-// ═══════════════════════════════════════
-// RENDER — Main
-// ═══════════════════════════════════════
-function renderTracker() {
-  var el = document.getElementById('front-schedule');
-  if (!el) return;
-
-  var html = '';
-
-  // ── Stats row ──
-  var total = _trState.tasks.length;
-  var overdue = _trState.tasks.filter(function(t) { return trDaysFromToday(t.dueDate) < 0 && t.status !== 'DONE'; }).length;
-  var dueWeek = _trState.tasks.filter(function(t) { var d = trDaysFromToday(t.dueDate); return d >= 0 && d <= 7 && t.status !== 'DONE'; }).length;
-  var inProg = _trState.tasks.filter(function(t) { return t.status === 'IN PROGRESS'; }).length;
-  var daysToOpen = trDaysDiff(trToday(), '2026-06-25');
-
-  html += '<div class="trk-stats">';
-  html += trStatCard('TOTAL', total, '#888780');
-  html += trStatCard('OVERDUE', overdue, '#E24B4A');
-  html += trStatCard('DUE THIS WEEK', dueWeek, '#EF9F27');
-  html += trStatCard('IN PROGRESS', inProg, '#378ADD');
-  html += trStatCard('DAYS TO OPEN', daysToOpen, '#1D9E75');
-  html += '</div>';
-
-  // ── View tabs ──
-  html += '<div class="trk-toolbar">';
-  html += '<div class="trk-views">';
-  ['board','timeline','log'].forEach(function(v) {
-    var active = _trState.view === v ? ' active' : '';
-    html += '<button class="trk-view-btn' + active + '" onclick="trSetView(\'' + v + '\')">' + v.toUpperCase() + '</button>';
-  });
-  html += '</div>';
-  html += '<div class="trk-search-wrap"><input type="text" class="trk-search" placeholder="Search tasks..." value="' + trEsc(_trState.search) + '" oninput="trSetSearch(this.value)"></div>';
-  html += '<button class="trk-add-btn" onclick="trAddTask()">+ New task</button>';
-  html += '</div>';
-
-  // ── Category filter pills ──
-  html += '<div class="trk-filters">';
-  html += '<div class="trk-cat-pills">';
-  var cats = ['ALL'].concat(Object.keys(TR_CATEGORIES));
-  cats.forEach(function(c) {
-    var active = _trState.filterCat === c;
-    var cat = TR_CATEGORIES[c];
-    var cls = 'trk-pill' + (active ? ' active' : '');
-    var style = '';
-    if (active && cat) style = 'background:' + cat.color + ';color:' + cat.text + ';border-color:' + cat.color;
-    else if (active) style = 'background:var(--text);color:var(--bg);border-color:var(--text)';
-    else if (cat) style = 'border-color:' + cat.dot + '66';
-    var label = c === 'ALL' ? 'ALL' : c.split(' / ')[0];
-    html += '<button class="' + cls + '" style="' + style + '" onclick="trSetCatFilter(\'' + trEsc(c) + '\')">' + trEsc(label) + '</button>';
-  });
-  html += '</div>';
-
-  html += '<div class="trk-filter-sep"></div>';
-
-  // ── Status filter pills ──
-  html += '<div class="trk-status-pills">';
-  ['ALL','TODO','IN PROGRESS','BLOCKED','DONE'].forEach(function(s) {
-    var active = _trState.filterStatus === s;
-    var cls = 'trk-pill' + (active ? ' active' : '');
-    var style = active ? 'background:var(--text);color:var(--bg);border-color:var(--text)' : '';
-    html += '<button class="' + cls + '" style="' + style + '" onclick="trSetStatusFilter(\'' + trEsc(s) + '\')">' + trEsc(s) + '</button>';
-  });
-  html += '</div>';
-  html += '</div>';
-
-  // ── View content ──
-  if (_trState.view === 'board') html += renderBoard();
-  else if (_trState.view === 'timeline') html += renderTimeline();
-  else if (_trState.view === 'log') html += renderLog();
-
-  // ── Detail panel ──
-  if (_trState.selectedId !== null) {
-    html += renderDetailPanel();
-  }
-
-  el.innerHTML = html;
-
-  // Focus search if it was focused
-  var searchEl = el.querySelector('.trk-search');
-  if (searchEl && document.activeElement && document.activeElement.classList.contains('trk-search')) {
-    searchEl.focus();
-    searchEl.selectionStart = searchEl.selectionEnd = searchEl.value.length;
-  }
-}
-
-function trStatCard(label, val, color) {
-  return '<div class="trk-stat-card"><div class="trk-stat-label">' + label + '</div><div class="trk-stat-val" style="color:' + color + '">' + val + '</div></div>';
-}
-
-// ═══════════════════════════════════════
-// BOARD VIEW
-// ═══════════════════════════════════════
-function renderBoard() {
-  var html = '<div class="trk-board">';
-  [['TODO','#888780'],['IN PROGRESS','#378ADD'],['BLOCKED','#E24B4A'],['DONE','#1D9E75']].forEach(function(pair) {
-    var status = pair[0], color = pair[1];
-    var tasks = trByStatus(status);
-    html += '<div class="trk-board-col">';
-    html += '<div class="trk-col-header"><div class="trk-col-dot" style="background:' + color + '"></div>';
-    html += '<span class="trk-col-title">' + status + '</span>';
-    html += '<span class="trk-col-count">' + tasks.length + '</span></div>';
-    html += '<div class="trk-col-body">';
-    if (tasks.length === 0) {
-      html += '<div class="trk-col-empty">\u2014</div>';
-    } else {
-      tasks.forEach(function(t) { html += renderTaskCard(t); });
-    }
-    html += '</div></div>';
-  });
-  html += '</div>';
-  return html;
-}
-
-function renderTaskCard(task) {
-  var cat = TR_CATEGORIES[task.category] || TR_CATEGORIES['OTHER'];
-  var urg = trUrgency(task);
-  var selected = _trState.selectedId === task.id;
-  var cls = 'trk-card' + (selected ? ' selected' : '');
-  var catLabel = task.category.split(' / ')[0];
-
-  var html = '<div class="' + cls + '" onclick="trSelectTask(' + task.id + ')">';
-  if (task.priority === 'HIGH') {
-    html += '<div class="trk-card-urgency-bar" style="background:' + TR_URGENCY_COLOR[urg] + '"></div>';
-  }
-  html += '<div class="trk-card-tags">';
-  html += '<span class="trk-cat-tag" style="background:' + cat.color + ';color:' + cat.text + '">' + trEsc(catLabel) + '</span>';
-  if (task.deps && task.deps.length > 0) {
-    html += '<span class="trk-dep-tag">' + task.deps.length + ' dep' + (task.deps.length > 1 ? 's' : '') + '</span>';
-  }
-  html += '</div>';
-  html += '<div class="trk-card-title">' + trEsc(task.title) + '</div>';
-  html += '<div class="trk-card-footer">';
-  html += '<span class="trk-card-urgency" style="color:' + TR_URGENCY_COLOR[urg] + '">' + trUrgencyLabel(task) + '</span>';
-  html += '<span class="trk-card-assignee">' + trEsc(task.assignee) + '</span>';
-  html += '</div>';
-  html += '</div>';
-  return html;
-}
-
-// ═══════════════════════════════════════
-// TIMELINE VIEW
-// ═══════════════════════════════════════
-function renderTimeline() {
-  var START = new Date('2026-03-25T00:00:00');
-  var END   = new Date('2026-07-25T00:00:00');
-  var totalMs = END - START;
-  function pct(d) { return ((d - START) / totalMs) * 100; }
-
-  var today = trParseDate(trToday());
-  var todayPct = pct(today);
-
-  var phases = [
-    { label: 'NOW',      start: '2026-03-25', end: '2026-04-14', color: '#B5D4F422' },
-    { label: 'LEGAL & $', start: '2026-04-14', end: '2026-05-15', color: '#C0DD9722' },
-    { label: 'BUILD',    start: '2026-05-15', end: '2026-06-18', color: '#CECBF622' },
-    { label: 'OPEN',     start: '2026-06-18', end: '2026-07-21', color: '#9FE1CB22' }
+  var PHASES = [
+    { name: 'Foundation',        start: '2026-03-30', end: '2026-04-13', color: '#378ADD' },
+    { name: 'Design & Outreach', start: '2026-04-14', end: '2026-05-31', color: '#D4537E' },
+    { name: 'Pre-Launch',        start: '2026-06-01', end: '2026-06-17', color: '#BA7517' },
+    { name: 'Installation',      start: '2026-06-18', end: '2026-06-24', color: '#D85A30' },
+    { name: 'Open',              start: '2026-06-25', end: '2026-07-19', color: '#1D9E75' },
+    { name: 'Close',             start: '2026-07-20', end: '2026-07-31', color: '#7F77DD' },
   ];
 
-  // Month markers
-  var months = [];
-  var d = new Date(START);
-  while (d < END) {
-    months.push({ label: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), pct: pct(d) });
-    d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+  var MILESTONE_IDS = [9, 3, 41, 10, 14, 13, 42, 23, 24, 20, 15, 29, 34, 35, 36, 49];
+
+  /* ── Seed Data (all 54 tasks) ── */
+  function buildSeedTasks() {
+    var raw = [
+      { id:1, title:'Get AC repair quote from Amir / 334 Broome', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-04', startDate:'2026-03-30', endDate:'2026-04-04', deps:[], notes:'Landlord open to splitting cost. Use as leverage for lease extension + deinstall days.' },
+      { id:2, title:'Negotiate AC cost split + lease extension + deinstall days', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-06', startDate:'2026-04-04', endDate:'2026-04-06', deps:[1], notes:'Negotiate all together: AC cost split, install access Jun 20\u201324 (5 days before launch), deinstall days Jul 20\u201321 (2 days after close Jul 19). AC contribution is leverage for the extras.' },
+      { id:3, title:'Sign lease contract (updated terms)', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-08', endDate:'2026-04-13', deps:[51], notes:'Sign within 2 weeks. Must reflect: open Jun 25, close Jul 19, install Jun 20\u201324, deinstall Jul 20\u201321, AC cost split.' },
+      { id:4, title:'Secure domain names', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-04', startDate:'2026-03-30', endDate:'2026-04-04', deps:[], notes:'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations.' },
+      { id:5, title:'Preliminary budget \u2014 costs + revenue model', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Upfront costs, P&L, commission revenue projections. Inform business plan.' },
+      { id:6, title:'Preliminary project timeline', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Launch Jun 25 (Thu). Turnover Jun 15. Fabrication May 28\u2013Jun 14.' },
+      { id:7, title:'Set up project base (repo, Supabase, Vercel, tracker)', workstream:'Planning', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'GitHub: smitb383/TheFront_BackOfHouse. Migrate tasks to Supabase.' },
+      { id:8, title:'Loop in Caroline Zimbalist', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Key contact \u2014 bring in early.' },
+      { id:9, title:'Register LLC', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[], notes:'Lease currently in Del\u2019s personal name \u2014 must reassign to LLC.' },
+      { id:10, title:'Get EIN', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-06', endDate:'2026-04-13', deps:[9], notes:'Required for sales tax cert and vendor agreements.' },
+      { id:11, title:'Reassign lease from Del \u2192 LLC', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-04-13', endDate:'2026-04-20', deps:[3,9], notes:'Coordinate with Amir Badawi / Patjen Realty Corp.' },
+      { id:12, title:'Apply for NY Sales Tax Certificate of Authority', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-13', endDate:'2026-05-01', deps:[10], notes:'20-day lead time. Must be active before opening.' },
+      { id:13, title:'Secure General Liability Insurance ($2M)', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-10', startDate:'2026-04-20', endDate:'2026-05-10', deps:[9,10], notes:'Additional insureds: Amir Badawi (334 Broome St Apt 16) + Patjen Realty Corp (151 Hester St).' },
+      { id:14, title:'Pay deposit \u2014 $1,750 to Amir', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-05-15', endDate:'2026-05-15', deps:[13], notes:'Non-refundable. Cash / Venmo @amir-H-Badawi / Zelle (713) 410-9531 / PayPal amir.h.badawi@gmail.com' },
+      { id:15, title:'Pay full rent \u2014 $3,500 to Amir', workstream:'Finance', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-14', startDate:'2026-06-14', endDate:'2026-06-14', deps:[14], notes:'Due June 14. $300/day overtime if overstayed beyond agreed end date.' },
+      { id:16, title:'Brand identity \u2014 tagline, visual language, type system', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-03-30', endDate:'2026-04-20', deps:[], notes:'Bebas Neue confirmed. Tagline TBD. Loop Hannah Witner for graphic work.' },
+      { id:17, title:'Social accounts set up + content strategy', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[42], notes:'Instagram primary. Social templates must be produced before content goes live. Content cadence tied to launch countdown.' },
+      { id:18, title:'Design window vinyl signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[41], notes:'Full glass window front. Part of graphic production phase. Must be ordered with enough lead time to arrive before Jun 15.' },
+      { id:19, title:'Order + receive window vinyl signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-10', startDate:'2026-05-15', endDate:'2026-06-10', deps:[18], notes:'Must arrive before Jun 15 so it\u2019s ready for install week.' },
+      { id:20, title:'Build + launch website', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-01', startDate:'2026-04-20', endDate:'2026-06-01', deps:[16,4], notes:'GitHub \u2192 Vercel. Vanilla HTML/CSS/JS. Supabase backend.' },
+      { id:21, title:'Press outreach \u2014 Megan Prives (WGSN) + others', workstream:'Marketing & Outreach', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-10', startDate:'2026-06-01', endDate:'2026-06-10', deps:[20], notes:'Website should be live before pitching press.' },
+      { id:22, title:'Launch marketing push \u2014 posts, invites, event page', workstream:'Marketing & Outreach', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-20', startDate:'2026-06-10', endDate:'2026-06-20', deps:[17,21], notes:'Build to Jun 25 launch. Invites, Instagram, event listings.' },
+      { id:23, title:'Finalize vendor roster \u2014 outreach + confirmation', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', endDate:'2026-05-15', deps:[40], notes:'Deck already out by this point. Follow up with all targets, confirm who\u2019s in. Verconiik + Harlot Hands confirmed.' },
+      { id:24, title:'Vendor consignment agreements signed', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-01', startDate:'2026-05-25', endDate:'2026-06-01', deps:[54], notes:'All vendors signed before product comes in. Agreement includes agreed item list, 70/30 split, Square POS, payment within 7 days of close.' },
+      { id:25, title:'Order small print items \u2014 tags, cards, bags, tissue, hangers', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-05-30', startDate:'2026-05-15', endDate:'2026-05-30', deps:[42], notes:'Graphic production must be done before ordering. Must arrive before Jun 14. Merch: temp tattoos, stickers, fans, lighters.' },
+      { id:26, title:'Assemble tags, bags, packaging \u2014 fully done before install', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-14', startDate:'2026-06-01', endDate:'2026-06-14', deps:[25], notes:'Everything pre-assembled so no time is spent on this in the space.' },
+      { id:27, title:'Space design plan \u2014 layout, zones, fixture list', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-01', endDate:'2026-05-01', deps:[16], notes:'Clothing area, nook shelving, plinths, dressing room zone. Drives fabrication scope.' },
+      { id:28, title:'Source + purchase all build materials', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-28', startDate:'2026-05-01', endDate:'2026-05-28', deps:[27], notes:'Paint, hardware, shelving materials, plinth materials. Everything in hand before fabrication starts.' },
+      { id:29, title:'Fabrication \u2014 clothing racks, shelves, plinths, dressing room', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-14', startDate:'2026-05-28', endDate:'2026-06-14', deps:[28], notes:'2.5 weeks offsite. Everything built before we enter the space Jun 15.' },
+      { id:30, title:'Coordinate large item deliveries \u2014 mirrors, lights, furniture', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-15', startDate:'2026-06-01', endDate:'2026-06-15', deps:[29], notes:'Schedule delivery for Jun 22\u201323, after hard install done and paint dry.' },
+      { id:31, title:'INSTALL: Painting \u2014 2 days', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-21', startDate:'2026-06-20', endDate:'2026-06-21', deps:[15,29], notes:'Jun 20\u201321 (Sat\u2013Sun). First thing in install window. AJ leads. 5-day buffer after Jun 15 turnover used here.' },
+      { id:32, title:'INSTALL: Hard install \u2014 shelves, built items \u2014 1 day', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-22', startDate:'2026-06-22', endDate:'2026-06-22', deps:[31], notes:'Jun 22 (Mon). All fabricated pieces go up. AJ leads.' },
+      { id:33, title:'INSTALL: Large item delivery + placement', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-23', startDate:'2026-06-22', endDate:'2026-06-23', deps:[32,30], notes:'Jun 22\u201323 (Mon\u2013Tue). Mirrors, lighting fixtures, furniture in after paint is dry.' },
+      { id:34, title:'INSTALL: Decorative styling, signage + final touches', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-24', startDate:'2026-06-23', endDate:'2026-06-24', deps:[33,19,26], notes:'Jun 23\u201324 (Tue\u2013Wed). Vinyl signage up, vendor product placed, tags on, everything dressed. Space ready for Thu open.' },
+      { id:35, title:'LAUNCH \u2014 Opening event, Thu Jun 25', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-25', startDate:'2026-06-25', endDate:'2026-06-25', deps:[34,22,24], notes:'Thu Jun 25. Operating Tue\u2013Sun. Run through Sun Jul 19.' },
+      { id:36, title:'CLOSE \u2014 Last day of run, Sun Jul 19', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-19', startDate:'2026-07-19', endDate:'2026-07-19', deps:[35], notes:'Full day Jul 19. End of ~25-day run.' },
+      { id:37, title:'General business plan \u2014 all sections', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', endDate:'2026-04-06', deps:[5], notes:'Full business plan. Parsons grant version adapted from this.' },
+      { id:38, title:'Parsons grant version of business plan', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-10', startDate:'2026-04-06', endDate:'2026-04-10', deps:[37], notes:'Adapted from general plan.' },
+      { id:39, title:'Finalize vendor deck', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-10', startDate:'2026-04-06', endDate:'2026-04-10', deps:[37], notes:'Deck communicates concept, terms (70/30), space, programming. Should feel on-brand even if identity isn\u2019t fully locked yet.' },
+      { id:40, title:'Begin sending vendor deck \u2014 outreach to targets', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-10', endDate:'2026-04-13', deps:[39], notes:'Confirmed: Verconiik, Harlot Hands. Identify and reach all new targets this week.' },
+      { id:41, title:'Brand identity complete \u2014 gate for all graphic production', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-20', startDate:'2026-04-06', endDate:'2026-04-20', deps:[16], notes:'Full identity locked: logo, type, color, tagline. Nothing goes to print, to social, or to vendors until this is done.' },
+      { id:42, title:'Graphic production \u2014 social templates, print assets, packaging', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[41], notes:'Lead time before anything prints or goes live. Includes: social templates, signage files, tag/bag/packaging design, merch graphics. All assets must clear production before ordering or releasing.' },
+      { id:43, title:'Merch ideation \u2014 concepts, items, quantities', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-04-30', startDate:'2026-04-20', endDate:'2026-04-30', deps:[41], notes:'Contingent on graphic identity being locked. Define what we\u2019re making: temp tattoos, stickers, fans, lighters, totes, etc.' },
+      { id:44, title:'Merch design \u2014 artwork files for each item', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-05-10', startDate:'2026-04-30', endDate:'2026-05-10', deps:[43,42], notes:'Design files must meet vendor specs (bleed, resolution, format). One round of revisions built in.' },
+      { id:45, title:'Merch costing \u2014 get quotes per item, build cost model', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-05-10', startDate:'2026-04-30', endDate:'2026-05-10', deps:[43], notes:'Get unit costs + MOQs for each item. Build into budget model \u2014 retail price, margin, breakeven quantity.' },
+      { id:46, title:'Merch final approval \u2014 items, designs, quantities confirmed', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-15', startDate:'2026-05-10', endDate:'2026-05-15', deps:[44,45], notes:'Both design and cost must be approved before ordering. No changes after this.' },
+      { id:47, title:'Place merch orders', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-20', startDate:'2026-05-15', endDate:'2026-05-20', deps:[46], notes:'1 month production + shipping lead time. Must order by May 20 to arrive before Jun 20.' },
+      { id:48, title:'Merch received + QC checked', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-20', startDate:'2026-06-10', endDate:'2026-06-20', deps:[47], notes:'Arrives ~Jun 10\u201320. Check all items against order. Any issues need time to resolve before launch.' },
+      { id:49, title:'DEINSTALL \u2014 2 days, Jul 20\u201321', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-21', startDate:'2026-07-20', endDate:'2026-07-21', deps:[36], notes:'Jul 20 (Mon) \u2013 Jul 21 (Tue). Space must be returned in original condition. Negotiate these 2 days into the lease.' },
+      { id:50, title:'Compile contract term changes \u2014 dates, AC, deinstall, extensions', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-04-04', endDate:'2026-04-06', deps:[2], notes:'Document all requested changes before the call with Amir: open Jun 25 (Thu), close Jul 19 (Sun), install access Jun 20\u201324, deinstall Jul 20\u201321, AC cost split terms.' },
+      { id:51, title:'Call / meet with Amir + Patjen Realty to align on terms', workstream:'Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-08', startDate:'2026-04-06', endDate:'2026-04-08', deps:[50], notes:'Verify all changes verbally before the contract is revised. Confirm: updated dates, install + deinstall access, AC agreement, deposit and rent amounts unchanged.' },
+      { id:52, title:'Draft vendor consignment agreement template', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-20', startDate:'2026-04-10', endDate:'2026-04-20', deps:[9], notes:'Terms: 70% vendor / 30% The Front. Vendor fills in: item list, descriptions, quantities, sale prices. Square POS (2.6% fee). Includes liability, pickup terms, payment schedule.' },
+      { id:53, title:'Collect item lists from confirmed vendors', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', endDate:'2026-05-15', deps:[40,52], notes:'Each vendor provides full inventory: item name, description, qty, proposed sale price. We review and agree before agreement is countersigned. Verconiik + Harlot Hands first.' },
+      { id:54, title:'Review + agree on inventory + pricing per vendor', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-25', startDate:'2026-05-15', endDate:'2026-05-25', deps:[53], notes:'Go through each vendor\u2019s item list. Confirm pricing makes sense for the space and customer. Flag anything to negotiate. This informs how we set up Square and the floor plan.' },
+    ];
+    return raw.map(function(t) {
+      t.subtasks = [];
+      t.isMilestone = MILESTONE_IDS.indexOf(t.id) !== -1;
+      return t;
+    });
   }
 
-  var tasks = trFilteredTasks().sort(function(a,b) { return new Date(a.startDate) - new Date(b.startDate); });
+  /* ── Date Helpers ── */
+  function parseD(s) { return new Date(s + 'T00:00:00'); }
+  function todayDate() { return new Date(); }
+  function todayStr() { var d = todayDate(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  function daysBetween(a, b) { return Math.round((parseD(b) - parseD(a)) / 86400000); }
+  function daysUntil(s) { return daysBetween(todayStr(), s); }
+  function fmtShort(s) { if (!s) return ''; var d = parseD(s); return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+  function weekStart(d) { var dt = typeof d === 'string' ? parseD(d) : new Date(d); var day = dt.getDay(); var diff = dt.getDate() - day + (day === 0 ? -6 : 1); return new Date(dt.getFullYear(), dt.getMonth(), diff); }
+  function sameWeek(a, b) { return weekStart(a).getTime() === weekStart(b).getTime(); }
 
-  var html = '<div class="trk-timeline">';
+  /* ── State ── */
+  var tasks = [];
+  var currentView = 'timeline';
+  var selectedTaskId = null;
+  var searchQuery = '';
+  var filterWorkstream = 'ALL';
+  var timelineZoom = 1;
+  var listSortField = 'dueDate';
+  var listSortAsc = true;
 
-  // Header
-  html += '<div class="trk-tl-header" style="margin-left:220px;position:relative;height:32px;border-bottom:1px solid var(--border)">';
-  phases.forEach(function(p) {
-    var ps = pct(trParseDate(p.start)), pe = pct(trParseDate(p.end));
-    html += '<div style="position:absolute;left:' + ps + '%;width:' + (pe-ps) + '%;height:100%;background:' + p.color + ';display:flex;align-items:center;justify-content:center"><span class="trk-tl-phase-label">' + p.label + '</span></div>';
-  });
-  months.forEach(function(m) {
-    html += '<div style="position:absolute;left:' + m.pct + '%;top:0;height:100%;border-left:1px solid var(--border)"><span class="trk-tl-month-label">' + m.label + '</span></div>';
-  });
-  html += '<div class="trk-tl-today-line" style="left:' + todayPct + '%"></div>';
-  html += '</div>';
+  /* ── Persistence ── */
+  function loadTasks() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (data._seedVersion === TRACKER_SEED_VERSION && Array.isArray(data.tasks)) {
+          tasks = data.tasks;
+          return;
+        }
+      }
+    } catch (e) { /* corrupt data, reseed */ }
+    tasks = buildSeedTasks();
+    saveTasks();
+  }
 
-  // Rows
-  html += '<div class="trk-tl-rows">';
-  tasks.forEach(function(task, i) {
-    var cat = TR_CATEGORIES[task.category] || TR_CATEGORIES['OTHER'];
-    var sp = pct(trParseDate(task.startDate));
-    var ep = pct(trParseDate(task.endDate));
-    var width = Math.max(ep - sp, 0.5);
-    var stripe = i % 2 === 1 ? ' trk-tl-row-alt' : '';
+  function saveTasks() {
+    var payload = { _seedVersion: TRACKER_SEED_VERSION, tasks: tasks };
+    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+    if (typeof window.onTrackerSave === 'function') window.onTrackerSave(payload);
+  }
 
-    html += '<div class="trk-tl-row' + stripe + '" onclick="trSelectTask(' + task.id + ')">';
-    // Label
-    html += '<div class="trk-tl-label"><div class="trk-tl-dot" style="background:' + cat.dot + '"></div><span class="trk-tl-name">' + trEsc(task.title) + '</span></div>';
-    // Bar area
-    html += '<div class="trk-tl-bar-area">';
-    html += '<div class="trk-tl-today-line-row" style="left:' + todayPct + '%"></div>';
-    // Phase bg
-    phases.forEach(function(p) {
-      var ps2 = pct(trParseDate(p.start)), pe2 = pct(trParseDate(p.end));
-      html += '<div style="position:absolute;left:' + ps2 + '%;width:' + (pe2-ps2) + '%;height:100%;background:' + p.color + '"></div>';
+  /* ── Task Helpers ── */
+  function getTask(id) { for (var i = 0; i < tasks.length; i++) { if (tasks[i].id === id) return tasks[i]; } return null; }
+  function nextId() { var mx = 0; tasks.forEach(function(t){ if (t.id > mx) mx = t.id; }); return mx + 1; }
+  function taskBlocks(id) { return tasks.filter(function(t){ return t.deps && t.deps.indexOf(id) !== -1; }); }
+  function taskBlockedBy(id) { var t = getTask(id); if (!t || !t.deps) return []; return t.deps.map(getTask).filter(Boolean); }
+  function dueThisWeek() { var ts = todayStr(); return tasks.filter(function(t){ return t.status !== 'DONE' && sameWeek(t.dueDate, ts); }); }
+  function beginningThisWeek() { var ts = todayStr(); return tasks.filter(function(t){ return t.status !== 'DONE' && sameWeek(t.startDate, ts); }); }
+
+  function currentFocusBullets() {
+    var ws = {};
+    tasks.filter(function(t){ return t.status !== 'DONE'; }).forEach(function(t) {
+      if (!ws[t.workstream] || parseD(t.dueDate) < parseD(ws[t.workstream].dueDate)) {
+        ws[t.workstream] = t;
+      }
     });
-    // Dep lines
-    if (task.deps) {
-      task.deps.forEach(function(depId) {
-        var dep = _trState.tasks.find(function(t) { return t.id === depId; });
-        if (!dep) return;
-        var depEp = pct(trParseDate(dep.endDate));
-        html += '<div class="trk-tl-dep-line" style="left:' + depEp + '%;width:' + (sp - depEp) + '%;background:' + cat.dot + '44"></div>';
+    var focusMap = {
+      'Space': 'Finalizing lease agreement',
+      'Planning': 'Project scoping & budget',
+      'Brand': 'Branding / voice of project',
+      'Vendors': 'Vendor curation & outreach',
+      'Marketing & Outreach': 'Marketing & press groundwork',
+      'Finance': 'Insurance & deposits',
+      'Merch': 'Merch planning & production',
+    };
+    return Object.keys(ws).map(function(k){ return focusMap[k] || k; }).slice(0, 5);
+  }
+
+  /* ── DOM Helpers ── */
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    var children = Array.prototype.slice.call(arguments, 2);
+    if (attrs) {
+      Object.keys(attrs).forEach(function(k) {
+        var v = attrs[k];
+        if (k === 'style' && typeof v === 'object') { Object.keys(v).forEach(function(sk){ el.style[sk] = v[sk]; }); }
+        else if (k.indexOf('on') === 0 && typeof v === 'function') { el.addEventListener(k.slice(2).toLowerCase(), v); }
+        else if (k === 'className') el.className = v;
+        else if (k === 'innerHTML') el.innerHTML = v;
+        else if (k === 'checked' && v) el.checked = true;
+        else if (k === 'selected' && v) el.selected = true;
+        else el.setAttribute(k, v);
       });
     }
-    // Bar
-    html += '<div class="trk-tl-bar" style="left:' + sp + '%;width:' + width + '%;background:' + cat.color + ';border-color:' + cat.dot + '55">';
-    if (task.priority === 'HIGH') html += '<div class="trk-tl-bar-hi" style="background:' + cat.dot + '"></div>';
-    html += '<span class="trk-tl-bar-text" style="color:' + cat.text + '">' + trEsc(task.assignee) + '</span>';
-    html += '</div>';
-    html += '</div>'; // bar-area
-    html += '</div>'; // row
-  });
-  html += '</div>';
-
-  // Legend
-  html += '<div class="trk-tl-legend">';
-  Object.keys(TR_CATEGORIES).forEach(function(name) {
-    var cat = TR_CATEGORIES[name];
-    html += '<div class="trk-tl-legend-item"><div class="trk-tl-legend-swatch" style="background:' + cat.color + ';border-color:' + cat.dot + '55"></div><span>' + name.split(' / ')[0] + '</span></div>';
-  });
-  html += '<div class="trk-tl-legend-item"><div class="trk-tl-today-swatch"></div><span>TODAY</span></div>';
-  html += '</div>';
-
-  html += '</div>';
-  return html;
-}
-
-// ═══════════════════════════════════════
-// LOG VIEW
-// ═══════════════════════════════════════
-function renderLog() {
-  var tasks = trFilteredTasks().sort(function(a,b) {
-    return (TR_PRIORITY_ORDER[a.priority]||9) - (TR_PRIORITY_ORDER[b.priority]||9) || trDaysFromToday(a.dueDate) - trDaysFromToday(b.dueDate);
-  });
-
-  var html = '<div class="trk-log">';
-  // Header row
-  html += '<div class="trk-log-header">';
-  html += '<div class="trk-log-cell trk-log-dot-col"></div>';
-  html += '<div class="trk-log-cell trk-log-title-col">TASK</div>';
-  html += '<div class="trk-log-cell trk-log-cat-col">CATEGORY</div>';
-  html += '<div class="trk-log-cell trk-log-status-col">STATUS</div>';
-  html += '<div class="trk-log-cell trk-log-pri-col">PRIORITY</div>';
-  html += '<div class="trk-log-cell trk-log-who-col">ASSIGNEE</div>';
-  html += '<div class="trk-log-cell trk-log-due-col">DUE</div>';
-  html += '</div>';
-
-  tasks.forEach(function(task, i) {
-    var cat = TR_CATEGORIES[task.category] || TR_CATEGORIES['OTHER'];
-    var urg = trUrgency(task);
-    var selected = _trState.selectedId === task.id;
-    var cls = 'trk-log-row' + (selected ? ' selected' : '');
-    var statusColor = TR_STATUS_COLORS[task.status] || 'var(--muted)';
-    var priColor = task.priority === 'HIGH' ? '#E24B4A' : task.priority === 'MED' ? '#BA7517' : 'var(--muted)';
-    var catLabel = task.category.split(' / ')[0];
-
-    html += '<div class="' + cls + '" onclick="trSelectTask(' + task.id + ')">';
-    html += '<div class="trk-log-cell trk-log-dot-col"><div class="trk-log-dot" style="background:' + cat.dot + '"></div></div>';
-    html += '<div class="trk-log-cell trk-log-title-col">';
-    if (task.deps && task.deps.length > 0) html += '<span class="trk-log-dep-icon">\u21b3 ' + task.deps.length + '</span>';
-    html += trEsc(task.title) + '</div>';
-    html += '<div class="trk-log-cell trk-log-cat-col"><span class="trk-cat-tag" style="background:' + cat.color + ';color:' + cat.text + '">' + trEsc(catLabel) + '</span></div>';
-    html += '<div class="trk-log-cell trk-log-status-col" style="color:' + statusColor + '">' + task.status + '</div>';
-    html += '<div class="trk-log-cell trk-log-pri-col" style="color:' + priColor + '">' + task.priority + '</div>';
-    html += '<div class="trk-log-cell trk-log-who-col">' + trEsc(task.assignee) + '</div>';
-    html += '<div class="trk-log-cell trk-log-due-col" style="color:' + TR_URGENCY_COLOR[urg] + '">' + trFmtDate(task.dueDate) + '</div>';
-    html += '</div>';
-  });
-
-  html += '</div>';
-  return html;
-}
-
-// ═══════════════════════════════════════
-// DETAIL PANEL
-// ═══════════════════════════════════════
-function renderDetailPanel() {
-  var task = _trState.tasks.find(function(t) { return t.id === _trState.selectedId; });
-  if (!task) return '';
-  var cat = TR_CATEGORIES[task.category] || TR_CATEGORIES['OTHER'];
-  var urg = trUrgency(task);
-  var priColor = task.priority === 'HIGH' ? '#E24B4A' : task.priority === 'MED' ? '#BA7517' : 'var(--muted)';
-
-  var html = '<div class="trk-detail-overlay" onclick="trCloseDetail()"></div>';
-  html += '<div class="trk-detail">';
-
-  // Header
-  html += '<div class="trk-detail-header">';
-  html += '<div>';
-  html += '<div class="trk-detail-tags">';
-  html += '<span class="trk-cat-tag" style="background:' + cat.color + ';color:' + cat.text + '">' + trEsc(task.category) + '</span>';
-  html += '<span class="trk-pri-tag" style="color:' + priColor + '">' + task.priority + '</span>';
-  html += '</div>';
-  html += '<h2 class="trk-detail-title">' + trEsc(task.title) + '</h2>';
-  html += '</div>';
-  html += '<button class="trk-detail-close" onclick="trCloseDetail()">\u00d7</button>';
-  html += '</div>';
-
-  // Body
-  html += '<div class="trk-detail-body">';
-
-  // Status selector
-  html += '<div class="trk-detail-section">';
-  html += '<div class="trk-detail-label">STATUS</div>';
-  html += '<div class="trk-detail-status-btns">';
-  ['TODO','IN PROGRESS','BLOCKED','DONE'].forEach(function(s) {
-    var active = task.status === s ? ' active' : '';
-    html += '<button class="trk-status-btn' + active + '" onclick="trUpdateTask(' + task.id + ',\'status\',\'' + s + '\')">' + s + '</button>';
-  });
-  html += '</div></div>';
-
-  // Priority selector
-  html += '<div class="trk-detail-section">';
-  html += '<div class="trk-detail-label">PRIORITY</div>';
-  html += '<div class="trk-detail-status-btns">';
-  ['HIGH','MED','LOW'].forEach(function(p) {
-    var active = task.priority === p ? ' active' : '';
-    html += '<button class="trk-status-btn' + active + '" onclick="trUpdateTask(' + task.id + ',\'priority\',\'' + p + '\')">' + p + '</button>';
-  });
-  html += '</div></div>';
-
-  // Assignee selector
-  html += '<div class="trk-detail-section">';
-  html += '<div class="trk-detail-label">ASSIGNEE</div>';
-  html += '<div class="trk-detail-status-btns">';
-  ['Brooke','Del'].forEach(function(a) {
-    var active = task.assignee === a ? ' active' : '';
-    html += '<button class="trk-status-btn' + active + '" onclick="trUpdateTask(' + task.id + ',\'assignee\',\'' + a + '\')">' + a + '</button>';
-  });
-  html += '</div></div>';
-
-  // Category selector
-  html += '<div class="trk-detail-section">';
-  html += '<div class="trk-detail-label">CATEGORY</div>';
-  html += '<select class="trk-detail-select" onchange="trUpdateTask(' + task.id + ',\'category\',this.value)">';
-  Object.keys(TR_CATEGORIES).forEach(function(c) {
-    var sel = task.category === c ? ' selected' : '';
-    html += '<option value="' + trEsc(c) + '"' + sel + '>' + trEsc(c) + '</option>';
-  });
-  html += '</select></div>';
-
-  // Meta grid
-  html += '<div class="trk-detail-meta">';
-  html += '<div class="trk-detail-meta-card"><div class="trk-detail-label">DUE</div><input type="date" class="trk-detail-date" value="' + (task.dueDate||'') + '" onchange="trUpdateTask(' + task.id + ',\'dueDate\',this.value)"></div>';
-  html += '<div class="trk-detail-meta-card"><div class="trk-detail-label">URGENCY</div><div class="trk-detail-meta-val" style="color:' + TR_URGENCY_COLOR[urg] + '">' + trUrgencyLabel(task) + '</div></div>';
-  html += '<div class="trk-detail-meta-card"><div class="trk-detail-label">START</div><input type="date" class="trk-detail-date" value="' + (task.startDate||'') + '" onchange="trUpdateTask(' + task.id + ',\'startDate\',this.value)"></div>';
-  html += '<div class="trk-detail-meta-card"><div class="trk-detail-label">END</div><input type="date" class="trk-detail-date" value="' + (task.endDate||'') + '" onchange="trUpdateTask(' + task.id + ',\'endDate\',this.value)"></div>';
-  html += '</div>';
-
-  // Title edit
-  html += '<div class="trk-detail-section">';
-  html += '<div class="trk-detail-label">TITLE</div>';
-  html += '<input type="text" class="trk-detail-input" value="' + trEsc(task.title) + '" onchange="trUpdateTask(' + task.id + ',\'title\',this.value)">';
-  html += '</div>';
-
-  // Notes
-  html += '<div class="trk-detail-section">';
-  html += '<div class="trk-detail-label">NOTES</div>';
-  html += '<textarea class="trk-detail-textarea" onchange="trUpdateTask(' + task.id + ',\'notes\',this.value)">' + trEsc(task.notes || '') + '</textarea>';
-  html += '</div>';
-
-  // Dependencies
-  var depTasks = (task.deps||[]).map(function(id) { return _trState.tasks.find(function(t) { return t.id === id; }); }).filter(Boolean);
-  if (depTasks.length > 0) {
-    html += '<div class="trk-detail-section">';
-    html += '<div class="trk-detail-label">DEPENDS ON</div>';
-    html += '<div class="trk-detail-deps">';
-    depTasks.forEach(function(d) {
-      var dc = TR_CATEGORIES[d.category] || TR_CATEGORIES['OTHER'];
-      html += '<div class="trk-detail-dep-item"><div class="trk-tl-dot" style="background:' + dc.dot + '"></div><span>' + trEsc(d.title) + '</span></div>';
-    });
-    html += '</div></div>';
+    function append(c) {
+      if (c == null || c === false) return;
+      if (Array.isArray(c)) { c.forEach(append); return; }
+      if (typeof c === 'string' || typeof c === 'number') el.appendChild(document.createTextNode(String(c)));
+      else if (c instanceof Node) el.appendChild(c);
+    }
+    children.forEach(append);
+    return el;
   }
 
-  // Unlocks
-  var unlocks = _trState.tasks.filter(function(t) { return t.deps && t.deps.indexOf(task.id) !== -1; });
-  if (unlocks.length > 0) {
-    html += '<div class="trk-detail-section">';
-    html += '<div class="trk-detail-label">UNLOCKS</div>';
-    html += '<div class="trk-detail-deps">';
-    unlocks.forEach(function(d) {
-      var dc = TR_CATEGORIES[d.category] || TR_CATEGORIES['OTHER'];
-      html += '<div class="trk-detail-dep-item"><div class="trk-tl-dot" style="background:' + dc.dot + '"></div><span>' + trEsc(d.title) + '</span></div>';
-    });
-    html += '</div></div>';
+  function priorityBadge(p) {
+    var colors = { HIGH: '#E24B4A', MED: '#EF9F27', LOW: '#888780' };
+    return h('span', { style: { fontSize:'8px', fontFamily:"'DM Mono',monospace", letterSpacing:'0.1em', textTransform:'uppercase', padding:'1px 5px', borderRadius:'2px', background: colors[p] || '#888', color:'#fff', lineHeight:'1.5' } }, p);
   }
 
-  // Delete button
-  html += '<div class="trk-detail-section" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">';
-  html += '<button class="trk-delete-btn" onclick="trDeleteTask(' + task.id + ')">Delete task</button>';
-  html += '</div>';
+  function wsDot(ws, size) {
+    size = size || 8;
+    var color = (WORKSTREAMS[ws] || {}).dot || '#888';
+    return h('span', { style: { display:'inline-block', width:size+'px', height:size+'px', borderRadius:'50%', background:color, flexShrink:'0' } });
+  }
 
-  html += '</div>'; // body
-  html += '</div>'; // detail
-  return html;
-}
+  function diamondIcon(size) {
+    size = size || 10;
+    return h('span', { style: { display:'inline-block', width:size+'px', height:size+'px', background:'var(--front)', transform:'rotate(45deg)', flexShrink:'0' } });
+  }
 
-// ═══════════════════════════════════════
-// ACTIONS
-// ═══════════════════════════════════════
-function trSetView(v) {
-  _trState.view = v;
-  renderTracker();
-}
+  /* ── Inject Styles ── */
+  function injectStyles() {
+    if (document.getElementById('tracker-styles')) return;
+    var css = [
+      '#front-schedule { position:relative; }',
+      '.trk-mono { font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; }',
+      '.trk-serif { font-family:"Cormorant Garamond",serif; font-size:15px; }',
+      '.trk-card { background:var(--surface); border:1px solid var(--border); border-radius:4px; }',
+      '.trk-btn { background:none; border:1px solid var(--border); color:var(--muted); font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; padding:5px 12px; cursor:pointer; border-radius:2px; transition:all 0.2s; white-space:nowrap; line-height:1; }',
+      '.trk-btn:hover { color:var(--text); border-color:var(--muted); }',
+      '.trk-btn.active { background:var(--front); color:var(--bg); border-color:var(--front); }',
+      '.trk-input { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:"Cormorant Garamond",serif; font-size:14px; padding:6px 10px; border-radius:3px; outline:none; width:100%; box-sizing:border-box; }',
+      '.trk-input:focus { border-color:var(--front); }',
+      '.trk-select { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:"DM Mono",monospace; font-size:10px; letter-spacing:0.08em; padding:5px 8px; border-radius:3px; outline:none; cursor:pointer; }',
+      '.trk-select:focus { border-color:var(--front); }',
+      '.trk-stats { display:flex; gap:24px; align-items:center; padding:12px 16px; flex-wrap:wrap; }',
+      '.trk-stat-item { display:flex; flex-direction:column; gap:2px; }',
+      '.trk-stat-label { font-family:"DM Mono",monospace; font-size:8px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); }',
+      '.trk-stat-value { font-family:"Cormorant Garamond",serif; font-size:18px; color:var(--text); }',
+      '.trk-board { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }',
+      '.trk-col-header { font-family:"DM Mono",monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:8px 0; border-bottom:1px solid var(--border); margin-bottom:8px; }',
+      '.trk-task-card { padding:10px 12px; margin-bottom:8px; cursor:pointer; transition:border-color 0.15s; }',
+      '.trk-task-card:hover { border-color:var(--muted); }',
+      '.trk-task-card.selected { border-color:var(--front); }',
+      '.trk-task-title { font-family:"Cormorant Garamond",serif; font-size:14px; color:var(--text); line-height:1.3; }',
+      '.trk-task-meta { display:flex; gap:8px; align-items:center; margin-top:6px; flex-wrap:wrap; }',
+      '.trk-week-sep { font-family:"DM Mono",monospace; font-size:8px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); padding:6px 0 2px; border-top:1px dashed var(--border); margin-top:4px; }',
+      '.trk-warning { display:inline-block; width:6px; height:6px; border-radius:50%; background:#E24B4A; margin-right:4px; }',
+      '.trk-list-table { width:100%; border-collapse:collapse; }',
+      '.trk-list-table th { font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; white-space:nowrap; }',
+      '.trk-list-table th:hover { color:var(--text); }',
+      '.trk-list-table td { font-family:"Cormorant Garamond",serif; font-size:14px; color:var(--text); padding:8px 10px; border-bottom:1px solid var(--faint); vertical-align:middle; }',
+      '.trk-list-table tr.trk-list-row { cursor:pointer; transition:background 0.1s; }',
+      '.trk-list-table tr.trk-list-row:hover { background:var(--surface2); }',
+      '.trk-list-table tr.trk-list-row.selected { background:var(--front-dim); }',
+      '.trk-timeline-wrap { position:relative; overflow-x:auto; overflow-y:visible; }',
+      '.trk-timeline-row { display:flex; align-items:center; height:28px; position:relative; }',
+      '.trk-timeline-bar { position:absolute; height:14px; border-radius:3px; cursor:pointer; transition:opacity 0.15s; min-width:6px; z-index:2; }',
+      '.trk-timeline-bar:hover { opacity:0.85; }',
+      '.trk-timeline-bar.selected { outline:2px solid var(--front); outline-offset:1px; }',
+      '.trk-timeline-milestone { position:absolute; width:12px; height:12px; transform:rotate(45deg); cursor:pointer; z-index:3; border:2px solid var(--front); }',
+      '.trk-timeline-milestone.selected { background:var(--front); }',
+      '.trk-timeline-today { position:absolute; top:0; bottom:0; width:2px; background:#E24B4A; z-index:4; pointer-events:none; }',
+      '.trk-timeline-dep { stroke:var(--muted); stroke-width:1; fill:none; opacity:0.4; }',
+      '.trk-timeline-ws-label { font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:140px; min-width:140px; padding:0 8px; display:flex; align-items:center; gap:6px; height:28px; }',
+      '.trk-phase-band { position:absolute; top:0; bottom:0; opacity:0.06; pointer-events:none; }',
+      '.trk-detail { position:fixed; top:0; right:0; width:380px; height:100vh; background:var(--surface); border-left:1px solid var(--border); z-index:100; overflow-y:auto; padding:20px; box-shadow:-4px 0 20px rgba(0,0,0,0.3); }',
+      '.trk-detail-close { position:absolute; top:12px; right:12px; background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px 8px; }',
+      '.trk-detail-close:hover { color:var(--text); }',
+      '.trk-detail label { font-family:"DM Mono",monospace; font-size:8px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); display:block; margin-top:14px; margin-bottom:4px; }',
+      '.trk-dep-link { font-family:"Cormorant Garamond",serif; font-size:13px; color:var(--front); cursor:pointer; text-decoration:underline; display:block; padding:1px 0; }',
+      '.trk-dep-link:hover { opacity:0.8; }',
+      '.trk-subtask-row { display:flex; align-items:center; gap:6px; padding:3px 0; }',
+      '.trk-subtask-row input[type=checkbox] { accent-color:var(--front); cursor:pointer; }',
+      '.trk-subtask-text { font-family:"Cormorant Garamond",serif; font-size:13px; color:var(--text); flex:1; }',
+      '.trk-subtask-text.done { text-decoration:line-through; color:var(--muted); }',
+      '.trk-subtask-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; padding:0 4px; }',
+      '.trk-subtask-del:hover { color:#E24B4A; }',
+      '.trk-focus-list { list-style:none; padding:0; margin:4px 0 0 0; }',
+      '.trk-focus-list li { font-family:"Cormorant Garamond",serif; font-size:14px; color:var(--text); padding:2px 0; display:flex; align-items:center; gap:6px; }',
+      '.trk-focus-list li::before { content:"\\2022"; color:var(--front); }',
+      '.trk-pills { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }',
+      '.trk-pill { font-family:"DM Mono",monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; padding:4px 10px; border-radius:12px; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s; }',
+      '.trk-pill:hover { border-color:var(--muted); color:var(--text); }',
+      '.trk-pill.active { border-color:var(--front); color:var(--front); background:var(--front-dim); }',
+      '@media (max-width:900px) { .trk-board { grid-template-columns:1fr; } .trk-detail { width:100%; } }',
+    ].join('\n');
+    var style = document.createElement('style');
+    style.id = 'tracker-styles';
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
 
-function trSetSearch(val) {
-  _trState.search = val;
-  renderTracker();
-}
+  /* ═══════════════════════════════════════════
+     RENDER MAIN
+  ═══════════════════════════════════════════ */
+  function renderTracker() {
+    var root = document.getElementById('front-schedule');
+    if (!root) return;
+    root.innerHTML = '';
+    injectStyles();
 
-function trSetCatFilter(cat) {
-  _trState.filterCat = cat;
-  renderTracker();
-}
+    root.appendChild(renderStatsBar());
+    root.appendChild(renderFocusSection());
+    root.appendChild(renderViewSwitcher());
 
-function trSetStatusFilter(status) {
-  _trState.filterStatus = status;
-  renderTracker();
-}
+    if (currentView === 'timeline') root.appendChild(renderTimeline());
+    else if (currentView === 'board') root.appendChild(renderBoard());
+    else root.appendChild(renderList());
 
-function trSelectTask(id) {
-  _trState.selectedId = _trState.selectedId === id ? null : id;
-  renderTracker();
-}
+    if (selectedTaskId !== null) root.appendChild(renderDetail(selectedTaskId));
+  }
 
-function trCloseDetail() {
-  _trState.selectedId = null;
-  renderTracker();
-}
+  /* ── Stats Bar ── */
+  function renderStatsBar() {
+    var openDays = daysUntil('2026-06-25');
+    var depDays = daysUntil('2026-05-15');
+    var dueCount = dueThisWeek().length;
+    var doneCount = tasks.filter(function(t){ return t.status === 'DONE'; }).length;
 
-function trUpdateTask(id, field, value) {
-  var task = _trState.tasks.find(function(t) { return t.id === id; });
-  if (!task) return;
-  task[field] = value;
-  persistTasks();
-  renderTracker();
-}
+    function sep() { return h('div', { style:{ width:'1px', height:'28px', background:'var(--border)' } }); }
 
-function trAddTask() {
-  var newTask = {
-    id: trNextId(),
-    title: 'New task',
-    category: _trState.filterCat !== 'ALL' ? _trState.filterCat : 'BUILD / PLAN',
-    status: 'TODO',
-    priority: 'MED',
-    assignee: 'Brooke',
-    dueDate: trToday(),
-    startDate: trToday(),
-    endDate: trToday(),
-    deps: [],
-    notes: ''
-  };
-  _trState.tasks.push(newTask);
-  persistTasks();
-  _trState.selectedId = newTask.id;
-  renderTracker();
-}
+    return h('div', { className:'trk-card', style:{ marginBottom:'12px' } },
+      h('div', { className:'trk-stats' },
+        h('div', { className:'trk-stat-item' },
+          h('span', { className:'trk-stat-label' }, 'Opening'),
+          h('span', { className:'trk-stat-value' }, 'Jun 25 \u2014 ' + openDays + ' days')
+        ),
+        sep(),
+        h('div', { className:'trk-stat-item' },
+          h('span', { className:'trk-stat-label' }, 'Deposit'),
+          h('span', { className:'trk-stat-value' }, 'May 15 \u2014 ' + depDays + ' days')
+        ),
+        sep(),
+        h('div', { className:'trk-stat-item' },
+          h('span', { className:'trk-stat-label' }, 'Due This Week'),
+          h('span', { className:'trk-stat-value' }, String(dueCount))
+        ),
+        sep(),
+        h('div', { className:'trk-stat-item' },
+          h('span', { className:'trk-stat-label' }, 'Progress'),
+          h('span', { className:'trk-stat-value' }, doneCount + ' / ' + tasks.length)
+        )
+      )
+    );
+  }
 
-function trDeleteTask(id) {
-  if (!confirm('Delete this task?')) return;
-  _trState.tasks = _trState.tasks.filter(function(t) { return t.id !== id; });
-  // Remove from deps
-  _trState.tasks.forEach(function(t) {
-    if (t.deps) t.deps = t.deps.filter(function(d) { return d !== id; });
-  });
-  _trState.selectedId = null;
-  persistTasks();
-  renderTracker();
-}
+  /* ── Focus Section ── */
+  function renderFocusSection() {
+    var focusBullets = currentFocusBullets();
+    var beginItems = beginningThisWeek();
 
-// ═══════════════════════════════════════
-// BOOT — called when tracker tab is shown
-// ═══════════════════════════════════════
-document.addEventListener('DOMContentLoaded', function() {
-  // If initTracker is called from tab switching logic, this is a fallback
-  if (document.getElementById('front-schedule')) {
+    var wrap = h('div', { style:{ display:'flex', gap:'16px', marginBottom:'12px', flexWrap:'wrap' } });
+
+    wrap.appendChild(
+      h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } },
+        h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Current Focus'),
+        h('ul', { className:'trk-focus-list' }, focusBullets.map(function(b){ return h('li', null, b); }))
+      )
+    );
+
+    if (beginItems.length) {
+      wrap.appendChild(
+        h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } },
+          h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Beginning This Week'),
+          h('ul', { className:'trk-focus-list' }, beginItems.slice(0, 8).map(function(t) {
+            return h('li', { style:{ cursor:'pointer' }, onClick: function(){ selectedTaskId = t.id; renderTracker(); } },
+              wsDot(t.workstream, 6), ' ', t.title
+            );
+          }))
+        )
+      );
+    }
+    return wrap;
+  }
+
+  /* ── View Switcher ── */
+  function renderViewSwitcher() {
+    var bar = h('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px', flexWrap:'wrap', gap:'8px' } });
+
+    var btns = h('div', { style:{ display:'flex', gap:'4px' } });
+    [['timeline','Timeline'],['board','Board'],['list','List']].forEach(function(pair) {
+      btns.appendChild(h('button', {
+        className: 'trk-btn' + (currentView === pair[0] ? ' active' : ''),
+        onClick: function(){ currentView = pair[0]; renderTracker(); }
+      }, pair[1]));
+    });
+    bar.appendChild(btns);
+
+    bar.appendChild(h('button', {
+      className:'trk-btn', style:{ color:'var(--front)', borderColor:'var(--front-border)' },
+      onClick: addNewTask
+    }, '+ New Task'));
+
+    return bar;
+  }
+
+  /* ═══════════════════════════════════════════
+     BOARD VIEW
+  ═══════════════════════════════════════════ */
+  function renderBoard() {
+    var statuses = ['TODO', 'IN PROGRESS', 'DONE'];
+    var grid = h('div', { className:'trk-board' });
+
+    statuses.forEach(function(status) {
+      var col = h('div');
+      var colTasks = tasks.filter(function(t){ return t.status === status; })
+        .sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); });
+      var count = colTasks.length;
+      col.appendChild(h('div', { className:'trk-col-header' }, status + ' (' + count + ')'));
+
+      if (status === 'DONE') {
+        colTasks.forEach(function(t){ col.appendChild(renderTaskCard(t)); });
+      } else {
+        var ws = weekStart(todayDate());
+        var nextWs = new Date(ws); nextWs.setDate(nextWs.getDate() + 7);
+        var nextNextWs = new Date(ws); nextNextWs.setDate(nextNextWs.getDate() + 14);
+        var groups = { thisWeek:[], nextWeek:[], later:[] };
+        colTasks.forEach(function(t) {
+          var dd = parseD(t.dueDate);
+          if (dd < nextWs) groups.thisWeek.push(t);
+          else if (dd < nextNextWs) groups.nextWeek.push(t);
+          else groups.later.push(t);
+        });
+        function addGroup(label, items) {
+          if (!items.length) return;
+          col.appendChild(h('div', { className:'trk-week-sep' }, label));
+          items.forEach(function(t){ col.appendChild(renderTaskCard(t)); });
+        }
+        addGroup('Due this week', groups.thisWeek);
+        addGroup('Due next week', groups.nextWeek);
+        addGroup('Later', groups.later);
+      }
+      grid.appendChild(col);
+    });
+    return grid;
+  }
+
+  function renderTaskCard(t) {
+    var shouldHaveStarted = t.status === 'TODO' && parseD(t.startDate) <= todayDate();
+    return h('div', {
+      className: 'trk-card trk-task-card' + (selectedTaskId === t.id ? ' selected' : ''),
+      onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+    },
+      h('div', { style:{ display:'flex', alignItems:'flex-start', gap:'6px', marginBottom:'4px' } },
+        shouldHaveStarted ? h('span', { className:'trk-warning', title:'Should have started' }) : null,
+        t.isMilestone ? diamondIcon(8) : wsDot(t.workstream),
+        h('span', { className:'trk-task-title' }, t.title)
+      ),
+      h('div', { className:'trk-task-meta' },
+        h('span', { className:'trk-mono', style:{ color:'var(--muted)', fontSize:'8px' } }, fmtShort(t.dueDate)),
+        h('span', { className:'trk-mono', style:{ color:'var(--muted)', fontSize:'8px' } }, t.assignee),
+        priorityBadge(t.priority)
+      )
+    );
+  }
+
+  /* ═══════════════════════════════════════════
+     LIST VIEW
+  ═══════════════════════════════════════════ */
+  function renderList() {
+    var wrap = h('div');
+
+    // Filter pills
+    var pills = h('div', { className:'trk-pills' });
+    var allWs = ['ALL'].concat(Object.keys(WORKSTREAMS));
+    allWs.forEach(function(ws) {
+      pills.appendChild(h('button', {
+        className: 'trk-pill' + (filterWorkstream === ws ? ' active' : ''),
+        onClick: function(){ filterWorkstream = ws; renderTracker(); }
+      }, ws));
+    });
+    wrap.appendChild(pills);
+
+    // Search
+    var searchInput = h('input', {
+      className:'trk-input', type:'text', placeholder:'Search tasks...',
+      value: searchQuery,
+      style:{ maxWidth:'300px', fontFamily:"'DM Mono',monospace", fontSize:'11px', marginBottom:'12px' },
+      onInput: function(e){ searchQuery = e.target.value; renderTracker(); }
+    });
+    wrap.appendChild(searchInput);
+
+    // Filter + sort
+    var filtered = tasks.slice();
+    if (filterWorkstream !== 'ALL') filtered = filtered.filter(function(t){ return t.workstream === filterWorkstream; });
+    if (searchQuery) {
+      var q = searchQuery.toLowerCase();
+      filtered = filtered.filter(function(t){ return t.title.toLowerCase().indexOf(q) !== -1 || (t.notes || '').toLowerCase().indexOf(q) !== -1; });
+    }
+    filtered.sort(function(a, b) {
+      var va, vb;
+      if (listSortField === 'title') { va = a.title.toLowerCase(); vb = b.title.toLowerCase(); return listSortAsc ? (va < vb ? -1 : va > vb ? 1 : 0) : (vb < va ? -1 : vb > va ? 1 : 0); }
+      if (listSortField === 'priority') { var po = {HIGH:0,MED:1,LOW:2}; va = po[a.priority]; vb = po[b.priority]; }
+      else if (listSortField === 'dueDate') { va = parseD(a.dueDate).getTime(); vb = parseD(b.dueDate).getTime(); }
+      else if (listSortField === 'workstream') { va = a.workstream; vb = b.workstream; return listSortAsc ? (va < vb ? -1 : va > vb ? 1 : 0) : (vb < va ? -1 : vb > va ? 1 : 0); }
+      else if (listSortField === 'status') { var so = {'TODO':0,'IN PROGRESS':1,'DONE':2}; va = so[a.status]; vb = so[b.status]; }
+      else if (listSortField === 'assignee') { va = a.assignee; vb = b.assignee; return listSortAsc ? (va < vb ? -1 : va > vb ? 1 : 0) : (vb < va ? -1 : vb > va ? 1 : 0); }
+      else { va = parseD(a.dueDate).getTime(); vb = parseD(b.dueDate).getTime(); }
+      return listSortAsc ? va - vb : vb - va;
+    });
+
+    var table = h('table', { className:'trk-list-table' });
+
+    function sortHeader(label, field) {
+      var arrow = listSortField === field ? (listSortAsc ? ' \u25B2' : ' \u25BC') : '';
+      return h('th', { onClick: function(){ if (listSortField === field) listSortAsc = !listSortAsc; else { listSortField = field; listSortAsc = true; } renderTracker(); } }, label + arrow);
+    }
+
+    table.appendChild(h('thead', null,
+      h('tr', null,
+        h('th', null, ''),
+        sortHeader('Title', 'title'),
+        sortHeader('Workstream', 'workstream'),
+        sortHeader('Status', 'status'),
+        sortHeader('Priority', 'priority'),
+        sortHeader('Assignee', 'assignee'),
+        sortHeader('Due', 'dueDate'),
+        h('th', null, 'Progress')
+      )
+    ));
+
+    var tbody = h('tbody');
+    filtered.forEach(function(t) {
+      var stDone = (t.subtasks || []).filter(function(s){ return s.done; }).length;
+      var stTotal = (t.subtasks || []).length;
+      var progress = stTotal ? Math.round(stDone / stTotal * 100) + '%' : (t.status === 'DONE' ? '100%' : '\u2014');
+      var statusColor = t.status === 'DONE' ? '#1D9E75' : t.status === 'IN PROGRESS' ? 'var(--front)' : 'var(--muted)';
+
+      tbody.appendChild(h('tr', {
+        className: 'trk-list-row' + (selectedTaskId === t.id ? ' selected' : ''),
+        onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+      },
+        h('td', null, t.isMilestone ? diamondIcon(8) : wsDot(t.workstream)),
+        h('td', null, t.title),
+        h('td', { style:{ fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.08em', textTransform:'uppercase' } }, t.workstream),
+        h('td', null, h('span', { style:{ fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.08em', textTransform:'uppercase', color:statusColor } }, t.status)),
+        h('td', null, priorityBadge(t.priority)),
+        h('td', { style:{ fontFamily:"'DM Mono',monospace", fontSize:'9px' } }, t.assignee),
+        h('td', { style:{ fontFamily:"'DM Mono',monospace", fontSize:'9px', whiteSpace:'nowrap' } }, fmtShort(t.dueDate)),
+        h('td', { style:{ fontFamily:"'DM Mono',monospace", fontSize:'9px' } }, progress)
+      ));
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  /* ═══════════════════════════════════════════
+     TIMELINE VIEW (Gantt)
+  ═══════════════════════════════════════════ */
+  function renderTimeline() {
+    var wrap = h('div');
+
+    // Zoom controls
+    var zoomRow = h('div', { style:{ display:'flex', justifyContent:'flex-end', gap:'4px', marginBottom:'8px', alignItems:'center' } });
+    zoomRow.appendChild(h('button', { className:'trk-btn', onClick:function(){ timelineZoom = Math.max(0.3, timelineZoom - 0.2); renderTracker(); } }, '\u2212'));
+    zoomRow.appendChild(h('span', { className:'trk-mono', style:{ padding:'4px 8px', color:'var(--muted)' } }, Math.round(timelineZoom * 100) + '%'));
+    zoomRow.appendChild(h('button', { className:'trk-btn', onClick:function(){ timelineZoom = Math.min(3, timelineZoom + 0.2); renderTracker(); } }, '+'));
+    zoomRow.appendChild(h('button', { className:'trk-btn', style:{ marginLeft:'8px' }, onClick:function(){ timelineZoom = 1; renderTracker(); } }, 'Reset'));
+    wrap.appendChild(zoomRow);
+
+    var projStart = '2026-03-30';
+    var projEnd = '2026-07-31';
+    var totalDays = daysBetween(projStart, projEnd);
+    var dayWidth = Math.max(3, 8 * timelineZoom);
+    var labelWidth = 150;
+    var chartWidth = totalDays * dayWidth;
+
+    var container = h('div', { className:'trk-card', style:{ overflow:'hidden' } });
+    var scrollArea = h('div', { className:'trk-timeline-wrap', style:{ overflowX:'auto', position:'relative' } });
+
+    // Phase header
+    var phaseHeader = h('div', { style:{ display:'flex', height:'22px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative' } });
+    PHASES.forEach(function(phase) {
+      var left = Math.max(0, daysBetween(projStart, phase.start)) * dayWidth;
+      var width = daysBetween(phase.start, phase.end) * dayWidth;
+      phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:left+'px', width:width+'px', height:'100%', background:phase.color, opacity:'0.15', borderRadius:'2px' } }));
+      if (width > 40) {
+        phaseHeader.appendChild(h('div', { className:'trk-mono', style:{ position:'absolute', left:(left+4)+'px', top:'5px', fontSize:'8px', color:phase.color, whiteSpace:'nowrap', pointerEvents:'none' } }, phase.name));
+      }
+    });
+    scrollArea.appendChild(phaseHeader);
+
+    // Month header
+    var monthHeader = h('div', { style:{ display:'flex', height:'18px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative', borderBottom:'1px solid var(--border)' } });
+    var curMonth = '';
+    for (var d = 0; d < totalDays; d++) {
+      var dt = new Date(parseD(projStart)); dt.setDate(dt.getDate() + d);
+      var ml = dt.toLocaleDateString('en-US', { month:'short' });
+      if (ml !== curMonth) {
+        curMonth = ml;
+        monthHeader.appendChild(h('div', { className:'trk-mono', style:{ position:'absolute', left:(d*dayWidth)+'px', top:'3px', fontSize:'8px', color:'var(--muted)', whiteSpace:'nowrap' } }, ml + ' ' + dt.getDate()));
+      }
+      if (dt.getDay() === 1) {
+        monthHeader.appendChild(h('div', { style:{ position:'absolute', left:(d*dayWidth)+'px', bottom:'0', width:'1px', height:'6px', background:'var(--border)' } }));
+      }
+    }
+    scrollArea.appendChild(monthHeader);
+
+    // Body
+    var body = h('div', { style:{ position:'relative' } });
+
+    // Phase background bands
+    PHASES.forEach(function(phase) {
+      var left = Math.max(0, daysBetween(projStart, phase.start)) * dayWidth + labelWidth;
+      var width = daysBetween(phase.start, phase.end) * dayWidth;
+      body.appendChild(h('div', { className:'trk-phase-band', style:{ left:left+'px', width:width+'px', background:phase.color } }));
+    });
+
+    // Today line
+    var todayOffset = daysBetween(projStart, todayStr());
+    if (todayOffset >= 0 && todayOffset <= totalDays) {
+      body.appendChild(h('div', { className:'trk-timeline-today', style:{ left:(todayOffset * dayWidth + labelWidth)+'px' } }));
+    }
+
+    // Rows by workstream
+    var barPositions = {};
+    var rowIndex = 0;
+    var wsOrder = Object.keys(WORKSTREAMS);
+
+    wsOrder.forEach(function(ws) {
+      var wsTasks = tasks.filter(function(t){ return t.workstream === ws; })
+        .sort(function(a,b){ return parseD(a.startDate) - parseD(b.startDate); });
+      if (!wsTasks.length) return;
+
+      // Workstream label row
+      var labelRow = h('div', { style:{ display:'flex', alignItems:'center', height:'28px' } });
+      labelRow.appendChild(h('div', { className:'trk-timeline-ws-label' }, wsDot(ws, 6), ws));
+      labelRow.appendChild(h('div', { style:{ flex:'1', height:'1px', background:'var(--border)' } }));
+      body.appendChild(labelRow);
+      rowIndex++;
+
+      wsTasks.forEach(function(t) {
+        var row = h('div', { className:'trk-timeline-row' });
+
+        // Task label
+        var taskLabel = h('div', {
+          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px' },
+          title: t.title,
+          onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+        });
+        if (t.isMilestone) taskLabel.appendChild(diamondIcon(6));
+        taskLabel.appendChild(document.createTextNode(t.title));
+        row.appendChild(taskLabel);
+
+        // Bar area
+        var barArea = h('div', { style:{ position:'relative', width:chartWidth+'px', height:'28px' } });
+        var startOff = daysBetween(projStart, t.startDate);
+        var endOff = daysBetween(projStart, t.endDate);
+        var barLeft = startOff * dayWidth;
+        var barWidth = Math.max(dayWidth, (endOff - startOff + 1) * dayWidth);
+        var wsColor = (WORKSTREAMS[t.workstream] || {}).dot || '#888';
+
+        if (t.isMilestone && startOff === endOff) {
+          barArea.appendChild(h('div', {
+            className: 'trk-timeline-milestone' + (selectedTaskId === t.id ? ' selected' : ''),
+            style:{ left:(barLeft + barWidth/2 - 6)+'px', top:'8px', background:wsColor },
+            onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+          }));
+        } else {
+          var bar = h('div', {
+            className: 'trk-timeline-bar' + (selectedTaskId === t.id ? ' selected' : ''),
+            style:{ left:barLeft+'px', width:barWidth+'px', top:'7px', background:wsColor },
+            title: t.title + ' (' + fmtShort(t.startDate) + ' \u2013 ' + fmtShort(t.endDate) + ')',
+            onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+          });
+          if (t.isMilestone) { bar.style.border = '2px solid var(--front)'; }
+          // Status indicator: done tasks get reduced opacity
+          if (t.status === 'DONE') bar.style.opacity = '0.4';
+          barArea.appendChild(bar);
+        }
+
+        row.appendChild(barArea);
+        body.appendChild(row);
+
+        barPositions[t.id] = { row: rowIndex, left: barLeft, right: barLeft + barWidth, cy: rowIndex * 28 + 14 };
+        rowIndex++;
+      });
+    });
+
+    // Dependency lines (SVG)
+    var totalHeight = (rowIndex + 1) * 28;
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', String(chartWidth + labelWidth));
+    svg.setAttribute('height', String(totalHeight));
+    svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;z-index:1;';
+
+    tasks.forEach(function(t) {
+      if (!t.deps || !t.deps.length) return;
+      var to = barPositions[t.id];
+      if (!to) return;
+      t.deps.forEach(function(depId) {
+        var from = barPositions[depId];
+        if (!from) return;
+        var x1 = from.right + labelWidth;
+        var y1 = from.cy;
+        var x2 = to.left + labelWidth;
+        var y2 = to.cy;
+        var midX = (x1 + x2) / 2;
+        var path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', 'M' + x1 + ',' + y1 + ' C' + midX + ',' + y1 + ' ' + midX + ',' + y2 + ' ' + x2 + ',' + y2);
+        path.setAttribute('class', 'trk-timeline-dep');
+        svg.appendChild(path);
+      });
+    });
+    body.appendChild(svg);
+    body.style.minHeight = totalHeight + 'px';
+
+    scrollArea.appendChild(body);
+    container.appendChild(scrollArea);
+    wrap.appendChild(container);
+    return wrap;
+  }
+
+  /* ═══════════════════════════════════════════
+     DETAIL PANEL
+  ═══════════════════════════════════════════ */
+  function renderDetail(id) {
+    var t = getTask(id);
+    if (!t) return h('div');
+
+    var panel = h('div', { className:'trk-detail' });
+
+    // Close
+    panel.appendChild(h('button', { className:'trk-detail-close', onClick:function(){ selectedTaskId = null; renderTracker(); } }, '\u2715'));
+
+    // ID badge
+    panel.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--muted)', marginBottom:'4px' } }, '#' + t.id));
+
+    // Title
+    panel.appendChild(h('label', null, 'Title'));
+    panel.appendChild(h('input', {
+      className:'trk-input', type:'text', value:t.title,
+      onChange: function(e){ t.title = e.target.value; saveTasks(); }
+    }));
+
+    // Milestone badge
+    if (t.isMilestone) {
+      panel.appendChild(h('div', { style:{ display:'flex', alignItems:'center', gap:'6px', marginTop:'8px' } },
+        diamondIcon(10),
+        h('span', { className:'trk-mono', style:{ color:'var(--front)' } }, 'Milestone')
+      ));
+    }
+
+    // Grid: status, priority, assignee, workstream
+    var grid = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' } });
+
+    // Status
+    (function() {
+      var w = h('div');
+      w.appendChild(h('label', null, 'Status'));
+      var sel = h('select', { className:'trk-select', onChange:function(e){ t.status = e.target.value; saveTasks(); renderTracker(); } });
+      ['TODO','IN PROGRESS','DONE'].forEach(function(s) {
+        var opt = h('option', { value:s }, s);
+        if (t.status === s) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      w.appendChild(sel);
+      grid.appendChild(w);
+    })();
+
+    // Priority
+    (function() {
+      var w = h('div');
+      w.appendChild(h('label', null, 'Priority'));
+      var sel = h('select', { className:'trk-select', onChange:function(e){ t.priority = e.target.value; saveTasks(); renderTracker(); } });
+      ['HIGH','MED','LOW'].forEach(function(p) {
+        var opt = h('option', { value:p }, p);
+        if (t.priority === p) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      w.appendChild(sel);
+      grid.appendChild(w);
+    })();
+
+    // Assignee
+    (function() {
+      var w = h('div');
+      w.appendChild(h('label', null, 'Assignee'));
+      var sel = h('select', { className:'trk-select', onChange:function(e){ t.assignee = e.target.value; saveTasks(); renderTracker(); } });
+      ['Brooke','Del','Both'].forEach(function(a) {
+        var opt = h('option', { value:a }, a);
+        if (t.assignee === a) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      w.appendChild(sel);
+      grid.appendChild(w);
+    })();
+
+    // Workstream
+    (function() {
+      var w = h('div');
+      w.appendChild(h('label', null, 'Workstream'));
+      var sel = h('select', { className:'trk-select', onChange:function(e){ t.workstream = e.target.value; saveTasks(); renderTracker(); } });
+      Object.keys(WORKSTREAMS).forEach(function(ws) {
+        var opt = h('option', { value:ws }, ws);
+        if (t.workstream === ws) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      w.appendChild(sel);
+      grid.appendChild(w);
+    })();
+
+    panel.appendChild(grid);
+
+    // Dates
+    var dateGrid = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'8px' } });
+    [['Start Date','startDate'],['Due Date','dueDate'],['End Date','endDate']].forEach(function(pair) {
+      var dw = h('div');
+      dw.appendChild(h('label', null, pair[0]));
+      dw.appendChild(h('input', {
+        className:'trk-input', type:'date', value: t[pair[1]] || '',
+        style:{ fontFamily:"'DM Mono',monospace", fontSize:'10px' },
+        onChange: function(e){ t[pair[1]] = e.target.value; saveTasks(); }
+      }));
+      dateGrid.appendChild(dw);
+    });
+    panel.appendChild(dateGrid);
+
+    // Notes
+    panel.appendChild(h('label', null, 'Notes'));
+    var notesArea = document.createElement('textarea');
+    notesArea.className = 'trk-input';
+    notesArea.rows = 3;
+    notesArea.style.resize = 'vertical';
+    notesArea.style.minHeight = '60px';
+    notesArea.value = t.notes || '';
+    notesArea.addEventListener('input', function(e){ t.notes = e.target.value; saveTasks(); });
+    panel.appendChild(notesArea);
+
+    // Blocked By
+    var blockedBy = taskBlockedBy(id);
+    if (blockedBy.length) {
+      panel.appendChild(h('label', null, 'Blocked By'));
+      var depList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'2px' } });
+      blockedBy.forEach(function(dep) {
+        depList.appendChild(h('span', {
+          className:'trk-dep-link',
+          onClick: function(){ selectedTaskId = dep.id; renderTracker(); }
+        }, '#' + dep.id + ' ' + dep.title));
+      });
+      panel.appendChild(depList);
+    }
+
+    // Blocks
+    var blocks = taskBlocks(id);
+    if (blocks.length) {
+      panel.appendChild(h('label', null, 'Blocks'));
+      var blockList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'2px' } });
+      blocks.forEach(function(bl) {
+        blockList.appendChild(h('span', {
+          className:'trk-dep-link',
+          onClick: function(){ selectedTaskId = bl.id; renderTracker(); }
+        }, '#' + bl.id + ' ' + bl.title));
+      });
+      panel.appendChild(blockList);
+    }
+
+    // Sub-tasks
+    panel.appendChild(h('label', null, 'Sub-tasks'));
+    var stList = h('div', { style:{ marginBottom:'8px' } });
+    (t.subtasks || []).forEach(function(st, i) {
+      var stRow = h('div', { className:'trk-subtask-row' });
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      if (st.done) cb.checked = true;
+      cb.addEventListener('change', function(){ st.done = !st.done; saveTasks(); renderTracker(); });
+      stRow.appendChild(cb);
+      stRow.appendChild(h('span', { className:'trk-subtask-text' + (st.done ? ' done' : '') }, st.text));
+      stRow.appendChild(h('button', { className:'trk-subtask-del', onClick:function(){ t.subtasks.splice(i, 1); saveTasks(); renderTracker(); } }, '\u2715'));
+      stList.appendChild(stRow);
+    });
+    panel.appendChild(stList);
+
+    // Add sub-task
+    var addStRow = h('div', { style:{ display:'flex', gap:'4px' } });
+    var stInput = h('input', { className:'trk-input', type:'text', placeholder:'New sub-task...', style:{ flex:'1', fontSize:'12px' } });
+    addStRow.appendChild(stInput);
+    addStRow.appendChild(h('button', { className:'trk-btn', onClick:function() {
+      var val = stInput.value.trim();
+      if (!val) return;
+      if (!t.subtasks) t.subtasks = [];
+      t.subtasks.push({ id: Date.now(), text: val, done: false });
+      saveTasks();
+      renderTracker();
+    } }, '+'));
+    panel.appendChild(addStRow);
+
+    // Delete
+    panel.appendChild(h('div', { style:{ marginTop:'24px', paddingTop:'16px', borderTop:'1px solid var(--border)' } },
+      h('button', {
+        className:'trk-btn',
+        style:{ color:'#E24B4A', borderColor:'rgba(226,75,74,0.3)' },
+        onClick: function() {
+          if (!confirm('Delete "' + t.title + '"?')) return;
+          tasks = tasks.filter(function(x){ return x.id !== t.id; });
+          tasks.forEach(function(x){ if (x.deps) x.deps = x.deps.filter(function(d){ return d !== t.id; }); });
+          selectedTaskId = null;
+          saveTasks();
+          renderTracker();
+        }
+      }, 'Delete Task')
+    ));
+
+    return panel;
+  }
+
+  /* ── Add New Task ── */
+  function addNewTask() {
+    var id = nextId();
+    var td = todayStr();
+    tasks.push({
+      id: id,
+      title: 'New Task',
+      workstream: 'Planning',
+      status: 'TODO',
+      priority: 'MED',
+      assignee: 'Brooke',
+      dueDate: td,
+      startDate: td,
+      endDate: td,
+      deps: [],
+      notes: '',
+      subtasks: [],
+      isMilestone: false,
+    });
+    selectedTaskId = id;
+    saveTasks();
+    renderTracker();
+  }
+
+  /* ═══════════════════════════════════════════
+     INIT
+  ═══════════════════════════════════════════ */
+  function initTracker() {
+    loadTasks();
+    renderTracker();
+  }
+
+  window.initTracker = initTracker;
+  window.renderTracker = renderTracker;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTracker);
+  } else {
     initTracker();
   }
-});
+
+})();
