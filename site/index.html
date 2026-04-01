@@ -1336,31 +1336,31 @@
           <button class="doc-export-btn" onclick="openDocExport('popup')" style="flex-shrink:0">Export →</button>
         </div>
 
-        <!-- KEY DATES STRIP -->
+        <!-- KEY DATES STRIP — populated by tracker.js FRONT_KEY_DATES -->
         <div class="ov-dates-strip">
           <div class="ov-date-slot">
             <div class="ov-date-label">Setup</div>
-            <input class="ov-date-input bp-field" data-key="popup-setup" placeholder="Jun 20" oninput="autosaveBP(this)">
+            <div class="ov-date-value" id="ov-date-setup">—</div>
           </div>
           <div class="ov-date-slot ov-date-accent">
             <div class="ov-date-label">Opens</div>
-            <input class="ov-date-input bp-field" data-key="popup-open" placeholder="Jun 25" oninput="autosaveBP(this)">
+            <div class="ov-date-value" id="ov-date-opens">—</div>
           </div>
           <div class="ov-date-slot">
             <div class="ov-date-label">Opening event</div>
-            <input class="ov-date-input bp-field" data-key="popup-opening-event" placeholder="Jun 25" oninput="autosaveBP(this)">
+            <div class="ov-date-value" id="ov-date-event">—</div>
           </div>
           <div class="ov-date-slot">
             <div class="ov-date-label">Mid-run activation</div>
-            <input class="ov-date-input bp-field" data-key="popup-midrun" placeholder="TBD" oninput="autosaveBP(this)">
+            <div class="ov-date-value" id="ov-date-midrun">TBD</div>
           </div>
           <div class="ov-date-slot ov-date-accent">
             <div class="ov-date-label">Closes</div>
-            <input class="ov-date-input bp-field" data-key="popup-close" placeholder="Jul 19" oninput="autosaveBP(this)">
+            <div class="ov-date-value" id="ov-date-closes">—</div>
           </div>
           <div class="ov-date-slot">
             <div class="ov-date-label">Space confirmed</div>
-            <input class="ov-date-input bp-field" data-key="popup-confirmed" placeholder="Booked ✓" oninput="autosaveBP(this)">
+            <div class="ov-date-value">Booked ✓</div>
           </div>
         </div>
 

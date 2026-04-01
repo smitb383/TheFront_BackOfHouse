@@ -1582,6 +1582,31 @@
   function initTracker() {
     loadTasks();
     renderTracker();
+    populateOverviewDates();
+  }
+
+  // Expose key dates so the overview page can read them directly
+  var installPhase = PHASES.find(function(p) { return p.name === 'Install'; });
+  var openPhase    = PHASES.find(function(p) { return p.name === 'Open'; });
+  window.FRONT_KEY_DATES = {
+    setup:        fmtShort(installPhase.start),
+    opens:        fmtShort(OPENING_DATE),
+    openingEvent: fmtShort(OPENING_DATE),
+    closes:       fmtShort(openPhase.end),
+  };
+
+  function populateOverviewDates() {
+    var kd = window.FRONT_KEY_DATES;
+    var slots = {
+      'ov-date-setup':   kd.setup,
+      'ov-date-opens':   kd.opens,
+      'ov-date-event':   kd.openingEvent,
+      'ov-date-closes':  kd.closes,
+    };
+    Object.keys(slots).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = slots[id];
+    });
   }
 
   window.initTracker = initTracker;
