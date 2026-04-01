@@ -212,7 +212,8 @@
       var raw = localStorage.getItem(LS_KEY);
       if (raw) {
         var data = JSON.parse(raw);
-        if (data._seedVersion >= 7 && Array.isArray(data.tasks)) {
+        // NEVER reseed if data exists with any tasks — always preserve user edits
+        if (Array.isArray(data.tasks) && data.tasks.length > 0) {
           // Migrate workstream names if needed
           tasks = data.tasks.map(function(t) {
             if (t.workstream === 'Space') {
