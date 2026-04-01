@@ -1235,24 +1235,54 @@
     notesArea.addEventListener('input', function(e){ t.notes = e.target.value; saveTasks(); });
     panel.appendChild(notesArea);
 
-    // Blocked By
-    var blockedBy = taskBlockedBy(id);
-    if (blockedBy.length) {
-      panel.appendChild(h('label', null, 'Blocked By'));
-      var depList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'2px' } });
-      blockedBy.forEach(function(dep) {
-        depList.appendChild(h('span', {
-          className:'trk-dep-link',
-          onClick: function(){ showDetail(dep.id); }
-        }, '#' + dep.id + ' ' + dep.title));
+    // Depends On (Blocked By) — editable
+    panel.appendChild(h('label', null, 'Depends On'));
+    var depList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', marginBottom:'4px' } });
+    (t.deps || []).forEach(function(depId) {
+      var dep = getTask(depId);
+      if (!dep) return;
+      var row = h('div', { style:{ display:'flex', alignItems:'center', gap:'4px' } });
+      row.appendChild(h('span', {
+        className:'trk-dep-link',
+        style:{ flex:'1' },
+        onClick: function(){ showDetail(dep.id); }
+      }, '#' + dep.id + ' ' + dep.title));
+      row.appendChild(h('button', {
+        className:'trk-subtask-del',
+        title:'Remove dependency',
+        onClick: function() {
+          t.deps = t.deps.filter(function(d){ return d !== depId; });
+          saveTasks();
+          showDetail(t.id);
+        }
+      }, '\u2715'));
+      depList.appendChild(row);
+    });
+    panel.appendChild(depList);
+    // Add dependency
+    var addDepRow = h('div', { style:{ display:'flex', gap:'4px' } });
+    var depSelect = h('select', { className:'trk-select', style:{ flex:'1', fontSize:'10px' } });
+    depSelect.appendChild(h('option', { value:'' }, '+ Add dependency...'));
+    tasks.filter(function(other) { return other.id !== t.id && (t.deps || []).indexOf(other.id) === -1; })
+      .sort(function(a,b){ return a.id - b.id; })
+      .forEach(function(other) {
+        depSelect.appendChild(h('option', { value:String(other.id) }, '#' + other.id + ' ' + other.title));
       });
-      panel.appendChild(depList);
-    }
+    depSelect.addEventListener('change', function() {
+      var val = parseInt(depSelect.value);
+      if (!val) return;
+      if (!t.deps) t.deps = [];
+      t.deps.push(val);
+      saveTasks();
+      showDetail(t.id);
+    });
+    addDepRow.appendChild(depSelect);
+    panel.appendChild(addDepRow);
 
-    // Blocks
+    // Blocks (read-only, derived)
     var blocks = taskBlocks(id);
     if (blocks.length) {
-      panel.appendChild(h('label', null, 'Blocks'));
+      panel.appendChild(h('label', { style:{ marginTop:'8px' } }, 'Blocks'));
       var blockList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'2px' } });
       blocks.forEach(function(bl) {
         blockList.appendChild(h('span', {
