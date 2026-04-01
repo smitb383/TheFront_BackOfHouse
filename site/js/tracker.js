@@ -26,7 +26,7 @@
     { name: 'Foundation',        start: '2026-03-30', end: '2026-04-13', color: '#378ADD' },
     { name: 'Design & Outreach', start: '2026-04-14', end: '2026-05-31', color: '#D4537E' },
     { name: 'Pre-Launch',        start: '2026-06-01', end: '2026-06-17', color: '#BA7517' },
-    { name: 'Installation',      start: '2026-06-18', end: '2026-06-24', color: '#D85A30' },
+    { name: 'Install',           start: '2026-06-18', end: '2026-06-24', color: '#D85A30' },
     { name: 'Open',              start: '2026-06-25', end: '2026-07-19', color: '#1D9E75' },
     { name: 'Close',             start: '2026-07-20', end: '2026-07-31', color: '#7F77DD' },
   ];
@@ -124,6 +124,7 @@
   var selectedTaskId = null;
   var searchQuery = '';
   var filterWorkstream = 'ALL';
+  var filterAssignee = 'ALL';
   var timelineZoom = 1;
   var listSortField = 'dueDate';
   var listSortAsc = true;
@@ -570,7 +571,32 @@
       }, ws));
     });
 
+    // Assignee filter pills
+    pills.appendChild(h('span', { style:{ width:'1px', height:'16px', background:'var(--border)', margin:'0 8px', display:'inline-block', verticalAlign:'middle' } }));
+
+    ['ALL','Brooke','Del','Both'].forEach(function(a) {
+      var isActive = filterAssignee === a;
+      var label = a === 'ALL' ? 'Everyone' : a === 'Both' ? 'Brooke & Del' : a;
+      pills.appendChild(h('button', {
+        className: 'trk-ws-pill' + (isActive ? ' active' : ''),
+        style: {
+          borderColor: 'var(--border)',
+          color: isActive ? '#fff' : 'var(--muted)',
+          background: isActive ? 'var(--muted)' : 'transparent'
+        },
+        onClick: function(){ filterAssignee = a; renderTracker(); }
+      }, label));
+    });
+
     return pills;
+  }
+
+  function matchesAssigneeFilter(task) {
+    if (filterAssignee === 'ALL') return true;
+    if (filterAssignee === 'Brooke') return task.assignee === 'Brooke' || task.assignee === 'Both';
+    if (filterAssignee === 'Del') return task.assignee === 'Del' || task.assignee === 'Both';
+    if (filterAssignee === 'Both') return task.assignee === 'Both';
+    return true;
   }
 
   /* ── View Switcher ── */
@@ -604,7 +630,7 @@
     statuses.forEach(function(status) {
       var col = h('div');
       var colTasks = tasks.filter(function(t){
-        return t.status === status && (filterWorkstream === 'ALL' || t.workstream === filterWorkstream);
+        return t.status === status && (filterWorkstream === 'ALL' || t.workstream === filterWorkstream) && matchesAssigneeFilter(t);
       }).sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); });
       var count = colTasks.length;
       col.appendChild(h('div', { className:'trk-col-header' }, status + ' (' + count + ')'));
@@ -673,6 +699,7 @@
     // Filter + sort
     var filtered = tasks.slice();
     if (filterWorkstream !== 'ALL') filtered = filtered.filter(function(t){ return t.workstream === filterWorkstream; });
+    filtered = filtered.filter(matchesAssigneeFilter);
     if (searchQuery) {
       var q = searchQuery.toLowerCase();
       filtered = filtered.filter(function(t){ return t.title.toLowerCase().indexOf(q) !== -1 || (t.notes || '').toLowerCase().indexOf(q) !== -1; });
@@ -835,7 +862,7 @@
       // Apply workstream filter
       if (filterWorkstream !== 'ALL' && filterWorkstream !== ws) return;
 
-      var wsTasks = tasks.filter(function(t){ return t.workstream === ws; })
+      var wsTasks = tasks.filter(function(t){ return t.workstream === ws && matchesAssigneeFilter(t); })
         .sort(function(a,b){ return parseD(a.startDate) - parseD(b.startDate); });
       if (!wsTasks.length) return;
 
