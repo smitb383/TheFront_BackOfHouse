@@ -28,7 +28,7 @@
     { name: 'Pre-Launch',        start: '2026-06-01', end: '2026-06-17', color: '#BA7517' },
     { name: 'Install',           start: '2026-06-20', end: '2026-06-24', color: '#D85A30' },
     { name: 'Open',              start: '2026-06-25', end: '2026-07-19', color: '#1D9E75' },
-    { name: 'Close',             start: '2026-07-20', end: '2026-07-31', color: '#7F77DD' },
+    { name: 'Close',             start: '2026-07-20', end: '2026-07-22', color: '#7F77DD' },
   ];
 
   var MILESTONE_IDS = [9, 3, 41, 10, 14, 13, 42, 23, 24, 20, 15, 29, 34, 35, 36, 49, 55, 56];
@@ -83,12 +83,12 @@
       { id:46, title:'Approve merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-15', startDate:'2026-05-10', deps:[44,45], notes:'Both design and cost must be approved before ordering. No changes after this.' },
       { id:47, title:'Place merch orders', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-20', startDate:'2026-05-15', deps:[46], notes:'1 month production + shipping lead time. Must order by May 20 to arrive before Jun 20.' },
       { id:48, title:'Receive & QC merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-20', startDate:'2026-06-10', deps:[47], notes:'Arrives ~Jun 10\u201320. Check all items against order. Any issues need time to resolve before launch.' },
-      { id:49, title:'Deinstall', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-21', startDate:'2026-07-20', deps:[36], notes:'Jul 20 (Mon) \u2013 Jul 21 (Tue). Space must be returned in original condition. Negotiate these 2 days into the lease.' },
+      { id:49, title:'Deinstall', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-22', startDate:'2026-07-20', deps:[36], notes:'Jul 20-22. Remove all fixtures, product, signage. Space must be returned in original condition.' },
 { id:51, title:'Meet with 334', workstream:'334 Rent', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-04-08', startDate:'2026-04-06', deps:[2], notes:'Go over: new dates for taking on space, new price, AC repair quotes and cost split, new deposit dates, possible payment changes for lease. Confirm all verbally before contract revision.' },
       { id:52, title:'Draft vendor agreement', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-20', startDate:'2026-04-10', deps:[9], notes:'Terms: 70% vendor / 30% The Front. Vendor fills in: item list, descriptions, quantities, sale prices. Square POS (2.6% fee). Includes liability, pickup terms, payment schedule.' },
       { id:53, title:'Collect vendor inventory', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', deps:[40,52], notes:'Each vendor provides full inventory: item name, description, qty, proposed sale price. We review and agree before agreement is countersigned. Verconiik + Harlot Hands first.' },
       { id:54, title:'Approve vendor pricing', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-25', startDate:'2026-05-15', deps:[53], notes:'Go through each vendor\u2019s item list. Confirm pricing makes sense for the space and customer. Flag anything to negotiate. This informs how we set up Square and the floor plan.' },
-      { id:55, title:'Turnover space', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-07-21', startDate:'2026-07-21', deps:[49], notes:'Space returned to 334 Broome in original condition. Final walkthrough with landlord.' },
+      { id:55, title:'Turnover space', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-07-22', startDate:'2026-07-22', deps:[49], notes:'End of Jul 22. Space returned to 334 Broome in original condition. Final walkthrough with landlord.' },
       { id:56, title:'Get access to space', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-06-20', startDate:'2026-06-20', deps:[15], notes:'Lease begins Jun 20. First day of install access.' },
     ];
     // Subtasks for specific tasks
@@ -432,7 +432,7 @@
       { label:'Install Begins', date:'Jun 20', days:daysUntil('2026-06-20') },
       { label:'Opening', date:'Jun 25', days:daysUntil('2026-06-25') },
       { label:'Closing', date:'Jul 19', days:daysUntil('2026-07-19') },
-      { label:'Turnover Space', date:'Jul 21', days:daysUntil('2026-07-21') }
+      { label:'Turnover Space', date:'Jul 22', days:daysUntil('2026-07-22') }
     ];
 
     function sep() { return h('div', { style:{ width:'1px', height:'28px', background:'var(--border)' } }); }
@@ -808,7 +808,7 @@
     wrap.appendChild(zoomRow);
 
     var projStart = '2026-03-30';
-    var projEnd = '2026-07-31';
+    var projEnd = '2026-07-25';
     var totalDays = daysBetween(projStart, projEnd);
     var labelWidth = 150;
 
