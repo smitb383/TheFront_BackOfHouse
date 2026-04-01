@@ -258,7 +258,15 @@
   function nextId() { var mx = 0; tasks.forEach(function(t){ if (t.id > mx) mx = t.id; }); return mx + 1; }
   function taskBlocks(id) { return tasks.filter(function(t){ return t.deps && t.deps.indexOf(id) !== -1; }); }
   function taskBlockedBy(id) { var t = getTask(id); if (!t || !t.deps) return []; return t.deps.map(getTask).filter(Boolean); }
-  function dueThisWeek() { var ts = todayStr(); return tasks.filter(function(t){ return t.status !== 'DONE' && sameWeek(t.dueDate, ts); }); }
+  function dueNext7Days() {
+    var today = todayDate();
+    var end = new Date(today); end.setDate(end.getDate() + 7);
+    return tasks.filter(function(t) {
+      if (t.status === 'DONE') return false;
+      var due = parseD(t.dueDate);
+      return due >= today && due <= end;
+    });
+  }
   function beginningThisWeek() { var ts = todayStr(); return tasks.filter(function(t){ return t.status !== 'DONE' && sameWeek(t.startDate, ts); }); }
 
   function currentFocusBullets() {
@@ -501,7 +509,7 @@
   function renderFocusSection() {
     var focusBullets = currentFocusBullets();
     var beginItems = beginningThisWeek();
-    var dueItems = dueThisWeek();
+    var dueItems = dueNext7Days();
     var focusData = loadFocusData();
 
     var wrap = h('div', { style:{ display:'flex', gap:'16px', marginBottom:'12px', flexWrap:'wrap' } });
@@ -567,28 +575,28 @@
     function renderTwoColTasks(items, title) {
       var card = h('div', { className:'trk-card', style:{ flex:'1', minWidth:'200px', padding:'12px 16px' } });
       card.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, title));
-      var cols = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' } });
+      var cols = h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px' } });
 
-      ['Brooke','Del'].forEach(function(person) {
+      ['Brooke','Del','Both'].forEach(function(person) {
         var col = h('div');
-        col.appendChild(h('div', { className:'trk-mono', style:{ fontSize:'8px', color:'var(--muted)', marginBottom:'4px', letterSpacing:'0.1em' } }, person));
-        var myItems = items.filter(function(t) { return t.assignee === person || t.assignee === 'Both'; });
+        var label = person === 'Both' ? 'Brooke & Del' : person;
+        col.appendChild(h('div', { className:'trk-mono', style:{ fontSize:'8px', color:'var(--muted)', marginBottom:'4px', letterSpacing:'0.1em' } }, label));
+        var myItems = items.filter(function(t) {
+          if (person === 'Both') return t.assignee === 'Both';
+          return t.assignee === person;
+        });
         if (!myItems.length) {
           col.appendChild(h('div', { style:{ fontSize:'11px', color:'var(--muted)', fontStyle:'italic' } }, 'None'));
         }
         myItems.forEach(function(t) {
-          var row = h('div', {
+          col.appendChild(h('div', {
             className:'trk-due-item',
             onClick: function(){ showDetail(t.id); }
           },
             wsDot(t.workstream, 6),
             h('span', null, t.title),
             h('span', { className:'trk-mono', style:{ color:'var(--muted)', fontSize:'8px', marginLeft:'auto' } }, fmtShort(t.dueDate))
-          );
-          if (t.assignee === 'Both') {
-            row.appendChild(h('span', { className:'trk-mono', style:{ fontSize:'7px', color:'var(--muted)', marginLeft:'4px' } }, '+both'));
-          }
-          col.appendChild(row);
+          ));
         });
         cols.appendChild(col);
       });
@@ -605,7 +613,7 @@
     // Due This Week — two columns
     var dueItems2 = dueItems.sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); });
     if (dueItems2.length) {
-      wrap.appendChild(renderTwoColTasks(dueItems2, 'Due This Week'));
+      wrap.appendChild(renderTwoColTasks(dueItems2, 'Due in Next 7 Days'));
     }
 
     return wrap;
