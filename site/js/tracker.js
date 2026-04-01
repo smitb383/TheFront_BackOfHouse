@@ -351,13 +351,27 @@
     else root.appendChild(renderList());
 
     if (selectedTaskId !== null) root.appendChild(renderDetail(selectedTaskId));
+  }
 
-    // Restore scroll position after re-render
-    requestAnimationFrame(function() {
-      window.scrollTo(0, scrollY);
-      var newWrap = root.querySelector('.trk-timeline-wrap');
-      if (newWrap && timelineScrollX) newWrap.scrollLeft = timelineScrollX;
-    });
+  // Open/close detail panel WITHOUT re-rendering the whole page
+  function showDetail(id) {
+    var root = document.getElementById('front-schedule');
+    if (!root) return;
+    // Remove existing detail panel
+    var existing = root.querySelector('.trk-detail');
+    if (existing) existing.remove();
+    // Remove existing overlay
+    var existingOverlay = root.querySelector('.trk-detail-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    selectedTaskId = id;
+    if (id !== null) {
+      root.appendChild(renderDetail(id));
+    }
+  }
+
+  function closeDetail() {
+    showDetail(null);
   }
 
   /* ── Stats Bar ── */
@@ -482,7 +496,7 @@
       var beginList = h('ul', { className:'trk-focus-list' });
 
       beginItems.slice(0, 8).forEach(function(t) {
-        var li = h('li', { style:{ cursor:'pointer' }, onClick: function(){ selectedTaskId = t.id; renderTracker(); } });
+        var li = h('li', { style:{ cursor:'pointer' }, onClick: function(){ showDetail(t.id); } });
         var inp = h('input', {
           className:'trk-focus-input',
           type:'text',
@@ -544,7 +558,7 @@
       dueItems.sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); }).forEach(function(t) {
         dueList.appendChild(h('div', {
           className:'trk-due-item',
-          onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+          onClick: function(){ showDetail(t.id); }
         },
           wsDot(t.workstream, 6),
           h('span', null, t.title),
@@ -683,7 +697,7 @@
     var shouldHaveStarted = t.status === 'TODO' && parseD(t.startDate) <= todayDate();
     return h('div', {
       className: 'trk-card trk-task-card' + (selectedTaskId === t.id ? ' selected' : ''),
-      onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+      onClick: function(){ showDetail(t.id); }
     },
       h('div', { style:{ display:'flex', alignItems:'flex-start', gap:'6px', marginBottom:'4px' } },
         shouldHaveStarted ? h('span', { className:'trk-warning', title:'Should have started' }) : null,
@@ -762,7 +776,7 @@
 
       tbody.appendChild(h('tr', {
         className: 'trk-list-row' + (selectedTaskId === t.id ? ' selected' : ''),
-        onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+        onClick: function(){ showDetail(t.id); }
       },
         h('td', null, t.isMilestone ? diamondIcon(8) : wsDot(t.workstream)),
         h('td', null, t.title),
@@ -907,7 +921,7 @@
         var taskLabel = h('div', {
           style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px' },
           title: t.title,
-          onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+          onClick: function(){ showDetail(t.id); }
         });
         if (t.isMilestone) taskLabel.appendChild(diamondIcon(6));
         taskLabel.appendChild(document.createTextNode(t.title));
@@ -927,7 +941,7 @@
           barArea.appendChild(h('div', {
             className: mClass,
             style:{ left:(barLeft + barWidth/2 - mSize/2)+'px', top:(t.isMajorMilestone ? '2px' : '8px'), width:mSize+'px', height:mSize+'px', background:t.isMajorMilestone ? 'var(--front)' : taskWsColor },
-            onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+            onClick: function(){ showDetail(t.id); }
           }));
           if (t.isMajorMilestone) {
             barArea.appendChild(h('div', {
@@ -939,7 +953,7 @@
             className: 'trk-timeline-bar' + (selectedTaskId === t.id ? ' selected' : ''),
             style:{ left:barLeft+'px', width:barWidth+'px', top:'7px', background:taskWsColor },
             title: t.title + ' (' + fmtShort(t.startDate) + ' \u2013 ' + fmtShort(t.dueDate) + ')',
-            onClick: function(){ selectedTaskId = t.id; renderTracker(); }
+            onClick: function(){ showDetail(t.id); }
           });
           if (t.isMilestone) { bar.style.border = '2px solid var(--front)'; }
           // Status indicator: done tasks get reduced opacity
@@ -1000,7 +1014,7 @@
     var panel = h('div', { className:'trk-detail' });
 
     // Close
-    panel.appendChild(h('button', { className:'trk-detail-close', onClick:function(){ selectedTaskId = null; renderTracker(); } }, '\u2715'));
+    panel.appendChild(h('button', { className:'trk-detail-close', onClick:function(){ closeDetail(); } }, '\u2715'));
 
     // ID badge
     panel.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--muted)', marginBottom:'4px' } }, '#' + t.id));
@@ -1114,7 +1128,7 @@
       blockedBy.forEach(function(dep) {
         depList.appendChild(h('span', {
           className:'trk-dep-link',
-          onClick: function(){ selectedTaskId = dep.id; renderTracker(); }
+          onClick: function(){ showDetail(dep.id); }
         }, '#' + dep.id + ' ' + dep.title));
       });
       panel.appendChild(depList);
@@ -1128,7 +1142,7 @@
       blocks.forEach(function(bl) {
         blockList.appendChild(h('span', {
           className:'trk-dep-link',
-          onClick: function(){ selectedTaskId = bl.id; renderTracker(); }
+          onClick: function(){ showDetail(bl.id); }
         }, '#' + bl.id + ' ' + bl.title));
       });
       panel.appendChild(blockList);
