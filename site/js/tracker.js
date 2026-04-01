@@ -138,8 +138,21 @@
       var raw = localStorage.getItem(LS_KEY);
       if (raw) {
         var data = JSON.parse(raw);
-        if (data._seedVersion === TRACKER_SEED_VERSION && Array.isArray(data.tasks)) {
-          tasks = data.tasks;
+        if (data._seedVersion >= 4 && Array.isArray(data.tasks)) {
+          // Migrate workstream names if needed
+          tasks = data.tasks.map(function(t) {
+            if (t.workstream === 'Space') {
+              // Check if it should be 334 Rent or Fit Out
+              var rentIds = [1,2,3,11,13,14,15,50,51];
+              var fitOutIds = [27,28,29,30,31,32,33,34];
+              if (rentIds.indexOf(t.id) !== -1) t.workstream = '334 Rent';
+              else if (fitOutIds.indexOf(t.id) !== -1) t.workstream = 'Fit Out';
+            }
+            if (t.workstream === 'Finance') t.workstream = '334 Rent';
+            // Move opening/close/deinstall to Marketing
+            if ([35,36,49].indexOf(t.id) !== -1) t.workstream = 'Marketing & Outreach';
+            return t;
+          });
           return;
         }
       }
