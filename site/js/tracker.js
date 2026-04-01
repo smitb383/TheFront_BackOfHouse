@@ -1076,37 +1076,61 @@
       if (!t.deps || !t.deps.length) return;
       var to = barPositions[t.id];
       if (!to) return;
+      var toWsColor = (WORKSTREAMS[t.workstream] || {}).dot || '#888';
+
       t.deps.forEach(function(depId) {
         var from = barPositions[depId];
         if (!from) return;
-        var x1, y1, x2, y2;
+
         if (from.isMajorMilestone) {
-          // Connect from the vertical milestone line at the task's y position
-          x1 = from.left + labelWidth;
-          y1 = to.cy;
-          x2 = to.left + labelWidth;
-          y2 = to.cy;
-          // Draw a horizontal line from the milestone vertical to the task
-          var path = document.createElementNS(svgNS, 'line');
-          path.setAttribute('x1', String(x1));
-          path.setAttribute('y1', String(y1));
-          path.setAttribute('x2', String(x2));
-          path.setAttribute('y2', String(y2));
-          path.setAttribute('class', 'trk-timeline-dep');
-          path.setAttribute('stroke', 'rgba(226,201,126,0.4)');
-          path.setAttribute('stroke-width', '1.5');
-          path.setAttribute('stroke-dasharray', '4,3');
-          svg.appendChild(path);
+          // Horizontal line from task bar to the milestone's vertical line
+          var milestoneX = from.left + labelWidth;
+          var taskX = to.left + labelWidth;
+          var y = to.cy;
+          // Line goes from task start horizontally to the milestone vertical
+          var lineX1 = Math.min(milestoneX, taskX);
+          var lineX2 = Math.max(milestoneX, taskX);
+
+          var line = document.createElementNS(svgNS, 'line');
+          line.setAttribute('x1', String(lineX1));
+          line.setAttribute('y1', String(y));
+          line.setAttribute('x2', String(lineX2));
+          line.setAttribute('y2', String(y));
+          line.setAttribute('stroke', 'rgba(226,201,126,0.5)');
+          line.setAttribute('stroke-width', '2');
+          svg.appendChild(line);
+
+          // Circle at intersection with milestone vertical
+          var circle = document.createElementNS(svgNS, 'circle');
+          circle.setAttribute('cx', String(milestoneX));
+          circle.setAttribute('cy', String(y));
+          circle.setAttribute('r', '4');
+          circle.setAttribute('fill', 'rgba(226,201,126,0.8)');
+          svg.appendChild(circle);
         } else {
-          x1 = from.right + labelWidth;
-          y1 = from.cy;
-          x2 = to.left + labelWidth;
-          y2 = to.cy;
+          var fromWsColor = (WORKSTREAMS[(getTask(depId) || {}).workstream] || {}).dot || '#888';
+          var x1 = from.right + labelWidth;
+          var y1 = from.cy;
+          var x2 = to.left + labelWidth;
+          var y2 = to.cy;
           var midX = (x1 + x2) / 2;
+
           var path = document.createElementNS(svgNS, 'path');
           path.setAttribute('d', 'M' + x1 + ',' + y1 + ' C' + midX + ',' + y1 + ' ' + midX + ',' + y2 + ' ' + x2 + ',' + y2);
-          path.setAttribute('class', 'trk-timeline-dep');
+          path.setAttribute('stroke', toWsColor);
+          path.setAttribute('stroke-width', '1.5');
+          path.setAttribute('stroke-opacity', '0.4');
+          path.setAttribute('fill', 'none');
           svg.appendChild(path);
+
+          // Small circle at the end (where it meets the target task)
+          var endCircle = document.createElementNS(svgNS, 'circle');
+          endCircle.setAttribute('cx', String(x2));
+          endCircle.setAttribute('cy', String(y2));
+          endCircle.setAttribute('r', '3');
+          endCircle.setAttribute('fill', toWsColor);
+          endCircle.setAttribute('fill-opacity', '0.5');
+          svg.appendChild(endCircle);
         }
       });
     });
