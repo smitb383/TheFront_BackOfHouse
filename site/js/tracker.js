@@ -69,8 +69,8 @@
 
   var PHASES = buildPhases();
 
-  var MILESTONE_IDS = [9, 3, 41, 10, 14, 13, 42, 23, 24, 20, 15, 29, 34, 35, 36, 49, 55, 56];
-  var MAJOR_MILESTONE_IDS = [35, 36, 49, 55, 56]; // Opening, Close, Deinstall, Turnover, Get Access — extra prominent
+  var MILESTONE_IDS = [9, 3, 41, 10, 14, 13, 42, 23, 24, 20, 15, 29, 34, 35, 36, 55, 56];
+  var MAJOR_MILESTONE_IDS = [35, 36, 55, 56]; // Opening, Close, Turnover, Get Access — extra prominent
 
   /* ── Seed Data (all 54 tasks) ── */
   function buildSeedTasks() {
@@ -121,7 +121,7 @@
       { id:46, title:'Approve merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-15', startDate:'2026-05-10', deps:[44,45], notes:'Both design and cost must be approved before ordering. No changes after this.' },
       { id:47, title:'Place merch orders', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-20', startDate:'2026-05-15', deps:[46], notes:'1 month production + shipping lead time. Must order by May 20 to arrive before Jun 20.' },
       { id:48, title:'Receive & QC merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-20', startDate:'2026-06-10', deps:[47], notes:'Arrives ~Jun 10\u201320. Check all items against order. Any issues need time to resolve before launch.' },
-      { id:49, title:'Deinstall', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-22', startDate:'2026-07-20', deps:[36], notes:'Jul 20-22. Remove all fixtures, product, signage. Space must be returned in original condition.' },
+      { id:49, title:'Deinstall', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-22', startDate:'2026-07-20', deps:[36], notes:'Jul 20-22. Remove all fixtures, product, signage. Space must be returned in original condition.' },
 { id:51, title:'Meet with 334', workstream:'334 Rent', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-04-08', startDate:'2026-04-06', deps:[2], notes:'Go over: new dates for taking on space, new price, AC repair quotes and cost split, new deposit dates, possible payment changes for lease. Confirm all verbally before contract revision.' },
       { id:52, title:'Draft vendor agreement', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-20', startDate:'2026-04-10', deps:[9], notes:'Terms: 70% vendor / 30% The Front. Vendor fills in: item list, descriptions, quantities, sale prices. Square POS (2.6% fee). Includes liability, pickup terms, payment schedule.' },
       { id:53, title:'Collect vendor inventory', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', deps:[40,52], notes:'Each vendor provides full inventory: item name, description, qty, proposed sale price. We review and agree before agreement is countersigned. Verconiik + Harlot Hands first.' },
