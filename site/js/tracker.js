@@ -207,40 +207,60 @@
   var listSortAsc = true;
 
   /* ── Persistence ── */
+  var _isSeeded = false; // true if we loaded from seed (no user data found)
+
   function loadTasks() {
     try {
       var raw = localStorage.getItem(LS_KEY);
       if (raw) {
         var data = JSON.parse(raw);
-        // NEVER reseed if data exists with any tasks — always preserve user edits
         if (Array.isArray(data.tasks) && data.tasks.length > 0) {
-          // Migrate workstream names if needed
-          tasks = data.tasks.map(function(t) {
-            if (t.workstream === 'Space') {
-              // Check if it should be 334 Rent or Fit Out
-              var rentIds = [1,2,3,11,13,14,15,50,51];
-              var fitOutIds = [27,28,29,30,31,32,33,34];
-              if (rentIds.indexOf(t.id) !== -1) t.workstream = '334 Rent';
-              else if (fitOutIds.indexOf(t.id) !== -1) t.workstream = 'Fit Out';
-            }
-            if (t.workstream === 'Finance') t.workstream = '334 Rent';
-            // Move opening/close/deinstall to Marketing
-            if ([35,36,49].indexOf(t.id) !== -1) t.workstream = 'Marketing & Events';
-            return t;
-          });
+          tasks = data.tasks;
+          _isSeeded = false;
           return;
         }
       }
-    } catch (e) { /* corrupt data, reseed */ }
+    } catch (e) {}
+    // No saved data — use seed but DON'T write to localStorage yet
+    // (wait for Supabase to potentially have the real data)
     tasks = buildSeedTasks();
-    saveTasks();
+    _isSeeded = true;
   }
 
   function saveTasks() {
+    _isSeeded = false; // user made a change, this is now real data
     var payload = { _seedVersion: TRACKER_SEED_VERSION, tasks: tasks };
     localStorage.setItem(LS_KEY, JSON.stringify(payload));
-    if (typeof window.onTrackerSave === 'function') window.onTrackerSave(payload);
   }
+
+  // Listen for Supabase data arrival — reload if it has better data
+  window.addEventListener('kv-updated', function(e) {
+    if (e.detail && e.detail.key === LS_KEY) {
+      try {
+        var data = JSON.parse(localStorage.getItem(LS_KEY));
+        if (data && Array.isArray(data.tasks) && data.tasks.length > 0) {
+          tasks = data.tasks;
+          _isSeeded = false;
+          if (typeof renderTracker === 'function') renderTracker();
+        }
+      } catch(ex) {}
+    }
+  });
+
+  // Also listen for the supabase-ready event
+  window.addEventListener('supabase-ready', function() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (Array.isArray(data.tasks) && data.tasks.length > 0) {
+          tasks = data.tasks;
+          _isSeeded = false;
+          if (typeof renderTracker === 'function') renderTracker();
+        }
+      }
+    } catch(ex) {}
+  });
 
   /* ── Focus persistence ── */
   function loadFocusData() {
