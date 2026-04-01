@@ -29,33 +29,33 @@
 
   function buildPhases() {
     var open = parseD(OPENING_DATE);
+    function fmt(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+    function addDays(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
 
-    // Install: 5 days before opening (day before opening through 4 days before)
-    var installEnd = new Date(open); installEnd.setDate(installEnd.getDate() - 1);
-    var installStart = new Date(open); installStart.setDate(installStart.getDate() - 5);
-
-    // Pre-Launch: ends day before install starts
-    var preLaunchEnd = new Date(installStart); preLaunchEnd.setDate(preLaunchEnd.getDate() - 1);
-
-    // Foundation is fixed
     var foundEnd = parseD(FOUNDATION_END);
 
-    // Design & Outreach: day after foundation ends through day before pre-launch
-    // Split remaining time: Design & Outreach gets from foundation end to pre-launch start
-    // Pre-Launch gets 3 weeks before install
-    var preLaunchStart = new Date(preLaunchEnd); preLaunchStart.setDate(preLaunchStart.getDate() - 18); // ~19 days
+    // Install: 5 days before opening, ends day before opening
+    var installStart = addDays(open, -5);
+    var installEnd = addDays(open, -1);
 
-    var designStart = new Date(foundEnd); designStart.setDate(designStart.getDate() + 1);
-    var designEnd = new Date(preLaunchStart); designEnd.setDate(designEnd.getDate() - 1);
+    // Pre-Launch ends day before install starts (no gap)
+    var preLaunchEnd = addDays(installStart, -1);
 
-    // Open: opening day through last day (24 days for a ~25 day run)
-    var openEnd = new Date(open); openEnd.setDate(openEnd.getDate() + 24);
+    // Split gap between foundation and install into Design & Pre-Launch
+    var totalGap = Math.round((preLaunchEnd - addDays(foundEnd, 1)) / 86400000) + 1;
+    var preLaunchDays = Math.min(Math.round(totalGap * 0.35), totalGap);
+    var preLaunchStart = addDays(preLaunchEnd, -(preLaunchDays - 1));
 
-    // Close: 3 days after open ends
-    var closeStart = new Date(openEnd); closeStart.setDate(closeStart.getDate() + 1);
-    var closeEnd = new Date(closeStart); closeEnd.setDate(closeEnd.getDate() + 2);
+    // Design & Outreach: immediately after foundation through day before pre-launch (no gap)
+    var designStart = addDays(foundEnd, 1);
+    var designEnd = addDays(preLaunchStart, -1);
 
-    function fmt(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+    // Open: opening day through +24 days
+    var openEnd = addDays(open, 24);
+
+    // Close: immediately after open (no gap), 3 days
+    var closeStart = addDays(openEnd, 1);
+    var closeEnd = addDays(closeStart, 2);
 
     return [
       { name: 'Foundation',        start: FOUNDATION_START, end: FOUNDATION_END, color: '#378ADD' },
@@ -847,7 +847,10 @@
     wrap.appendChild(zoomRow);
 
     var projStart = '2026-03-30';
-    var projEnd = PHASES[PHASES.length - 1].end;
+    // Add 2 day buffer after last phase so Close is fully visible
+    var lastPhaseEnd = parseD(PHASES[PHASES.length - 1].end);
+    lastPhaseEnd.setDate(lastPhaseEnd.getDate() + 2);
+    var projEnd = lastPhaseEnd.getFullYear() + '-' + String(lastPhaseEnd.getMonth()+1).padStart(2,'0') + '-' + String(lastPhaseEnd.getDate()).padStart(2,'0');
     var totalDays = daysBetween(projStart, projEnd);
     var labelWidth = 150;
 
@@ -867,7 +870,7 @@
     PHASES.forEach(function(phase) {
       var left = Math.max(0, daysBetween(projStart, phase.start)) * dayWidth;
       var width = daysBetween(phase.start, phase.end) * dayWidth;
-      phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:left+'px', width:width+'px', height:'100%', background:phase.color, opacity:'0.2', borderRadius:'2px' } }));
+      phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:left+'px', width:(width+1)+'px', height:'100%', background:phase.color, opacity:'0.2' } }));
       var phaseStartFmt = fmtShort(phase.start);
       var phaseEndFmt = fmtShort(phase.end);
       // Always show name
