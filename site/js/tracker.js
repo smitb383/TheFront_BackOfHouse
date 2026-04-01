@@ -535,20 +535,34 @@
 
     var wrap = h('div', { style:{ display:'flex', gap:'12px', marginBottom:'12px', flexWrap:'wrap' } });
 
-    // Current Focus — narrower
-    var focusCard = h('div', { className:'trk-card', style:{ flex:'0 0 220px', minWidth:'180px', padding:'12px 16px' } });
+    // Current Focus
+    var focusCard = h('div', { className:'trk-card', style:{ flex:'0 0 280px', minWidth:'240px', padding:'12px 16px' } });
     focusCard.appendChild(h('div', { className:'trk-mono', style:{ color:'var(--front)', marginBottom:'6px' } }, 'Current Focus'));
     var focusList = h('ul', { className:'trk-focus-list' });
 
-    // Auto-populated items rendered as editable inputs
+    // Auto-populated items — editable with delete
     focusBullets.forEach(function(b, i) {
-      var li = h('li');
+      var fd2 = loadFocusData();
+      var isHidden = (fd2.hiddenFocus || []).indexOf(b) !== -1;
+      if (isHidden) return;
+      var li = h('li', { style:{ display:'flex', alignItems:'center', gap:'4px' } });
       var inp = h('input', {
         className:'trk-focus-input',
         type:'text',
-        value: b
+        value: b,
+        style:{ flex:'1' }
       });
       li.appendChild(inp);
+      li.appendChild(h('button', {
+        className:'trk-focus-del',
+        onClick: function() {
+          var fd3 = loadFocusData();
+          if (!fd3.hiddenFocus) fd3.hiddenFocus = [];
+          fd3.hiddenFocus.push(b);
+          saveFocusData(fd3);
+          renderTracker();
+        }
+      }, '\u2715'));
       focusList.appendChild(li);
     });
 
