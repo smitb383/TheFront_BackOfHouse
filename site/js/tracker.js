@@ -10,7 +10,7 @@
   /* ── Constants ── */
   var LS_KEY = 'tracker_data_v1';
   var LS_FOCUS_KEY = 'tracker_focus_v1';
-  var TRACKER_SEED_VERSION = 7;
+  var TRACKER_SEED_VERSION = 8;
 
   var WORKSTREAMS = {
     'Planning':              { bg: '#B5D4F4', dot: '#378ADD' },
@@ -26,7 +26,7 @@
     { name: 'Foundation',        start: '2026-03-30', end: '2026-04-13', color: '#378ADD' },
     { name: 'Design & Outreach', start: '2026-04-14', end: '2026-05-31', color: '#D4537E' },
     { name: 'Pre-Launch',        start: '2026-06-01', end: '2026-06-17', color: '#BA7517' },
-    { name: 'Install',           start: '2026-06-18', end: '2026-06-24', color: '#D85A30' },
+    { name: 'Install',           start: '2026-06-20', end: '2026-06-24', color: '#D85A30' },
     { name: 'Open',              start: '2026-06-25', end: '2026-07-19', color: '#1D9E75' },
     { name: 'Close',             start: '2026-07-20', end: '2026-07-31', color: '#7F77DD' },
   ];
@@ -89,7 +89,7 @@
       { id:53, title:'Collect vendor inventory', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', deps:[40,52], notes:'Each vendor provides full inventory: item name, description, qty, proposed sale price. We review and agree before agreement is countersigned. Verconiik + Harlot Hands first.' },
       { id:54, title:'Approve vendor pricing', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-25', startDate:'2026-05-15', deps:[53], notes:'Go through each vendor\u2019s item list. Confirm pricing makes sense for the space and customer. Flag anything to negotiate. This informs how we set up Square and the floor plan.' },
       { id:55, title:'Turnover space', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-07-21', startDate:'2026-07-21', deps:[49], notes:'Space returned to 334 Broome in original condition. Final walkthrough with landlord.' },
-      { id:56, title:'Get access to space', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-06-18', startDate:'2026-06-18', deps:[15], notes:'Lease begins Jun 18. First day of install access.' },
+      { id:56, title:'Get access to space', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-06-20', startDate:'2026-06-20', deps:[15], notes:'Lease begins Jun 20. First day of install access.' },
     ];
     // Subtasks for specific tasks
     var taskSubtasks = {
@@ -174,7 +174,7 @@
       var raw = localStorage.getItem(LS_KEY);
       if (raw) {
         var data = JSON.parse(raw);
-        if (data._seedVersion >= 7 && Array.isArray(data.tasks)) {
+        if (data._seedVersion >= 8 && Array.isArray(data.tasks)) {
           // Migrate workstream names if needed
           tasks = data.tasks.map(function(t) {
             if (t.workstream === 'Space') {
@@ -429,7 +429,7 @@
 
     var keyDates = [
       { label:'Deposit Due', date:'May 15', days:daysUntil('2026-05-15') },
-      { label:'Install Begins', date:'Jun 18', days:daysUntil('2026-06-18') },
+      { label:'Install Begins', date:'Jun 20', days:daysUntil('2026-06-20') },
       { label:'Opening', date:'Jun 25', days:daysUntil('2026-06-25') },
       { label:'Closing', date:'Jul 19', days:daysUntil('2026-07-19') },
       { label:'Turnover Space', date:'Jul 21', days:daysUntil('2026-07-21') }
@@ -868,6 +868,36 @@
     }
     scrollArea.appendChild(monthHeader);
 
+    // Major milestone lane (above workstream rows)
+    var majorTasks = tasks.filter(function(t) { return t.isMajorMilestone; })
+      .sort(function(a,b) { return parseD(a.dueDate) - parseD(b.dueDate); });
+    var milestoneLane = h('div', { style:{ position:'relative', height:'50px', marginLeft:labelWidth+'px', width:chartWidth+'px', borderBottom:'1px solid var(--border)' } });
+
+    // Stagger overlapping labels
+    var prevRight = -999;
+    var staggerRow = 0;
+    majorTasks.forEach(function(mt) {
+      var mOff = daysBetween(projStart, mt.dueDate);
+      var mLeft = mOff * dayWidth;
+      var topOffset = 4;
+      if (mLeft - prevRight < 80) { staggerRow = (staggerRow + 1) % 2; topOffset = 4 + staggerRow * 20; }
+      else { staggerRow = 0; }
+
+      // Diamond
+      milestoneLane.appendChild(h('div', {
+        className:'trk-timeline-milestone major' + (selectedTaskId === mt.id ? ' selected' : ''),
+        style:{ left:(mLeft - 9)+'px', top:topOffset+'px', width:'18px', height:'18px', background:'var(--front)', cursor:'pointer', zIndex:'6' },
+        onClick: function(){ showDetail(mt.id); }
+      }));
+      // Label
+      milestoneLane.appendChild(h('div', {
+        style:{ position:'absolute', left:(mLeft + 14)+'px', top:(topOffset + 2)+'px', fontSize:'9px', fontFamily:"'DM Mono',monospace", fontWeight:'700', letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--front)', whiteSpace:'nowrap', cursor:'pointer', zIndex:'6' },
+        onClick: function(){ showDetail(mt.id); }
+      }, mt.title));
+      prevRight = mLeft + 80;
+    });
+    scrollArea.appendChild(milestoneLane);
+
     // Body
     var body = h('div', { style:{ position:'relative' } });
 
@@ -876,6 +906,13 @@
       var left = Math.max(0, daysBetween(projStart, phase.start)) * dayWidth + labelWidth;
       var width = daysBetween(phase.start, phase.end) * dayWidth;
       body.appendChild(h('div', { className:'trk-phase-band', style:{ left:left+'px', width:width+'px', background:phase.color } }));
+    });
+
+    // Major milestone vertical lines (full height, distinct color)
+    majorTasks.forEach(function(mt) {
+      var mOff = daysBetween(projStart, mt.dueDate);
+      var mLeft = mOff * dayWidth + labelWidth;
+      body.appendChild(h('div', { style:{ position:'absolute', left:mLeft+'px', top:'0', bottom:'0', width:'2px', background:'rgba(226,201,126,0.35)', zIndex:'2', pointerEvents:'none' } }));
     });
 
     // Today line
@@ -893,7 +930,7 @@
       // Apply workstream filter
       if (filterWorkstream !== 'ALL' && filterWorkstream !== ws) return;
 
-      var wsTasks = tasks.filter(function(t){ return t.workstream === ws && matchesAssigneeFilter(t); })
+      var wsTasks = tasks.filter(function(t){ return t.workstream === ws && matchesAssigneeFilter(t) && !t.isMajorMilestone; })
         .sort(function(a,b){ return parseD(a.startDate) - parseD(b.startDate); });
       if (!wsTasks.length) return;
 
@@ -970,6 +1007,14 @@
     });
 
     // Dependency lines (SVG)
+    // Add barPositions for major milestones (vertical line position)
+    majorTasks.forEach(function(mt) {
+      var mOff = daysBetween(projStart, mt.dueDate);
+      var mLeft = mOff * dayWidth;
+      // Major milestones connect at their vertical line, spanning full height
+      barPositions[mt.id] = { row: 0, left: mLeft, right: mLeft, cy: 14, isMajorMilestone: true };
+    });
+
     var totalHeight = (rowIndex + 1) * 28;
     var svgNS = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(svgNS, 'svg');
@@ -984,15 +1029,35 @@
       t.deps.forEach(function(depId) {
         var from = barPositions[depId];
         if (!from) return;
-        var x1 = from.right + labelWidth;
-        var y1 = from.cy;
-        var x2 = to.left + labelWidth;
-        var y2 = to.cy;
-        var midX = (x1 + x2) / 2;
-        var path = document.createElementNS(svgNS, 'path');
-        path.setAttribute('d', 'M' + x1 + ',' + y1 + ' C' + midX + ',' + y1 + ' ' + midX + ',' + y2 + ' ' + x2 + ',' + y2);
-        path.setAttribute('class', 'trk-timeline-dep');
-        svg.appendChild(path);
+        var x1, y1, x2, y2;
+        if (from.isMajorMilestone) {
+          // Connect from the vertical milestone line at the task's y position
+          x1 = from.left + labelWidth;
+          y1 = to.cy;
+          x2 = to.left + labelWidth;
+          y2 = to.cy;
+          // Draw a horizontal line from the milestone vertical to the task
+          var path = document.createElementNS(svgNS, 'line');
+          path.setAttribute('x1', String(x1));
+          path.setAttribute('y1', String(y1));
+          path.setAttribute('x2', String(x2));
+          path.setAttribute('y2', String(y2));
+          path.setAttribute('class', 'trk-timeline-dep');
+          path.setAttribute('stroke', 'rgba(226,201,126,0.4)');
+          path.setAttribute('stroke-width', '1.5');
+          path.setAttribute('stroke-dasharray', '4,3');
+          svg.appendChild(path);
+        } else {
+          x1 = from.right + labelWidth;
+          y1 = from.cy;
+          x2 = to.left + labelWidth;
+          y2 = to.cy;
+          var midX = (x1 + x2) / 2;
+          var path = document.createElementNS(svgNS, 'path');
+          path.setAttribute('d', 'M' + x1 + ',' + y1 + ' C' + midX + ',' + y1 + ' ' + midX + ',' + y2 + ' ' + x2 + ',' + y2);
+          path.setAttribute('class', 'trk-timeline-dep');
+          svg.appendChild(path);
+        }
       });
     });
     body.appendChild(svg);
