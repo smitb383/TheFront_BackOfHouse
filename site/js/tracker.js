@@ -752,36 +752,40 @@
     var projStart = '2026-03-30';
     var projEnd = '2026-07-31';
     var totalDays = daysBetween(projStart, projEnd);
-    var dayWidth = Math.max(3, 8 * timelineZoom);
     var labelWidth = 150;
-    var chartWidth = totalDays * dayWidth;
 
+    // At 100% zoom, chart fills the container width minus the label column
     var container = h('div', { className:'trk-card', style:{ overflow:'hidden' } });
     var scrollArea = h('div', { className:'trk-timeline-wrap', style:{ overflowX:'auto', position:'relative' } });
 
+    // Calculate available width (use container's width or fallback)
+    var el = document.getElementById('front-schedule');
+    var availWidth = (el ? el.offsetWidth : window.innerWidth) - labelWidth - 80;
+    var baseWidth = Math.max(availWidth, 600);
+    var chartWidth = Math.round(baseWidth * timelineZoom);
+    var dayWidth = chartWidth / totalDays;
+
     // Phase header — full width with dates
-    var phaseHeader = h('div', { style:{ display:'flex', height:'30px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative' } });
+    var phaseHeader = h('div', { style:{ display:'flex', height:'44px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative' } });
     PHASES.forEach(function(phase) {
       var left = Math.max(0, daysBetween(projStart, phase.start)) * dayWidth;
       var width = daysBetween(phase.start, phase.end) * dayWidth;
       phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:left+'px', width:width+'px', height:'100%', background:phase.color, opacity:'0.2', borderRadius:'2px' } }));
       var phaseStartFmt = fmtShort(phase.start);
       var phaseEndFmt = fmtShort(phase.end);
-      if (width > 60) {
-        phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:(left+6)+'px', top:'4px', fontSize:'11px', fontFamily:"'DM Mono',monospace", fontWeight:'700', letterSpacing:'0.08em', textTransform:'uppercase', color:phase.color, whiteSpace:'nowrap', pointerEvents:'none', lineHeight:'1' } },
-          phase.name
-        ));
-        if (width > 120) {
-          phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:(left+6)+'px', top:'17px', fontSize:'8px', fontFamily:"'DM Mono',monospace", letterSpacing:'0.06em', color:phase.color, opacity:'0.7', whiteSpace:'nowrap', pointerEvents:'none' } },
-            phaseStartFmt + ' \u2013 ' + phaseEndFmt
-          ));
-        }
-      }
+      // Always show name
+      phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:(left+6)+'px', top:'4px', fontSize:'12px', fontFamily:"'DM Mono',monospace", fontWeight:'700', letterSpacing:'0.08em', textTransform:'uppercase', color:phase.color, whiteSpace:'nowrap', pointerEvents:'none', lineHeight:'1' } },
+        phase.name
+      ));
+      // Always show dates
+      phaseHeader.appendChild(h('div', { style:{ position:'absolute', left:(left+6)+'px', top:'20px', fontSize:'9px', fontFamily:"'DM Mono',monospace", letterSpacing:'0.06em', color:phase.color, opacity:'0.8', whiteSpace:'nowrap', pointerEvents:'none' } },
+        phaseStartFmt + ' \u2013 ' + phaseEndFmt
+      ));
     });
     scrollArea.appendChild(phaseHeader);
 
     // Date markers header — more frequent markers
-    var monthHeader = h('div', { style:{ display:'flex', height:'18px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative', borderBottom:'1px solid var(--border)' } });
+    var monthHeader = h('div', { style:{ display:'flex', height:'26px', marginLeft:labelWidth+'px', width:chartWidth+'px', position:'relative', borderBottom:'1px solid var(--border)' } });
     var lastLabel = -999;
     for (var d = 0; d < totalDays; d++) {
       var dt = new Date(parseD(projStart)); dt.setDate(dt.getDate() + d);
@@ -793,9 +797,10 @@
       if (timelineZoom >= 1.5 && dt.getDay() === 1) showLabel = true;
       if (timelineZoom >= 2.5 && (dayOfMonth % 3 === 1)) showLabel = true;
 
-      if (showLabel && (d - lastLabel) * dayWidth > 30) {
+      if (showLabel && (d - lastLabel) * dayWidth > 40) {
         var ml = dt.toLocaleDateString('en-US', { month:'short' });
-        monthHeader.appendChild(h('div', { className:'trk-mono', style:{ position:'absolute', left:(d*dayWidth)+'px', top:'3px', fontSize:'8px', color:'var(--muted)', whiteSpace:'nowrap' } }, ml + ' ' + dayOfMonth));
+        monthHeader.appendChild(h('div', { className:'trk-mono', style:{ position:'absolute', left:(d*dayWidth)+'px', top:'2px', fontSize:'10px', color:'var(--muted)', whiteSpace:'nowrap', fontWeight: dayOfMonth === 1 ? '700' : '400' } }, ml + ' ' + dayOfMonth));
+        monthHeader.appendChild(h('div', { style:{ position:'absolute', left:(d*dayWidth)+'px', top:'16px', width:'1px', height:'8px', background:'var(--border)' } }));
         lastLabel = d;
       }
 
