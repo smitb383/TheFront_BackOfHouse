@@ -4510,3 +4510,12 @@ body::before {
 .pl-vendor-collapse-body .pl-rev-spreadrow {
   grid-template-columns:1fr 55px 40px 40px 55px 50px;
 }
+
+/* ── Popup nav tabs — more pronounced ── */
+.front-popup-nav {
+  padding:10px 8px !important; gap:4px !important;
+}
+.front-popup-nav .tab {
+  padding:10px 16px; font-size:10px; letter-spacing:0.12em;
+}
+.front-popup-nav .tab .tab-icon { font-size:13px; }
