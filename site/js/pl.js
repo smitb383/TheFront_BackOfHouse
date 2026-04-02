@@ -298,8 +298,25 @@ function renderPL() {
   var calc = calcPL(scenario, data.inventory);
 
   var isBusiness = scenario.id === 'business';
+  var isFunding = data.activeScenario === 'funding';
 
   renderScenarioBar(data);
+
+  // Funding view — show/hide
+  var fundingView = document.getElementById('pl-funding-view');
+  var plSummary = document.getElementById('pl-summary');
+  var plColumns = plSummary ? plSummary.parentElement.querySelector('.pl-columns') : null;
+
+  if (isFunding) {
+    if (fundingView) fundingView.style.display = 'block';
+    if (plSummary) plSummary.style.display = 'none';
+    if (plColumns) plColumns.style.display = 'none';
+    return;
+  } else {
+    if (fundingView) fundingView.style.display = 'none';
+    if (plSummary) plSummary.style.display = '';
+    if (plColumns) plColumns.style.display = '';
+  }
   renderPLSummary(calc, scenario);
 
   var revEl = document.getElementById('pl-revenue');
@@ -336,6 +353,7 @@ function renderScenarioBar(data) {
   if (business) {
     html += '<button class="pl-scenario-pill pl-scenario-biz' + (data.activeScenario === 'business' ? ' active' : '') + '" onclick="switchScenario(\'business\')">' + esc(business.name) + '</button>';
   }
+  html += '<button class="pl-scenario-pill' + (data.activeScenario === 'funding' ? ' active' : '') + '" onclick="switchScenario(\'funding\')" style="' + (data.activeScenario === 'funding' ? 'background:#88c98a;color:#0c0c0f;border-color:#88c98a' : 'border-color:#88c98a;color:#88c98a') + '">Funding Sources</button>';
 
   // Cloned scenarios
   data.scenarios.forEach(function(s) {
