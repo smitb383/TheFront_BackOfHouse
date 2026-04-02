@@ -67,7 +67,6 @@
           <button class="tab" data-tab="brand-identity" onclick="showTab('front','brand-identity',this)"><span class="tab-icon">✦</span>Brand Identity</button>
           <button class="tab" data-tab="story" onclick="showTab('front','story',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
           <button class="tab" data-tab="visual-identity" onclick="showTab('front','visual-identity',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
-          <button class="tab" data-tab="financials" onclick="showTab('front','financials',this)"><span class="tab-icon">💰</span>Financials</button>
         </div>
         <div class="sub-bar front-side-bar" id="front-tools-bar">
           <button class="tab active" data-tab="tracker" onclick="showTab('front','tracker',this)"><span class="tab-icon">🎯</span>Tracker</button>
@@ -126,7 +125,6 @@
             <div class="quicknav">
               <button class="qn-btn" onclick="jumpTo('front','tracker','build')"><span class="qn-icon">🎯</span>Tracker</button>
               <button class="qn-btn" onclick="jumpTo('front','bizplan','build')"><span class="qn-icon">📋</span>Bus. Plan</button>
-              <button class="qn-btn" onclick="jumpTo('front','financials','build')"><span class="qn-icon">💰</span>Financials</button>
               <button class="qn-btn" onclick="jumpTo('front','vendors','operate')"><span class="qn-icon">🤝</span>Vendors</button>
               <button class="qn-btn" onclick="jumpTo('front','story','develop')"><span class="qn-icon">✍️</span>Story</button>
               <button class="qn-btn" onclick="jumpTo('front','ideas','develop')"><span class="qn-icon">💡</span>Ideas</button>
@@ -858,98 +856,6 @@
       </div>
 
       <!-- ═══ FINANCIALS ═══ -->
-      <div class="ws-view" id="front-financials">
-        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
-          <div><div class="view-title">Financials & Funding</div>
-          <div class="view-desc">Color-coded by category. Every line item tagged — watch the pie chart update as you fill in numbers.</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-shrink:0;margin-top:4px">
-            <button class="tab-export-btn" onclick="openDocExport('front-financials')">Export →</button>
-          </div>
-        </div>
-
-        <!-- Budget sub-tabs -->
-        <div class="popup-tabs" style="margin-bottom:28px">
-          <button class="popup-tab active" onclick="showFinTab('upfront',this)">Upfront Costs</button>
-          <button class="popup-tab" onclick="showFinTab('monthly',this)">Monthly Budget</button>
-          <button class="popup-tab" onclick="showFinTab('revenue',this)">Revenue</button>
-          <button class="popup-tab" onclick="showFinTab('funding',this)">Funding Sources</button>
-        </div>
-
-        <!-- UPFRONT COSTS -->
-        <div class="fin-panel active" id="fin-panel-upfront">
-          <div class="budget-layout">
-            <div class="budget-table-col">
-              <div class="budget-cat-legend" id="fin-legend-upfront"></div>
-              <div class="budget-rows" id="budget-rows-upfront"></div>
-              <div class="budget-grand-total" id="budget-total-upfront">Total: $0</div>
-              <div class="field-group" style="margin-top:20px"><div class="field-label">How you're covering this</div><textarea class="field-textarea bp-field" data-key="fin-upfront-plan" placeholder="Personal savings: $X&#10;Grant (Parsons): $X&#10;CDFI microloan: $X&#10;Gap remaining: $X" oninput="autosaveBP(this)"></textarea></div>
-            </div>
-            <div class="budget-chart-col">
-              <div class="budget-chart-title">Spend by category</div>
-              <canvas id="pie-upfront" width="220" height="220"></canvas>
-              <div class="pie-legend" id="pie-legend-upfront"></div>
-            </div>
-          </div>
-          <div class="save-bar"><button class="save-btn green" onclick="saveBudget('upfront')">Save →</button><span class="saved-check" id="fin-saved-upfront">Saved ✓</span></div>
-        </div>
-
-        <!-- MONTHLY BUDGET -->
-        <div class="fin-panel" id="fin-panel-monthly">
-          <div class="budget-layout">
-            <div class="budget-table-col">
-              <div class="budget-cat-legend" id="fin-legend-monthly"></div>
-              <div class="budget-rows" id="budget-rows-monthly"></div>
-              <div class="budget-grand-total" id="budget-total-monthly">Total: $0 / mo</div>
-            </div>
-            <div class="budget-chart-col">
-              <div class="budget-chart-title">Monthly spend by category</div>
-              <canvas id="pie-monthly" width="220" height="220"></canvas>
-              <div class="pie-legend" id="pie-legend-monthly"></div>
-            </div>
-          </div>
-          <div class="save-bar"><button class="save-btn green" onclick="saveBudget('monthly')">Save →</button><span class="saved-check" id="fin-saved-monthly">Saved ✓</span></div>
-        </div>
-
-        <!-- REVENUE -->
-        <div class="fin-panel" id="fin-panel-revenue">
-          <div class="popup-panel-title" style="font-family:Cormorant Garamond,serif;font-size:19px;font-weight:300;margin-bottom:16px">Revenue Model & Break-Even</div>
-          <div class="field-group">
-            <div class="rev-header"><span>Revenue Stream</span><span>How it works</span><span>Est. $/month</span></div>
-            <div id="rev-rows-gen">
-              <div class="rev-row"><input value="Vendor participation fees" data-key="rev-gen-0-stream" oninput="autosaveRevRow(this)"><input placeholder="e.g. 6 vendors × $300/mo = $1,800" data-key="rev-gen-0-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-0-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
-              <div class="rev-row"><input value="Commission on vendor sales" data-key="rev-gen-1-stream" oninput="autosaveRevRow(this)"><input placeholder="e.g. 30% × $8k in vendor sales = $2,400" data-key="rev-gen-1-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-1-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
-              <div class="rev-row"><input value="Event tickets / door" data-key="rev-gen-2-stream" oninput="autosaveRevRow(this)"><input placeholder="e.g. 2 events/mo × 40 people × $20 = $1,600" data-key="rev-gen-2-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-2-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
-              <div class="rev-row"><input value="Own merchandise / branded goods" data-key="rev-gen-3-stream" oninput="autosaveRevRow(this)"><input placeholder="Tote bags, zines, printed matter" data-key="rev-gen-3-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-3-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
-              <div class="rev-row"><input value="Brand sponsorships / activations" data-key="rev-gen-4-stream" oninput="autosaveRevRow(this)"><input placeholder="Per-event brand placement, co-presentations" data-key="rev-gen-4-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-4-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
-              <div class="rev-row"><input value="Grants (amortized monthly)" data-key="rev-gen-5-stream" oninput="autosaveRevRow(this)"><input placeholder="Divide annual grant amount by 12" data-key="rev-gen-5-model" oninput="autosaveRevRow(this)"><input type="number" placeholder="0" data-key="rev-gen-5-est" oninput="autosaveRevRow(this);updateRevTotal('gen')"></div>
-            </div>
-            <div class="rev-total" id="rev-total-gen">Estimated monthly revenue: $0</div>
-          </div>
-          <div class="field-group"><div class="field-label">Break-even analysis</div><textarea class="field-textarea bp-field" data-key="gen-breakeven" style="min-height:120px" placeholder="Monthly costs total: $X&#10;Monthly revenue needed to break even: $X&#10;&#10;Conservative month-1 projection: $X&#10;Month-6 projection: $X&#10;The model works when: [condition]" oninput="autosaveBP(this)"></textarea></div>
-          <div class="field-group"><div class="field-label">Commission structure decision</div><textarea class="field-textarea bp-field" data-key="fin-model-final" placeholder="Before: 20% me / 80% vendor (no rent)&#10;Now with rent:&#10;Vendors pay: $X/cycle&#10;Commission split: X% / X%&#10;Why this works:" oninput="autosaveBP(this)"></textarea></div>
-          <div class="save-bar"><button class="save-btn green" onclick="saveBPAll()">Save →</button><span class="saved-check" id="fin-saved-rev">Saved ✓</span></div>
-        </div>
-
-        <!-- FUNDING SOURCES -->
-        <div class="fin-panel" id="fin-panel-funding">
-          <div class="funding-list">
-            <div class="funding-item"><div class="funding-type">NYC Arts Grant</div><div class="funding-name">NYC Dept of Cultural Affairs (DCLA) — Cultural Development Fund</div><div class="funding-desc">Primary NYC arts funder. Strong fit for The Front's community programming angle. Nonprofits only — use fiscal sponsor if for-profit.</div><textarea class="funding-notes-input" data-key="fund-dcla" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
-            <div class="funding-item"><div class="funding-type">NYC Small Business</div><div class="funding-name">NYC Small Business Services (SBS) — Neighborhood 360°</div><div class="funding-desc">Grants, loans, free legal + financial support for NYC small businesses. Use this regardless of whether you get funding — the free resources alone are worth it.</div><textarea class="funding-notes-input" data-key="fund-sbs" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
-            <div class="funding-item"><div class="funding-type">Arts Grant</div><div class="funding-name">New York State Council on the Arts (NYSCA)</div><div class="funding-desc">State-level arts funding. Can fund for-profits via fiscal sponsorship. Apply annually once you have documented programming.</div><textarea class="funding-notes-input" data-key="fund-nysca" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
-            <div class="funding-item"><div class="funding-type">CDFI Microloan</div><div class="funding-name">Accompany Capital — Microloan ($500–$50k)</div><div class="funding-desc">NYC-based CDFI. Lower bar than banks. Good for upfront costs and operating runway.</div><textarea class="funding-notes-input" data-key="fund-accompany" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
-            <div class="funding-item"><div class="funding-type">Design / Fashion</div><div class="funding-name">CFDA Programs + Vogue Fashion Fund</div><div class="funding-desc">Grants for design-supporting organizations. The Front as a platform for emerging fashion designers is a strong fit. CFDA network also opens press doors.</div><textarea class="funding-notes-input" data-key="fund-cfda" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
-            <div class="funding-item"><div class="funding-type">Foundation</div><div class="funding-name">Jerome Foundation — Emerging Artists Program</div><div class="funding-desc">Supports orgs creating opportunity for early-career artists. Start documenting programming history now — they want track record.</div><textarea class="funding-notes-input" data-key="fund-jerome" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
-            <div class="funding-item"><div class="funding-type">University</div><div class="funding-name">Parsons / The New School — Internal Grants + Alumni Programs</div><div class="funding-desc">Seed funding for alumni ventures, Startup Studios connections. Alumni affairs office is the right first call.</div><textarea class="funding-notes-input" data-key="fund-parsons-internal" placeholder="My notes / contacts / status…" oninput="autosaveBP(this)"></textarea></div>
-            <div class="funding-item"><div class="funding-type">SBA Microloan</div><div class="funding-name">SBA Microloan via Grameen America or Pursuit NYC</div><div class="funding-desc">Up to $50k, lower interest than conventional loans.</div><textarea class="funding-notes-input" data-key="fund-sba" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
-          </div>
-          <div class="field-group"><div class="field-label">Other funding leads</div><textarea class="field-textarea bp-field" data-key="fin-other-funding" placeholder="Other foundations, crowdfunding, potential investors…" oninput="autosaveBP(this)"></textarea></div>
-          <div class="save-bar"><button class="save-btn green" onclick="saveBPAll()">Save →</button><span class="saved-check" id="fin-saved-check">Saved ✓</span></div>
-        </div>
-
-      </div>
-
-      <!-- ═══ VENDORS ═══ -->
       <div class="ws-view" id="front-vendors">
         <div class="view-header">
           <div class="view-title">Vendors & Designers</div>
@@ -1457,6 +1363,22 @@
           <div class="pl-col" id="pl-revenue"></div>
           <div class="pl-col" id="pl-variable"></div>
           <div class="pl-col" id="pl-fixed"></div>
+        </div>
+
+        <!-- FUNDING SOURCES (migrated from Financials tab) -->
+        <div style="margin-top:32px">
+          <div class="pl-section-header"><span class="pl-section-title">Funding Sources</span></div>
+          <div class="funding-list">
+            <div class="funding-item"><div class="funding-type">NYC Arts Grant</div><div class="funding-name">NYC Dept of Cultural Affairs (DCLA) — Cultural Development Fund</div><div class="funding-desc">Primary NYC arts funder. Strong fit for The Front's community programming angle. Nonprofits only — use fiscal sponsor if for-profit.</div><textarea class="funding-notes-input" data-key="fund-dcla" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">NYC Small Business</div><div class="funding-name">NYC Small Business Services (SBS) — Neighborhood 360°</div><div class="funding-desc">Grants, loans, free legal + financial support for NYC small businesses. Use this regardless of whether you get funding — the free resources alone are worth it.</div><textarea class="funding-notes-input" data-key="fund-sbs" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">Arts Grant</div><div class="funding-name">New York State Council on the Arts (NYSCA)</div><div class="funding-desc">State-level arts funding. Can fund for-profits via fiscal sponsorship. Apply annually once you have documented programming.</div><textarea class="funding-notes-input" data-key="fund-nysca" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">CDFI Microloan</div><div class="funding-name">Accompany Capital — Microloan ($500–$50k)</div><div class="funding-desc">NYC-based CDFI. Lower bar than banks. Good for upfront costs and operating runway.</div><textarea class="funding-notes-input" data-key="fund-accompany" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">Design / Fashion</div><div class="funding-name">CFDA Programs + Vogue Fashion Fund</div><div class="funding-desc">Grants for design-supporting organizations. The Front as a platform for emerging fashion designers is a strong fit. CFDA network also opens press doors.</div><textarea class="funding-notes-input" data-key="fund-cfda" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">Foundation</div><div class="funding-name">Jerome Foundation — Emerging Artists Program</div><div class="funding-desc">Supports orgs creating opportunity for early-career artists. Start documenting programming history now — they want track record.</div><textarea class="funding-notes-input" data-key="fund-jerome" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">University</div><div class="funding-name">Parsons / The New School — Internal Grants + Alumni Programs</div><div class="funding-desc">Seed funding for alumni ventures, Startup Studios connections. Alumni affairs office is the right first call.</div><textarea class="funding-notes-input" data-key="fund-parsons-internal" placeholder="My notes / contacts / status…" oninput="autosaveBP(this)"></textarea></div>
+            <div class="funding-item"><div class="funding-type">SBA Microloan</div><div class="funding-name">SBA Microloan via Grameen America or Pursuit NYC</div><div class="funding-desc">Up to $50k, lower interest than conventional loans.</div><textarea class="funding-notes-input" data-key="fund-sba" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
+          </div>
+          <div class="field-group"><div class="field-label">Other funding leads</div><textarea class="field-textarea bp-field" data-key="fin-other-funding" placeholder="Other foundations, crowdfunding, potential investors…" oninput="autosaveBP(this)"></textarea></div>
         </div>
       </div>
 
