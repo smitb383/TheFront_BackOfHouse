@@ -53,9 +53,9 @@
     // Open: opening day through +24 days
     var openEnd = addDays(open, 24);
 
-    // Close: immediately after open (no gap), 3 days
+    // Close: immediately after open (no gap), 2 days (deinstall + turnover)
     var closeStart = addDays(openEnd, 1);
-    var closeEnd = addDays(closeStart, 2);
+    var closeEnd = addDays(closeStart, 1);
 
     return [
       { name: 'Foundation',        start: FOUNDATION_START, end: FOUNDATION_END, color: '#378ADD' },
@@ -505,7 +505,7 @@
       { label:'Install Begins', date:'Jun 20', days:daysUntil('2026-06-20') },
       { label:'Opening', date:'Jun 25', days:daysUntil('2026-06-25') },
       { label:'Closing', date:'Jul 19', days:daysUntil('2026-07-19') },
-      { label:'Turnover Space', date:'Jul 22', days:daysUntil('2026-07-22') }
+      { label:'Turnover Space', date:'Jul 21', days:daysUntil('2026-07-21') }
     ];
 
     function sep() { return h('div', { style:{ width:'1px', height:'28px', background:'var(--border)' } }); }
