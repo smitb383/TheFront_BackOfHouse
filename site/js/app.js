@@ -2952,12 +2952,30 @@ function switchFrontSide(side, btn) {
   if (btn) btn.classList.add('active');
   var bar = document.getElementById('front-' + side + '-bar');
   if (bar) bar.classList.add('active');
+  // If entering Brand section, default to 334 Pop Up Brand
+  if (side === 'retail') {
+    switchBrand('popup', document.getElementById('brand-sw-popup'));
+    return;
+  }
   var firstTab = bar ? bar.querySelector('.tab') : null;
   if (firstTab) {
     var tabName = firstTab.dataset.tab;
     showTab('front', tabName, firstTab);
   }
 }
+function switchBrand(brand, btn) {
+  document.querySelectorAll('.brand-switch-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.brand-sub-bar').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  var bar = document.getElementById('brand-bar-' + brand);
+  if (bar) bar.classList.add('active');
+  var firstTab = bar ? bar.querySelector('.tab') : null;
+  if (firstTab) {
+    var tabName = firstTab.dataset.tab;
+    showTab('front', tabName, firstTab);
+  }
+}
+
 function showView(project, tab) {
   const ws = document.getElementById('page-' + project);
   if (!ws) return;

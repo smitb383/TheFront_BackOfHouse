@@ -64,9 +64,20 @@
           <button class="tab" data-tab="references" onclick="showTab('front','references',this)"><span class="tab-icon">🖼</span>References</button>
         </div>
         <div class="sub-bar front-side-bar" id="front-retail-bar">
-          <button class="tab" data-tab="brand-identity" onclick="showTab('front','brand-identity',this)"><span class="tab-icon">✦</span>Brand Identity</button>
-          <button class="tab" data-tab="story" onclick="showTab('front','story',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
-          <button class="tab" data-tab="visual-identity" onclick="showTab('front','visual-identity',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
+          <div class="brand-switcher">
+            <button class="brand-switch-btn" id="brand-sw-popup" onclick="switchBrand('popup',this)">334 Pop Up Brand</button>
+            <button class="brand-switch-btn active" id="brand-sw-front" onclick="switchBrand('front',this)">The Front Brand</button>
+          </div>
+          <div class="brand-sub-bar active" id="brand-bar-front">
+            <button class="tab" data-tab="brand-identity" onclick="showTab('front','brand-identity',this)"><span class="tab-icon">✦</span>Brand Identity</button>
+            <button class="tab" data-tab="story" onclick="showTab('front','story',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
+            <button class="tab" data-tab="visual-identity" onclick="showTab('front','visual-identity',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
+          </div>
+          <div class="brand-sub-bar" id="brand-bar-popup">
+            <button class="tab active" data-tab="popup-brand-identity" onclick="showTab('front','popup-brand-identity',this)"><span class="tab-icon">✦</span>Brand Identity</button>
+            <button class="tab" data-tab="popup-brand-voice" onclick="showTab('front','popup-brand-voice',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
+            <button class="tab" data-tab="popup-brand-visual" onclick="showTab('front','popup-brand-visual',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
+          </div>
         </div>
         <div class="sub-bar front-side-bar" id="front-tools-bar">
           <button class="tab active" data-tab="tracker" onclick="showTab('front','tracker',this)"><span class="tab-icon">🎯</span>Tracker</button>
@@ -1218,6 +1229,48 @@
         <div class="field-group"><div class="field-label">What The Front is NOT <span>defining by contrast is powerful</span></div><textarea class="field-textarea bp-field" data-key="story-not" placeholder="Not a gallery. Not a pop-up mall. Not a vanity showcase. Not trend-driven. Not static…" oninput="autosaveBP(this)"></textarea></div>
         <div class="field-group"><div class="field-label">Brand voice notes <span>how The Front sounds in writing</span></div><textarea class="field-textarea bp-field" data-key="story-voice" placeholder="Direct but considered. Uses specific nouns over adjectives. Avoids startup clichés ('disruptive', 'community-first', 'reimagining'). The language reflects the work — conceptual but grounded. First-person plural (we/our) in most contexts…" oninput="autosaveBP(this)"></textarea></div>
         <div class="save-bar"><button class="save-btn" onclick="saveBPAll()">Save all →</button><span class="saved-check" id="story-saved-check">Saved ✓</span></div>
+      </div>
+
+      <!-- ═══ 334 POP UP BRAND ═══ -->
+      <div class="ws-view" id="front-popup-brand-identity">
+        <div class="view-header">
+          <div><div class="view-title">334 Pop Up — Brand Identity</div>
+          <div class="view-desc">Identity elements specific to the 334 Broome popup — name, positioning, visual direction.</div></div>
+        </div>
+        <div class="ws-section">
+          <div class="field-group"><div class="field-label">Pop-up name / volume title</div><textarea class="field-textarea bp-field" data-key="popup-brand-name" placeholder="What is this edition called? e.g. 'Volume 1: 334 Broome'" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Pop-up tagline</div><textarea class="field-textarea bp-field" data-key="popup-brand-tagline" placeholder="A one-liner for the pop-up specifically…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">How does this relate to The Front brand?</div><textarea class="field-textarea bp-field" data-key="popup-brand-relation" placeholder="Is it a sub-brand? A first edition? How does the visual identity connect to or diverge from The Front's main identity?" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Key visual direction</div><textarea class="field-textarea bp-field" data-key="popup-brand-visual-dir" placeholder="Colors, typography, imagery, textures specific to this popup…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Target audience for this edition</div><textarea class="field-textarea bp-field" data-key="popup-brand-audience" placeholder="Who specifically are you trying to reach with 334 Broome?" oninput="autosaveBP(this)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="ws-view" id="front-popup-brand-voice">
+        <div class="view-header">
+          <div><div class="view-title">334 Pop Up — Voice & Story</div>
+          <div class="view-desc">Messaging and narrative for the 334 Broome popup.</div></div>
+        </div>
+        <div class="ws-section">
+          <div class="field-group"><div class="field-label">Pop-up elevator pitch</div><textarea class="field-textarea bp-field" data-key="popup-voice-pitch" placeholder="2-3 sentences describing the 334 popup to someone who's never heard of it…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">What makes this edition unique</div><textarea class="field-textarea bp-field" data-key="popup-voice-unique" placeholder="What's specific to this time, place, and vendor lineup?" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Press-ready description</div><textarea class="field-textarea bp-field" data-key="popup-voice-press" placeholder="A paragraph suitable for press releases, event listings, social bios…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Social media tone / voice</div><textarea class="field-textarea bp-field" data-key="popup-voice-social" placeholder="How should posts sound? Casual, editorial, poetic, informative?" oninput="autosaveBP(this)"></textarea></div>
+        </div>
+      </div>
+
+      <div class="ws-view" id="front-popup-brand-visual">
+        <div class="view-header">
+          <div><div class="view-title">334 Pop Up — Visual Identity</div>
+          <div class="view-desc">Visual assets and design system for the popup.</div></div>
+        </div>
+        <div class="ws-section">
+          <div class="field-group"><div class="field-label">Color palette</div><textarea class="field-textarea bp-field" data-key="popup-visual-colors" placeholder="Primary and accent colors for the popup…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Typography</div><textarea class="field-textarea bp-field" data-key="popup-visual-type" placeholder="Fonts, weights, usage rules…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Signage & environmental</div><textarea class="field-textarea bp-field" data-key="popup-visual-signage" placeholder="Window vinyl, interior signage, price cards, wayfinding…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Social & digital assets</div><textarea class="field-textarea bp-field" data-key="popup-visual-digital" placeholder="Templates, story formats, grid aesthetic…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Print & packaging</div><textarea class="field-textarea bp-field" data-key="popup-visual-print" placeholder="Bags, tags, tissue, business cards, flyers…" oninput="autosaveBP(this)"></textarea></div>
+        </div>
       </div>
 
       <!-- ═══ IDEAS ═══ -->

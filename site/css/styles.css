@@ -4520,3 +4520,18 @@ body::before {
   padding:10px 16px; font-size:10px; letter-spacing:0.12em;
 }
 .front-popup-nav .tab .tab-icon { font-size:13px; }
+
+/* ── Brand switcher ── */
+.brand-switcher {
+  display:flex; gap:4px; margin-bottom:8px; width:100%;
+}
+.brand-switch-btn {
+  flex:1; padding:8px 12px; border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'DM Mono',monospace; font-size:9px;
+  letter-spacing:0.1em; text-transform:uppercase; cursor:pointer;
+  border-radius:3px; transition:all 0.2s;
+}
+.brand-switch-btn:hover { color:var(--text); border-color:var(--muted); }
+.brand-switch-btn.active { background:var(--front); color:#0c0c0f; border-color:var(--front); }
+.brand-sub-bar { display:none; width:100%; }
+.brand-sub-bar.active { display:flex; gap:3px; flex-wrap:wrap; }
