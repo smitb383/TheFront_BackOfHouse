@@ -72,7 +72,7 @@
             <button class="tab" data-tab="visual-identity" onclick="showTab('front','visual-identity',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
           </div>
           <div class="brand-sub-bar" id="brand-bar-popup">
-            <button class="tab active" data-tab="popup-brand-identity" onclick="showTab('front','popup-brand-identity',this)"><span class="tab-icon">✦</span>Brand Identity</button>
+            <button class="tab active" data-tab="popup-brand-identity" onclick="showTab('front','popup-brand-identity',this)"><span class="tab-icon">✦</span>Concept Brainstorm</button>
             <button class="tab" data-tab="popup-brand-voice" onclick="showTab('front','popup-brand-voice',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
             <button class="tab" data-tab="popup-brand-visual" onclick="showTab('front','popup-brand-visual',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
             <button class="tab" data-tab="popup-brand-merch" onclick="showTab('front','popup-brand-merch',this)"><span class="tab-icon">🛍</span>Merch Ideation</button>
@@ -1226,12 +1226,12 @@
       </div>
 
       <!-- ═══ 334 POP UP BRAND ═══ -->
-      <div class="ws-view" id="front-popup-brand-identity">
+      <div class="ws-view pl-fullwidth" id="front-popup-brand-identity" class="pl-fullwidth">
         <div class="view-header">
-          <div><div class="view-title">334 Pop Up — Brand Identity</div>
-          <div class="view-desc">Identity elements specific to the 334 Broome popup — name, positioning, visual direction.</div></div>
+          <div><div class="view-title">334 Pop Up — Concept Brainstorm</div>
+          <div class="view-desc">Name ideation, thought dumps, tagline — early-stage brainstorming.</div></div>
         </div>
-        <div class="ws-section">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
           <div class="field-group">
             <div class="field-label">Pop-up name / volume name ideation</div>
             <div id="popup-name-ideas-list"></div>
@@ -1240,44 +1240,81 @@
               <button class="save-btn" style="padding:6px 14px;font-size:9px" onclick="addPopupNameIdea()">+</button>
             </div>
           </div>
-          <script>
-          function getPopupNameIdeas() { try { return JSON.parse(localStorage.getItem('popup_name_ideas') || '[]'); } catch(e) { return []; } }
-          function savePopupNameIdeas(list) { localStorage.setItem('popup_name_ideas', JSON.stringify(list)); }
-          function renderPopupNameIdeas() {
-            var el = document.getElementById('popup-name-ideas-list');
-            if (!el) return;
-            var ideas = getPopupNameIdeas();
-            el.innerHTML = ideas.map(function(idea, i) {
-              return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">' +
-                '<span style="font-family:Cormorant Garamond,serif;font-size:15px;flex:1">' + idea + '</span>' +
-                '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px" onclick="removePopupNameIdea(' + i + ')">✕</button>' +
-              '</div>';
-            }).join('');
-          }
-          function addPopupNameIdea() {
-            var inp = document.getElementById('popup-name-idea-input');
-            var val = inp.value.trim();
-            if (!val) return;
-            var ideas = getPopupNameIdeas();
-            ideas.push(val);
-            savePopupNameIdeas(ideas);
-            inp.value = '';
-            renderPopupNameIdeas();
-          }
-          function removePopupNameIdea(i) {
-            var ideas = getPopupNameIdeas();
-            ideas.splice(i, 1);
-            savePopupNameIdeas(ideas);
-            renderPopupNameIdeas();
-          }
-          document.addEventListener('DOMContentLoaded', renderPopupNameIdeas);
-          if (document.readyState !== 'loading') renderPopupNameIdeas();
-          </script>
-          <div class="field-group"><div class="field-label">Pop-up tagline</div><textarea class="field-textarea bp-field" data-key="popup-brand-tagline" placeholder="A one-liner for the pop-up specifically…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group">
+            <div class="field-label">Thought dump</div>
+            <div id="popup-thought-dump-list"></div>
+            <div style="display:flex;gap:4px;margin-top:6px">
+              <input type="text" id="popup-thought-dump-input" class="field-input" placeholder="Drop a thought…" style="flex:1;min-height:32px" onkeydown="if(event.key==='Enter'){addThoughtDump();event.preventDefault()}">
+              <button class="save-btn" style="padding:6px 14px;font-size:9px" onclick="addThoughtDump()">+</button>
+            </div>
+          </div>
         </div>
+        <script>
+        function getPopupNameIdeas() { try { return JSON.parse(localStorage.getItem('popup_name_ideas') || '[]'); } catch(e) { return []; } }
+        function savePopupNameIdeas(list) { localStorage.setItem('popup_name_ideas', JSON.stringify(list)); }
+        function renderPopupNameIdeas() {
+          var el = document.getElementById('popup-name-ideas-list');
+          if (!el) return;
+          var ideas = getPopupNameIdeas();
+          el.innerHTML = ideas.map(function(idea, i) {
+            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">' +
+              '<span style="font-family:Cormorant Garamond,serif;font-size:15px;flex:1">' + idea + '</span>' +
+              '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px" onclick="removePopupNameIdea(' + i + ')">✕</button>' +
+            '</div>';
+          }).join('');
+        }
+        function addPopupNameIdea() {
+          var inp = document.getElementById('popup-name-idea-input');
+          var val = inp.value.trim();
+          if (!val) return;
+          var ideas = getPopupNameIdeas();
+          ideas.push(val);
+          savePopupNameIdeas(ideas);
+          inp.value = '';
+          renderPopupNameIdeas();
+        }
+        function removePopupNameIdea(i) {
+          var ideas = getPopupNameIdeas();
+          ideas.splice(i, 1);
+          savePopupNameIdeas(ideas);
+          renderPopupNameIdeas();
+        }
+        function getThoughtDumps() { try { return JSON.parse(localStorage.getItem('popup_thought_dumps') || '[]'); } catch(e) { return []; } }
+        function saveThoughtDumps(list) { localStorage.setItem('popup_thought_dumps', JSON.stringify(list)); }
+        function renderThoughtDumps() {
+          var el = document.getElementById('popup-thought-dump-list');
+          if (!el) return;
+          var items = getThoughtDumps();
+          el.innerHTML = items.map(function(item, i) {
+            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">' +
+              '<span style="font-family:Cormorant Garamond,serif;font-size:15px;flex:1">' + item + '</span>' +
+              '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px" onclick="removeThoughtDump(' + i + ')">✕</button>' +
+            '</div>';
+          }).join('');
+        }
+        function addThoughtDump() {
+          var inp = document.getElementById('popup-thought-dump-input');
+          var val = inp.value.trim();
+          if (!val) return;
+          var items = getThoughtDumps();
+          items.push(val);
+          saveThoughtDumps(items);
+          inp.value = '';
+          renderThoughtDumps();
+        }
+        function removeThoughtDump(i) {
+          var items = getThoughtDumps();
+          items.splice(i, 1);
+          saveThoughtDumps(items);
+          renderThoughtDumps();
+        }
+        document.addEventListener('DOMContentLoaded', function() { renderPopupNameIdeas(); renderThoughtDumps(); });
+        if (document.readyState !== 'loading') { renderPopupNameIdeas(); renderThoughtDumps(); }
+        </script>
+        <div class="field-group" style="margin-top:16px"><div class="field-label">Pop-up tagline</div><textarea class="field-textarea bp-field" data-key="popup-brand-tagline" placeholder="A one-liner for the pop-up specifically…" oninput="autosaveBP(this)"></textarea></div>
       </div>
 
-      <div class="ws-view" id="front-popup-brand-voice">
+      <div class="ws-view pl-fullwidth" id="front-popup-brand-voice" class="pl-fullwidth">
         <div class="view-header">
           <div><div class="view-title">334 Pop Up — Voice & Story</div>
           <div class="view-desc">Messaging and narrative for the 334 Broome popup.</div></div>
@@ -1292,7 +1329,7 @@
         </div>
       </div>
 
-      <div class="ws-view" id="front-popup-brand-visual">
+      <div class="ws-view pl-fullwidth" id="front-popup-brand-visual" class="pl-fullwidth">
         <div class="view-header">
           <div><div class="view-title">334 Pop Up — Visual Identity</div>
           <div class="view-desc">Visual assets and design system for the popup.</div></div>
@@ -1307,7 +1344,7 @@
       </div>
 
       <!-- MERCH IDEATION -->
-      <div class="ws-view" id="front-popup-brand-merch">
+      <div class="ws-view pl-fullwidth" id="front-popup-brand-merch" class="pl-fullwidth">
         <div class="view-header">
           <div><div class="view-title">334 Pop Up — Merch Ideation</div>
           <div class="view-desc">Ideas for The Front branded merchandise for the popup.</div></div>
@@ -1322,7 +1359,7 @@
       </div>
 
       <!-- WEBSITE IDEATION -->
-      <div class="ws-view" id="front-popup-brand-website">
+      <div class="ws-view pl-fullwidth" id="front-popup-brand-website" class="pl-fullwidth">
         <div class="view-header">
           <div><div class="view-title">334 Pop Up — Website Ideation</div>
           <div class="view-desc">Planning for thefront.nyc and any popup-specific web presence.</div></div>
@@ -1337,7 +1374,7 @@
       </div>
 
       <!-- SIGNAGE IDEATION -->
-      <div class="ws-view" id="front-popup-brand-signage">
+      <div class="ws-view pl-fullwidth" id="front-popup-brand-signage" class="pl-fullwidth">
         <div class="view-header">
           <div><div class="view-title">334 Pop Up — Signage Ideation</div>
           <div class="view-desc">Planning for all physical signage — window, exterior, interior, wayfinding.</div></div>
