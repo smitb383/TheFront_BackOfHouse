@@ -1608,22 +1608,36 @@
       if (el) el.textContent = slots[id];
     });
 
-    // Populate "This week — what needs to happen" on overview
+    // Populate "This week — what needs to happen" on overview, grouped by priority
     var ovWeek = document.getElementById('ov-week-from-schedule');
     if (ovWeek) {
       var weekItems = dueNext7Days().sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); });
       if (!weekItems.length) {
         ovWeek.innerHTML = '<div style="font-size:11px;color:var(--muted);font-style:italic">Nothing due in the next 7 days</div>';
       } else {
-        var whtml = '';
+        var priGroups = { HIGH: [], MED: [], LOW: [] };
         weekItems.forEach(function(t) {
-          var ws = WORKSTREAMS[t.workstream] || {};
-          whtml += '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--faint)">' +
-            '<div style="width:6px;height:6px;border-radius:50%;background:' + (ws.dot || '#888') + ';flex-shrink:0"></div>' +
-            '<span style="font-family:Cormorant Garamond,serif;font-size:14px;flex:1">' + (t.title || '') + '</span>' +
-            '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">' + fmtShort(t.dueDate) + '</span>' +
-            '<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted);min-width:40px;text-align:right">' + (t.assignee || '') + '</span>' +
-          '</div>';
+          var p = t.priority || 'MED';
+          if (!priGroups[p]) priGroups[p] = [];
+          priGroups[p].push(t);
+        });
+        var priColors = { HIGH:'#E24B4A', MED:'var(--front)', LOW:'var(--muted)' };
+        var priLabels = { HIGH:'High', MED:'Medium', LOW:'Low' };
+        var whtml = '';
+        ['HIGH','MED','LOW'].forEach(function(pri) {
+          var items = priGroups[pri];
+          if (!items || !items.length) return;
+          whtml += '<div style="margin-top:8px"><div style="font-family:DM Mono,monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:' + priColors[pri] + ';margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid var(--faint)">' + priLabels[pri] + '</div>';
+          items.forEach(function(t) {
+            var ws = WORKSTREAMS[t.workstream] || {};
+            whtml += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--faint)">' +
+              '<div style="width:6px;height:6px;border-radius:50%;background:' + (ws.dot || '#888') + ';flex-shrink:0"></div>' +
+              '<span style="font-family:Cormorant Garamond,serif;font-size:14px;flex:1">' + (t.title || '') + '</span>' +
+              '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">' + fmtShort(t.dueDate) + '</span>' +
+              '<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted);min-width:40px;text-align:right">' + (t.assignee || '') + '</span>' +
+            '</div>';
+          });
+          whtml += '</div>';
         });
         ovWeek.innerHTML = whtml;
       }
