@@ -1232,7 +1232,47 @@
           <div class="view-desc">Identity elements specific to the 334 Broome popup — name, positioning, visual direction.</div></div>
         </div>
         <div class="ws-section">
-          <div class="field-group"><div class="field-label">Pop-up name / volume title</div><textarea class="field-textarea bp-field" data-key="popup-brand-name" placeholder="What is this edition called? e.g. 'Volume 1: 334 Broome'" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group">
+            <div class="field-label">Pop-up name / volume name ideation</div>
+            <div id="popup-name-ideas-list"></div>
+            <div style="display:flex;gap:4px;margin-top:6px">
+              <input type="text" id="popup-name-idea-input" class="field-input" placeholder="Add a name idea…" style="flex:1;min-height:32px" onkeydown="if(event.key==='Enter'){addPopupNameIdea();event.preventDefault()}">
+              <button class="save-btn" style="padding:6px 14px;font-size:9px" onclick="addPopupNameIdea()">+</button>
+            </div>
+          </div>
+          <script>
+          function getPopupNameIdeas() { try { return JSON.parse(localStorage.getItem('popup_name_ideas') || '[]'); } catch(e) { return []; } }
+          function savePopupNameIdeas(list) { localStorage.setItem('popup_name_ideas', JSON.stringify(list)); }
+          function renderPopupNameIdeas() {
+            var el = document.getElementById('popup-name-ideas-list');
+            if (!el) return;
+            var ideas = getPopupNameIdeas();
+            el.innerHTML = ideas.map(function(idea, i) {
+              return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">' +
+                '<span style="font-family:Cormorant Garamond,serif;font-size:15px;flex:1">' + idea + '</span>' +
+                '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px" onclick="removePopupNameIdea(' + i + ')">✕</button>' +
+              '</div>';
+            }).join('');
+          }
+          function addPopupNameIdea() {
+            var inp = document.getElementById('popup-name-idea-input');
+            var val = inp.value.trim();
+            if (!val) return;
+            var ideas = getPopupNameIdeas();
+            ideas.push(val);
+            savePopupNameIdeas(ideas);
+            inp.value = '';
+            renderPopupNameIdeas();
+          }
+          function removePopupNameIdea(i) {
+            var ideas = getPopupNameIdeas();
+            ideas.splice(i, 1);
+            savePopupNameIdeas(ideas);
+            renderPopupNameIdeas();
+          }
+          document.addEventListener('DOMContentLoaded', renderPopupNameIdeas);
+          if (document.readyState !== 'loading') renderPopupNameIdeas();
+          </script>
           <div class="field-group"><div class="field-label">Pop-up tagline</div><textarea class="field-textarea bp-field" data-key="popup-brand-tagline" placeholder="A one-liner for the pop-up specifically…" oninput="autosaveBP(this)"></textarea></div>
         </div>
       </div>
