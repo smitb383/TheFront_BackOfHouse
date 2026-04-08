@@ -1430,8 +1430,12 @@
           saveThoughtDumps(items);
           renderThoughtDumps();
         }
-        document.addEventListener('DOMContentLoaded', function() { renderPopupNameIdeas(); renderThoughtDumps(); renderRefExplores(); });
-        if (document.readyState !== 'loading') { renderPopupNameIdeas(); renderThoughtDumps(); renderRefExplores(); }
+        function reloadAllBrainstorm() { renderPopupNameIdeas(); renderThoughtDumps(); renderRefExplores(); loadCanvas(); loadCanvas2(); }
+        document.addEventListener('DOMContentLoaded', reloadAllBrainstorm);
+        if (document.readyState !== 'loading') reloadAllBrainstorm();
+        // Re-render when Supabase data arrives (fixes data not showing on first load)
+        window.addEventListener('supabase-ready', function() { setTimeout(reloadAllBrainstorm, 500); });
+        window.addEventListener('kv-updated', function() { setTimeout(reloadAllBrainstorm, 200); });
         </script>
       </div>
 
