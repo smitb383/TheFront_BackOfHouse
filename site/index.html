@@ -1332,14 +1332,18 @@
           var items = getRefExplores();
           el.innerHTML = items.map(function(item, i) {
             var isUrl = item.match(/^https?:\/\//);
-            var display = isUrl
-              ? '<a href="' + item + '" target="_blank" style="color:var(--front);text-decoration:underline;font-family:Cormorant Garamond,serif;font-size:15px;flex:1;word-break:break-all">' + item + '</a>'
-              : '<span style="font-family:Cormorant Garamond,serif;font-size:15px;flex:1">' + item + '</span>';
+            var linkBtn = isUrl ? '<a href="' + item + '" target="_blank" style="color:var(--front);font-size:10px;flex-shrink:0" title="Open link">↗</a>' : '';
             return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">' +
-              display +
+              '<input type="text" value="' + item.replace(/"/g,'&quot;') + '" style="flex:1;background:none;border:none;color:var(--text);font-family:Cormorant Garamond,serif;font-size:15px;outline:none;padding:0" oninput="editRefExplore(' + i + ',this.value)">' +
+              linkBtn +
               '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px" onclick="removeRefExplore(' + i + ')">✕</button>' +
             '</div>';
           }).join('');
+        }
+        function editRefExplore(i, val) {
+          var items = getRefExplores();
+          items[i] = val;
+          saveRefExplores(items);
         }
         function addRefExplore() {
           var inp = document.getElementById('popup-refs-explore-input');
