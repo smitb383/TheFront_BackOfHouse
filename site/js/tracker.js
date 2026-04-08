@@ -1607,6 +1607,27 @@
       var el = document.getElementById(id);
       if (el) el.textContent = slots[id];
     });
+
+    // Populate "Due in next 7 days" on overview
+    var ovDue = document.getElementById('ov-due-next-7');
+    if (ovDue) {
+      var dueItems = dueNext7Days().sort(function(a,b){ return parseD(a.dueDate) - parseD(b.dueDate); });
+      if (!dueItems.length) {
+        ovDue.innerHTML = '<div style="font-size:11px;color:var(--muted);font-style:italic">Nothing due in the next 7 days</div>';
+      } else {
+        var html = '';
+        dueItems.forEach(function(t) {
+          var ws = WORKSTREAMS[t.workstream] || {};
+          html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--faint);cursor:pointer" onclick="showTab(\'front\',\'schedule\',document.querySelector(\'[data-tab=schedule]\'))">' +
+            '<div style="width:6px;height:6px;border-radius:50%;background:' + (ws.dot || '#888') + ';flex-shrink:0"></div>' +
+            '<span style="font-family:Cormorant Garamond,serif;font-size:13px;flex:1">' + (t.title || '') + '</span>' +
+            '<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted)">' + fmtShort(t.dueDate) + '</span>' +
+            '<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted)">' + (t.assignee || '') + '</span>' +
+          '</div>';
+        });
+        ovDue.innerHTML = html;
+      }
+    }
   }
 
   window.initTracker = initTracker;

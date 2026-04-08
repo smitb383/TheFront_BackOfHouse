@@ -112,16 +112,8 @@
           </div>
 
           <div class="today-card">
-            <div class="today-card-label" style="cursor:pointer" onclick="toggleWeekDue('front')">
-              Due this week
-              <div style="display:flex;align-items:center;gap:8px">
-                <button class="task-toolbar-btn" onclick="event.stopPropagation();jumpTo('front','tracker','build')" style="font-size:8px">View all →</button>
-                <span id="front-week-due-chevron" style="font-size:11px;color:var(--muted);transition:transform 0.2s;display:inline-block">›</span>
-              </div>
-            </div>
-            <div id="front-week-due-body" style="overflow:hidden;transition:max-height 0.3s ease">
-              <div id="front-week-due"><div class="week-empty">Nothing due this week.</div></div>
-            </div>
+            <div class="today-card-label">Due in next 7 days</div>
+            <div id="ov-due-next-7"></div>
           </div>
 
           <div class="today-card">
@@ -1291,7 +1283,6 @@
             <div class="ov-title">334 Broome St</div>
             <div class="ov-sub">Pop-up proof-of-concept · The Front</div>
           </div>
-          <button class="doc-export-btn" onclick="openDocExport('popup')" style="flex-shrink:0">Export →</button>
         </div>
 
         <!-- KEY DATES STRIP — populated by tracker.js FRONT_KEY_DATES -->
@@ -1308,10 +1299,6 @@
             <div class="ov-date-label">Opening event</div>
             <div class="ov-date-value" id="ov-date-event">—</div>
           </div>
-          <div class="ov-date-slot">
-            <div class="ov-date-label">Mid-run activation</div>
-            <div class="ov-date-value" id="ov-date-midrun">TBD</div>
-          </div>
           <div class="ov-date-slot ov-date-accent">
             <div class="ov-date-label">Closes</div>
             <div class="ov-date-value" id="ov-date-closes">—</div>
@@ -1327,16 +1314,6 @@
           <div class="ov-stat-card" onclick="showTab('front','popup-vendors',document.querySelector('[data-tab=popup-vendors]'))">
             <div class="ov-stat-label">Vendors confirmed</div>
             <div class="ov-stat-val" id="ov-vendor-count">—</div>
-            <div class="ov-stat-hint">tap to open →</div>
-          </div>
-          <div class="ov-stat-card" onclick="showTab('front','popup-resources',document.querySelector('[data-tab=popup-resources]'))">
-            <div class="ov-stat-label">Resources done</div>
-            <div class="ov-stat-val" id="ov-res-count">—</div>
-            <div class="ov-stat-hint">tap to open →</div>
-          </div>
-          <div class="ov-stat-card" onclick="showTab('front','popup-events',document.querySelector('[data-tab=popup-events]'))">
-            <div class="ov-stat-label">Events planned</div>
-            <div class="ov-stat-val" id="ov-event-count">—</div>
             <div class="ov-stat-hint">tap to open →</div>
           </div>
           <div class="ov-stat-card" onclick="showTab('front','popup-marketing',document.querySelector('[data-tab=popup-marketing]'))">
@@ -1365,10 +1342,6 @@
           </div>
         </div>
 
-        <div class="save-bar" style="margin-top:20px">
-          <button class="save-btn" style="background:#a8c4d4" onclick="saveBPAll()">Save →</button>
-          <span class="saved-check" id="popup-saved-ov">Saved ✓</span>
-        </div>
       </div>
 
       <!-- ═══ RESOURCES / PROCUREMENT ═══ -->
