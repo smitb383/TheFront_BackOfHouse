@@ -4535,3 +4535,17 @@ body::before {
 .brand-switch-btn.active { background:var(--front); color:#0c0c0f; border-color:var(--front); }
 .brand-sub-bar { display:none; width:100%; }
 .brand-sub-bar.active { display:flex; gap:3px; flex-wrap:wrap; }
+
+/* ── Canvas rich text editor ── */
+.canvas-btn {
+  background:var(--surface); border:1px solid var(--border); color:var(--muted);
+  font-family:'DM Mono',monospace; font-size:11px; padding:3px 8px;
+  cursor:pointer; border-radius:2px; transition:all 0.15s; min-width:28px;
+  text-align:center;
+}
+.canvas-btn:hover { color:var(--text); border-color:var(--muted); }
+.canvas-editor:empty:before {
+  content:attr(data-placeholder); color:var(--muted); font-style:italic; pointer-events:none;
+}
+.canvas-editor ul, .canvas-editor ol { padding-left:20px; margin:4px 0; }
+.canvas-editor li { margin:2px 0; }
