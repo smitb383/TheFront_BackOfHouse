@@ -1643,6 +1643,26 @@
       }
     }
 
+    // Populate meeting/action/questions on overview
+    var focusData = loadFocusData();
+    [['meetingItems','ov-meeting-list'],['actionItems','ov-action-list'],['openQuestions','ov-questions-list']].forEach(function(pair) {
+      var dataKey = pair[0], elId = pair[1];
+      var el = document.getElementById(elId);
+      if (!el) return;
+      var items = focusData[dataKey] || [];
+      var html = '';
+      items.forEach(function(item, i) {
+        var isDone = item.done;
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--faint);opacity:' + (isDone ? '0.4' : '1') + '">' +
+          '<input type="checkbox"' + (isDone ? ' checked' : '') + ' style="accent-color:var(--front);cursor:pointer" onchange="ovToggleFocusItem(\'' + dataKey + '\',' + i + ')">' +
+          '<input type="text" value="' + (item.text || '').replace(/"/g,'&quot;') + '" style="flex:1;background:none;border:none;color:var(--text);font-family:Cormorant Garamond,serif;font-size:13px;outline:none;' + (isDone ? 'text-decoration:line-through;color:var(--muted)' : '') + '" oninput="ovEditFocusItem(\'' + dataKey + '\',' + i + ',this.value)">' +
+          '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 4px" onclick="ovDelFocusItem(\'' + dataKey + '\',' + i + ')">✕</button>' +
+        '</div>';
+      });
+      html += '<button style="background:none;border:none;color:var(--muted);font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:8px 0;cursor:pointer" onclick="ovAddFocusItem(\'' + dataKey + '\')">+ Add</button>';
+      el.innerHTML = html;
+    });
+
     // Populate "Due in next 7 days" on overview
     var ovDue = document.getElementById('ov-due-next-7');
     if (ovDue) {
@@ -1667,6 +1687,27 @@
 
   window.initTracker = initTracker;
   window.renderTracker = renderTracker;
+
+  // Global helpers for overview focus items
+  window.ovToggleFocusItem = function(key, i) {
+    var fd = loadFocusData();
+    if (fd[key] && fd[key][i]) { fd[key][i].done = !fd[key][i].done; saveFocusData(fd); populateOverviewDates(); }
+  };
+  window.ovEditFocusItem = function(key, i, val) {
+    var fd = loadFocusData();
+    if (fd[key] && fd[key][i]) { fd[key][i].text = val; saveFocusData(fd); }
+  };
+  window.ovDelFocusItem = function(key, i) {
+    var fd = loadFocusData();
+    if (fd[key]) { fd[key].splice(i, 1); saveFocusData(fd); populateOverviewDates(); }
+  };
+  window.ovAddFocusItem = function(key) {
+    var fd = loadFocusData();
+    if (!fd[key]) fd[key] = [];
+    fd[key].push({ text: '', done: false });
+    saveFocusData(fd);
+    populateOverviewDates();
+  };
 
   // Populate overview dates on page load (not just when Schedule tab opens)
   if (document.readyState === 'loading') {

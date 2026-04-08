@@ -1329,15 +1329,19 @@
           <div id="ov-week-from-schedule"></div>
         </div>
 
-        <!-- PROOF + MEASURE -->
-        <div class="ov-two-col">
-          <div>
-            <div class="ov-field-label">What this run needs to prove</div>
-            <textarea class="field-textarea bp-field" data-key="popup-goal" placeholder="Rotating designers in a curated environment drives foot traffic, real sales, community engagement. Specifically: [sales target / visitor count / vendor satisfaction / press]…" oninput="autosaveBP(this)" style="min-height:80px"></textarea>
+        <!-- MEETING / ACTION / QUESTIONS -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+          <div class="today-card" style="flex:1;min-width:200px" id="ov-meeting-items">
+            <div class="today-card-label">Items for Next Meeting</div>
+            <div id="ov-meeting-list"></div>
           </div>
-          <div>
-            <div class="ov-field-label">How you'll measure it</div>
-            <textarea class="field-textarea bp-field" data-key="popup-measure" placeholder="Sales data by designer, foot traffic count, event attendance, social reach, press mentions, photos/video, vendor feedback…" oninput="autosaveBP(this)" style="min-height:80px"></textarea>
+          <div class="today-card" style="flex:1;min-width:200px" id="ov-action-items">
+            <div class="today-card-label">New Action Items</div>
+            <div id="ov-action-list"></div>
+          </div>
+          <div class="today-card" style="flex:1;min-width:200px" id="ov-open-questions">
+            <div class="today-card-label">Open Questions</div>
+            <div id="ov-questions-list"></div>
           </div>
         </div>
 
