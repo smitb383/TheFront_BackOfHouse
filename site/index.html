@@ -1312,10 +1312,15 @@
           var ideas = getPopupNameIdeas();
           el.innerHTML = ideas.map(function(idea, i) {
             return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">' +
-              '<span style="font-family:Cormorant Garamond,serif;font-size:15px;flex:1">' + idea + '</span>' +
+              '<input type="text" value="' + idea.replace(/"/g,'&quot;') + '" style="flex:1;background:none;border:none;color:var(--text);font-family:Cormorant Garamond,serif;font-size:15px;outline:none;padding:0" oninput="editPopupNameIdea(' + i + ',this.value)">' +
               '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px" onclick="removePopupNameIdea(' + i + ')">✕</button>' +
             '</div>';
           }).join('');
+        }
+        function editPopupNameIdea(i, val) {
+          var ideas = getPopupNameIdeas();
+          ideas[i] = val;
+          savePopupNameIdeas(ideas);
         }
         function addPopupNameIdea() {
           var inp = document.getElementById('popup-name-idea-input');
@@ -1341,10 +1346,15 @@
           var items = getThoughtDumps();
           el.innerHTML = items.map(function(item, i) {
             return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">' +
-              '<span style="font-family:Cormorant Garamond,serif;font-size:15px;flex:1">' + item + '</span>' +
+              '<input type="text" value="' + item.replace(/"/g,'&quot;') + '" style="flex:1;background:none;border:none;color:var(--text);font-family:Cormorant Garamond,serif;font-size:15px;outline:none;padding:0" oninput="editThoughtDump(' + i + ',this.value)">' +
               '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px" onclick="removeThoughtDump(' + i + ')">✕</button>' +
             '</div>';
           }).join('');
+        }
+        function editThoughtDump(i, val) {
+          var items = getThoughtDumps();
+          items[i] = val;
+          saveThoughtDumps(items);
         }
         function addThoughtDump() {
           var inp = document.getElementById('popup-thought-dump-input');
