@@ -1294,6 +1294,35 @@
           <textarea class="field-textarea bp-field" data-key="popup-unifying-qualities" placeholder="What connects the designers in this edition? Shared aesthetic, material approach, ethos, community, discipline…" oninput="autosaveBP(this)" style="min-height:120px"></textarea>
         </div>
 
+        <div class="field-group" style="margin-top:16px">
+          <div class="field-label">Research dump</div>
+          <div class="canvas-toolbar" style="display:flex;gap:4px;margin-bottom:4px">
+            <button class="canvas-btn" onclick="canvasCmd2('bold','popup-research-canvas-editor')" title="Bold"><b>B</b></button>
+            <button class="canvas-btn" onclick="canvasCmd2('italic','popup-research-canvas-editor')" title="Italic"><i>I</i></button>
+            <button class="canvas-btn" onclick="canvasCmd2('underline','popup-research-canvas-editor')" title="Underline"><u>U</u></button>
+            <button class="canvas-btn" onclick="canvasCmd2('insertUnorderedList','popup-research-canvas-editor')" title="Bullet list">•</button>
+            <button class="canvas-btn" onclick="canvasHighlight2('popup-research-canvas-editor')" title="Highlight">🖍</button>
+          </div>
+          <div class="canvas-editor" contenteditable="true" id="popup-research-canvas-editor" data-key="popup-research-canvas-rich" oninput="saveCanvas(this)" data-placeholder="Paste research, notes, links, excerpts — anything relevant to the concept…" style="min-height:150px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:10px 13px;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.6;outline:none;overflow-y:auto"></div>
+        </div>
+
+        <script>
+        function canvasCmd2(cmd, id) { document.execCommand(cmd, false, null); document.getElementById(id).focus(); }
+        function canvasHighlight2(id) {
+          var sel = window.getSelection();
+          if (sel.rangeCount && !sel.isCollapsed) document.execCommand('hiliteColor', false, 'rgba(226,201,126,0.3)');
+          document.getElementById(id).focus();
+        }
+        function loadCanvas2() {
+          var el = document.getElementById('popup-research-canvas-editor');
+          if (!el) return;
+          var saved = localStorage.getItem(el.dataset.key);
+          if (saved) el.innerHTML = saved;
+        }
+        document.addEventListener('DOMContentLoaded', loadCanvas2);
+        if (document.readyState !== 'loading') loadCanvas2();
+        </script>
+
         <script>
         function getRefExplores() { try { return JSON.parse(localStorage.getItem('popup_refs_explore') || '[]'); } catch(e) { return []; } }
         function saveRefExplores(list) { localStorage.setItem('popup_refs_explore', JSON.stringify(list)); }
