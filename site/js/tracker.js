@@ -208,6 +208,9 @@
 
   /* ── Persistence ── */
   var _isSeeded = false; // true if we loaded from seed (no user data found)
+  // Tombstones — IDs the user explicitly deleted in this session.
+  // Without these, the merge-on-save would resurrect deleted tasks from remote.
+  var _locallyDeletedIds = {};
 
   function loadTasks() {
     try {
@@ -233,6 +236,27 @@
       // Show a warning if user tries to edit before Supabase loads.
       console.warn('[tracker] Waiting for data sync — edit not saved yet. Refresh in a moment.');
       return;
+    }
+    // MERGE GUARD: re-read whatever's in localStorage right now (it may have been
+    // updated by the realtime listener since we last loaded). Bring in any task IDs
+    // that exist remotely but not locally — those are edits made by the other founder.
+    // Skip any IDs we tombstoned (user explicitly deleted in this session).
+    try {
+      var rawNow = localStorage.getItem(LS_KEY);
+      if (rawNow) {
+        var remote = JSON.parse(rawNow);
+        if (remote && Array.isArray(remote.tasks)) {
+          var localIds = {};
+          tasks.forEach(function(t) { localIds[t.id] = true; });
+          remote.tasks.forEach(function(rt) {
+            if (!localIds[rt.id] && !_locallyDeletedIds[rt.id]) {
+              tasks.push(rt);
+            }
+          });
+        }
+      }
+    } catch (mergeErr) {
+      console.warn('[tracker] merge-on-save failed, writing local copy as-is:', mergeErr);
     }
     var payload = { _seedVersion: TRACKER_SEED_VERSION, tasks: tasks };
     localStorage.setItem(LS_KEY, JSON.stringify(payload));
@@ -262,7 +286,14 @@
           tasks = data.tasks;
           _isSeeded = false;
           if (typeof renderTracker === 'function') renderTracker();
+          return;
         }
+      }
+      // Supabase confirmed empty — unblock saving the seed so a brand new DB
+      // doesn't get stuck in a "waiting for sync" loop forever.
+      if (_isSeeded) {
+        _isSeeded = false;
+        saveTasks();
       }
     } catch(ex) {}
   });
@@ -1540,6 +1571,7 @@
         style:{ color:'#E24B4A', borderColor:'rgba(226,75,74,0.3)' },
         onClick: function() {
           if (!confirm('Delete "' + t.title + '"?')) return;
+          _locallyDeletedIds[t.id] = true;
           tasks = tasks.filter(function(x){ return x.id !== t.id; });
           tasks.forEach(function(x){ if (x.deps) x.deps = x.deps.filter(function(d){ return d !== t.id; }); });
           selectedTaskId = null;

@@ -10,6 +10,9 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 var _sb = null;
 var _sbReady = false;
+// Expose readiness so other modules (tracker.js etc.) can avoid acting on stale local data
+window._sbReady = false;
+window._sbPullDone = false;
 
 // Keys that should NOT be synced to Supabase (local-only)
 var LOCAL_ONLY_KEYS = ['_boh_auth', 'ws_theme', 'loglevel'];
@@ -20,6 +23,7 @@ function _initSB() {
   try {
     _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     _sbReady = true;
+    window._sbReady = true;
     console.log('[data] Supabase connected');
     return _sb;
   } catch (e) {
@@ -42,6 +46,7 @@ function _pullAllData() {
       return;
     }
     var count = 0;
+    var pulledKeys = [];
     (res.data || []).forEach(function(row) {
       // Store value as JSON string in localStorage (matching what app.js expects)
       var val = row.value;
@@ -50,9 +55,14 @@ function _pullAllData() {
       } else {
         _origSetItem.call(localStorage, row.key, JSON.stringify(val));
       }
+      pulledKeys.push(row.key);
       count++;
     });
     console.log('[data] Pulled ' + count + ' keys from Supabase');
+    // Notify any listeners that all keys are fresh from server
+    pulledKeys.forEach(function(k) {
+      window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: k, source: 'pull' } }));
+    });
   });
 }
 
@@ -82,7 +92,22 @@ function _flushWrites() {
   if (rows.length === 0) return;
 
   sb.from('kv_store').upsert(rows, { onConflict: 'key' }).then(function(res) {
-    if (res.error) console.error('[data] Sync error:', res.error.message);
+    if (res.error) { console.error('[data] Sync error:', res.error.message); return; }
+    // Daily snapshot: for any critical key we just wrote, mirror to a dated snapshot row.
+    // Caps automatically because the key includes YYYY-MM-DD (one snapshot per day, max).
+    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1'];
+    var today = new Date().toISOString().slice(0, 10);
+    var snapRows = [];
+    rows.forEach(function(r) {
+      if (SNAPSHOT_KEYS.indexOf(r.key) >= 0) {
+        snapRows.push({ key: r.key + '__snap_' + today, value: r.value });
+      }
+    });
+    if (snapRows.length) {
+      sb.from('kv_store').upsert(snapRows, { onConflict: 'key' }).then(function(sres) {
+        if (sres.error) console.warn('[data] Snapshot write failed:', sres.error.message);
+      });
+    }
   });
 }
 
@@ -110,11 +135,15 @@ function _startRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'kv_store' }, function(payload) {
       if (payload.new && payload.new.key) {
         var key = payload.new.key;
+        // Ignore snapshot rows — they're just backups, not live data
+        if (key.indexOf('__snap_') >= 0) return;
         var val = payload.new.value;
         var str = typeof val === 'string' ? val : JSON.stringify(val);
         // Update localStorage without triggering another sync
         _origSetItem.call(localStorage, key, str);
         console.log('[realtime] Updated:', key);
+        // Notify listeners (tracker, brand, etc.) that this key changed remotely
+        window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: key, source: 'realtime' } }));
       }
     })
     .subscribe();
@@ -129,6 +158,7 @@ function _startRealtime() {
 (function() {
   _initSB();
   _pullAllData().then(function() {
+    window._sbPullDone = true;
     _startRealtime();
     // Dispatch event so app.js can re-render if needed
     window.dispatchEvent(new Event('supabase-ready'));
