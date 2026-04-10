@@ -1451,19 +1451,25 @@
         </div>
         <script>
           var GRAPHIC_SCOPE_KEY = 'popup_graphic_scope_v1';
+          var GRAPHIC_TYPE_CYCLE = ['', 'physical', 'digital', 'both'];
+          var GRAPHIC_TYPE_COLORS = {
+            'physical': { bg:'#FAC775', fg:'#000' },
+            'digital':  { bg:'#B5D4F4', fg:'#000' },
+            'both':     { bg:'#9FE1CB', fg:'#000' }
+          };
           var GRAPHIC_SCOPE_SEED = [
-            { title:'Logo / Wordmark', owner:'', vendors:'', ideation:'' },
-            { title:'Typography & Color System', owner:'', vendors:'', ideation:'' },
-            { title:'Vinyl Signage — Exterior', owner:'', vendors:'', ideation:'' },
-            { title:'Window Graphics', owner:'', vendors:'', ideation:'' },
-            { title:'Interior Signage / Wayfinding', owner:'', vendors:'', ideation:'' },
-            { title:'Hang Tags & Maker Cards', owner:'', vendors:'', ideation:'' },
-            { title:'Shopping Bags', owner:'', vendors:'', ideation:'' },
-            { title:'Tissue / Packaging', owner:'', vendors:'', ideation:'' },
-            { title:'Flyer / Opening Invite', owner:'', vendors:'', ideation:'' },
-            { title:'Website Design', owner:'', vendors:'', ideation:'' },
-            { title:'Social Media Templates', owner:'', vendors:'', ideation:'' },
-            { title:'Merch Graphics (stickers, tattoos, etc.)', owner:'', vendors:'', ideation:'' }
+            { title:'Logo / Wordmark',                          type:'both',     tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Typography & Color System',                type:'digital',  tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Vinyl Signage — Exterior',                 type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Window Graphics',                          type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Interior Signage / Wayfinding',            type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Hang Tags & Maker Cards',                  type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Shopping Bags',                            type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Tissue / Packaging',                       type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Flyer / Opening Invite',                   type:'both',     tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Website Design',                           type:'digital',  tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Social Media Templates',                   type:'digital',  tags:[], owner:'', vendors:'', ideation:'' },
+            { title:'Merch Graphics (stickers, tattoos, etc.)', type:'physical', tags:[], owner:'', vendors:'', ideation:'' }
           ];
           function getGraphicScope() {
             try {
@@ -1488,10 +1494,23 @@
               return;
             }
             el.innerHTML = list.map(function(item, i) {
+              if (!Array.isArray(item.tags)) item.tags = [];
+              if (typeof item.type === 'undefined') item.type = '';
+              var typeStyle = GRAPHIC_TYPE_COLORS[item.type];
+              var typeChip = item.type
+                ? '<button onclick="cycleGraphicType(' + i + ')" title="Click to cycle type" style="background:' + typeStyle.bg + ';color:' + typeStyle.fg + ';border:none;border-radius:10px;padding:3px 10px;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer">' + item.type + '</button>'
+                : '<button onclick="cycleGraphicType(' + i + ')" title="Click to set type" style="background:transparent;color:var(--muted);border:1px dashed var(--faint);border-radius:10px;padding:2px 10px;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer">+ type</button>';
+              var tagChips = item.tags.map(function(t, ti) {
+                return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);border-radius:10px;padding:2px 4px 2px 8px;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.05em">' + escHtml(t) + '<button onclick="removeGraphicTag(' + i + ',' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 2px">✕</button></span>';
+              }).join('');
               return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px">' +
                 '<div style="display:flex;align-items:center;gap:8px">' +
                   '<input type="text" value="' + escAttr(item.title) + '" placeholder="Asset title…" style="flex:1;background:none;border:none;border-bottom:1px solid var(--faint);color:var(--text);font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600;outline:none;padding:4px 0" oninput="editGraphicScope(' + i + ',\'title\',this.value)">' +
                   '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 8px" title="Delete asset" onclick="removeGraphicScope(' + i + ')">✕</button>' +
+                '</div>' +
+                '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">' +
+                  typeChip + tagChips +
+                  '<input type="text" placeholder="+ tag" onkeydown="if(event.key===\'Enter\'){addGraphicTag(' + i + ',this.value);this.value=\'\';event.preventDefault();}" style="background:transparent;border:none;border-bottom:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;outline:none;padding:2px 4px;width:70px">' +
                 '</div>' +
                 '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Responsible</div>' +
                   '<input type="text" value="' + escAttr(item.owner) + '" placeholder="Brooke / Del / vendor name…" style="width:100%;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box" oninput="editGraphicScope(' + i + ',\'owner\',this.value)"></div>' +
@@ -1508,9 +1527,35 @@
             list[i][field] = val;
             saveGraphicScope(list);
           }
+          function cycleGraphicType(i) {
+            var list = getGraphicScope() || [];
+            if (!list[i]) return;
+            var cur = list[i].type || '';
+            var idx = GRAPHIC_TYPE_CYCLE.indexOf(cur);
+            list[i].type = GRAPHIC_TYPE_CYCLE[(idx + 1) % GRAPHIC_TYPE_CYCLE.length];
+            saveGraphicScope(list);
+            renderGraphicScope();
+          }
+          function addGraphicTag(i, val) {
+            val = (val || '').trim();
+            if (!val) return;
+            var list = getGraphicScope() || [];
+            if (!list[i]) return;
+            if (!Array.isArray(list[i].tags)) list[i].tags = [];
+            list[i].tags.push(val);
+            saveGraphicScope(list);
+            renderGraphicScope();
+          }
+          function removeGraphicTag(i, ti) {
+            var list = getGraphicScope() || [];
+            if (!list[i] || !Array.isArray(list[i].tags)) return;
+            list[i].tags.splice(ti, 1);
+            saveGraphicScope(list);
+            renderGraphicScope();
+          }
           function addGraphicScopeItem() {
             var list = getGraphicScope() || [];
-            list.push({ title:'', owner:'', vendors:'', ideation:'' });
+            list.push({ title:'', type:'', tags:[], owner:'', vendors:'', ideation:'' });
             saveGraphicScope(list);
             renderGraphicScope();
           }
