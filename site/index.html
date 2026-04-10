@@ -1689,18 +1689,31 @@
             return new Promise(function(resolve, reject) {
               var reader = new FileReader();
               reader.onload = function(e) {
+                var original = e.target.result;
+                // Skip compression for small files (< 500KB) — they're fine as-is
+                if (file.size < 500 * 1024) { resolve(original); return; }
+                // For larger files, try canvas compression
                 var img = new Image();
                 img.onload = function() {
-                  var maxW = 1200;
-                  var w = img.width, h = img.height;
-                  if (w > maxW) { h = h * (maxW / w); w = maxW; }
-                  var canvas = document.createElement('canvas');
-                  canvas.width = w; canvas.height = h;
-                  canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                  resolve(canvas.toDataURL('image/jpeg', 0.82));
+                  try {
+                    if (!img.naturalWidth || !img.naturalHeight) { resolve(original); return; }
+                    var maxW = 1200;
+                    var w = img.naturalWidth, h = img.naturalHeight;
+                    if (w > maxW) { h = h * (maxW / w); w = maxW; }
+                    var canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    var compressed = canvas.toDataURL('image/jpeg', 0.82);
+                    // If compression failed (empty data URL), fall back to original
+                    if (!compressed || compressed.length < 100) { resolve(original); return; }
+                    resolve(compressed);
+                  } catch (err) {
+                    console.warn('[visual] compression failed, using original:', err);
+                    resolve(original);
+                  }
                 };
-                img.onerror = reject;
-                img.src = e.target.result;
+                img.onerror = function() { resolve(original); };
+                img.src = original;
               };
               reader.onerror = reject;
               reader.readAsDataURL(file);
