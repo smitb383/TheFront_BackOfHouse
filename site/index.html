@@ -1710,7 +1710,7 @@
               reader.readAsDataURL(file);
             });
           }
-          function compressImage(file) {
+          function visualCompressImage(file) {
             return blobToDataURL(file).then(function(original) {
               console.log('[visual] dataUrl from blob, length:', original.length);
               // Skip canvas re-compression for small files (< 500KB) — they're fine as-is
@@ -1746,7 +1746,7 @@
               return;
             }
             console.log('[visual] adding image to', section, '— file:', file.name, file.type, file.size + ' bytes');
-            compressImage(file).then(function(dataUrl) {
+            visualCompressImage(file).then(function(dataUrl) {
               console.log('[visual] got dataUrl, length:', dataUrl.length, '— starts:', dataUrl.slice(0, 40));
               if (!dataUrl || dataUrl.length < 100) {
                 console.error('[visual] BAD dataUrl, refusing to save:', dataUrl);
