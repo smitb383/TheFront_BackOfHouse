@@ -1647,15 +1647,136 @@
       <div class="ws-view pl-fullwidth" id="front-popup-brand-visual" class="pl-fullwidth">
         <div class="view-header">
           <div><div class="view-title">334 Pop Up — Visual Identity</div>
-          <div class="view-desc">Visual assets and design system for the popup.</div></div>
+          <div class="view-desc">Visual assets and design system for the popup. Drop images into any section.</div></div>
         </div>
         <div class="ws-section">
-          <div class="field-group"><div class="field-label">Key visual direction</div><textarea class="field-textarea bp-field" data-key="popup-brand-visual-dir" placeholder="Colors, typography, imagery, textures specific to this popup…" oninput="autosaveBP(this)"></textarea></div>
-          <div class="field-group"><div class="field-label">Color palette</div><textarea class="field-textarea bp-field" data-key="popup-visual-colors" placeholder="Primary and accent colors for the popup…" oninput="autosaveBP(this)"></textarea></div>
-          <div class="field-group"><div class="field-label">Typography</div><textarea class="field-textarea bp-field" data-key="popup-visual-type" placeholder="Fonts, weights, usage rules…" oninput="autosaveBP(this)"></textarea></div>
-          <div class="field-group"><div class="field-label">Social & digital assets</div><textarea class="field-textarea bp-field" data-key="popup-visual-digital" placeholder="Templates, story formats, grid aesthetic…" oninput="autosaveBP(this)"></textarea></div>
-          <div class="field-group"><div class="field-label">Print & packaging</div><textarea class="field-textarea bp-field" data-key="popup-visual-print" placeholder="Bags, tags, tissue, business cards, flyers…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group">
+            <div class="field-label">Logo</div>
+            <textarea class="field-textarea bp-field" data-key="popup-visual-logo" placeholder="Logo direction, wordmark vs. mark, variations needed, sizing rules…" oninput="autosaveBP(this)"></textarea>
+            <div class="visual-dropzone" data-section="logo"></div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Key visual direction</div>
+            <textarea class="field-textarea bp-field" data-key="popup-brand-visual-dir" placeholder="Colors, typography, imagery, textures specific to this popup…" oninput="autosaveBP(this)"></textarea>
+            <div class="visual-dropzone" data-section="direction"></div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Color palette</div>
+            <textarea class="field-textarea bp-field" data-key="popup-visual-colors" placeholder="Primary and accent colors for the popup…" oninput="autosaveBP(this)"></textarea>
+            <div class="visual-dropzone" data-section="colors"></div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Typography</div>
+            <textarea class="field-textarea bp-field" data-key="popup-visual-type" placeholder="Fonts, weights, usage rules…" oninput="autosaveBP(this)"></textarea>
+            <div class="visual-dropzone" data-section="typography"></div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Print & packaging</div>
+            <textarea class="field-textarea bp-field" data-key="popup-visual-print" placeholder="Bags, tags, tissue, business cards, flyers…" oninput="autosaveBP(this)"></textarea>
+            <div class="visual-dropzone" data-section="print"></div>
+          </div>
         </div>
+        <script>
+          // Drop-image system for visual identity sections.
+          // Images stored as base64 in popup_visual_imgs_v1 (one array per section).
+          // Compresses large images to max 1200px wide before storing.
+          var VISUAL_IMG_KEY = 'popup_visual_imgs_v1';
+          function getVisualImgs() {
+            try { return JSON.parse(localStorage.getItem(VISUAL_IMG_KEY) || '{}'); } catch(e) { return {}; }
+          }
+          function saveVisualImgs(obj) { localStorage.setItem(VISUAL_IMG_KEY, JSON.stringify(obj)); }
+          function compressImage(file) {
+            return new Promise(function(resolve, reject) {
+              var reader = new FileReader();
+              reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                  var maxW = 1200;
+                  var w = img.width, h = img.height;
+                  if (w > maxW) { h = h * (maxW / w); w = maxW; }
+                  var canvas = document.createElement('canvas');
+                  canvas.width = w; canvas.height = h;
+                  canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                  resolve(canvas.toDataURL('image/jpeg', 0.82));
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          }
+          function addVisualImg(section, file) {
+            if (!file || !file.type || file.type.indexOf('image') !== 0) return;
+            compressImage(file).then(function(dataUrl) {
+              var all = getVisualImgs();
+              if (!all[section]) all[section] = [];
+              all[section].push({ id: Date.now() + Math.random(), src: dataUrl });
+              saveVisualImgs(all);
+              renderVisualSection(section);
+            }).catch(function(err) { console.error('[visual] image error', err); });
+          }
+          function removeVisualImg(section, id) {
+            var all = getVisualImgs();
+            if (!all[section]) return;
+            all[section] = all[section].filter(function(im) { return im.id !== id; });
+            saveVisualImgs(all);
+            renderVisualSection(section);
+          }
+          function renderVisualSection(section) {
+            var zones = document.querySelectorAll('.visual-dropzone[data-section="' + section + '"]');
+            var all = getVisualImgs();
+            var imgs = all[section] || [];
+            zones.forEach(function(zone) {
+              var thumbs = imgs.map(function(im) {
+                return '<div style="position:relative;display:inline-block;margin:4px">' +
+                  '<img src="' + im.src + '" style="max-width:160px;max-height:160px;border:1px solid var(--border);border-radius:4px;display:block">' +
+                  '<button onclick="removeVisualImg(\'' + section + '\',' + im.id + ')" title="Remove" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.7);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:1">✕</button>' +
+                '</div>';
+              }).join('');
+              zone.innerHTML =
+                '<div style="display:flex;flex-wrap:wrap;align-items:center;min-height:60px;padding:8px;margin-top:8px;border:1px dashed var(--faint);border-radius:4px;background:var(--surface2)">' +
+                  thumbs +
+                  '<label style="display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;margin:4px;border:1px dashed var(--muted);border-radius:4px;color:var(--muted);cursor:pointer;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;text-align:center;line-height:1.2" title="Click to upload or drop images">' +
+                    '+ image' +
+                    '<input type="file" accept="image/*" multiple style="display:none" onchange="visualFileInput(\'' + section + '\',this)">' +
+                  '</label>' +
+                '</div>';
+            });
+          }
+          function visualFileInput(section, input) {
+            for (var i = 0; i < input.files.length; i++) addVisualImg(section, input.files[i]);
+            input.value = '';
+          }
+          function setupVisualDropzones() {
+            document.querySelectorAll('.visual-dropzone').forEach(function(zone) {
+              var section = zone.getAttribute('data-section');
+              renderVisualSection(section);
+            });
+            // Wire up drag-and-drop on the parent field-group so the user can drop anywhere in the section
+            document.querySelectorAll('#front-popup-brand-visual .field-group').forEach(function(fg) {
+              fg.addEventListener('dragover', function(e) { e.preventDefault(); fg.style.outline = '2px dashed var(--front)'; });
+              fg.addEventListener('dragleave', function(e) { fg.style.outline = ''; });
+              fg.addEventListener('drop', function(e) {
+                e.preventDefault();
+                fg.style.outline = '';
+                var dz = fg.querySelector('.visual-dropzone');
+                if (!dz) return;
+                var section = dz.getAttribute('data-section');
+                var files = e.dataTransfer.files;
+                for (var i = 0; i < files.length; i++) addVisualImg(section, files[i]);
+              });
+            });
+          }
+          document.addEventListener('DOMContentLoaded', setupVisualDropzones);
+          if (document.readyState !== 'loading') setupVisualDropzones();
+          window.addEventListener('supabase-ready', function() { setTimeout(setupVisualDropzones, 500); });
+          window.addEventListener('kv-updated', function(e) {
+            if (!e.detail || !e.detail.key || e.detail.key === VISUAL_IMG_KEY) {
+              setTimeout(setupVisualDropzones, 200);
+            }
+          });
+        </script>
       </div>
 
       <!-- MERCH IDEATION -->
