@@ -1685,14 +1685,38 @@
             try { return JSON.parse(localStorage.getItem(VISUAL_IMG_KEY) || '{}'); } catch(e) { return {}; }
           }
           function saveVisualImgs(obj) { localStorage.setItem(VISUAL_IMG_KEY, JSON.stringify(obj)); }
-          function compressImage(file) {
+          // Read a Blob/File into a base64 data URL using arrayBuffer (more reliable than FileReader
+          // in some Safari/drag-drop edge cases where the FileReader returns 'data:,').
+          function blobToDataURL(file) {
+            if (typeof file.arrayBuffer === 'function') {
+              return file.arrayBuffer().then(function(buf) {
+                var bytes = new Uint8Array(buf);
+                console.log('[visual] arrayBuffer bytes:', bytes.length);
+                if (!bytes.length) throw new Error('empty arrayBuffer (file blob has no data)');
+                // Convert to binary string in chunks (avoid stack overflow for large files)
+                var binary = '';
+                var chunk = 0x8000;
+                for (var i = 0; i < bytes.length; i += chunk) {
+                  binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+                }
+                return 'data:' + (file.type || 'image/jpeg') + ';base64,' + btoa(binary);
+              });
+            }
+            // Fallback: FileReader
             return new Promise(function(resolve, reject) {
               var reader = new FileReader();
-              reader.onload = function(e) {
-                var original = e.target.result;
-                // Skip compression for small files (< 500KB) — they're fine as-is
-                if (file.size < 500 * 1024) { resolve(original); return; }
-                // For larger files, try canvas compression
+              reader.onload = function(e) { resolve(e.target.result); };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          }
+          function compressImage(file) {
+            return blobToDataURL(file).then(function(original) {
+              console.log('[visual] dataUrl from blob, length:', original.length);
+              // Skip canvas re-compression for small files (< 500KB) — they're fine as-is
+              if (file.size < 500 * 1024) return original;
+              // Larger: try to downscale via canvas
+              return new Promise(function(resolve) {
                 var img = new Image();
                 img.onload = function() {
                   try {
@@ -1704,7 +1728,6 @@
                     canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                     var compressed = canvas.toDataURL('image/jpeg', 0.82);
-                    // If compression failed (empty data URL), fall back to original
                     if (!compressed || compressed.length < 100) { resolve(original); return; }
                     resolve(compressed);
                   } catch (err) {
@@ -1714,9 +1737,7 @@
                 };
                 img.onerror = function() { resolve(original); };
                 img.src = original;
-              };
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
+              });
             });
           }
           function addVisualImg(section, file) {
