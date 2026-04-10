@@ -73,6 +73,7 @@
           </div>
           <div class="brand-sub-bar" id="brand-bar-popup">
             <button class="tab active" data-tab="popup-brand-identity" onclick="showTab('front','popup-brand-identity',this)"><span class="tab-icon">✦</span>Concept Brainstorm</button>
+            <button class="tab" data-tab="popup-brand-scope" onclick="showTab('front','popup-brand-scope',this)"><span class="tab-icon">📐</span>Graphic Scope</button>
             <button class="tab" data-tab="popup-brand-voice" onclick="showTab('front','popup-brand-voice',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
             <button class="tab" data-tab="popup-brand-visual" onclick="showTab('front','popup-brand-visual',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
             <button class="tab" data-tab="popup-brand-merch" onclick="showTab('front','popup-brand-merch',this)"><span class="tab-icon">🛍</span>Merch Ideation</button>
@@ -1437,6 +1438,26 @@
         window.addEventListener('supabase-ready', function() { setTimeout(reloadAllBrainstorm, 500); });
         window.addEventListener('kv-updated', function() { setTimeout(reloadAllBrainstorm, 200); });
         </script>
+      </div>
+
+      <div class="ws-view pl-fullwidth" id="front-popup-brand-scope" class="pl-fullwidth">
+        <div class="view-header">
+          <div><div class="view-title">334 Pop Up — Graphic Scope</div>
+          <div class="view-desc">Every graphic asset that needs to be produced for the 334 popup. Use this to scope work, brief designers, and track what's done.</div></div>
+        </div>
+        <div class="ws-section">
+          <div class="field-group"><div class="field-label">Identity assets</div><textarea class="field-textarea bp-field" data-key="popup-scope-identity" placeholder="Logo / wordmark variations, monogram, typographic lockups…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Typography & color system</div><textarea class="field-textarea bp-field" data-key="popup-scope-type-color" placeholder="Typefaces, weights, color palette, usage rules…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Window & exterior signage</div><textarea class="field-textarea bp-field" data-key="popup-scope-signage-ext" placeholder="Vinyl window graphics, blade sign, hours decal, sidewalk piece…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Interior signage & wayfinding</div><textarea class="field-textarea bp-field" data-key="popup-scope-signage-int" placeholder="Wall vinyl, vendor cards, section labels, dressing room signage…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Tags, labels & maker cards</div><textarea class="field-textarea bp-field" data-key="popup-scope-tags" placeholder="Hang tags, price stickers, vendor bio cards, care instructions…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Packaging</div><textarea class="field-textarea bp-field" data-key="popup-scope-packaging" placeholder="Shopping bags, tissue, ribbon, boxes, stickers…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Merch graphics</div><textarea class="field-textarea bp-field" data-key="popup-scope-merch" placeholder="Temp tattoos, stickers, fans, lighters, totes, tees…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Print collateral</div><textarea class="field-textarea bp-field" data-key="popup-scope-print" placeholder="Opening invites, flyers, postcards, press one-pager, vendor deck cover…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Social media templates</div><textarea class="field-textarea bp-field" data-key="popup-scope-social" placeholder="Story templates, grid posts, countdown graphics, vendor highlight templates…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Website assets</div><textarea class="field-textarea bp-field" data-key="popup-scope-website" placeholder="Hero images, page headers, vendor portraits, OG share image…" oninput="autosaveBP(this)"></textarea></div>
+          <div class="field-group"><div class="field-label">Notes / outstanding questions</div><textarea class="field-textarea bp-field" data-key="popup-scope-notes" placeholder="Open questions, dependencies, who owns what, deadlines…" oninput="autosaveBP(this)"></textarea></div>
+        </div>
       </div>
 
       <div class="ws-view pl-fullwidth" id="front-popup-brand-voice" class="pl-fullwidth">
