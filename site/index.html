@@ -1286,20 +1286,19 @@
                 <input type="text" id="popup-refs-explore-input" class="field-input" placeholder="Add an idea, link, reference…" style="flex:1;min-height:32px" onkeydown="if(event.key==='Enter'){addRefExplore();event.preventDefault()}">
                 <button class="save-btn" style="padding:6px 14px;font-size:9px" onclick="addRefExplore()">+</button>
               </div>
+              <div style="margin-top:16px">
+                <div class="field-label">Research dump</div>
+                <div class="canvas-toolbar" style="display:flex;gap:4px;margin-bottom:4px">
+                  <button class="canvas-btn" onclick="canvasCmd2('bold','popup-research-canvas-editor')" title="Bold"><b>B</b></button>
+                  <button class="canvas-btn" onclick="canvasCmd2('italic','popup-research-canvas-editor')" title="Italic"><i>I</i></button>
+                  <button class="canvas-btn" onclick="canvasCmd2('underline','popup-research-canvas-editor')" title="Underline"><u>U</u></button>
+                  <button class="canvas-btn" onclick="canvasCmd2('insertUnorderedList','popup-research-canvas-editor')" title="Bullet list">•</button>
+                  <button class="canvas-btn" onclick="canvasHighlight2('popup-research-canvas-editor')" title="Highlight">🖍</button>
+                </div>
+                <div class="canvas-editor" contenteditable="true" id="popup-research-canvas-editor" data-key="popup-research-canvas-rich" oninput="saveCanvas(this)" data-placeholder="Paste research, notes, links, excerpts — anything relevant to the concept…" style="min-height:150px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:10px 13px;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.6;outline:none;overflow-y:auto"></div>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div class="field-group" style="margin-top:16px">
-          <div class="field-label">Research dump</div>
-          <div class="canvas-toolbar" style="display:flex;gap:4px;margin-bottom:4px">
-            <button class="canvas-btn" onclick="canvasCmd2('bold','popup-research-canvas-editor')" title="Bold"><b>B</b></button>
-            <button class="canvas-btn" onclick="canvasCmd2('italic','popup-research-canvas-editor')" title="Italic"><i>I</i></button>
-            <button class="canvas-btn" onclick="canvasCmd2('underline','popup-research-canvas-editor')" title="Underline"><u>U</u></button>
-            <button class="canvas-btn" onclick="canvasCmd2('insertUnorderedList','popup-research-canvas-editor')" title="Bullet list">•</button>
-            <button class="canvas-btn" onclick="canvasHighlight2('popup-research-canvas-editor')" title="Highlight">🖍</button>
-          </div>
-          <div class="canvas-editor" contenteditable="true" id="popup-research-canvas-editor" data-key="popup-research-canvas-rich" oninput="saveCanvas(this)" data-placeholder="Paste research, notes, links, excerpts — anything relevant to the concept…" style="min-height:150px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:10px 13px;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:15px;line-height:1.6;outline:none;overflow-y:auto"></div>
         </div>
 
         <div class="field-group" style="margin-top:16px">
