@@ -1370,11 +1370,29 @@
           if (!el) return;
           var ideas = getPopupNameIdeas();
           el.innerHTML = ideas.map(function(idea, i) {
-            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint)">' +
+            return '<div draggable="true" data-idx="' + i + '" ' +
+              'ondragstart="popupNameDragStart(event,' + i + ')" ' +
+              'ondragover="event.preventDefault()" ' +
+              'ondrop="popupNameDrop(event,' + i + ')" ' +
+              'ondragend="popupNameDragEnd(event)" ' +
+              'style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--faint);cursor:grab">' +
+              '<span style="color:var(--muted);font-size:12px;line-height:1;user-select:none" title="Drag to reorder">⋮⋮</span>' +
               '<input type="text" value="' + idea.replace(/"/g,'&quot;') + '" style="flex:1;background:none;border:none;color:var(--text);font-family:Cormorant Garamond,serif;font-size:15px;outline:none;padding:0" oninput="editPopupNameIdea(' + i + ',this.value)">' +
               '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px" onclick="removePopupNameIdea(' + i + ')">✕</button>' +
             '</div>';
           }).join('');
+        }
+        var _popupNameDragIdx = null;
+        function popupNameDragStart(e, i) { _popupNameDragIdx = i; e.dataTransfer.effectAllowed = 'move'; e.currentTarget.style.opacity = '0.4'; }
+        function popupNameDragEnd(e) { e.currentTarget.style.opacity = ''; _popupNameDragIdx = null; }
+        function popupNameDrop(e, targetIdx) {
+          e.preventDefault();
+          if (_popupNameDragIdx === null || _popupNameDragIdx === targetIdx) return;
+          var ideas = getPopupNameIdeas();
+          var moved = ideas.splice(_popupNameDragIdx, 1)[0];
+          ideas.splice(targetIdx, 0, moved);
+          savePopupNameIdeas(ideas);
+          renderPopupNameIdeas();
         }
         function editPopupNameIdea(i, val) {
           var ideas = getPopupNameIdeas();
