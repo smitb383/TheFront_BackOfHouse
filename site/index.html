@@ -1720,14 +1720,24 @@
             });
           }
           function addVisualImg(section, file) {
-            if (!file || !file.type || file.type.indexOf('image') !== 0) return;
+            if (!file || !file.type || file.type.indexOf('image') !== 0) {
+              console.warn('[visual] not an image, skipping:', file && file.type);
+              return;
+            }
+            console.log('[visual] adding image to', section, '— file:', file.name, file.type, file.size + ' bytes');
             compressImage(file).then(function(dataUrl) {
+              console.log('[visual] got dataUrl, length:', dataUrl.length, '— starts:', dataUrl.slice(0, 40));
+              if (!dataUrl || dataUrl.length < 100) {
+                console.error('[visual] BAD dataUrl, refusing to save:', dataUrl);
+                alert('Image upload failed — dataUrl was empty. Check browser console for details.');
+                return;
+              }
               var all = getVisualImgs();
               if (!all[section]) all[section] = [];
               all[section].push({ id: Date.now() + Math.random(), src: dataUrl });
               saveVisualImgs(all);
               renderVisualSection(section);
-            }).catch(function(err) { console.error('[visual] image error', err); });
+            }).catch(function(err) { console.error('[visual] image error', err); alert('Image upload error: ' + err); });
           }
           function removeVisualImg(section, id) {
             var all = getVisualImgs();
