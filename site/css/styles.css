@@ -4549,3 +4549,13 @@ body::before {
 }
 .canvas-editor ul, .canvas-editor ol { padding-left:20px; margin:4px 0; }
 .canvas-editor li { margin:2px 0; }
+/* Force pasted content to match canvas font/size — overrides inline styles from copied source */
+.canvas-editor, .canvas-editor * {
+  font-family: 'Cormorant Garamond', serif !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+}
+.canvas-editor *:not(mark) {
+  background: transparent !important;
+  color: var(--text) !important;
+}
