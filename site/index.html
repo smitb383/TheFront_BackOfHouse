@@ -1493,7 +1493,14 @@
               el.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:20px">No assets yet — click "+ Add Asset" to start.</div>';
               return;
             }
-            el.innerHTML = list.map(function(item, i) {
+            // Group by type
+            var GROUPS = [
+              { key:'physical', label:'Physical' },
+              { key:'digital',  label:'Digital' },
+              { key:'both',     label:'Both' },
+              { key:'',         label:'Untyped' }
+            ];
+            var renderCard = function(item, i) {
               if (!Array.isArray(item.tags)) item.tags = [];
               if (typeof item.type === 'undefined') item.type = '';
               var typeStyle = GRAPHIC_TYPE_COLORS[item.type];
@@ -1519,7 +1526,34 @@
                 '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Ideation / notes</div>' +
                   '<textarea placeholder="Visual direction, references, open questions…" style="width:100%;min-height:80px;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical" oninput="editGraphicScope(' + i + ',\'ideation\',this.value)">' + escHtml(item.ideation) + '</textarea></div>' +
               '</div>';
-            }).join('');
+            };
+            // Switch container to vertical sections (override the inline grid)
+            el.style.display = 'flex';
+            el.style.flexDirection = 'column';
+            el.style.gap = '24px';
+            var html = '';
+            GROUPS.forEach(function(g) {
+              var members = [];
+              list.forEach(function(item, idx) {
+                if ((item.type || '') === g.key) members.push({ item: item, idx: idx });
+              });
+              if (members.length === 0) return;
+              var headerColor = GRAPHIC_TYPE_COLORS[g.key];
+              var dot = headerColor
+                ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + headerColor.bg + '"></span>'
+                : '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:transparent;border:1px dashed var(--faint)"></span>';
+              html += '<div>' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">' +
+                  dot +
+                  '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)">' + g.label + '</div>' +
+                  '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + members.length + '</div>' +
+                '</div>' +
+                '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">' +
+                  members.map(function(m) { return renderCard(m.item, m.idx); }).join('') +
+                '</div>' +
+              '</div>';
+            });
+            el.innerHTML = html;
           }
           function editGraphicScope(i, field, val) {
             var list = getGraphicScope() || [];
