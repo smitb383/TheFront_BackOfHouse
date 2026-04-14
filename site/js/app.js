@@ -3765,7 +3765,7 @@ function setVendorView(mode, btn, store) {
 function addVendor() {
   const vendors = getVendors();
   const id = Date.now();
-  vendors.push({ id, name:'', discipline:'Clothing', status:'prospect', email:'', instagram:'', website:'', commissionRate:'', notes:'', cyclesParticipated:'', priceRange:'', photos:[] });
+  vendors.push({ id, name:'', discipline:'Clothing', status:'prospect', email:'', instagram:'', website:'', commissionRate:'', notes:'', cyclesParticipated:'', priceRange:'', location:'', photos:[] });
   saveVendors(vendors);
   renderVendors();
   setTimeout(() => {
@@ -3920,6 +3920,7 @@ function buildVendorCard(v, store) {
         </div>
         <div class="vendor-row-name">${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}</div>
         <div class="vendor-row-cell"><span class="vendor-status status-${v.status}">${statusLabel}</span></div>
+        <div class="vendor-row-cell vendor-row-location">${esc(v.location || '')}</div>
         <div class="vendor-row-cell vendor-row-price">${esc(v.priceRange || '')}</div>
         <div class="vendor-row-cell vendor-row-ig">${igDisplay ? `<a href="https://instagram.com/${esc(igHandle)}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a>` : ''}</div>
         <div class="vendor-row-chevron">▾</div>
@@ -3951,6 +3952,7 @@ function buildVendorCard(v, store) {
                 ${VENDOR_DISCIPLINES.map(d=>`<option value="${d}"${(v.discipline||'Other')===d?' selected':''}>${d}</option>`).join('')}
               </select>
             </div>
+            <div class="vendor-field"><label>Location</label><input value="${esc(v.location||'')}" placeholder="e.g. Brooklyn, NY" oninput="${updFn}(${v.id},'location',this.value)"></div>
             <div class="vendor-field"><label>Price range</label><input value="${esc(v.priceRange||'')}" placeholder="e.g. $50 – $300" oninput="${updFn}(${v.id},'priceRange',this.value)"></div>
             <div class="vendor-field"><label>Status</label>
               <select onchange="${updFn}(${v.id},'status',this.value)">
@@ -4098,7 +4100,7 @@ function savePopupVendors(v) { localStorage.setItem('popup_vendors_v1', JSON.str
 function addPopupVendor() {
   const vendors = getPopupVendors();
   const id = Date.now();
-  vendors.push({ id, name:'', discipline:'Clothing', status:'prospect', email:'', instagram:'', website:'', fee:'', notes:'', priceRange:'', photos:[] });
+  vendors.push({ id, name:'', discipline:'Clothing', status:'prospect', email:'', instagram:'', website:'', fee:'', notes:'', priceRange:'', location:'', photos:[] });
   savePopupVendors(vendors);
   renderPopupVendors();
   setTimeout(() => {
