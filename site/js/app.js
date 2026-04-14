@@ -3910,11 +3910,14 @@ function buildVendorCard(v, store) {
             ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">`
             : `<div class="vendor-row-img-empty" onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">+</div>`}
         </div>
-        <div class="vendor-row-name">${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}</div>
-        <div class="vendor-row-price">${esc(v.priceRange || '')}</div>
-        <div class="vendor-row-status"><span class="vendor-status status-${v.status}">${statusLabel}</span></div>
-        <div class="vendor-row-ig">${igDisplay ? `<a href="https://instagram.com/${esc((v.instagram||'').replace('@',''))}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a>` : ''}</div>
-        <div class="vendor-row-chevron">▾</div>
+        <div class="vendor-row-info">
+          <div class="vendor-row-name">${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}</div>
+          <div class="vendor-row-meta">
+            <span class="vendor-status status-${v.status}">${statusLabel}</span>
+            ${v.priceRange ? `<span class="vendor-row-price">${esc(v.priceRange)}</span>` : ''}
+          </div>
+          ${igDisplay ? `<div class="vendor-row-ig"><a href="https://instagram.com/${esc((v.instagram||'').replace('@',''))}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a></div>` : ''}
+        </div>
       </div>
       <div class="vendor-body">
         <div class="vendor-expand-grid">
@@ -3969,25 +3972,33 @@ function buildVendorCard(v, store) {
 }
 
 function buildGallery(vendors, store) {
-  // flatten all photos across all vendors
-  const items = [];
+  // group vendors by discipline
+  const groups = {};
+  VENDOR_DISCIPLINES.forEach(d => { groups[d] = []; });
   vendors.forEach(v => {
-    (v.photos || []).forEach(url => {
-      items.push({ url, name: v.name || '(unnamed)', discipline: v.discipline || '', id: v.id, store });
+    const d = v.discipline || 'Other';
+    if (!groups[d]) groups[d] = [];
+    const photos = v.photos || [];
+    photos.forEach(url => {
+      groups[d].push({ url, name: v.name || '(unnamed)', discipline: d, id: v.id, store });
     });
   });
-  if (!items.length) {
-    return `<div class="vgallery-empty">No photos yet — open a vendor card and paste image URLs to add work photos.</div>`;
+  const renderedGroups = VENDOR_DISCIPLINES.filter(d => groups[d] && groups[d].length);
+  if (!renderedGroups.length) {
+    return `<div class="vgallery-empty">No photos yet — open a vendor card and add work photos.</div>`;
   }
-  return `<div class="vendor-gallery">${items.map(item => `
-    <div class="vgallery-item" onclick="${store==='popup'?'togglePopupVendor':'toggleVendor'}(${item.id});${store==='popup'?'showPopupTab(\'vendors\',document.querySelector(\'.popup-tab[onclick*=vendors]\'))':''}">
-      <img src="${esc(item.url)}" alt="${esc(item.name)}" loading="lazy" onerror="this.closest('.vgallery-item').style.display='none'">
-      <div class="vgallery-caption">
-        <div class="vgallery-name">${esc(item.name)}</div>
-        <div class="vgallery-disc">${esc(item.discipline)}</div>
+  return renderedGroups.map(discipline => `
+    <div class="vgallery-group">
+      <div class="vgallery-group-header">${discipline}</div>
+      <div class="vendor-gallery">${groups[discipline].map(item => `
+        <div class="vgallery-item" onclick="${store==='popup'?'togglePopupVendor':'toggleVendor'}(${item.id})">
+          <img src="${esc(item.url)}" alt="${esc(item.name)}" loading="lazy" onerror="this.closest('.vgallery-item').style.display='none'">
+          <div class="vgallery-caption">
+            <div class="vgallery-name">${esc(item.name)}</div>
+          </div>
+        </div>`).join('')}
       </div>
-    </div>`).join('')}
-  </div>`;
+    </div>`).join('');
 }
 
 function renderVendors() {
