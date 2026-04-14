@@ -3918,14 +3918,11 @@ function buildVendorCard(v, store) {
             ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">`
             : `<div class="vendor-row-img-empty" onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">+</div>`}
         </div>
-        <div class="vendor-row-info">
-          <div class="vendor-row-name">${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}</div>
-          <div class="vendor-row-meta">
-            <span class="vendor-status status-${v.status}">${statusLabel}</span>
-            ${v.priceRange ? `<span class="vendor-row-price">${esc(v.priceRange)}</span>` : ''}
-          </div>
-          ${igDisplay ? `<div class="vendor-row-ig"><a href="https://instagram.com/${esc(igHandle)}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a></div>` : ''}
-        </div>
+        <div class="vendor-row-name">${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}</div>
+        <div class="vendor-row-cell"><span class="vendor-status status-${v.status}">${statusLabel}</span></div>
+        <div class="vendor-row-cell vendor-row-price">${esc(v.priceRange || '')}</div>
+        <div class="vendor-row-cell vendor-row-ig">${igDisplay ? `<a href="https://instagram.com/${esc(igHandle)}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a>` : ''}</div>
+        <div class="vendor-row-chevron">▾</div>
       </div>
       <div class="vendor-body">
         <div class="vendor-expand-grid">
