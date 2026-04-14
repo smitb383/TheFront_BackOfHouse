@@ -3765,7 +3765,7 @@ function setVendorView(mode, btn, store) {
 function addVendor() {
   const vendors = getVendors();
   const id = Date.now();
-  vendors.push({ id, name:'', discipline:'Clothing', status:'prospect', email:'', instagram:'', website:'', commissionRate:'', notes:'', cyclesParticipated:'', photos:[] });
+  vendors.push({ id, name:'', discipline:'Clothing', status:'prospect', email:'', instagram:'', website:'', commissionRate:'', notes:'', cyclesParticipated:'', priceRange:'', photos:[] });
   saveVendors(vendors);
   renderVendors();
   setTimeout(() => {
@@ -3885,60 +3885,65 @@ function buildVendorCard(v, store) {
   const photos = v.photos || [];
   const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : v.status;
   const heroPhoto = photos[0] || '';
-  const extraPhotos = photos.slice(1);
 
-  const extraPhotoSlots = extraPhotos.map((src, idx) => `
+  const allPhotoSlots = photos.map((src, idx) => `
     <div class="vendor-photo-slot">
       <img src="${esc(src)}" alt="">
-      <button class="vendor-photo-remove" onclick="event.stopPropagation();removeVendorPhoto(${v.id},${idx+1},'${store}')">✕</button>
+      <button class="vendor-photo-remove" onclick="event.stopPropagation();removeVendorPhoto(${v.id},${idx},'${store}')">✕</button>
     </div>`).join('');
+
+  const igDisplay = v.instagram ? (v.instagram.startsWith('@') ? v.instagram : '@' + v.instagram) : '';
 
   const commissionField = store === 'popup'
     ? `<div class="vendor-field"><label>Participation fee</label><input value="${esc(v.fee||v.commissionRate||'')}" placeholder="e.g. $200 for the full run" oninput="${updFn}(${v.id},'fee',this.value)"></div>`
-    : `<div class="vendor-info-row">
-         <div class="vendor-field"><label>Commission / fee</label><input value="${esc(v.commissionRate)}" placeholder="e.g. 30% + $200/cycle" oninput="${updFn}(${v.id},'commissionRate',this.value)"></div>
-         <div class="vendor-field"><label>Cycles</label><input value="${esc(v.cyclesParticipated)}" placeholder="e.g. Spring 2024" oninput="${updFn}(${v.id},'cyclesParticipated',this.value)"></div>
-       </div>`;
+    : `<div class="vendor-field"><label>Commission / fee</label><input value="${esc(v.commissionRate)}" placeholder="e.g. 30% + $200/cycle" oninput="${updFn}(${v.id},'commissionRate',this.value)"></div>
+       <div class="vendor-field"><label>Cycles</label><input value="${esc(v.cyclesParticipated)}" placeholder="e.g. Spring 2024" oninput="${updFn}(${v.id},'cyclesParticipated',this.value)"></div>`;
 
   return `
     <div class="vendor-card" id="${pfx}card-${v.id}">
-      <div class="vendor-card-header" onclick="${togFn}(${v.id})">
-        <span class="vendor-status status-${v.status}">${statusLabel}</span>
-        <span class="vendor-name-text">${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}</span>
-        <span class="vendor-discipline-badge">${esc(v.discipline||'Other')}</span>
-        <span class="vendor-ig">${v.instagram ? esc(v.instagram) : ''}</span>
-        ${photos.length ? `<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted);letter-spacing:0.06em">${photos.length} photo${photos.length!==1?'s':''}</span>` : ''}
-        <span class="vendor-chevron">▾</span>
+      <div class="vendor-row" onclick="${togFn}(${v.id})">
+        <div class="vendor-row-img"
+          ondragover="event.preventDefault();event.stopPropagation();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="event.preventDefault();event.stopPropagation();this.classList.remove('dragover');handleVendorDrop(event,${v.id},'${store}')">
+          ${heroPhoto
+            ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">`
+            : `<div class="vendor-row-img-empty" onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">+</div>`}
+        </div>
+        <div class="vendor-row-name">${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}</div>
+        <div class="vendor-row-price">${esc(v.priceRange || '')}</div>
+        <div class="vendor-row-status"><span class="vendor-status status-${v.status}">${statusLabel}</span></div>
+        <div class="vendor-row-ig">${igDisplay ? `<a href="https://instagram.com/${esc((v.instagram||'').replace('@',''))}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a>` : ''}</div>
+        <div class="vendor-row-chevron">▾</div>
       </div>
       <div class="vendor-body">
-        <div class="vendor-hero-zone" id="${pfx}hero-${v.id}"
-          ondragover="event.preventDefault();this.classList.add('dragover')"
-          ondragleave="this.classList.remove('dragover')"
-          ondrop="event.preventDefault();this.classList.remove('dragover');handleVendorDrop(event,${v.id},'${store}')">
-          ${heroPhoto
-            ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">
-               <div class="vendor-hero-overlay">
-                 <button onclick="event.stopPropagation();removeVendorPhoto(${v.id},0,'${store}')">Remove</button>
-                 <button onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">Add more</button>
-               </div>`
-            : `<div class="vendor-hero-placeholder">
-                 <div class="vendor-hero-placeholder-icon">+</div>
-                 <div class="vendor-hero-placeholder-text">
-                   Drag & drop an image here<br>
-                   or <span onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">browse files</span>
-                 </div>
-               </div>`}
-        </div>
-        <div class="vendor-info-panel">
-          <div class="vendor-info-row">
+        <div class="vendor-expand-grid">
+          <div class="vendor-expand-images">
+            <div class="vendor-hero-zone" id="${pfx}hero-${v.id}"
+              ondragover="event.preventDefault();this.classList.add('dragover')"
+              ondragleave="this.classList.remove('dragover')"
+              ondrop="event.preventDefault();this.classList.remove('dragover');handleVendorDrop(event,${v.id},'${store}')">
+              ${heroPhoto
+                ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">`
+                : `<div class="vendor-hero-placeholder">
+                     <div class="vendor-hero-placeholder-icon">+</div>
+                     <div class="vendor-hero-placeholder-text">
+                       Drag & drop images<br>
+                       or <span onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">browse files</span>
+                     </div>
+                   </div>`}
+            </div>
+            ${photos.length > 1 ? `<div class="vendor-photos-grid">${allPhotoSlots}</div>` : ''}
+            <button class="vendor-photo-upload-btn" onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">+ Add photos</button>
+          </div>
+          <div class="vendor-expand-fields">
             <div class="vendor-field"><label>Name</label><input value="${esc(v.name)}" placeholder="Designer / brand name" oninput="${updFn}(${v.id},'name',this.value)"></div>
             <div class="vendor-field"><label>Discipline</label>
               <select onchange="${updFn}(${v.id},'discipline',this.value)">
                 ${VENDOR_DISCIPLINES.map(d=>`<option value="${d}"${(v.discipline||'Other')===d?' selected':''}>${d}</option>`).join('')}
               </select>
             </div>
-          </div>
-          <div class="vendor-info-row">
+            <div class="vendor-field"><label>Price range</label><input value="${esc(v.priceRange||'')}" placeholder="e.g. $50 – $300" oninput="${updFn}(${v.id},'priceRange',this.value)"></div>
             <div class="vendor-field"><label>Status</label>
               <select onchange="${updFn}(${v.id},'status',this.value)">
                 <option value="prospect"${v.status==='prospect'?' selected':''}>Prospect</option>
@@ -3947,20 +3952,16 @@ function buildVendorCard(v, store) {
                 <option value="past"${v.status==='past'?' selected':''}>Past</option>
               </select>
             </div>
+            <div class="vendor-field"><label>Contact name</label><input value="${esc(v.contactName||'')}" placeholder="Primary contact" oninput="${updFn}(${v.id},'contactName',this.value)"></div>
             <div class="vendor-field"><label>Email</label><input value="${esc(v.email)}" placeholder="email@…" oninput="${updFn}(${v.id},'email',this.value)"></div>
-          </div>
-          <div class="vendor-info-row">
             <div class="vendor-field"><label>Instagram</label><input value="${esc(v.instagram)}" placeholder="@handle" oninput="${updFn}(${v.id},'instagram',this.value)"></div>
             <div class="vendor-field"><label>Website</label><input value="${esc(v.website)}" placeholder="https://…" oninput="${updFn}(${v.id},'website',this.value)"></div>
-          </div>
-          ${commissionField}
-          <div class="vendor-field"><label>Notes</label><textarea placeholder="How you met, what they make, relevant context…" oninput="${updFn}(${v.id},'notes',this.value)">${esc(v.notes)}</textarea></div>
-
-          ${extraPhotos.length ? `<div class="vendor-photos-strip">${extraPhotoSlots}</div>` : ''}
-
-          <div class="vendor-actions">
-            <button class="vendor-save-btn" onclick="showToast('Saved ✓','${toastColor}')">Save ✓</button>
-            <button class="vendor-delete-btn" onclick="${delFn}(${v.id})">Delete</button>
+            ${commissionField}
+            <div class="vendor-field full"><label>Notes</label><textarea placeholder="How you met, what they make, relevant context…" oninput="${updFn}(${v.id},'notes',this.value)">${esc(v.notes)}</textarea></div>
+            <div class="vendor-actions">
+              <button class="vendor-save-btn" onclick="event.stopPropagation();showToast('Saved ✓','${toastColor}')">Save ✓</button>
+              <button class="vendor-delete-btn" onclick="event.stopPropagation();${delFn}(${v.id})">Delete</button>
+            </div>
           </div>
         </div>
       </div>
@@ -4028,10 +4029,18 @@ function renderVendors() {
         <span class="vendor-group-count">${groups[discipline].length}</span>
         <span class="vendor-group-chevron">›</span>
       </div>` : '';
+    const tableHeader = `<div class="vendor-table-header">
+      <div></div>
+      <div>Vendor name</div>
+      <div>Price</div>
+      <div>Status</div>
+      <div>Instagram</div>
+      <div></div>
+    </div>`;
     const maxH = collapsed ? '0' : '9999px';
     return `<div class="vendor-group ${collapsed}" id="fvgroup-${slug}">
       ${header}
-      <div class="vendor-group-cards" style="max-height:${maxH}">${cards}</div>
+      <div class="vendor-group-cards" style="max-height:${maxH}">${tableHeader}${cards}</div>
     </div>`;
   }).join('');
 }
@@ -4061,7 +4070,7 @@ function savePopupVendors(v) { localStorage.setItem('popup_vendors_v1', JSON.str
 function addPopupVendor() {
   const vendors = getPopupVendors();
   const id = Date.now();
-  vendors.push({ id, name:'', discipline:'Clothing', status:'prospect', email:'', instagram:'', website:'', fee:'', notes:'', photos:[] });
+  vendors.push({ id, name:'', discipline:'Clothing', status:'prospect', email:'', instagram:'', website:'', fee:'', notes:'', priceRange:'', photos:[] });
   savePopupVendors(vendors);
   renderPopupVendors();
   setTimeout(() => {
@@ -4116,10 +4125,18 @@ function renderPopupVendors() {
         <span class="vendor-group-count">${groups[discipline].length}</span>
         <span class="vendor-group-chevron">›</span>
       </div>` : '';
+    const tableHeader = `<div class="vendor-table-header">
+      <div></div>
+      <div>Vendor name</div>
+      <div>Price</div>
+      <div>Status</div>
+      <div>Instagram</div>
+      <div></div>
+    </div>`;
     const maxH = collapsed ? '0' : '9999px';
     return `<div class="vendor-group ${collapsed}" id="pvgroup-${slug}">
       ${header}
-      <div class="vendor-group-cards" style="max-height:${maxH}">${cards}</div>
+      <div class="vendor-group-cards" style="max-height:${maxH}">${tableHeader}${cards}</div>
     </div>`;
   }).join('');
 }
