@@ -3883,7 +3883,7 @@ function buildVendorCard(v, store) {
   const togFn = store === 'popup' ? 'togglePopupVendor'      : 'toggleVendor';
   const toastColor = store === 'popup' ? '#a8c4d4' : '#c9a8d4';
   const photos = v.photos || [];
-  const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : v.status;
+  const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : (v.status || 'prospect');
   const heroPhoto = photos[0] || '';
 
   const allPhotoSlots = photos.map((src, idx) => `
@@ -3892,7 +3892,15 @@ function buildVendorCard(v, store) {
       <button class="vendor-photo-remove" onclick="event.stopPropagation();removeVendorPhoto(${v.id},${idx},'${store}')">✕</button>
     </div>`).join('');
 
-  const igDisplay = v.instagram ? (v.instagram.startsWith('@') ? v.instagram : '@' + v.instagram) : '';
+  // Extract handle from instagram URL or handle
+  let igHandle = '';
+  if (v.instagram) {
+    const igRaw = v.instagram.trim();
+    const igMatch = igRaw.match(/instagram\.com\/([^/?#]+)/);
+    if (igMatch) igHandle = igMatch[1];
+    else igHandle = igRaw.replace(/^@/, '');
+  }
+  const igDisplay = igHandle ? '@' + igHandle : '';
 
   const commissionField = store === 'popup'
     ? `<div class="vendor-field"><label>Participation fee</label><input value="${esc(v.fee||v.commissionRate||'')}" placeholder="e.g. $200 for the full run" oninput="${updFn}(${v.id},'fee',this.value)"></div>`
@@ -3916,7 +3924,7 @@ function buildVendorCard(v, store) {
             <span class="vendor-status status-${v.status}">${statusLabel}</span>
             ${v.priceRange ? `<span class="vendor-row-price">${esc(v.priceRange)}</span>` : ''}
           </div>
-          ${igDisplay ? `<div class="vendor-row-ig"><a href="https://instagram.com/${esc((v.instagram||'').replace('@',''))}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a></div>` : ''}
+          ${igDisplay ? `<div class="vendor-row-ig"><a href="https://instagram.com/${esc(igHandle)}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a></div>` : ''}
         </div>
       </div>
       <div class="vendor-body">
@@ -3952,6 +3960,7 @@ function buildVendorCard(v, store) {
                 <option value="prospect"${v.status==='prospect'?' selected':''}>Prospect</option>
                 <option value="reached"${v.status==='reached'?' selected':''}>Reached out</option>
                 <option value="signed"${v.status==='signed'?' selected':''}>${store==='popup'?'Confirmed':'Signed'}</option>
+                <option value="backburner"${v.status==='backburner'?' selected':''}>Backburner</option>
                 <option value="past"${v.status==='past'?' selected':''}>Past</option>
               </select>
             </div>
@@ -4019,41 +4028,52 @@ function renderVendors() {
     return;
   }
 
-  const groups = {};
-  VENDOR_DISCIPLINES.forEach(d => { groups[d] = []; });
-  vendors.forEach(v => {
-    const d = v.discipline || 'Other';
-    if (!groups[d]) groups[d] = [];
-    groups[d].push(v);
-  });
-  VENDOR_DISCIPLINES.forEach(d => { if (groups[d]) groups[d].sort((a,b) => (a.name||'').localeCompare(b.name||'')); });
+  // Separate backburner vendors
+  const activeVendors = vendors.filter(v => v.status !== 'backburner');
+  const backburnerVendors = vendors.filter(v => v.status === 'backburner');
 
-  const showHeaders = vendorCatFilter === 'all';
-  const renderedGroups = VENDOR_DISCIPLINES.filter(d => groups[d] && groups[d].length);
+  function buildDisciplineGroups(vendorList, prefix) {
+    const groups = {};
+    VENDOR_DISCIPLINES.forEach(d => { groups[d] = []; });
+    vendorList.forEach(v => {
+      const d = v.discipline || 'Other';
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(v);
+    });
+    VENDOR_DISCIPLINES.forEach(d => { if (groups[d]) groups[d].sort((a,b) => (a.name||'').localeCompare(b.name||'')); });
 
-  list.innerHTML = renderedGroups.map(discipline => {
-    const slug = discipline.replace(/[^a-z0-9]/gi,'_');
-    const collapsed = frontVendorCollapsed[slug] ? 'collapsed' : '';
-    const cards = groups[discipline].map(v => buildVendorCard(v, 'front')).join('');
-    const header = showHeaders ? `<div class="vendor-group-header" onclick="toggleFrontVendorGroup('${slug}',this)">
-        <span class="vendor-group-label">${discipline}</span>
-        <span class="vendor-group-count">${groups[discipline].length}</span>
-        <span class="vendor-group-chevron">›</span>
-      </div>` : '';
-    const tableHeader = `<div class="vendor-table-header">
-      <div></div>
-      <div>Vendor name</div>
-      <div>Price</div>
-      <div>Status</div>
-      <div>Instagram</div>
-      <div></div>
+    const showHeaders = vendorCatFilter === 'all';
+    const renderedGroups = VENDOR_DISCIPLINES.filter(d => groups[d] && groups[d].length);
+
+    return renderedGroups.map(discipline => {
+      const slug = prefix + discipline.replace(/[^a-z0-9]/gi,'_');
+      const collapsed = frontVendorCollapsed[slug] ? 'collapsed' : '';
+      const cards = groups[discipline].map(v => buildVendorCard(v, 'front')).join('');
+      const header = showHeaders ? `<div class="vendor-group-header" onclick="toggleFrontVendorGroup('${slug}',this)">
+          <span class="vendor-group-label">${discipline}</span>
+          <span class="vendor-group-count">${groups[discipline].length}</span>
+          <span class="vendor-group-chevron">›</span>
+        </div>` : '';
+      const maxH = collapsed ? '0' : '9999px';
+      return `<div class="vendor-group ${collapsed}" id="fvgroup-${slug}">
+        ${header}
+        <div class="vendor-group-cards" style="max-height:${maxH}">${cards}</div>
+      </div>`;
+    }).join('');
+  }
+
+  let html = buildDisciplineGroups(activeVendors, '');
+
+  if (backburnerVendors.length && statusFilter === 'all') {
+    html += `<div class="vendor-backburner-section">
+      <div class="vendor-backburner-divider">Backburner</div>
+      ${buildDisciplineGroups(backburnerVendors, 'bb_')}
     </div>`;
-    const maxH = collapsed ? '0' : '9999px';
-    return `<div class="vendor-group ${collapsed}" id="fvgroup-${slug}">
-      ${header}
-      <div class="vendor-group-cards" style="max-height:${maxH}">${tableHeader}${cards}</div>
-    </div>`;
-  }).join('');
+  } else if (statusFilter === 'backburner') {
+    html = buildDisciplineGroups(backburnerVendors, 'bb_');
+  }
+
+  list.innerHTML = html;
 }
 
 function toggleVendor(id) { document.getElementById('vcard-' + id)?.classList.toggle('open'); }
@@ -4115,41 +4135,51 @@ function renderPopupVendors() {
     return;
   }
 
-  const groups = {};
-  VENDOR_DISCIPLINES.forEach(d => { groups[d] = []; });
-  vendors.forEach(v => {
-    const d = v.discipline || 'Other';
-    if (!groups[d]) groups[d] = [];
-    groups[d].push(v);
-  });
-  VENDOR_DISCIPLINES.forEach(d => { if (groups[d]) groups[d].sort((a,b) => (a.name||'').localeCompare(b.name||'')); });
+  const activeVendors = vendors.filter(v => v.status !== 'backburner');
+  const backburnerVendors = vendors.filter(v => v.status === 'backburner');
 
-  const showHeaders = popupVendorCatFilter === 'all';
-  const renderedGroups = VENDOR_DISCIPLINES.filter(d => groups[d] && groups[d].length);
+  function buildDisciplineGroups(vendorList, prefix) {
+    const groups = {};
+    VENDOR_DISCIPLINES.forEach(d => { groups[d] = []; });
+    vendorList.forEach(v => {
+      const d = v.discipline || 'Other';
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(v);
+    });
+    VENDOR_DISCIPLINES.forEach(d => { if (groups[d]) groups[d].sort((a,b) => (a.name||'').localeCompare(b.name||'')); });
 
-  list.innerHTML = renderedGroups.map(discipline => {
-    const slug = discipline.replace(/[^a-z0-9]/gi,'_');
-    const collapsed = popupVendorCollapsed[slug] ? 'collapsed' : '';
-    const cards = groups[discipline].map(v => buildVendorCard(v, 'popup')).join('');
-    const header = showHeaders ? `<div class="vendor-group-header" onclick="togglePopupVendorGroup('${slug}',this)">
-        <span class="vendor-group-label">${discipline}</span>
-        <span class="vendor-group-count">${groups[discipline].length}</span>
-        <span class="vendor-group-chevron">›</span>
-      </div>` : '';
-    const tableHeader = `<div class="vendor-table-header">
-      <div></div>
-      <div>Vendor name</div>
-      <div>Price</div>
-      <div>Status</div>
-      <div>Instagram</div>
-      <div></div>
+    const showHeaders = popupVendorCatFilter === 'all';
+    const renderedGroups = VENDOR_DISCIPLINES.filter(d => groups[d] && groups[d].length);
+
+    return renderedGroups.map(discipline => {
+      const slug = prefix + discipline.replace(/[^a-z0-9]/gi,'_');
+      const collapsed = popupVendorCollapsed[slug] ? 'collapsed' : '';
+      const cards = groups[discipline].map(v => buildVendorCard(v, 'popup')).join('');
+      const header = showHeaders ? `<div class="vendor-group-header" onclick="togglePopupVendorGroup('${slug}',this)">
+          <span class="vendor-group-label">${discipline}</span>
+          <span class="vendor-group-count">${groups[discipline].length}</span>
+          <span class="vendor-group-chevron">›</span>
+        </div>` : '';
+      const maxH = collapsed ? '0' : '9999px';
+      return `<div class="vendor-group ${collapsed}" id="pvgroup-${slug}">
+        ${header}
+        <div class="vendor-group-cards" style="max-height:${maxH}">${cards}</div>
+      </div>`;
+    }).join('');
+  }
+
+  let html = buildDisciplineGroups(activeVendors, '');
+
+  if (backburnerVendors.length && statusFilter === 'all') {
+    html += `<div class="vendor-backburner-section">
+      <div class="vendor-backburner-divider">Backburner</div>
+      ${buildDisciplineGroups(backburnerVendors, 'bb_')}
     </div>`;
-    const maxH = collapsed ? '0' : '9999px';
-    return `<div class="vendor-group ${collapsed}" id="pvgroup-${slug}">
-      ${header}
-      <div class="vendor-group-cards" style="max-height:${maxH}">${tableHeader}${cards}</div>
-    </div>`;
-  }).join('');
+  } else if (statusFilter === 'backburner') {
+    html = buildDisciplineGroups(backburnerVendors, 'bb_');
+  }
+
+  list.innerHTML = html;
 }
 
 
