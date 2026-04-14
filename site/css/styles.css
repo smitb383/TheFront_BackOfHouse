@@ -548,23 +548,9 @@ body::before {
   text-transform: uppercase; padding: 8px 16px; cursor: pointer; border-radius: 2px; transition: all 0.2s;
 }
 .add-vendor-btn:hover { filter: brightness(1.1); }
-.vendor-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-  margin-bottom: 10px; overflow: hidden;
-}
-.vendor-card-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; }
-.vendor-status {
-  font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase;
-  padding: 2px 8px; border-radius: 10px; flex-shrink: 0;
-}
-.status-signed    { background: rgba(136,201,138,0.15); color: #88c98a; }
-.status-prospect  { background: rgba(226,201,126,0.12); color: var(--front); }
-.status-past      { background: rgba(255,255,255,0.06); color: var(--muted); }
-.status-reached   { background: rgba(201,168,212,0.15); color: #c9a8d4; }
+/* base vendor-field & action styles (card styles defined in vendor section below) */
 .vendor-name { font-size: 13px; flex: 1; }
 .vendor-medium { font-size: 10px; color: var(--muted); }
-.vendor-body { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
-.vendor-card.open .vendor-body { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 14px; }
 .vendor-field label { font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
 .vendor-field input, .vendor-field textarea, .vendor-field select {
   width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 2px;
@@ -575,7 +561,6 @@ body::before {
 .vendor-field select { font-family: 'DM Mono', monospace; font-size: 10px; background: var(--surface2); }
 .vendor-field input:focus, .vendor-field textarea:focus, .vendor-field select:focus { border-color: #c9a8d4; }
 .vendor-field.full { grid-column: 1 / -1; }
-.vendor-actions { grid-column: 1 / -1; display: flex; gap: 10px; margin-top: 4px; }
 .vendor-save-btn {
   background: #c9a8d4; border: none; color: #0c0c0f;
   font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
@@ -2306,31 +2291,138 @@ body::before {
 .vendor-group-label { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300; }
 .vendor-group-count { font-size: 9px; color: var(--muted); }
 
-/* compact vendor card */
+/* ── FULL-WIDTH VENDOR VIEWS ── */
+#front-vendors,
+#front-popup-vendors {
+  max-width: none;
+  width: calc(100% + 48px);
+  margin-left: -24px;
+  margin-right: -24px;
+  padding: 0 32px;
+}
+
+/* vendor card — visual layout */
 .vendor-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-  margin-bottom: 7px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  margin-bottom: 10px; overflow: hidden;
 }
 .vendor-card-header {
   display: grid; grid-template-columns: auto 1fr auto auto auto;
-  gap: 10px; align-items: center; padding: 10px 14px; cursor: pointer;
+  gap: 10px; align-items: center; padding: 12px 16px; cursor: pointer;
 }
-.vendor-status { font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
+.vendor-status { font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; font-family: 'DM Mono', monospace; }
 .status-signed   { background: rgba(136,201,138,0.15); color: #88c98a; }
 .status-prospect { background: rgba(226,201,126,0.12); color: var(--front); }
 .status-past     { background: rgba(255,255,255,0.06); color: var(--muted); }
 .status-reached  { background: rgba(201,168,212,0.15); color: #c9a8d4; }
-.vendor-name-text { font-family: 'Cormorant Garamond', serif; font-size: 16px; }
+.vendor-name-text { font-family: 'Cormorant Garamond', serif; font-size: 18px; }
 .vendor-discipline-badge {
   font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase;
   padding: 2px 8px; border-radius: 10px; white-space: nowrap;
   background: rgba(201,168,212,0.08); color: #c9a8d4; border: 1px solid rgba(201,168,212,0.2);
+  font-family: 'DM Mono', monospace;
 }
 .vendor-ig { font-size: 10px; color: var(--muted); }
 .vendor-chevron { font-size: 9px; color: var(--muted); transition: transform 0.2s; }
 .vendor-card.open .vendor-chevron { transform: rotate(180deg); }
 .vendor-body { display: none; border-top: 1px solid var(--border); }
-.vendor-card.open .vendor-body { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 14px 10px; }
+.vendor-card.open .vendor-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+/* left: hero image drop zone */
+.vendor-hero-zone {
+  min-height: 320px;
+  background: var(--faint);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.vendor-hero-zone img {
+  width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; inset: 0;
+}
+.vendor-hero-zone.dragover {
+  outline: 2px dashed #c9a8d4;
+  outline-offset: -4px;
+  background: rgba(201,168,212,0.06);
+}
+.vendor-hero-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  color: var(--muted); text-align: center; padding: 24px; z-index: 1;
+}
+.vendor-hero-placeholder-icon {
+  width: 48px; height: 48px; border: 2px dashed var(--border); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: var(--border); transition: border-color 0.2s, color 0.2s;
+}
+.vendor-hero-zone.dragover .vendor-hero-placeholder-icon,
+.vendor-hero-zone:hover .vendor-hero-placeholder-icon { border-color: #c9a8d4; color: #c9a8d4; }
+.vendor-hero-placeholder-text {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em;
+  text-transform: uppercase; line-height: 1.6;
+}
+.vendor-hero-placeholder-text span { color: #c9a8d4; cursor: pointer; }
+.vendor-hero-placeholder-text span:hover { text-decoration: underline; }
+.vendor-hero-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+  display: flex; gap: 6px; padding: 10px;
+  background: linear-gradient(transparent, rgba(12,12,15,0.75));
+  opacity: 0; transition: opacity 0.2s;
+}
+.vendor-hero-zone:hover .vendor-hero-overlay { opacity: 1; }
+.vendor-hero-overlay button {
+  background: rgba(12,12,15,0.7); border: 1px solid rgba(255,255,255,0.15);
+  color: #fff; font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 5px 10px; border-radius: 3px; cursor: pointer;
+  transition: background 0.15s;
+}
+.vendor-hero-overlay button:hover { background: rgba(12,12,15,0.9); }
+
+/* right: vendor info fields */
+.vendor-info-panel {
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.vendor-info-panel .vendor-field label {
+  font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px;
+}
+.vendor-info-panel .vendor-field input,
+.vendor-info-panel .vendor-field select,
+.vendor-info-panel .vendor-field textarea {
+  width: 100%; background: var(--faint); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Cormorant Garamond', serif; font-size: 15px;
+  padding: 8px 10px; border-radius: 3px; outline: none; transition: border-color 0.15s;
+}
+.vendor-info-panel .vendor-field input:focus,
+.vendor-info-panel .vendor-field select:focus,
+.vendor-info-panel .vendor-field textarea:focus { border-color: #c9a8d4; }
+.vendor-info-panel .vendor-field textarea { min-height: 60px; resize: vertical; }
+
+/* extra photos strip below the hero */
+.vendor-photos-strip {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto;
+}
+.vendor-photos-strip .vendor-photo-slot {
+  width: 56px; height: 56px; aspect-ratio: 1; flex-shrink: 0;
+}
+
+.vendor-info-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+
+.vendor-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; }
+
+@media(max-width:700px){
+  .vendor-card.open .vendor-body { grid-template-columns: 1fr; }
+  .vendor-hero-zone { min-height: 220px; border-right: none; border-bottom: 1px solid var(--border); }
+  #front-vendors, #front-popup-vendors { width: calc(100% + 24px); margin-left: -12px; margin-right: -12px; padding: 0 16px; }
+}
 /* ── BUDGET SYSTEM ── */
 .budget-layout {
   display: grid;

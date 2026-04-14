@@ -3844,6 +3844,38 @@ function removeVendorPhoto(id, idx, store) {
   if (store === 'popup') renderPopupVendors(); else renderVendors();
 }
 
+async function handleVendorDrop(event, id, store) {
+  const files = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  const getF  = store === 'popup' ? getPopupVendors  : getVendors;
+  const saveF = store === 'popup' ? savePopupVendors : saveVendors;
+  const vendors = getF();
+  const v = vendors.find(x => x.id === id);
+  if (!v) return;
+  if (!v.photos) v.photos = [];
+  const slots = 9 - v.photos.length;
+  if (slots <= 0) { alert('Max 9 photos per vendor'); return; }
+  const toProcess = files.slice(0, slots);
+  showToast('Compressing ' + toProcess.length + ' photo' + (toProcess.length > 1 ? 's' : '') + '…', '#8899aa');
+  try {
+    for (const file of toProcess) {
+      const compressed = await compressImage(file, 600, 0.75);
+      v.photos.push(compressed);
+    }
+    saveF(vendors);
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || (e.message && e.message.includes('quota'))) {
+      alert('Storage full. Try deleting some vendors or exporting + clearing data.');
+      return;
+    }
+  }
+  if (store === 'popup') renderPopupVendors(); else renderVendors();
+  // Re-open the card after re-render
+  const pfx = store === 'popup' ? 'pv' : 'v';
+  document.getElementById(pfx + 'card-' + id)?.classList.add('open');
+  showToast('Photos added ✓', '#88c98a');
+}
+
 function buildVendorCard(v, store) {
   const pfx   = store === 'popup' ? 'pv' : 'v';
   const updFn = store === 'popup' ? 'updatePopupVendorField' : 'updateVendorField';
@@ -3852,17 +3884,21 @@ function buildVendorCard(v, store) {
   const toastColor = store === 'popup' ? '#a8c4d4' : '#c9a8d4';
   const photos = v.photos || [];
   const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : v.status;
+  const heroPhoto = photos[0] || '';
+  const extraPhotos = photos.slice(1);
 
-  const photoSlots = photos.map((src, idx) => `
+  const extraPhotoSlots = extraPhotos.map((src, idx) => `
     <div class="vendor-photo-slot">
       <img src="${esc(src)}" alt="">
-      <button class="vendor-photo-remove" onclick="event.stopPropagation();removeVendorPhoto(${v.id},${idx},'${store}')">✕</button>
+      <button class="vendor-photo-remove" onclick="event.stopPropagation();removeVendorPhoto(${v.id},${idx+1},'${store}')">✕</button>
     </div>`).join('');
 
   const commissionField = store === 'popup'
     ? `<div class="vendor-field"><label>Participation fee</label><input value="${esc(v.fee||v.commissionRate||'')}" placeholder="e.g. $200 for the full run" oninput="${updFn}(${v.id},'fee',this.value)"></div>`
-    : `<div class="vendor-field"><label>Commission / fee</label><input value="${esc(v.commissionRate)}" placeholder="e.g. 30% + $200/cycle" oninput="${updFn}(${v.id},'commissionRate',this.value)"></div>
-       <div class="vendor-field"><label>Cycles</label><input value="${esc(v.cyclesParticipated)}" placeholder="e.g. Spring 2024" oninput="${updFn}(${v.id},'cyclesParticipated',this.value)"></div>`;
+    : `<div class="vendor-info-row">
+         <div class="vendor-field"><label>Commission / fee</label><input value="${esc(v.commissionRate)}" placeholder="e.g. 30% + $200/cycle" oninput="${updFn}(${v.id},'commissionRate',this.value)"></div>
+         <div class="vendor-field"><label>Cycles</label><input value="${esc(v.cyclesParticipated)}" placeholder="e.g. Spring 2024" oninput="${updFn}(${v.id},'cyclesParticipated',this.value)"></div>
+       </div>`;
 
   return `
     <div class="vendor-card" id="${pfx}card-${v.id}">
@@ -3875,37 +3911,57 @@ function buildVendorCard(v, store) {
         <span class="vendor-chevron">▾</span>
       </div>
       <div class="vendor-body">
-        <div class="vendor-field"><label>Name</label><input value="${esc(v.name)}" placeholder="Designer / brand name" oninput="${updFn}(${v.id},'name',this.value)"></div>
-        <div class="vendor-field"><label>Discipline</label>
-          <select onchange="${updFn}(${v.id},'discipline',this.value)">
-            ${VENDOR_DISCIPLINES.map(d=>`<option value="${d}"${(v.discipline||'Other')===d?' selected':''}>${d}</option>`).join('')}
-          </select>
+        <div class="vendor-hero-zone" id="${pfx}hero-${v.id}"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="event.preventDefault();this.classList.remove('dragover');handleVendorDrop(event,${v.id},'${store}')">
+          ${heroPhoto
+            ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">
+               <div class="vendor-hero-overlay">
+                 <button onclick="event.stopPropagation();removeVendorPhoto(${v.id},0,'${store}')">Remove</button>
+                 <button onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">Add more</button>
+               </div>`
+            : `<div class="vendor-hero-placeholder">
+                 <div class="vendor-hero-placeholder-icon">+</div>
+                 <div class="vendor-hero-placeholder-text">
+                   Drag & drop an image here<br>
+                   or <span onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">browse files</span>
+                 </div>
+               </div>`}
         </div>
-        <div class="vendor-field"><label>Status</label>
-          <select onchange="${updFn}(${v.id},'status',this.value)">
-            <option value="prospect"${v.status==='prospect'?' selected':''}>Prospect</option>
-            <option value="reached"${v.status==='reached'?' selected':''}>Reached out</option>
-            <option value="signed"${v.status==='signed'?' selected':''}>${store==='popup'?'Confirmed':'Signed'}</option>
-            <option value="past"${v.status==='past'?' selected':''}>Past</option>
-          </select>
-        </div>
-        <div class="vendor-field"><label>Email</label><input value="${esc(v.email)}" placeholder="email@…" oninput="${updFn}(${v.id},'email',this.value)"></div>
-        <div class="vendor-field"><label>Instagram</label><input value="${esc(v.instagram)}" placeholder="@handle" oninput="${updFn}(${v.id},'instagram',this.value)"></div>
-        <div class="vendor-field"><label>Website</label><input value="${esc(v.website)}" placeholder="https://…" oninput="${updFn}(${v.id},'website',this.value)"></div>
-        ${commissionField}
-        <div class="vendor-field full"><label>Notes</label><textarea placeholder="How you met, what they make, relevant context…" oninput="${updFn}(${v.id},'notes',this.value)">${esc(v.notes)}</textarea></div>
+        <div class="vendor-info-panel">
+          <div class="vendor-info-row">
+            <div class="vendor-field"><label>Name</label><input value="${esc(v.name)}" placeholder="Designer / brand name" oninput="${updFn}(${v.id},'name',this.value)"></div>
+            <div class="vendor-field"><label>Discipline</label>
+              <select onchange="${updFn}(${v.id},'discipline',this.value)">
+                ${VENDOR_DISCIPLINES.map(d=>`<option value="${d}"${(v.discipline||'Other')===d?' selected':''}>${d}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="vendor-info-row">
+            <div class="vendor-field"><label>Status</label>
+              <select onchange="${updFn}(${v.id},'status',this.value)">
+                <option value="prospect"${v.status==='prospect'?' selected':''}>Prospect</option>
+                <option value="reached"${v.status==='reached'?' selected':''}>Reached out</option>
+                <option value="signed"${v.status==='signed'?' selected':''}>${store==='popup'?'Confirmed':'Signed'}</option>
+                <option value="past"${v.status==='past'?' selected':''}>Past</option>
+              </select>
+            </div>
+            <div class="vendor-field"><label>Email</label><input value="${esc(v.email)}" placeholder="email@…" oninput="${updFn}(${v.id},'email',this.value)"></div>
+          </div>
+          <div class="vendor-info-row">
+            <div class="vendor-field"><label>Instagram</label><input value="${esc(v.instagram)}" placeholder="@handle" oninput="${updFn}(${v.id},'instagram',this.value)"></div>
+            <div class="vendor-field"><label>Website</label><input value="${esc(v.website)}" placeholder="https://…" oninput="${updFn}(${v.id},'website',this.value)"></div>
+          </div>
+          ${commissionField}
+          <div class="vendor-field"><label>Notes</label><textarea placeholder="How you met, what they make, relevant context…" oninput="${updFn}(${v.id},'notes',this.value)">${esc(v.notes)}</textarea></div>
 
-        <div class="vendor-photos-section">
-          <div class="vendor-photos-label">Work photos ${photos.length ? '('+photos.length+'/9)' : ''}</div>
-          <div class="vendor-photos-grid">${photoSlots}</div>
-          <button class="vendor-photo-upload-btn" onclick="pickVendorPhotos(${v.id},'${store}')">
-            ↑ Upload photos from device
-          </button>
-        </div>
+          ${extraPhotos.length ? `<div class="vendor-photos-strip">${extraPhotoSlots}</div>` : ''}
 
-        <div class="vendor-actions">
-          <button class="vendor-save-btn" onclick="showToast('Saved ✓','${toastColor}')">Save ✓</button>
-          <button class="vendor-delete-btn" onclick="${delFn}(${v.id})">Delete</button>
+          <div class="vendor-actions">
+            <button class="vendor-save-btn" onclick="showToast('Saved ✓','${toastColor}')">Save ✓</button>
+            <button class="vendor-delete-btn" onclick="${delFn}(${v.id})">Delete</button>
+          </div>
         </div>
       </div>
     </div>`;
