@@ -2150,6 +2150,7 @@ function showTab(project, tab, btn) {
   if (tab === 'chashama-storefront') setTimeout(function(){ loadBPData(); }, 20);
   if (tab === 'chashama-budget') setTimeout(function(){ initCshBudget(); }, 20);
   if (tab === 'chashama-pl') setTimeout(function(){ initCshPL(); }, 20);
+  if (tab === 'popup-vendors') setTimeout(function(){ renderPopupVendors(); }, 20);
 }
 
 
@@ -3918,8 +3919,10 @@ function buildVendorCard(v, store) {
             ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">`
             : `<div class="vendor-row-img-empty" onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">+</div>`}
         </div>
-        <div class="vendor-row-name">${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}</div>
-        <div class="vendor-row-cell"><span class="vendor-status status-${v.status}">${statusLabel}</span></div>
+        <div class="vendor-row-name">
+          ${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}
+          <span class="vendor-status status-${v.status}">${statusLabel}</span>
+        </div>
         <div class="vendor-row-cell vendor-row-location">${esc(v.location || '')}</div>
         <div class="vendor-row-cell vendor-row-price">${esc(v.priceRange || '')}</div>
         <div class="vendor-row-cell vendor-row-ig">${igDisplay ? `<a href="https://instagram.com/${esc(igHandle)}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a>` : ''}</div>
