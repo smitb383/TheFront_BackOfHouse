@@ -1470,10 +1470,66 @@
           <div class="view-desc">Every graphic asset that needs to be produced. For each one: who owns it, where it'll be made, and any ideation notes. Add, edit, or delete items freely.</div></div>
           <div><button class="trk-btn" style="background:var(--front);color:#000;border-color:var(--front)" onclick="addGraphicScopeItem()">+ Add Asset</button></div>
         </div>
+        <div class="ws-section" style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)">Possible Graphic Designers</div>
+            <button class="trk-btn" style="font-size:10px;padding:5px 12px" onclick="addGraphicDesigner()">+ Add Designer</button>
+          </div>
+          <div id="graphic-designers-list"></div>
+        </div>
+
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">Asset Scope</div>
         <div class="ws-section">
           <div id="popup-graphic-scope-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px"></div>
         </div>
         <script>
+          // ── GRAPHIC DESIGNERS ROSTER ──
+          var GD_KEY = 'popup_graphic_designers_v1';
+          function getGraphicDesigners() {
+            try { var raw = localStorage.getItem(GD_KEY); if (raw) { var arr = JSON.parse(raw); if (Array.isArray(arr)) return arr; } } catch(e) {}
+            return [];
+          }
+          function saveGraphicDesigners(list) { localStorage.setItem(GD_KEY, JSON.stringify(list)); }
+          function addGraphicDesigner() {
+            var list = getGraphicDesigners();
+            list.push({ id: Date.now(), name:'', link:'', notes:'' });
+            saveGraphicDesigners(list);
+            renderGraphicDesigners();
+          }
+          function editGraphicDesigner(id, field, val) {
+            var list = getGraphicDesigners();
+            var d = list.find(function(x){ return x.id === id; });
+            if (d) { d[field] = val; saveGraphicDesigners(list); }
+          }
+          function removeGraphicDesigner(id) {
+            if (!confirm('Remove this designer?')) return;
+            saveGraphicDesigners(getGraphicDesigners().filter(function(x){ return x.id !== id; }));
+            renderGraphicDesigners();
+          }
+          function renderGraphicDesigners() {
+            var el = document.getElementById('graphic-designers-list');
+            if (!el) return;
+            var list = getGraphicDesigners();
+            if (!list.length) {
+              el.innerHTML = '<div style="color:var(--muted);font-style:italic;font-family:Cormorant Garamond,serif;font-size:14px;padding:12px 0">No designers added yet.</div>';
+              return;
+            }
+            el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">' + list.map(function(d) {
+              var linkDisplay = d.link ? d.link.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : '';
+              return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;gap:10px;align-items:flex-start">' +
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
+                  '<input type="text" value="' + escAttr(d.name) + '" placeholder="Designer name" oninput="editGraphicDesigner(' + d.id + ',\'name\',this.value)" style="background:none;border:none;border-bottom:1px solid var(--faint);color:var(--text);font-family:Cormorant Garamond,serif;font-size:16px;font-weight:600;outline:none;padding:2px 0;width:100%">' +
+                  '<input type="text" value="' + escAttr(d.link) + '" placeholder="IG or portfolio link" oninput="editGraphicDesigner(' + d.id + ',\'link\',this.value)" style="background:none;border:none;color:#82a4d4;font-family:DM Mono,monospace;font-size:10px;outline:none;padding:2px 0;width:100%">' +
+                  '<textarea placeholder="Notes…" oninput="editGraphicDesigner(' + d.id + ',\'notes\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);border-radius:3px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:13px;outline:none;padding:6px 8px;min-height:36px;resize:vertical;width:100%;box-sizing:border-box">' + escHtml(d.notes) + '</textarea>' +
+                '</div>' +
+                '<button onclick="removeGraphicDesigner(' + d.id + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px" title="Remove">✕</button>' +
+              '</div>';
+            }).join('') + '</div>';
+          }
+          document.addEventListener('DOMContentLoaded', renderGraphicDesigners);
+          if (document.readyState !== 'loading') renderGraphicDesigners();
+
+          // ── GRAPHIC SCOPE ──
           var GRAPHIC_SCOPE_KEY = 'popup_graphic_scope_v1';
           var GRAPHIC_TYPE_CYCLE = ['', 'physical', 'digital', 'both'];
           var GRAPHIC_TYPE_COLORS = {
