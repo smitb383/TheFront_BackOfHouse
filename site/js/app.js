@@ -1221,11 +1221,12 @@ function visRenderLinks() {
   var el = document.getElementById('vis-links-list');
   if (!el) return;
   el.innerHTML = links.map(function(lk, i) {
-    return '<div class="vi-link-row">' +
+    return '<div class="vi-link-row" style="flex-wrap:wrap">' +
       '<input class="vi-link-label" value="'+esc(lk.label||'')+'" placeholder="Label" data-idx="'+i+'" data-field="label" oninput="visUpdateLink(this)">' +
       '<input class="vi-link-url" value="'+esc(lk.url||'')+'" placeholder="https://…" data-idx="'+i+'" data-field="url" oninput="visUpdateLink(this)">' +
       (lk.url ? '<a class="vi-link-open" href="'+esc(lk.url)+'" target="_blank">↗</a>' : '') +
       '<button class="vi-row-del" data-idx="'+i+'" onclick="visDeleteLink(+this.dataset.idx)">✕</button>' +
+      '<textarea class="vi-link-notes" data-idx="'+i+'" data-field="notes" placeholder="Add notes…" oninput="visUpdateLink(this)" style="width:100%;margin-top:4px;min-height:36px;font-family:\'Cormorant Garamond\',serif;font-size:13px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:6px 8px;color:var(--text);resize:vertical">'+esc(lk.notes||'')+'</textarea>' +
     '</div>';
   }).join('');
 }
@@ -1238,13 +1239,16 @@ function visDeleteLink(idx) {
   var links=getVisLinks(); links.splice(idx,1); saveVisLinks(links); visRenderLinks();
 }
 function visAddLink() {
-  var links=getVisLinks(); links.push({label:'',url:''}); saveVisLinks(links); visRenderLinks();
+  var links=getVisLinks(); links.push({label:'',url:'',notes:''}); saveVisLinks(links); visRenderLinks();
 }
 
 function initBrandTabs() {
   seedBrandDefaults();
   visRenderSwatches('primary');
   visRenderSwatches('accent');
+  visRenderSwatches('color-dir1');
+  visRenderSwatches('color-dir2');
+  visRenderSwatches('color-dir3');
   visRenderLinks();
   loadBPData();
 }
