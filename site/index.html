@@ -74,14 +74,14 @@
           </div>
           <div class="brand-sub-bar active" id="brand-bar-front">
             <button class="tab" data-tab="brand-identity" onclick="showTab('front','brand-identity',this)"><span class="tab-icon">✦</span>Brand Identity</button>
-            <button class="tab" data-tab="visual-identity" onclick="showTab('front','visual-identity',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
             <button class="tab" data-tab="story" onclick="showTab('front','story',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
+            <button class="tab" data-tab="visual-identity" onclick="showTab('front','visual-identity',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
           </div>
           <div class="brand-sub-bar" id="brand-bar-popup">
             <button class="tab active" data-tab="popup-brand-identity" onclick="showTab('front','popup-brand-identity',this)"><span class="tab-icon">✦</span>Concept Brainstorm</button>
             <button class="tab" data-tab="popup-brand-scope" onclick="showTab('front','popup-brand-scope',this)"><span class="tab-icon">📐</span>Graphic Scope</button>
-            <button class="tab" data-tab="popup-brand-voice" onclick="showTab('front','popup-brand-voice',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
             <button class="tab" data-tab="popup-brand-visual" onclick="showTab('front','popup-brand-visual',this)"><span class="tab-icon">🎨</span>Visual Identity</button>
+            <button class="tab" data-tab="popup-brand-voice" onclick="showTab('front','popup-brand-voice',this)"><span class="tab-icon">✍️</span>Voice & Story</button>
             <button class="tab" data-tab="popup-brand-merch" onclick="showTab('front','popup-brand-merch',this)"><span class="tab-icon">🛍</span>Merch Ideation</button>
             <button class="tab" data-tab="popup-brand-website" onclick="showTab('front','popup-brand-website',this)"><span class="tab-icon">🌐</span>Website Ideation</button>
             <button class="tab" data-tab="popup-brand-signage" onclick="showTab('front','popup-brand-signage',this)"><span class="tab-icon">🪧</span>Signage Ideation</button>
@@ -1116,57 +1116,24 @@
         </div>
 
         <div class="brand-section">
-          <div class="brand-section-label">Logo Direction</div>
-          <div class="brand-hint" style="margin-bottom:12px">Three directions to explore — each represents a different approach to the brand mark.</div>
-
-          <div class="brand-field" style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
-            <div class="brand-label" style="font-size:11px;letter-spacing:0.06em">Direction 1</div>
-            <input class="brand-input bp-field" data-key="vis-logo-dir1-name" placeholder="Direction name — e.g. Typographic Wordmark, Minimal Serif…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
-            <textarea class="field-textarea bp-field" data-key="vis-logo-dir1-desc" placeholder="Describe this direction — concept, feeling, references, how it would be used…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
-            <div class="visual-dropzone" data-section="logo-dir1"></div>
+          <div class="brand-section-label">Color</div>
+          <div class="vi-two-col" style="gap:16px">
+            <div class="brand-field">
+              <div class="brand-label">Primary palette</div>
+              <div class="brand-hint">The colors that show up everywhere — background, primary text, brand moments</div>
+              <div class="vis-swatch-row" id="vis-primary-swatches"></div>
+              <button class="vi-add-btn" onclick="visAddSwatch('primary')" style="margin-top:6px">+ Add color</button>
+            </div>
+            <div class="brand-field">
+              <div class="brand-label">Accent / secondary palette</div>
+              <div class="brand-hint">Used sparingly — for highlights, CTAs, seasonal moments</div>
+              <div class="vis-swatch-row" id="vis-accent-swatches"></div>
+              <button class="vi-add-btn" onclick="visAddSwatch('accent')" style="margin-top:6px">+ Add color</button>
+            </div>
           </div>
-
-          <div class="brand-field" style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
-            <div class="brand-label" style="font-size:11px;letter-spacing:0.06em">Direction 2</div>
-            <input class="brand-input bp-field" data-key="vis-logo-dir2-name" placeholder="Direction name — e.g. Abstract Mark, Symbol-Led…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
-            <textarea class="field-textarea bp-field" data-key="vis-logo-dir2-desc" placeholder="Describe this direction…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
-            <div class="visual-dropzone" data-section="logo-dir2"></div>
-          </div>
-
-          <div class="brand-field" style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
-            <div class="brand-label" style="font-size:11px;letter-spacing:0.06em">Direction 3</div>
-            <input class="brand-input bp-field" data-key="vis-logo-dir3-name" placeholder="Direction name — e.g. Monogram, Stamp / Seal…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
-            <textarea class="field-textarea bp-field" data-key="vis-logo-dir3-desc" placeholder="Describe this direction…" oninput="autosaveBP(this)" style="min-height:70px"></textarea>
-            <div class="visual-dropzone" data-section="logo-dir3"></div>
-          </div>
-        </div>
-
-        <div class="brand-section">
-          <div class="brand-section-label">Color Palette</div>
-          <div class="brand-hint" style="margin-bottom:12px">Three directions to explore — each represents a different mood or approach to the brand's palette.</div>
-
-          <div class="brand-field" style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
-            <div class="brand-label" style="font-size:11px;letter-spacing:0.06em">Direction 1</div>
-            <input class="brand-input bp-field" data-key="vis-color-dir1-name" placeholder="Direction name — e.g. Warm Neutral, Earth & Plaster…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
-            <div class="vis-swatch-row" id="vis-color-dir1-swatches"></div>
-            <button class="vi-add-btn" onclick="visAddSwatch('color-dir1')" style="margin-top:6px">+ Add color</button>
-            <textarea class="field-textarea bp-field" data-key="vis-color-dir1-notes" placeholder="Notes on this direction — what feeling does it evoke? Where would it live?" oninput="autosaveBP(this)" style="min-height:50px;margin-top:8px"></textarea>
-          </div>
-
-          <div class="brand-field" style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
-            <div class="brand-label" style="font-size:11px;letter-spacing:0.06em">Direction 2</div>
-            <input class="brand-input bp-field" data-key="vis-color-dir2-name" placeholder="Direction name — e.g. Cool Minimal, Concrete & Silver…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
-            <div class="vis-swatch-row" id="vis-color-dir2-swatches"></div>
-            <button class="vi-add-btn" onclick="visAddSwatch('color-dir2')" style="margin-top:6px">+ Add color</button>
-            <textarea class="field-textarea bp-field" data-key="vis-color-dir2-notes" placeholder="Notes on this direction…" oninput="autosaveBP(this)" style="min-height:50px;margin-top:8px"></textarea>
-          </div>
-
-          <div class="brand-field" style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
-            <div class="brand-label" style="font-size:11px;letter-spacing:0.06em">Direction 3</div>
-            <input class="brand-input bp-field" data-key="vis-color-dir3-name" placeholder="Direction name — e.g. Muted Color, Sage & Clay…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
-            <div class="vis-swatch-row" id="vis-color-dir3-swatches"></div>
-            <button class="vi-add-btn" onclick="visAddSwatch('color-dir3')" style="margin-top:6px">+ Add color</button>
-            <textarea class="field-textarea bp-field" data-key="vis-color-dir3-notes" placeholder="Notes on this direction…" oninput="autosaveBP(this)" style="min-height:50px;margin-top:8px"></textarea>
+          <div class="brand-field" style="margin-top:16px">
+            <div class="brand-label">Color notes</div>
+            <textarea class="field-textarea bp-field" data-key="vis-color-notes" placeholder="Neutral ground — off-white or plaster tone for the space itself. Accent in print materials only. Text is always near-black, never pure black." oninput="autosaveBP(this)" style="min-height:60px"></textarea>
           </div>
         </div>
 
@@ -1215,7 +1182,7 @@
         <div class="brand-section">
           <div class="brand-section-label">Inspiration links</div>
           <div id="vis-links-list"></div>
-          <button class="vi-add-btn" onclick="visAddLink()" style="margin-top:8px">+ Add reference</button>
+          <button class="vi-add-btn" onclick="visAddLink()" style="margin-top:8px">+ Add link</button>
         </div>
 
         <!-- Visual Identity action bar -->
@@ -1747,19 +1714,66 @@
         </div>
         <div class="ws-section">
           <div class="field-group">
-            <div class="field-label">Logo</div>
-            <textarea class="field-textarea bp-field" data-key="popup-visual-logo" placeholder="Logo direction, wordmark vs. mark, variations needed, sizing rules…" oninput="autosaveBP(this)"></textarea>
-            <div class="visual-dropzone" data-section="logo"></div>
+            <div class="field-label">Logo Direction</div>
+            <div class="field-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px">Three directions to explore — each represents a different approach to the brand mark.</div>
+
+            <div style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
+              <div class="field-label" style="font-size:10px;letter-spacing:0.06em;margin-bottom:6px">Direction 1</div>
+              <input class="field-input bp-field" data-key="popup-logo-dir1-name" placeholder="Direction name — e.g. Typographic Wordmark, Minimal Serif…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
+              <textarea class="field-textarea bp-field" data-key="popup-logo-dir1-desc" placeholder="Describe this direction — concept, feeling, references, how it would be used…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+              <div class="visual-dropzone" data-section="popup-logo-dir1"></div>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
+              <div class="field-label" style="font-size:10px;letter-spacing:0.06em;margin-bottom:6px">Direction 2</div>
+              <input class="field-input bp-field" data-key="popup-logo-dir2-name" placeholder="Direction name — e.g. Abstract Mark, Symbol-Led…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
+              <textarea class="field-textarea bp-field" data-key="popup-logo-dir2-desc" placeholder="Describe this direction…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+              <div class="visual-dropzone" data-section="popup-logo-dir2"></div>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
+              <div class="field-label" style="font-size:10px;letter-spacing:0.06em;margin-bottom:6px">Direction 3</div>
+              <input class="field-input bp-field" data-key="popup-logo-dir3-name" placeholder="Direction name — e.g. Monogram, Stamp / Seal…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
+              <textarea class="field-textarea bp-field" data-key="popup-logo-dir3-desc" placeholder="Describe this direction…" oninput="autosaveBP(this)" style="min-height:60px"></textarea>
+              <div class="visual-dropzone" data-section="popup-logo-dir3"></div>
+            </div>
           </div>
+
           <div class="field-group">
             <div class="field-label">Key visual direction</div>
             <textarea class="field-textarea bp-field" data-key="popup-brand-visual-dir" placeholder="Colors, typography, imagery, textures specific to this popup…" oninput="autosaveBP(this)"></textarea>
             <div class="visual-dropzone" data-section="direction"></div>
+            <div id="popup-vis-refs-list" style="margin-top:12px"></div>
+            <button class="vi-add-btn" onclick="popupVisAddRef()" style="margin-top:8px">+ Add reference</button>
           </div>
+
           <div class="field-group">
-            <div class="field-label">Color palette</div>
-            <textarea class="field-textarea bp-field" data-key="popup-visual-colors" placeholder="Primary and accent colors for the popup…" oninput="autosaveBP(this)"></textarea>
-            <div class="visual-dropzone" data-section="colors"></div>
+            <div class="field-label">Color Palette</div>
+            <div class="field-hint" style="font-size:11px;color:var(--muted);margin-bottom:10px">Three directions to explore — each represents a different mood or approach to the popup's palette.</div>
+
+            <div style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
+              <div class="field-label" style="font-size:10px;letter-spacing:0.06em;margin-bottom:6px">Direction 1</div>
+              <input class="field-input bp-field" data-key="popup-color-dir1-name" placeholder="Direction name — e.g. Warm Neutral, Earth & Plaster…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
+              <div class="vis-swatch-row" id="vis-popup-color-dir1-swatches"></div>
+              <button class="vi-add-btn" onclick="visAddSwatch('popup-color-dir1')" style="margin-top:6px">+ Add color</button>
+              <textarea class="field-textarea bp-field" data-key="popup-color-dir1-notes" placeholder="Notes on this direction — what feeling does it evoke?" oninput="autosaveBP(this)" style="min-height:50px;margin-top:8px"></textarea>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
+              <div class="field-label" style="font-size:10px;letter-spacing:0.06em;margin-bottom:6px">Direction 2</div>
+              <input class="field-input bp-field" data-key="popup-color-dir2-name" placeholder="Direction name — e.g. Cool Minimal, Concrete & Silver…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
+              <div class="vis-swatch-row" id="vis-popup-color-dir2-swatches"></div>
+              <button class="vi-add-btn" onclick="visAddSwatch('popup-color-dir2')" style="margin-top:6px">+ Add color</button>
+              <textarea class="field-textarea bp-field" data-key="popup-color-dir2-notes" placeholder="Notes on this direction…" oninput="autosaveBP(this)" style="min-height:50px;margin-top:8px"></textarea>
+            </div>
+
+            <div style="border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:12px;background:var(--surface2)">
+              <div class="field-label" style="font-size:10px;letter-spacing:0.06em;margin-bottom:6px">Direction 3</div>
+              <input class="field-input bp-field" data-key="popup-color-dir3-name" placeholder="Direction name — e.g. Muted Color, Sage & Clay…" oninput="autosaveBP(this)" style="margin-bottom:8px;font-style:italic">
+              <div class="vis-swatch-row" id="vis-popup-color-dir3-swatches"></div>
+              <button class="vi-add-btn" onclick="visAddSwatch('popup-color-dir3')" style="margin-top:6px">+ Add color</button>
+              <textarea class="field-textarea bp-field" data-key="popup-color-dir3-notes" placeholder="Notes on this direction…" oninput="autosaveBP(this)" style="min-height:50px;margin-top:8px"></textarea>
+            </div>
           </div>
           <div class="field-group">
             <div class="field-label">Typography</div>

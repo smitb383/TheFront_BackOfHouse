@@ -1221,12 +1221,11 @@ function visRenderLinks() {
   var el = document.getElementById('vis-links-list');
   if (!el) return;
   el.innerHTML = links.map(function(lk, i) {
-    return '<div class="vi-link-row" style="flex-wrap:wrap">' +
+    return '<div class="vi-link-row">' +
       '<input class="vi-link-label" value="'+esc(lk.label||'')+'" placeholder="Label" data-idx="'+i+'" data-field="label" oninput="visUpdateLink(this)">' +
       '<input class="vi-link-url" value="'+esc(lk.url||'')+'" placeholder="https://…" data-idx="'+i+'" data-field="url" oninput="visUpdateLink(this)">' +
       (lk.url ? '<a class="vi-link-open" href="'+esc(lk.url)+'" target="_blank">↗</a>' : '') +
       '<button class="vi-row-del" data-idx="'+i+'" onclick="visDeleteLink(+this.dataset.idx)">✕</button>' +
-      '<textarea class="vi-link-notes" data-idx="'+i+'" data-field="notes" placeholder="Add notes…" oninput="visUpdateLink(this)" style="width:100%;margin-top:4px;min-height:36px;font-family:\'Cormorant Garamond\',serif;font-size:13px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:6px 8px;color:var(--text);resize:vertical">'+esc(lk.notes||'')+'</textarea>' +
     '</div>';
   }).join('');
 }
@@ -1239,17 +1238,50 @@ function visDeleteLink(idx) {
   var links=getVisLinks(); links.splice(idx,1); saveVisLinks(links); visRenderLinks();
 }
 function visAddLink() {
-  var links=getVisLinks(); links.push({label:'',url:'',notes:''}); saveVisLinks(links); visRenderLinks();
+  var links=getVisLinks(); links.push({label:'',url:''}); saveVisLinks(links); visRenderLinks();
+}
+
+// Popup visual references with notes
+function getPopupVisRefs() {
+  try { return JSON.parse(localStorage.getItem('popup_vis_refs_v1') || '[]'); } catch(e) { return []; }
+}
+function savePopupVisRefs(d) { localStorage.setItem('popup_vis_refs_v1', JSON.stringify(d)); }
+function popupVisRenderRefs() {
+  var refs = getPopupVisRefs();
+  var el = document.getElementById('popup-vis-refs-list');
+  if (!el) return;
+  el.innerHTML = refs.map(function(r, i) {
+    return '<div style="border:1px solid var(--border);border-radius:4px;padding:10px;margin-bottom:8px;background:var(--surface2)">' +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+        '<input class="field-input" value="'+esc(r.label||'')+'" placeholder="Reference name" data-idx="'+i+'" data-field="label" oninput="popupVisUpdateRef(this)" style="flex:1">' +
+        '<input class="field-input" value="'+esc(r.url||'')+'" placeholder="https://…" data-idx="'+i+'" data-field="url" oninput="popupVisUpdateRef(this)" style="flex:1">' +
+        (r.url ? '<a href="'+esc(r.url)+'" target="_blank" style="color:var(--front);font-size:14px;text-decoration:none">↗</a>' : '') +
+        '<button class="vi-row-del" data-idx="'+i+'" onclick="popupVisDeleteRef(+this.dataset.idx)">✕</button>' +
+      '</div>' +
+      '<textarea class="field-textarea" data-idx="'+i+'" data-field="notes" placeholder="Notes — why this reference matters, what to pull from it…" oninput="popupVisUpdateRef(this)" style="min-height:36px;margin-top:6px;font-size:13px">'+esc(r.notes||'')+'</textarea>' +
+    '</div>';
+  }).join('');
+}
+function popupVisUpdateRef(el) {
+  var refs=getPopupVisRefs(); var idx=+el.dataset.idx;
+  if(refs[idx]) { refs[idx][el.dataset.field]=el.value; savePopupVisRefs(refs); }
+}
+function popupVisDeleteRef(idx) {
+  var refs=getPopupVisRefs(); refs.splice(idx,1); savePopupVisRefs(refs); popupVisRenderRefs();
+}
+function popupVisAddRef() {
+  var refs=getPopupVisRefs(); refs.push({label:'',url:'',notes:''}); savePopupVisRefs(refs); popupVisRenderRefs();
 }
 
 function initBrandTabs() {
   seedBrandDefaults();
   visRenderSwatches('primary');
   visRenderSwatches('accent');
-  visRenderSwatches('color-dir1');
-  visRenderSwatches('color-dir2');
-  visRenderSwatches('color-dir3');
+  visRenderSwatches('popup-color-dir1');
+  visRenderSwatches('popup-color-dir2');
+  visRenderSwatches('popup-color-dir3');
   visRenderLinks();
+  popupVisRenderRefs();
   loadBPData();
 }
 
