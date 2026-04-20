@@ -3949,7 +3949,7 @@ function buildVendorCard(v, store) {
   const togFn = store === 'popup' ? 'togglePopupVendor'      : 'toggleVendor';
   const toastColor = store === 'popup' ? '#a8c4d4' : '#c9a8d4';
   const photos = v.photos || [];
-  const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : (v.status || 'prospect');
+  const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : v.status === 'vendor-tbd' ? 'vendor tbd' : (v.status || 'prospect');
   const heroPhoto = photos[0] || '';
 
   const allPhotoSlots = photos.map((src, idx) => `
@@ -4027,6 +4027,7 @@ function buildVendorCard(v, store) {
                 <option value="prospect"${v.status==='prospect'?' selected':''}>Prospect</option>
                 <option value="reached"${v.status==='reached'?' selected':''}>Reached out</option>
                 <option value="signed"${v.status==='signed'?' selected':''}>${store==='popup'?'Confirmed':'Signed'}</option>
+                <option value="vendor-tbd"${v.status==='vendor-tbd'?' selected':''}>Vendor TBD</option>
                 <option value="backburner"${v.status==='backburner'?' selected':''}>Backburner</option>
                 <option value="past"${v.status==='past'?' selected':''}>Past</option>
               </select>
