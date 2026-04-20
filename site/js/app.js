@@ -3777,7 +3777,7 @@ function renderWeekDue(project) {
 
 
 // ─── VENDORS ──────────────────────────
-const VENDOR_DISCIPLINES = ['Clothing','Accessories','Jewelry','Ceramics','Textiles','Objects','Art / Print','Other'];
+const VENDOR_DISCIPLINES = ['Clothing','Accessories','Jewelry','Ceramics','Textiles','Furniture','Objects','Art / Print','Other'];
 let vendorCatFilter  = 'all';
 let vendorViewMode   = 'list';   // 'list' | 'gallery'
 
