@@ -3853,18 +3853,30 @@ function pickVendorPhotos(id, store) {
     const slots = 9 - v.photos.length;
     if (slots <= 0) { alert('Max 9 photos per vendor'); return; }
     const toProcess = files.slice(0, slots);
-    showToast('Compressing ' + toProcess.length + ' photo' + (toProcess.length > 1 ? 's' : '') + '…', '#8899aa');
+    showToast('Uploading ' + toProcess.length + ' photo' + (toProcess.length > 1 ? 's' : '') + '…', '#8899aa');
     try {
       for (const file of toProcess) {
+        // Compress before uploading to keep storage efficient
         const compressed = await compressImage(file, 600, 0.75);
-        v.photos.push(compressed);
+        if (window.uploadVendorPhoto) {
+          // Convert base64 to blob for upload
+          const blob = await fetch(compressed).then(r => r.blob());
+          const url = await window.uploadVendorPhoto(blob, id);
+          v.photos.push(url);
+        } else {
+          // Fallback to base64 if Supabase not available
+          v.photos.push(compressed);
+        }
       }
       saveF(vendors);
     } catch(e) {
+      console.error('[photos] upload error:', e);
       if (e.name === 'QuotaExceededError' || (e.message && e.message.includes('quota'))) {
         alert('Storage full even after compression. Try deleting some vendors or exporting + clearing data.');
-        return;
+      } else {
+        alert('Photo upload failed: ' + (e.message || e));
       }
+      return;
     }
     if (store === 'popup') renderPopupVendors(); else renderVendors();
     showToast('Photos added ✓', '#88c98a');
@@ -3877,7 +3889,15 @@ function removeVendorPhoto(id, idx, store) {
   const saveF = store === 'popup' ? savePopupVendors : saveVendors;
   const vendors = getF();
   const v = vendors.find(x => x.id === id);
-  if (v && v.photos) { v.photos.splice(idx, 1); saveF(vendors); }
+  if (v && v.photos) {
+    const removed = v.photos[idx];
+    v.photos.splice(idx, 1);
+    saveF(vendors);
+    // Clean up from Supabase Storage if it's a URL (not base64)
+    if (removed && !removed.startsWith('data:') && window.deleteVendorPhoto) {
+      window.deleteVendorPhoto(removed);
+    }
+  }
   if (store === 'popup') renderPopupVendors(); else renderVendors();
 }
 
@@ -3893,18 +3913,27 @@ async function handleVendorDrop(event, id, store) {
   const slots = 9 - v.photos.length;
   if (slots <= 0) { alert('Max 9 photos per vendor'); return; }
   const toProcess = files.slice(0, slots);
-  showToast('Compressing ' + toProcess.length + ' photo' + (toProcess.length > 1 ? 's' : '') + '…', '#8899aa');
+  showToast('Uploading ' + toProcess.length + ' photo' + (toProcess.length > 1 ? 's' : '') + '…', '#8899aa');
   try {
     for (const file of toProcess) {
       const compressed = await compressImage(file, 600, 0.75);
-      v.photos.push(compressed);
+      if (window.uploadVendorPhoto) {
+        const blob = await fetch(compressed).then(r => r.blob());
+        const url = await window.uploadVendorPhoto(blob, id);
+        v.photos.push(url);
+      } else {
+        v.photos.push(compressed);
+      }
     }
     saveF(vendors);
   } catch(e) {
+    console.error('[photos] upload error:', e);
     if (e.name === 'QuotaExceededError' || (e.message && e.message.includes('quota'))) {
       alert('Storage full. Try deleting some vendors or exporting + clearing data.');
-      return;
+    } else {
+      alert('Photo upload failed: ' + (e.message || e));
     }
+    return;
   }
   if (store === 'popup') renderPopupVendors(); else renderVendors();
   // Re-open the card after re-render

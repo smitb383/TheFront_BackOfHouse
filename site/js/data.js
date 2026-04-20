@@ -155,6 +155,41 @@ function _startRealtime() {
 // 3. Start realtime listener
 // 4. App.js will then read from localStorage as usual
 
+// ── Supabase Storage helpers for vendor photos ──
+var PHOTO_BUCKET = 'vendor-photos';
+
+function uploadVendorPhoto(file, vendorId) {
+  var sb = _initSB();
+  if (!sb) return Promise.reject(new Error('Supabase not available'));
+  var ext = file.name ? file.name.split('.').pop() : 'jpg';
+  var path = vendorId + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+  return sb.storage.from(PHOTO_BUCKET).upload(path, file, {
+    cacheControl: '3600',
+    upsert: false
+  }).then(function(res) {
+    if (res.error) throw res.error;
+    var urlRes = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+    return urlRes.data.publicUrl;
+  });
+}
+
+function deleteVendorPhoto(url) {
+  var sb = _initSB();
+  if (!sb) return Promise.resolve();
+  // Extract path from public URL
+  var marker = '/object/public/' + PHOTO_BUCKET + '/';
+  var idx = url.indexOf(marker);
+  if (idx === -1) return Promise.resolve(); // base64 or unknown format, skip
+  var path = decodeURIComponent(url.slice(idx + marker.length));
+  return sb.storage.from(PHOTO_BUCKET).remove([path]).then(function(res) {
+    if (res.error) console.warn('[storage] delete error:', res.error);
+  });
+}
+
+// Expose globally
+window.uploadVendorPhoto = uploadVendorPhoto;
+window.deleteVendorPhoto = deleteVendorPhoto;
+
 (function() {
   _initSB();
   _pullAllData().then(function() {
