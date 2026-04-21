@@ -1539,18 +1539,18 @@
             'both':     { bg:'#9FE1CB', fg:'#000' }
           };
           var GRAPHIC_SCOPE_SEED = [
-            { title:'Logo / Wordmark',                          type:'both',     tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Typography & Color System',                type:'digital',  tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Vinyl Signage — Exterior',                 type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Window Graphics',                          type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Interior Signage / Wayfinding',            type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Hang Tags & Maker Cards',                  type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Shopping Bags',                            type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Tissue / Packaging',                       type:'physical', tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Flyer / Opening Invite',                   type:'both',     tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Website Design',                           type:'digital',  tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Social Media Templates',                   type:'digital',  tags:[], owner:'', vendors:'', ideation:'' },
-            { title:'Merch Graphics (stickers, tattoos, etc.)', type:'physical', tags:[], owner:'', vendors:'', ideation:'' }
+            { title:'Logo / Wordmark',                          type:'both',     tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Typography & Color System',                type:'digital',  tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Vinyl Signage — Exterior',                 type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Window Graphics',                          type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Interior Signage / Wayfinding',            type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Hang Tags & Maker Cards',                  type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Shopping Bags',                            type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Tissue / Packaging',                       type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Flyer / Opening Invite',                   type:'both',     tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Website Design',                           type:'digital',  tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Social Media Templates',                   type:'digital',  tags:[], owner:'', content:'', vendors:'', ideation:'' },
+            { title:'Merch Graphics (stickers, tattoos, etc.)', type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' }
           ];
           function getGraphicScope() {
             try {
@@ -1602,6 +1602,8 @@
                 '</div>' +
                 '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Responsible</div>' +
                   '<input type="text" value="' + escAttr(item.owner) + '" placeholder="Brooke / Del / vendor name…" style="width:100%;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box" oninput="editGraphicScope(' + i + ',\'owner\',this.value)"></div>' +
+                '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Content</div>' +
+                  '<textarea placeholder="What goes on this — copy, imagery, specs…" style="width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical" oninput="editGraphicScope(' + i + ',\'content\',this.value)">' + escHtml(item.content) + '</textarea></div>' +
                 '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Vendors / plan for making</div>' +
                   '<textarea placeholder="Where it\'ll be made, quotes, lead time…" style="width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical" oninput="editGraphicScope(' + i + ',\'vendors\',this.value)">' + escHtml(item.vendors) + '</textarea></div>' +
                 '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Ideation / notes</div>' +
@@ -1670,7 +1672,7 @@
           }
           function addGraphicScopeItem() {
             var list = getGraphicScope() || [];
-            list.push({ title:'', type:'', tags:[], owner:'', vendors:'', ideation:'' });
+            list.push({ title:'', type:'', tags:[], owner:'', content:'', vendors:'', ideation:'' });
             saveGraphicScope(list);
             renderGraphicScope();
           }
