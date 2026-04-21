@@ -1591,8 +1591,9 @@
               var tagChips = item.tags.map(function(t, ti) {
                 return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);border-radius:10px;padding:2px 4px 2px 8px;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.05em">' + escHtml(t) + '<button onclick="removeGraphicTag(' + i + ',' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 2px">✕</button></span>';
               }).join('');
-              return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px">' +
+              return '<div draggable="true" data-gs-idx="' + i + '" ondragstart="gsStartDrag(event,' + i + ')" ondragover="gsOverDrag(event,this)" ondragleave="this.style.borderTop=\'1px solid var(--border)\'" ondrop="gsDrop(event,' + i + ')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;cursor:default">' +
                 '<div style="display:flex;align-items:center;gap:8px">' +
+                  '<span style="cursor:grab;color:var(--muted);font-size:12px;padding:0 2px" title="Drag to reorder">⠿</span>' +
                   '<input type="text" value="' + escAttr(item.title) + '" placeholder="Asset title…" style="flex:1;background:none;border:none;border-bottom:1px solid var(--faint);color:var(--text);font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600;outline:none;padding:4px 0" oninput="editGraphicScope(' + i + ',\'title\',this.value)">' +
                   '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 8px" title="Delete asset" onclick="removeGraphicScope(' + i + ')">✕</button>' +
                 '</div>' +
@@ -1683,6 +1684,35 @@
             saveGraphicScope(list);
             renderGraphicScope();
           }
+          var _gsDragIdx = null;
+          function gsStartDrag(e, idx) {
+            _gsDragIdx = idx;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', idx);
+            e.target.closest('[data-gs-idx]').style.opacity = '0.4';
+          }
+          function gsOverDrag(e, el) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            el.style.borderTop = '2px solid var(--front)';
+          }
+          function gsDrop(e, targetIdx) {
+            e.preventDefault();
+            var el = e.target.closest('[data-gs-idx]');
+            if (el) el.style.borderTop = '1px solid var(--border)';
+            if (_gsDragIdx === null || _gsDragIdx === targetIdx) { _gsDragIdx = null; return; }
+            var list = getGraphicScope() || [];
+            var item = list.splice(_gsDragIdx, 1)[0];
+            var newIdx = targetIdx > _gsDragIdx ? targetIdx - 1 : targetIdx;
+            list.splice(newIdx, 0, item);
+            saveGraphicScope(list);
+            _gsDragIdx = null;
+            renderGraphicScope();
+          }
+          document.addEventListener('dragend', function() {
+            _gsDragIdx = null;
+            document.querySelectorAll('[data-gs-idx]').forEach(function(el) { el.style.opacity = '1'; el.style.borderTop = '1px solid var(--border)'; });
+          });
           document.addEventListener('DOMContentLoaded', renderGraphicScope);
           if (document.readyState !== 'loading') renderGraphicScope();
           window.addEventListener('supabase-ready', function() { setTimeout(renderGraphicScope, 500); });
