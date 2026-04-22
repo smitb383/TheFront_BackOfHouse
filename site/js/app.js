@@ -2175,6 +2175,7 @@ function showTab(project, tab, btn) {
   if (tab === 'popup-revenue') setTimeout(function(){ initRevProj(); renderRevProj(); }, 20);
   if (tab === 'popup-pl') setTimeout(function(){ initPLData(); renderPL(); }, 20);
   if (tab === 'popup-inventory') setTimeout(function(){ initPLData(); renderInventory(); }, 20);
+  if (tab === 'popup-inventory-new') setTimeout(function(){ renderInvNew(); }, 20);
   if (tab === 'schedule') setTimeout(function(){ if(typeof initTracker==='function') initTracker(); if(typeof renderTracker==='function') renderTracker(); }, 20);
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
   if (tab === 'chashama-proposal') setTimeout(function(){ loadBPData(); initChaShaMa(); }, 20);
@@ -7953,4 +7954,226 @@ window.fetch = function(url, options) {
 };
 
 document.addEventListener('DOMContentLoaded', checkApiKeyOnLoad);
+
+// ═══════════════════════════════════════════════════════════════
+//  INVENTORY NEW — Card-based consignment inventory
+// ═══════════════════════════════════════════════════════════════
+var INV_NEW_KEY = 'popup_inv_new_v1';
+var INV_NEW_SPLIT = { designer: 70, store: 30 };
+var invNewOpenVendor = null;
+var invNewOpenItem = null;
+
+function getInvNew() {
+  try { return JSON.parse(localStorage.getItem(INV_NEW_KEY) || 'null'); } catch(e) { return null; }
+}
+function saveInvNew(d) { localStorage.setItem(INV_NEW_KEY, JSON.stringify(d)); }
+
+function invNewSyncConfirmed() {
+  var data = getInvNew() || { vendors: [] };
+  var popupVendors = getPopupVendors();
+  var confirmed = popupVendors.filter(function(v) { return v.status === 'signed'; });
+  confirmed.forEach(function(v) {
+    var exists = data.vendors.find(function(iv) { return iv.vendorId === v.id; });
+    if (!exists) {
+      data.vendors.push({
+        vendorId: v.id,
+        name: v.name || 'Unnamed',
+        items: []
+      });
+    } else {
+      // Update name if changed
+      exists.name = v.name || exists.name;
+    }
+  });
+  saveInvNew(data);
+  return data;
+}
+
+function renderInvNew() {
+  var list = document.getElementById('inv-new-list');
+  var totalsEl = document.getElementById('inv-new-totals');
+  if (!list) return;
+  var data = invNewSyncConfirmed();
+  if (!data.vendors.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-family:Cormorant Garamond,serif;font-style:italic">No confirmed vendors yet. Mark a vendor as Confirmed in the Vendors tab to see them here.</div>';
+    if (totalsEl) totalsEl.innerHTML = '';
+    return;
+  }
+
+  var grandTotal = 0, grandStore = 0, grandDesigner = 0, grandItems = 0;
+
+  var html = data.vendors.map(function(vendor, vi) {
+    var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0;
+    vendor.items.forEach(function(item) {
+      var subtotal = (item.unitCost || 0) * (item.qty || 1);
+      vendorTotal += subtotal;
+      vendorStore += subtotal * (INV_NEW_SPLIT.store / 100);
+      vendorDesigner += subtotal * (INV_NEW_SPLIT.designer / 100);
+    });
+    grandTotal += vendorTotal;
+    grandStore += vendorStore;
+    grandDesigner += vendorDesigner;
+    grandItems += vendor.items.length;
+
+    var isOpen = invNewOpenVendor === vi;
+
+    var itemRows = vendor.items.map(function(item, ii) {
+      var subtotal = (item.unitCost || 0) * (item.qty || 1);
+      var storeNet = subtotal * (INV_NEW_SPLIT.store / 100);
+      var designerNet = subtotal * (INV_NEW_SPLIT.designer / 100);
+      var isItemOpen = invNewOpenItem === vi + '-' + ii;
+      var soldDisplay = '';
+      if (item.qty > 1) {
+        soldDisplay = '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">' + (item.sold || 0) + '/' + item.qty + ' sold</span>';
+      } else {
+        soldDisplay = item.sold ? '<span style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a">SOLD</span>' : '';
+      }
+
+      var detailPanel = '';
+      if (isItemOpen) {
+        detailPanel = '<div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 0 4px;border-top:1px dashed var(--faint)">' +
+          '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Material</label>' +
+            '<input class="field-input" value="' + esc(item.material || '') + '" placeholder="e.g. 100% silk" oninput="invNewEditItem(' + vi + ',' + ii + ',\'material\',this.value)" style="margin-top:3px"></div>' +
+          '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Care</label>' +
+            '<input class="field-input" value="' + esc(item.care || '') + '" placeholder="e.g. Dry clean only" oninput="invNewEditItem(' + vi + ',' + ii + ',\'care\',this.value)" style="margin-top:3px"></div>' +
+          '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Packaging</label>' +
+            '<input class="field-input" value="' + esc(item.packaging || '') + '" placeholder="e.g. Tissue + kraft bag" oninput="invNewEditItem(' + vi + ',' + ii + ',\'packaging\',this.value)" style="margin-top:3px"></div>' +
+          '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Dimensions</label>' +
+            '<input class="field-input" value="' + esc(item.dimensions || '') + '" placeholder="e.g. 12 × 8 × 4 in" oninput="invNewEditItem(' + vi + ',' + ii + ',\'dimensions\',this.value)" style="margin-top:3px"></div>' +
+        '</div>';
+      }
+
+      return '<div style="display:grid;grid-template-columns:48px 1fr 90px 70px 50px 80px 80px 28px;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--faint);cursor:pointer;flex-wrap:wrap" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+        '<div style="width:44px;height:44px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
+          (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
+        '</div>' +
+        '<input class="field-input" value="' + esc(item.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:15px">' +
+        '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
+          '<option value=""' + (!item.category ? ' selected' : '') + '>— cat —</option>' +
+          '<option value="clothing"' + (item.category === 'clothing' ? ' selected' : '') + '>Clothing</option>' +
+          '<option value="jewelry"' + (item.category === 'jewelry' ? ' selected' : '') + '>Jewelry</option>' +
+          '<option value="accessories"' + (item.category === 'accessories' ? ' selected' : '') + '>Accessories</option>' +
+          '<option value="ceramics"' + (item.category === 'ceramics' ? ' selected' : '') + '>Ceramics</option>' +
+          '<option value="objects"' + (item.category === 'objects' ? ' selected' : '') + '>Objects</option>' +
+          '<option value="art"' + (item.category === 'art' ? ' selected' : '') + '>Art</option>' +
+          '<option value="textiles"' + (item.category === 'textiles' ? ' selected' : '') + '>Textiles</option>' +
+          '<option value="furniture"' + (item.category === 'furniture' ? ' selected' : '') + '>Furniture</option>' +
+          '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
+        '</select>' +
+        '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" min="0" value="' + (item.unitCost || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'unitCost\',+this.value)" style="width:55px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+        '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
+        '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + Math.round(storeNet) + '</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(designerNet) + ' ' + soldDisplay + '</div>' +
+        '<button onclick="event.stopPropagation();invNewDeleteItem(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">✕</button>' +
+        detailPanel +
+      '</div>';
+    }).join('');
+
+    var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="display:flex;align-items:center;gap:10px;padding:12px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
+      '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (isOpen ? '90' : '0') + 'deg)">▶</span>' +
+      '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);flex:1">' + esc(vendor.name) + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">our $' + Math.round(vendorStore) + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">theirs $' + Math.round(vendorDesigner) + '</span>' +
+    '</div>';
+
+    var vendorBody = '';
+    if (isOpen) {
+      var colHeaders = '<div style="display:grid;grid-template-columns:48px 1fr 90px 70px 50px 80px 80px 28px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+        '<div></div><div>Item</div><div>Category</div><div>Unit $</div><div>Qty</div><div style="text-align:right">Our net</div><div style="text-align:right">Designer net</div><div></div>' +
+      '</div>';
+      vendorBody = '<div style="padding:4px 0 12px">' +
+        colHeaders + itemRows +
+        '<button onclick="invNewAddItem(' + vi + ')" style="margin-top:10px;background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Add item</button>' +
+      '</div>';
+    }
+
+    return '<div style="margin-bottom:4px">' + vendorHeader + vendorBody + '</div>';
+  }).join('');
+
+  list.innerHTML = html;
+
+  if (totalsEl) {
+    totalsEl.innerHTML =
+      '<span>Items: <strong style="color:var(--text)">' + grandItems + '</strong></span>' +
+      '<span>Total retail: <strong style="color:var(--text)">$' + grandTotal.toLocaleString() + '</strong></span>' +
+      '<span>Our split (30%): <strong style="color:#88c98a">$' + Math.round(grandStore).toLocaleString() + '</strong></span>' +
+      '<span>Designer split (70%): <strong style="color:var(--text)">$' + Math.round(grandDesigner).toLocaleString() + '</strong></span>';
+  }
+}
+
+function invNewToggleVendor(vi) {
+  invNewOpenVendor = invNewOpenVendor === vi ? null : vi;
+  invNewOpenItem = null;
+  renderInvNew();
+}
+
+function invNewToggleItem(vi, ii) {
+  var key = vi + '-' + ii;
+  invNewOpenItem = invNewOpenItem === key ? null : key;
+  renderInvNew();
+}
+
+function invNewAddItem(vi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  data.vendors[vi].items.push({
+    id: 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    name: '', category: '', unitCost: 0, qty: 1,
+    photo: '', material: '', care: '', packaging: '', dimensions: '',
+    sold: 0
+  });
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewEditItem(vi, ii, field, val) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  data.vendors[vi].items[ii][field] = val;
+  saveInvNew(data);
+  // Only re-render for fields that affect totals
+  if (field === 'unitCost' || field === 'qty') renderInvNew();
+}
+
+function invNewDeleteItem(vi, ii) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  data.vendors[vi].items.splice(ii, 1);
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewAddVendor() {
+  var name = prompt('Vendor name:');
+  if (!name) return;
+  var data = getInvNew() || { vendors: [] };
+  data.vendors.push({ vendorId: Date.now(), name: name, items: [] });
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewPickPhoto(vi, ii) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async function() {
+    var file = input.files[0];
+    if (!file) return;
+    var compressed = await compressImage(file, 300, 0.7);
+    if (window.uploadVendorPhoto) {
+      try {
+        var blob = await fetch(compressed).then(function(r) { return r.blob(); });
+        var url = await window.uploadVendorPhoto(blob, 'inv-' + vi + '-' + ii);
+        invNewEditItem(vi, ii, 'photo', url);
+      } catch(e) {
+        invNewEditItem(vi, ii, 'photo', compressed);
+      }
+    } else {
+      invNewEditItem(vi, ii, 'photo', compressed);
+    }
+    renderInvNew();
+  };
+  input.click();
+}
 
