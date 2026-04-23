@@ -278,12 +278,62 @@ function deleteVendorPhoto(url) {
 window.uploadVendorPhoto = uploadVendorPhoto;
 window.deleteVendorPhoto = deleteVendorPhoto;
 
+// ── Migrate base64 vendor photos to Supabase Storage ──
+function _migrateBase64Photos() {
+  var sb = _initSB();
+  if (!sb) return Promise.resolve();
+  var keys = ['popup_vendors_v1', 'front_vendors_v1'];
+  var migrated = 0;
+  var promises = keys.map(function(key) {
+    var raw = _origGetItem.call(localStorage, key);
+    if (!raw) return Promise.resolve();
+    var vendors;
+    try { vendors = JSON.parse(raw); } catch(e) { return Promise.resolve(); }
+    if (!Array.isArray(vendors)) return Promise.resolve();
+
+    var photoPromises = [];
+    vendors.forEach(function(v) {
+      if (!v.photos || !Array.isArray(v.photos)) return;
+      v.photos.forEach(function(photo, pi) {
+        if (!photo || !photo.startsWith('data:')) return;
+        // Convert base64 to blob and upload
+        var p = fetch(photo).then(function(r) { return r.blob(); }).then(function(blob) {
+          var path = (v.id || 'unknown') + '/migrated-' + pi + '-' + Date.now() + '.jpg';
+          return sb.storage.from(PHOTO_BUCKET).upload(path, blob, {
+            cacheControl: '3600', upsert: false
+          }).then(function(res) {
+            if (res.error) { console.warn('[migrate] upload failed:', res.error); return; }
+            var urlRes = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+            v.photos[pi] = urlRes.data.publicUrl;
+            migrated++;
+          });
+        }).catch(function(err) { console.warn('[migrate] photo error:', err); });
+        photoPromises.push(p);
+      });
+    });
+
+    return Promise.all(photoPromises).then(function() {
+      if (migrated > 0) {
+        var updated = JSON.stringify(vendors);
+        _origSetItem.call(localStorage, key, updated);
+        // Sync to Supabase
+        _writeQueue[key] = updated;
+        if (_writeTimer) clearTimeout(_writeTimer);
+        _writeTimer = setTimeout(_flushWrites, 500);
+        console.log('[migrate] Migrated ' + migrated + ' base64 photos to Storage for ' + key);
+      }
+    });
+  });
+  return Promise.all(promises);
+}
+
 (function() {
   _initSB();
   _pullAllData().then(function() {
     window._sbPullDone = true;
     _startRealtime();
-    // Dispatch event so app.js can re-render if needed
     window.dispatchEvent(new Event('supabase-ready'));
+    // Run photo migration after data is loaded
+    setTimeout(function() { _migrateBase64Photos(); }, 2000);
   });
 })();
