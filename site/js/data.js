@@ -48,8 +48,21 @@ function _pullAllData() {
     var count = 0;
     var pulledKeys = [];
     (res.data || []).forEach(function(row) {
-      // Store value as JSON string in localStorage (matching what app.js expects)
       var val = row.value;
+
+      // For mergeable keys, merge with any existing local data instead of overwriting
+      if (MERGEABLE_KEYS.indexOf(row.key) >= 0) {
+        var existing = _origGetItem.call(localStorage, row.key);
+        if (existing) {
+          var merged = _mergeKey(row.key, existing, val);
+          _origSetItem.call(localStorage, row.key, JSON.stringify(merged));
+          pulledKeys.push(row.key);
+          count++;
+          return;
+        }
+      }
+
+      // Store value as JSON string in localStorage (matching what app.js expects)
       if (typeof val === 'string') {
         _origSetItem.call(localStorage, row.key, val);
       } else {
@@ -95,7 +108,7 @@ function _flushWrites() {
     if (res.error) { console.error('[data] Sync error:', res.error.message); return; }
     // Daily snapshot: for any critical key we just wrote, mirror to a dated snapshot row.
     // Caps automatically because the key includes YYYY-MM-DD (one snapshot per day, max).
-    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1'];
+    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1', 'popup_vendors_v1', 'front_vendors_v1'];
     var today = new Date().toISOString().slice(0, 10);
     var snapRows = [];
     rows.forEach(function(r) {
@@ -125,6 +138,63 @@ localStorage.setItem = function(key, value) {
   _writeTimer = setTimeout(_flushWrites, 500); // batch writes every 500ms
 };
 
+// ── Merge logic for array-based keys (vendors, etc.) ──
+// Instead of last-write-wins, merge by item id so neither founder's additions get lost.
+var MERGEABLE_KEYS = ['popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1'];
+
+function _mergeArrayById(localArr, remoteArr) {
+  if (!Array.isArray(localArr) || !Array.isArray(remoteArr)) return remoteArr;
+  var merged = {};
+  // Remote is base — add all remote items
+  remoteArr.forEach(function(item) {
+    if (item && item.id) merged[item.id] = item;
+  });
+  // Layer local items on top (local edits take priority for same id)
+  localArr.forEach(function(item) {
+    if (item && item.id) {
+      if (merged[item.id]) {
+        // Merge fields: local wins for any non-empty field
+        var base = merged[item.id];
+        Object.keys(item).forEach(function(k) {
+          if (item[k] !== undefined && item[k] !== '') base[k] = item[k];
+        });
+      } else {
+        // Item exists locally but not remotely — keep it (it's new)
+        merged[item.id] = item;
+      }
+    }
+  });
+  return Object.values(merged);
+}
+
+function _mergeInvNew(local, remote) {
+  if (!local || !remote) return remote || local;
+  if (!local.vendors || !remote.vendors) return remote || local;
+  var vendorMap = {};
+  remote.vendors.forEach(function(v) { vendorMap[v.vendorId] = JSON.parse(JSON.stringify(v)); });
+  local.vendors.forEach(function(v) {
+    if (vendorMap[v.vendorId]) {
+      // Merge items by id
+      vendorMap[v.vendorId].items = _mergeArrayById(v.items || [], vendorMap[v.vendorId].items || []);
+      vendorMap[v.vendorId].name = v.name || vendorMap[v.vendorId].name;
+    } else {
+      vendorMap[v.vendorId] = v;
+    }
+  });
+  return { vendors: Object.values(vendorMap) };
+}
+
+function _mergeKey(key, localStr, remoteVal) {
+  if (MERGEABLE_KEYS.indexOf(key) < 0) return remoteVal;
+  try {
+    var local = JSON.parse(localStr);
+    var remote = typeof remoteVal === 'string' ? JSON.parse(remoteVal) : remoteVal;
+    if (key === 'popup_inv_new_v1') return _mergeInvNew(local, remote);
+    if (Array.isArray(local) && Array.isArray(remote)) return _mergeArrayById(local, remote);
+  } catch(e) {}
+  return remoteVal;
+}
+
 // ── Real-time: listen for changes from the other founder ──
 
 function _startRealtime() {
@@ -138,6 +208,24 @@ function _startRealtime() {
         // Ignore snapshot rows — they're just backups, not live data
         if (key.indexOf('__snap_') >= 0) return;
         var val = payload.new.value;
+
+        // For mergeable keys, merge instead of overwrite
+        if (MERGEABLE_KEYS.indexOf(key) >= 0) {
+          var localStr = _origGetItem.call(localStorage, key);
+          if (localStr) {
+            var merged = _mergeKey(key, localStr, val);
+            var mergedStr = JSON.stringify(merged);
+            _origSetItem.call(localStorage, key, mergedStr);
+            // Write merged result back to Supabase so both sides converge
+            _writeQueue[key] = mergedStr;
+            if (_writeTimer) clearTimeout(_writeTimer);
+            _writeTimer = setTimeout(_flushWrites, 1000);
+            console.log('[realtime] Merged:', key);
+            window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: key, source: 'realtime' } }));
+            return;
+          }
+        }
+
         var str = typeof val === 'string' ? val : JSON.stringify(val);
         // Update localStorage without triggering another sync
         _origSetItem.call(localStorage, key, str);
