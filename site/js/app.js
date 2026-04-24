@@ -4188,7 +4188,13 @@ function updateVendorField(id, field, value) {
   const vendors = getVendors();
   const v = vendors.find(x => x.id === id);
   if (v) { v[field] = value; saveVendors(vendors); }
-  if (field === 'status' || field === 'discipline') renderVendors();
+  if (['status','discipline','priority','locationTag'].includes(field)) {
+    var openId = null;
+    var openCard = document.querySelector('#front-vendors .vendor-card.open');
+    if (openCard) openId = openCard.id;
+    renderVendors();
+    if (openId) { var el = document.getElementById(openId); if (el) el.classList.add('open'); }
+  }
 }
 function deleteVendor(id) {
   if (!confirm('Delete this vendor?')) return;
@@ -4330,7 +4336,14 @@ function updatePopupVendorField(id, field, value) {
   const vendors = getPopupVendors();
   const v = vendors.find(x => x.id === id);
   if (v) { v[field] = value; savePopupVendors(vendors); }
-  if (field === 'status' || field === 'discipline') renderPopupVendors();
+  if (['status','discipline','priority','locationTag'].includes(field)) {
+    // Remember which card was open
+    var openId = null;
+    var openCard = document.querySelector('#front-popup-vendors .vendor-card.open');
+    if (openCard) openId = openCard.id;
+    renderPopupVendors();
+    if (openId) { var el = document.getElementById(openId); if (el) el.classList.add('open'); }
+  }
 }
 function deletePopupVendor(id) {
   if (!confirm('Delete this vendor?')) return;
