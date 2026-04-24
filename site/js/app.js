@@ -3954,8 +3954,8 @@ function buildVendorCard(v, store) {
   // Location tag
   const locTag = v.locationTag || '';
   const locDisplay = locTag === 'nyc' ? 'NYC' : locTag === 'other' && v.locationOther ? v.locationOther : v.location || '';
-  const priorityLabels = { high: 'Must have', maybe: 'Deciding', low: 'If room' };
-  const priorityColors = { high: '#88c98a', maybe: '#e2c97e', low: '#a8a8a8' };
+  const priorityLabels = { high: 'Must have', 'high-tbd': 'High, TBD on stock', maybe: 'Deciding', low: 'If room' };
+  const priorityColors = { high: '#88c98a', 'high-tbd': '#a8d4a8', maybe: '#e2c97e', low: '#a8a8a8' };
   const priority = v.priority || '';
   const priorityBadge = priority ? `<span class="vendor-priority priority-${priority}" style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.04em;padding:2px 6px;border-radius:2px;margin-left:6px;background:${priorityColors[priority]||'var(--border)'};color:#1a1a18">${priorityLabels[priority]||priority}</span>` : '';
   const heroPhoto = photos[0] || '';
@@ -4053,6 +4053,7 @@ function buildVendorCard(v, store) {
               <select onchange="${updFn}(${v.id},'priority',this.value)">
                 <option value=""${!v.priority?' selected':''}>—</option>
                 <option value="high"${v.priority==='high'?' selected':''}>Must have</option>
+                <option value="high-tbd"${v.priority==='high-tbd'?' selected':''}>High, TBD on stock</option>
                 <option value="maybe"${v.priority==='maybe'?' selected':''}>Deciding</option>
                 <option value="low"${v.priority==='low'?' selected':''}>If room</option>
               </select>
