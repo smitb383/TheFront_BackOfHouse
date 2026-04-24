@@ -2190,6 +2190,19 @@ function showTab(project, tab, btn) {
   if (tab === 'popup-vendors') setTimeout(function(){ renderPopupVendors(); }, 20);
 }
 
+// Auto-rerender vendors when realtime updates come in from the other founder
+window.addEventListener('kv-updated', function(e) {
+  if (!e.detail || e.detail.source !== 'realtime') return;
+  var key = e.detail.key;
+  if (key === 'popup_vendors_v1') {
+    var list = document.getElementById('popup-vendor-list');
+    if (list) renderPopupVendors();
+  }
+  if (key === 'front_vendors_v1') {
+    var list = document.getElementById('vendor-list');
+    if (list) renderVendors();
+  }
+});
 
 
 // ═══ REVENUE PROJECTION ══════════════════════════════════════════

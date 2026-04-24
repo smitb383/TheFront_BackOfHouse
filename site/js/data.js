@@ -195,27 +195,17 @@ var MERGEABLE_KEYS = ['popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1'
 
 function _mergeArrayById(localArr, remoteArr) {
   if (!Array.isArray(localArr) || !Array.isArray(remoteArr)) return remoteArr;
-  var merged = {};
-  // Remote is base — add all remote items
-  remoteArr.forEach(function(item) {
-    if (item && item.id) merged[item.id] = item;
-  });
-  // Layer local items on top (local edits take priority for same id)
+  var remoteIds = {};
+  remoteArr.forEach(function(item) { if (item && item.id) remoteIds[item.id] = true; });
+  // Start with all remote items (remote wins for existing vendors)
+  var merged = remoteArr.slice();
+  // Add any local-only items (new vendors not yet in remote)
   localArr.forEach(function(item) {
-    if (item && item.id) {
-      if (merged[item.id]) {
-        // Merge fields: local wins for any non-empty field
-        var base = merged[item.id];
-        Object.keys(item).forEach(function(k) {
-          if (item[k] !== undefined && item[k] !== '') base[k] = item[k];
-        });
-      } else {
-        // Item exists locally but not remotely — keep it (it's new)
-        merged[item.id] = item;
-      }
+    if (item && item.id && !remoteIds[item.id]) {
+      merged.push(item);
     }
   });
-  return Object.values(merged);
+  return merged;
 }
 
 function _mergeInvNew(local, remote) {
@@ -265,7 +255,7 @@ function _startRealtime() {
           val = _stripBase64Photos(key, val);
         }
 
-        // For mergeable keys, merge instead of overwrite
+        // For mergeable keys, merge to preserve local-only additions, but remote wins for edits
         if (MERGEABLE_KEYS.indexOf(key) >= 0) {
           var localStr = _origGetItem.call(localStorage, key);
           if (localStr) {
@@ -273,10 +263,7 @@ function _startRealtime() {
             var merged = _mergeKey(key, JSON.stringify(localClean), val);
             var mergedStr = JSON.stringify(merged);
             _safeSetItem(key, mergedStr);
-            // Write merged result back to Supabase so both sides converge
-            _writeQueue[key] = mergedStr;
-            if (_writeTimer) clearTimeout(_writeTimer);
-            _writeTimer = setTimeout(_flushWrites, 1000);
+            // Do NOT push back to Supabase — accept remote as truth to avoid sync loops
             console.log('[realtime] Merged:', key);
             window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: key, source: 'realtime' } }));
             return;
