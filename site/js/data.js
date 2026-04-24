@@ -36,6 +36,42 @@ function _initSB() {
 // This is the key bridge: Supabase is the source of truth,
 // localStorage is just a fast local cache that app.js reads from.
 
+// Strip base64 photos from vendor arrays to prevent localStorage bloat.
+// Photos should be URLs (Supabase Storage), not inline data.
+var VENDOR_KEYS = ['popup_vendors_v1', 'front_vendors_v1'];
+function _stripBase64Photos(key, val) {
+  if (VENDOR_KEYS.indexOf(key) < 0) return val;
+  var arr = typeof val === 'string' ? JSON.parse(val) : val;
+  if (!Array.isArray(arr)) return val;
+  arr.forEach(function(v) {
+    if (v.photos && Array.isArray(v.photos)) {
+      v.photos = v.photos.filter(function(p) { return p && !p.startsWith('data:'); });
+    }
+  });
+  return arr;
+}
+
+function _safeSetItem(key, value) {
+  var str = typeof value === 'string' ? value : JSON.stringify(value);
+  try {
+    _origSetItem.call(localStorage, key, str);
+    return true;
+  } catch(e) {
+    console.warn('[data] localStorage full writing ' + key + ', clearing and retrying');
+    // Clear this key and any snapshot keys to make room
+    try { localStorage.removeItem(key); } catch(e2) {}
+    // Also clear any visual image caches which can be large
+    try { localStorage.removeItem('popup_visual_imgs_v1'); } catch(e2) {}
+    try {
+      _origSetItem.call(localStorage, key, str);
+      return true;
+    } catch(e2) {
+      console.error('[data] Still cannot write ' + key + ' after clearing, skipping');
+      return false;
+    }
+  }
+}
+
 function _pullAllData() {
   var sb = _initSB();
   if (!sb) { console.warn('[data] No Supabase, using localStorage only'); return Promise.resolve(); }
@@ -50,26 +86,32 @@ function _pullAllData() {
     (res.data || []).forEach(function(row) {
       var val = row.value;
 
+      // Strip base64 photos before writing to localStorage
+      if (VENDOR_KEYS.indexOf(row.key) >= 0) {
+        val = _stripBase64Photos(row.key, val);
+      }
+
       // For mergeable keys, merge with any existing local data instead of overwriting
       if (MERGEABLE_KEYS.indexOf(row.key) >= 0) {
         var existing = _origGetItem.call(localStorage, row.key);
         if (existing) {
-          var merged = _mergeKey(row.key, existing, val);
-          _origSetItem.call(localStorage, row.key, JSON.stringify(merged));
-          pulledKeys.push(row.key);
-          count++;
+          // Strip base64 from local too before merging
+          var localClean = _stripBase64Photos(row.key, existing);
+          var merged = _mergeKey(row.key, JSON.stringify(localClean), val);
+          if (_safeSetItem(row.key, merged)) {
+            pulledKeys.push(row.key);
+            count++;
+          }
           return;
         }
       }
 
-      // Store value as JSON string in localStorage (matching what app.js expects)
-      if (typeof val === 'string') {
-        _origSetItem.call(localStorage, row.key, val);
-      } else {
-        _origSetItem.call(localStorage, row.key, JSON.stringify(val));
+      // Store value in localStorage
+      var str = typeof val === 'string' ? val : JSON.stringify(val);
+      if (_safeSetItem(row.key, str)) {
+        pulledKeys.push(row.key);
+        count++;
       }
-      pulledKeys.push(row.key);
-      count++;
     });
     console.log('[data] Pulled ' + count + ' keys from Supabase');
     // Notify any listeners that all keys are fresh from server
@@ -125,15 +167,24 @@ function _flushWrites() {
 }
 
 localStorage.setItem = function(key, value) {
-  // Always write to real localStorage immediately (app.js reads it)
-  _origSetItem.call(localStorage, key, value);
+  // For vendor keys, strip any base64 photos before saving to localStorage
+  var cleanValue = value;
+  if (VENDOR_KEYS.indexOf(key) >= 0) {
+    try {
+      var cleaned = _stripBase64Photos(key, value);
+      cleanValue = typeof cleaned === 'string' ? cleaned : JSON.stringify(cleaned);
+    } catch(e) { /* use original */ }
+  }
+
+  // Write to real localStorage with quota safety
+  _safeSetItem(key, cleanValue);
 
   // Skip local-only keys
   if (LOCAL_ONLY_KEYS.indexOf(key) >= 0) return;
   if (key.charAt(0) === '_') return; // internal keys
 
-  // Queue write to Supabase
-  _writeQueue[key] = value;
+  // Queue write to Supabase (send cleaned value)
+  _writeQueue[key] = cleanValue;
   if (_writeTimer) clearTimeout(_writeTimer);
   _writeTimer = setTimeout(_flushWrites, 500); // batch writes every 500ms
 };
@@ -209,13 +260,19 @@ function _startRealtime() {
         if (key.indexOf('__snap_') >= 0) return;
         var val = payload.new.value;
 
+        // Strip base64 photos from vendor data
+        if (VENDOR_KEYS.indexOf(key) >= 0) {
+          val = _stripBase64Photos(key, val);
+        }
+
         // For mergeable keys, merge instead of overwrite
         if (MERGEABLE_KEYS.indexOf(key) >= 0) {
           var localStr = _origGetItem.call(localStorage, key);
           if (localStr) {
-            var merged = _mergeKey(key, localStr, val);
+            var localClean = _stripBase64Photos(key, localStr);
+            var merged = _mergeKey(key, JSON.stringify(localClean), val);
             var mergedStr = JSON.stringify(merged);
-            _origSetItem.call(localStorage, key, mergedStr);
+            _safeSetItem(key, mergedStr);
             // Write merged result back to Supabase so both sides converge
             _writeQueue[key] = mergedStr;
             if (_writeTimer) clearTimeout(_writeTimer);
@@ -227,8 +284,7 @@ function _startRealtime() {
         }
 
         var str = typeof val === 'string' ? val : JSON.stringify(val);
-        // Update localStorage without triggering another sync
-        _origSetItem.call(localStorage, key, str);
+        _safeSetItem(key, str);
         console.log('[realtime] Updated:', key);
         // Notify listeners (tracker, brand, etc.) that this key changed remotely
         window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: key, source: 'realtime' } }));
