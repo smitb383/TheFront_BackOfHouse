@@ -2381,6 +2381,11 @@
                 <option value="backburner">Backburner</option>
                 <option value="past">Past</option>
               </select>
+              <select id="pvendor-location-filter" onchange="renderPopupVendors()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:6px 10px;outline:none;border-radius:2px;cursor:pointer">
+                <option value="all">All locations</option>
+                <option value="nyc">New York</option>
+                <option value="non-nyc">Non-NYC</option>
+              </select>
               <button class="add-vendor-btn" onclick="addPopupVendor()">+ Add vendor</button>
             </div>
           </div>

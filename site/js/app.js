@@ -3951,6 +3951,9 @@ function buildVendorCard(v, store) {
   const toastColor = store === 'popup' ? '#a8c4d4' : '#c9a8d4';
   const photos = v.photos || [];
   const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : v.status === 'vendor-tbd' ? 'vendor tbd' : (v.status || 'prospect');
+  // Location tag
+  const locTag = v.locationTag || '';
+  const locDisplay = locTag === 'nyc' ? 'NYC' : locTag === 'other' && v.locationOther ? v.locationOther : v.location || '';
   const priorityLabels = { high: 'Must have', maybe: 'Deciding', low: 'If room' };
   const priorityColors = { high: '#88c98a', maybe: '#e2c97e', low: '#a8a8a8' };
   const priority = v.priority || '';
@@ -3993,7 +3996,7 @@ function buildVendorCard(v, store) {
           ${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}
           <span class="vendor-status status-${v.status}">${statusLabel}</span>${priorityBadge}
         </div>
-        <div class="vendor-row-cell vendor-row-location">${esc(v.location || '')}</div>
+        <div class="vendor-row-cell vendor-row-location">${locTag === 'nyc' ? '<span style="background:#e2c97e;color:#1a1a18;font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:0.04em">NYC</span>' : esc(locDisplay)}</div>
         <div class="vendor-row-cell vendor-row-price">${esc(v.priceRange || '')}</div>
         <div class="vendor-row-cell vendor-row-ig">${igDisplay ? `<a href="https://instagram.com/${esc(igHandle)}" target="_blank" onclick="event.stopPropagation()">${esc(igDisplay)}</a>` : ''}</div>
         <div class="vendor-row-chevron">▾</div>
@@ -4025,7 +4028,16 @@ function buildVendorCard(v, store) {
                 ${VENDOR_DISCIPLINES.map(d=>`<option value="${d}"${(v.discipline||'Other')===d?' selected':''}>${d}</option>`).join('')}
               </select>
             </div>
-            <div class="vendor-field"><label>Location</label><input value="${esc(v.location||'')}" placeholder="e.g. Brooklyn, NY" oninput="${updFn}(${v.id},'location',this.value)"></div>
+            <div class="vendor-field"><label>Location</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <select onchange="${updFn}(${v.id},'locationTag',this.value);if(this.value==='nyc'){${updFn}(${v.id},'locationOther','')};setTimeout(function(){${store==='popup'?'renderPopupVendors':'renderVendors'}()},50)" style="flex:0 0 auto">
+                  <option value=""${!locTag?' selected':''}>—</option>
+                  <option value="nyc"${locTag==='nyc'?' selected':''}>New York</option>
+                  <option value="other"${locTag==='other'?' selected':''}>Other</option>
+                </select>
+                ${locTag === 'other' ? `<input value="${esc(v.locationOther||'')}" placeholder="City, Country…" oninput="${updFn}(${v.id},'locationOther',this.value)" style="flex:1">` : ''}
+              </div>
+            </div>
             <div class="vendor-field"><label>Price range</label><input value="${esc(v.priceRange||'')}" placeholder="e.g. $50 – $300" oninput="${updFn}(${v.id},'priceRange',this.value)"></div>
             <div class="vendor-field"><label>Status</label>
               <select onchange="${updFn}(${v.id},'status',this.value)">
@@ -4202,12 +4214,15 @@ function renderPopupVendors() {
   const list = document.getElementById('popup-vendor-list');
   if (!list) return;
   const statusFilter = document.getElementById('pvendor-status-filter')?.value || 'all';
+  const locationFilter = document.getElementById('pvendor-location-filter')?.value || 'all';
   let vendors = getPopupVendors();
   if (statusFilter !== 'all') vendors = vendors.filter(v => v.status === statusFilter);
   if (popupVendorCatFilter !== 'all') vendors = vendors.filter(v => (v.discipline || 'Other') === popupVendorCatFilter);
+  if (locationFilter === 'nyc') vendors = vendors.filter(v => v.locationTag === 'nyc');
+  if (locationFilter === 'non-nyc') vendors = vendors.filter(v => v.locationTag && v.locationTag !== 'nyc');
 
   if (!vendors.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:11px;font-family:\'Cormorant Garamond\',serif;font-style:italic">No vendors yet — click \"+ Add vendor\" to start.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:11px;font-family:\'Cormorant Garamond\',serif;font-style:italic">No vendors match these filters.</div>';
     return;
   }
 
