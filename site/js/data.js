@@ -166,6 +166,20 @@ function _flushWrites() {
   });
 }
 
+// Track locally-edited vendor IDs so realtime doesn't overwrite them before sync
+var _localEditedIds = {};  // key -> Set of vendor ids edited locally
+var _localEditClearTimers = {};
+
+function _markLocalEdit(key, vendorId) {
+  if (!_localEditedIds[key]) _localEditedIds[key] = {};
+  _localEditedIds[key][vendorId] = Date.now();
+  // Clear after 5 seconds (enough time for Supabase roundtrip)
+  if (_localEditClearTimers[key + '_' + vendorId]) clearTimeout(_localEditClearTimers[key + '_' + vendorId]);
+  _localEditClearTimers[key + '_' + vendorId] = setTimeout(function() {
+    if (_localEditedIds[key]) delete _localEditedIds[key][vendorId];
+  }, 5000);
+}
+
 localStorage.setItem = function(key, value) {
   // For vendor keys, strip any base64 photos before saving to localStorage
   var cleanValue = value;
@@ -173,6 +187,24 @@ localStorage.setItem = function(key, value) {
     try {
       var cleaned = _stripBase64Photos(key, value);
       cleanValue = typeof cleaned === 'string' ? cleaned : JSON.stringify(cleaned);
+      // Track which vendor IDs were edited by comparing with previous
+      var prev = _origGetItem.call(localStorage, key);
+      if (prev) {
+        var prevArr = JSON.parse(prev);
+        var newArr = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;
+        if (Array.isArray(prevArr) && Array.isArray(newArr)) {
+          var prevMap = {};
+          prevArr.forEach(function(v) { if (v && v.id) prevMap[v.id] = JSON.stringify(v); });
+          newArr.forEach(function(v) {
+            if (v && v.id && prevMap[v.id] && prevMap[v.id] !== JSON.stringify(v)) {
+              _markLocalEdit(key, v.id);
+            }
+            if (v && v.id && !prevMap[v.id]) {
+              _markLocalEdit(key, v.id);
+            }
+          });
+        }
+      }
     } catch(e) { /* use original */ }
   }
 
@@ -186,22 +218,32 @@ localStorage.setItem = function(key, value) {
   // Queue write to Supabase (send cleaned value)
   _writeQueue[key] = cleanValue;
   if (_writeTimer) clearTimeout(_writeTimer);
-  _writeTimer = setTimeout(_flushWrites, 500); // batch writes every 500ms
+  _writeTimer = setTimeout(_flushWrites, 300); // reduced from 500ms for faster sync
 };
 
 // ── Merge logic for array-based keys (vendors, etc.) ──
 // Instead of last-write-wins, merge by item id so neither founder's additions get lost.
 var MERGEABLE_KEYS = ['popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1'];
 
-function _mergeArrayById(localArr, remoteArr) {
+function _mergeArrayById(localArr, remoteArr, key) {
   if (!Array.isArray(localArr) || !Array.isArray(remoteArr)) return remoteArr;
-  var remoteIds = {};
-  remoteArr.forEach(function(item) { if (item && item.id) remoteIds[item.id] = true; });
-  // Start with all remote items (remote wins for existing vendors)
-  var merged = remoteArr.slice();
+  var remoteMap = {};
+  remoteArr.forEach(function(item) { if (item && item.id) remoteMap[item.id] = item; });
+  var localMap = {};
+  localArr.forEach(function(item) { if (item && item.id) localMap[item.id] = item; });
+  var localEdits = _localEditedIds[key] || {};
+
+  // Build merged list: use remote order as base
+  var merged = remoteArr.map(function(item) {
+    // If this vendor was recently edited locally, keep LOCAL version (it hasn't synced yet)
+    if (item && item.id && localEdits[item.id] && localMap[item.id]) {
+      return localMap[item.id];
+    }
+    return item;
+  });
   // Add any local-only items (new vendors not yet in remote)
   localArr.forEach(function(item) {
-    if (item && item.id && !remoteIds[item.id]) {
+    if (item && item.id && !remoteMap[item.id]) {
       merged.push(item);
     }
   });
@@ -231,7 +273,7 @@ function _mergeKey(key, localStr, remoteVal) {
     var local = JSON.parse(localStr);
     var remote = typeof remoteVal === 'string' ? JSON.parse(remoteVal) : remoteVal;
     if (key === 'popup_inv_new_v1') return _mergeInvNew(local, remote);
-    if (Array.isArray(local) && Array.isArray(remote)) return _mergeArrayById(local, remote);
+    if (Array.isArray(local) && Array.isArray(remote)) return _mergeArrayById(local, remote, key);
   } catch(e) {}
   return remoteVal;
 }
