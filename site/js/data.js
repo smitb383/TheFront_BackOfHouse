@@ -91,22 +91,8 @@ function _pullAllData() {
         val = _stripBase64Photos(row.key, val);
       }
 
-      // For mergeable keys, merge with any existing local data instead of overwriting
-      if (MERGEABLE_KEYS.indexOf(row.key) >= 0) {
-        var existing = _origGetItem.call(localStorage, row.key);
-        if (existing) {
-          // Strip base64 from local too before merging
-          var localClean = _stripBase64Photos(row.key, existing);
-          var merged = _mergeKey(row.key, JSON.stringify(localClean), val);
-          if (_safeSetItem(row.key, merged)) {
-            pulledKeys.push(row.key);
-            count++;
-          }
-          return;
-        }
-      }
-
-      // Store value in localStorage
+      // On initial pull, Supabase is the source of truth — no merge needed.
+      // Merging on load was causing stale localStorage to override fresh server data.
       var str = typeof val === 'string' ? val : JSON.stringify(val);
       if (_safeSetItem(row.key, str)) {
         pulledKeys.push(row.key);
