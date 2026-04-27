@@ -1762,6 +1762,12 @@
                 if (!el) return;
                 if (!list.length) { el.innerHTML = ''; return; }
                 var rows = list.map(function(r, i) {
+                  var rating = r.rating || 0;
+                  var stars = '';
+                  for (var s = 1; s <= 5; s++) {
+                    var filled = s <= rating;
+                    stars += '<span onclick="event.stopPropagation();rateDesignRes(' + i + ',' + s + ')" style="cursor:pointer;font-size:14px;color:' + (filled ? '#e2c97e' : 'var(--faint)') + '">' + (filled ? '★' : '☆') + '</span>';
+                  }
                   return '<tr>' +
                     '<td style="padding:6px 8px;vertical-align:middle;width:50px">' +
                       (r.image ? '<img src="' + r.image.replace(/"/g,'&quot;') + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px;cursor:pointer" onclick="pickDesignResImage(' + i + ')">' : '<div onclick="pickDesignResImage(' + i + ')" style="width:40px;height:40px;background:var(--surface2);border:1px dashed var(--faint);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;cursor:pointer">+</div>') +
@@ -1776,19 +1782,18 @@
                       '<option value="mockup"' + (r.type==='mockup'?' selected':'') + '>Mockup</option>' +
                       '<option value="other"' + (r.type==='other'?' selected':'') + '>Other</option>' +
                     '</select></td>' +
-                    '<td style="padding:6px 4px;width:70px"><div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" min="0" value="' + (r.price||0) + '" oninput="editDesignRes(' + i + ',\'price\',+this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:3px;border-radius:3px;text-align:right"></div></td>' +
+                    '<td style="padding:6px 4px;width:90px;white-space:nowrap">' + stars + '</td>' +
                     '<td style="padding:6px 4px">' + (r.link ? '<a href="' + r.link.replace(/"/g,'&quot;') + '" target="_blank" style="color:var(--front);font-size:12px;text-decoration:none">↗</a>' : '') + '<input value="' + (r.link||'').replace(/"/g,'&quot;') + '" placeholder="https://…" oninput="editDesignRes(' + i + ',\'link\',this.value)" style="width:100%;background:none;border:none;border-bottom:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;outline:none;padding:2px 0"></td>' +
                     '<td style="padding:6px 4px;width:28px"><button onclick="removeDesignRes(' + i + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">✕</button></td>' +
                   '</tr>';
                 }).join('');
-                var total = list.reduce(function(s,r){ return s + (r.price||0); }, 0);
                 el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
                   '<thead><tr style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:1px solid var(--border)">' +
-                    '<th style="padding:6px 8px;text-align:left"></th><th style="padding:6px 4px;text-align:left">Name</th><th style="padding:6px 4px;text-align:left">Type</th><th style="padding:6px 4px;text-align:right">Price</th><th style="padding:6px 4px;text-align:left">Link</th><th></th>' +
+                    '<th style="padding:6px 8px;text-align:left"></th><th style="padding:6px 4px;text-align:left">Name</th><th style="padding:6px 4px;text-align:left">Type</th><th style="padding:6px 4px;text-align:left">Rating</th><th style="padding:6px 4px;text-align:left">Link</th><th></th>' +
                   '</tr></thead><tbody>' + rows + '</tbody>' +
-                  '<tfoot><tr style="border-top:1px solid var(--border)"><td colspan="3" style="padding:8px;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted)">Total</td><td style="padding:8px 4px;font-family:DM Mono,monospace;font-size:12px;text-align:right;color:var(--text)">$' + total + '</td><td colspan="2"></td></tr></tfoot>' +
                 '</table>';
               }
+              function rateDesignRes(i, stars) { var list = getDesignRes(); if(list[i]) { list[i].rating = list[i].rating === stars ? 0 : stars; saveDesignRes(list); renderDesignRes(); } }
               function editDesignRes(i, field, val) { var list = getDesignRes(); if(list[i]) { list[i][field] = val; saveDesignRes(list); if(field==='link') renderDesignRes(); } }
               function addDesignResource() { var list = getDesignRes(); list.push({name:'',type:'',price:0,link:'',image:''}); saveDesignRes(list); renderDesignRes(); }
               function removeDesignRes(i) { var list = getDesignRes(); list.splice(i,1); saveDesignRes(list); renderDesignRes(); }
