@@ -398,13 +398,55 @@ function _migrateBase64Photos() {
   return Promise.all(promises);
 }
 
+// ── Migrate base64 visual dropzone images to Supabase Storage ──
+function _migrateVisualImgs() {
+  var sb = _initSB();
+  if (!sb) return Promise.resolve();
+  var raw = _origGetItem.call(localStorage, 'popup_visual_imgs_v1');
+  if (!raw) return Promise.resolve();
+  var all;
+  try { all = JSON.parse(raw); } catch(e) { return Promise.resolve(); }
+  if (!all || typeof all !== 'object') return Promise.resolve();
+
+  var migrated = 0;
+  var promises = [];
+  Object.keys(all).forEach(function(section) {
+    var imgs = all[section];
+    if (!Array.isArray(imgs)) return;
+    imgs.forEach(function(im, idx) {
+      if (!im.src || !im.src.startsWith('data:')) return;
+      var p = fetch(im.src).then(function(r) { return r.blob(); }).then(function(blob) {
+        var path = 'visual-' + section + '/' + Date.now() + '-' + idx + '.jpg';
+        return sb.storage.from(PHOTO_BUCKET).upload(path, blob, { cacheControl: '3600', upsert: false }).then(function(res) {
+          if (res.error) { console.warn('[migrate-visual] upload failed:', res.error); return; }
+          var urlRes = sb.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+          im.src = urlRes.data.publicUrl;
+          migrated++;
+        });
+      }).catch(function(err) { console.warn('[migrate-visual] error:', err); });
+      promises.push(p);
+    });
+  });
+
+  return Promise.all(promises).then(function() {
+    if (migrated > 0) {
+      var updated = JSON.stringify(all);
+      _origSetItem.call(localStorage, 'popup_visual_imgs_v1', updated);
+      _writeQueue['popup_visual_imgs_v1'] = updated;
+      if (_writeTimer) clearTimeout(_writeTimer);
+      _writeTimer = setTimeout(_flushWrites, 500);
+      console.log('[migrate-visual] Migrated ' + migrated + ' base64 images to Storage');
+    }
+  });
+}
+
 (function() {
   _initSB();
   _pullAllData().then(function() {
     window._sbPullDone = true;
     _startRealtime();
     window.dispatchEvent(new Event('supabase-ready'));
-    // Run photo migration after data is loaded
-    setTimeout(function() { _migrateBase64Photos(); }, 2000);
+    // Run photo migrations after data is loaded
+    setTimeout(function() { _migrateBase64Photos(); _migrateVisualImgs(); }, 2000);
   });
 })();

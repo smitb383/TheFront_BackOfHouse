@@ -1985,11 +1985,32 @@
                 alert('Image upload failed — dataUrl was empty. Check browser console for details.');
                 return;
               }
-              var all = getVisualImgs();
-              if (!all[section]) all[section] = [];
-              all[section].push({ id: Date.now() + Math.random(), src: dataUrl });
-              saveVisualImgs(all);
-              renderVisualSection(section);
+              var imgId = Date.now() + Math.random();
+              // Upload to Supabase Storage instead of storing base64 in localStorage
+              if (window.uploadVendorPhoto) {
+                fetch(dataUrl).then(function(r) { return r.blob(); }).then(function(blob) {
+                  return window.uploadVendorPhoto(blob, 'visual-' + section);
+                }).then(function(url) {
+                  var all = getVisualImgs();
+                  if (!all[section]) all[section] = [];
+                  all[section].push({ id: imgId, src: url });
+                  saveVisualImgs(all);
+                  renderVisualSection(section);
+                }).catch(function(err) {
+                  console.error('[visual] upload to storage failed, falling back to base64:', err);
+                  var all = getVisualImgs();
+                  if (!all[section]) all[section] = [];
+                  all[section].push({ id: imgId, src: dataUrl });
+                  saveVisualImgs(all);
+                  renderVisualSection(section);
+                });
+              } else {
+                var all = getVisualImgs();
+                if (!all[section]) all[section] = [];
+                all[section].push({ id: imgId, src: dataUrl });
+                saveVisualImgs(all);
+                renderVisualSection(section);
+              }
             }).catch(function(err) { console.error('[visual] image error', err); alert('Image upload error: ' + err); });
           }
           function removeVisualImg(section, id) {
