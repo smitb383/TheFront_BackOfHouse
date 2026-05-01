@@ -8042,7 +8042,7 @@ function saveInvNew(d) { localStorage.setItem(INV_NEW_KEY, JSON.stringify(d)); }
 function invNewSyncConfirmed() {
   var data = getInvNew() || { vendors: [] };
   var popupVendors = getPopupVendors();
-  var confirmed = popupVendors.filter(function(v) { return v.status === 'signed'; });
+  var confirmed = popupVendors.filter(function(v) { return v.inventoryStatus === 'confirmed-stock' || v.inventoryStatus === 'received-stock'; });
   confirmed.forEach(function(v) {
     var exists = data.vendors.find(function(iv) { return iv.vendorId === v.id; });
     if (!exists) {
@@ -8066,7 +8066,7 @@ function renderInvNew() {
   if (!list) return;
   var data = invNewSyncConfirmed();
   if (!data.vendors.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-family:Cormorant Garamond,serif;font-style:italic">No confirmed vendors yet. Mark a vendor as Confirmed in the Vendors tab to see them here.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-family:Cormorant Garamond,serif;font-style:italic">No vendors with confirmed stock yet. Set a vendor\'s inventory status to "Confirmed stock" or "Received stock" to see them here.</div>';
     if (totalsEl) totalsEl.innerHTML = '';
     return;
   }
