@@ -3963,14 +3963,18 @@ function buildVendorCard(v, store) {
   const togFn = store === 'popup' ? 'togglePopupVendor'      : 'toggleVendor';
   const toastColor = store === 'popup' ? '#a8c4d4' : '#c9a8d4';
   const photos = v.photos || [];
-  const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : v.status === 'vendor-tbd' ? 'vendor tbd' : (v.status || 'prospect');
+  const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : v.status === 'sent-deck' ? 'sent deck' : v.status === 'vendor-tbd' ? 'vendor tbd' : (v.status || 'prospect');
   // Location tag
   const locTag = v.locationTag || '';
   const locDisplay = locTag === 'nyc' ? 'NYC' : locTag === 'other' && v.locationOther ? v.locationOther : v.location || '';
-  const priorityLabels = { high: 'Must have', 'high-tbd': 'High, TBD on stock', maybe: 'Deciding', low: 'If room' };
-  const priorityColors = { high: '#88c98a', 'high-tbd': '#a8d4a8', maybe: '#e2c97e', low: '#a8a8a8' };
+  const priorityLabels = { high: 'Must have', maybe: 'Deciding', low: 'If room' };
+  const priorityColors = { high: '#88c98a', maybe: '#e2c97e', low: '#a8a8a8' };
   const priority = v.priority || '';
   const priorityBadge = priority ? `<span class="vendor-priority priority-${priority}" style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.04em;padding:2px 6px;border-radius:2px;margin-left:6px;background:${priorityColors[priority]||'var(--border)'};color:#1a1a18">${priorityLabels[priority]||priority}</span>` : '';
+  const invLabels = { 'waiting-linesheet': 'Waiting on line sheet', 'received-linesheet': 'Received line sheet', 'confirmed-stock': 'Confirmed stock', 'received-stock': 'Received stock' };
+  const invColors = { 'waiting-linesheet': '#a8a8a8', 'received-linesheet': '#e2c97e', 'confirmed-stock': '#a8d4a8', 'received-stock': '#88c98a' };
+  const inv = v.inventoryStatus || '';
+  const invBadge = inv ? `<span style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.04em;padding:2px 6px;border-radius:2px;margin-left:6px;background:${invColors[inv]||'var(--border)'};color:#1a1a18">${invLabels[inv]||inv}</span>` : '';
   const heroPhoto = photos[0] || '';
 
   const allPhotoSlots = photos.map((src, idx) => `
@@ -4007,7 +4011,7 @@ function buildVendorCard(v, store) {
         </div>
         <div class="vendor-row-name">
           ${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}
-          <span class="vendor-status status-${v.status}">${statusLabel}</span>${priorityBadge}
+          <span class="vendor-status status-${v.status}">${statusLabel}</span>${priorityBadge}${invBadge}
         </div>
         <div class="vendor-row-cell vendor-row-location">${locTag === 'nyc' ? '<span style="background:#e2c97e;color:#1a1a18;font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:0.04em">NYC</span>' : esc(locDisplay)}</div>
         <div class="vendor-row-cell vendor-row-price">${esc(v.priceRange || '')}</div>
@@ -4056,6 +4060,7 @@ function buildVendorCard(v, store) {
               <select onchange="${updFn}(${v.id},'status',this.value)">
                 <option value="prospect"${v.status==='prospect'?' selected':''}>Prospect</option>
                 <option value="reached"${v.status==='reached'?' selected':''}>Reached out</option>
+                <option value="sent-deck"${v.status==='sent-deck'?' selected':''}>Sent deck</option>
                 <option value="signed"${v.status==='signed'?' selected':''}>${store==='popup'?'Confirmed':'Signed'}</option>
                 <option value="vendor-tbd"${v.status==='vendor-tbd'?' selected':''}>Vendor TBD</option>
                 <option value="backburner"${v.status==='backburner'?' selected':''}>Backburner</option>
@@ -4066,9 +4071,17 @@ function buildVendorCard(v, store) {
               <select onchange="${updFn}(${v.id},'priority',this.value)">
                 <option value=""${!v.priority?' selected':''}>—</option>
                 <option value="high"${v.priority==='high'?' selected':''}>Must have</option>
-                <option value="high-tbd"${v.priority==='high-tbd'?' selected':''}>High, TBD on stock</option>
                 <option value="maybe"${v.priority==='maybe'?' selected':''}>Deciding</option>
                 <option value="low"${v.priority==='low'?' selected':''}>If room</option>
+              </select>
+            </div>
+            <div class="vendor-field"><label>Inventory status</label>
+              <select onchange="${updFn}(${v.id},'inventoryStatus',this.value)">
+                <option value=""${!v.inventoryStatus?' selected':''}>—</option>
+                <option value="waiting-linesheet"${v.inventoryStatus==='waiting-linesheet'?' selected':''}>Waiting on line sheet</option>
+                <option value="received-linesheet"${v.inventoryStatus==='received-linesheet'?' selected':''}>Received line sheet</option>
+                <option value="confirmed-stock"${v.inventoryStatus==='confirmed-stock'?' selected':''}>Confirmed stock</option>
+                <option value="received-stock"${v.inventoryStatus==='received-stock'?' selected':''}>Received stock</option>
               </select>
             </div>
             <div class="vendor-field"><label>Contact name</label><input value="${esc(v.contactName||'')}" placeholder="Primary contact" oninput="${updFn}(${v.id},'contactName',this.value)"></div>
@@ -4188,7 +4201,7 @@ function updateVendorField(id, field, value) {
   const vendors = getVendors();
   const v = vendors.find(x => x.id === id);
   if (v) { v[field] = value; saveVendors(vendors); }
-  if (['status','discipline','priority','locationTag'].includes(field)) {
+  if (['status','discipline','priority','locationTag','inventoryStatus'].includes(field)) {
     var openId = null;
     var openCard = document.querySelector('#front-vendors .vendor-card.open');
     if (openCard) openId = openCard.id;
@@ -4336,7 +4349,7 @@ function updatePopupVendorField(id, field, value) {
   const vendors = getPopupVendors();
   const v = vendors.find(x => x.id === id);
   if (v) { v[field] = value; savePopupVendors(vendors); }
-  if (['status','discipline','priority','locationTag'].includes(field)) {
+  if (['status','discipline','priority','locationTag','inventoryStatus'].includes(field)) {
     // Remember which card was open
     var openId = null;
     var openCard = document.querySelector('#front-popup-vendors .vendor-card.open');
