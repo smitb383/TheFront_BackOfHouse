@@ -8043,6 +8043,12 @@ function invNewSyncConfirmed() {
   var data = getInvNew() || { vendors: [] };
   var popupVendors = getPopupVendors();
   var confirmed = popupVendors.filter(function(v) { return v.inventoryStatus === 'confirmed-stock' || v.inventoryStatus === 'received-stock'; });
+  // Remove vendors that no longer qualify
+  var confirmedIds = confirmed.map(function(v) { return v.id; });
+  data.vendors = data.vendors.filter(function(iv) {
+    return confirmedIds.indexOf(iv.vendorId) !== -1;
+  });
+  // Add new qualifying vendors
   confirmed.forEach(function(v) {
     var exists = data.vendors.find(function(iv) { return iv.vendorId === v.id; });
     if (!exists) {
@@ -8052,7 +8058,6 @@ function invNewSyncConfirmed() {
         items: []
       });
     } else {
-      // Update name if changed
       exists.name = v.name || exists.name;
     }
   });
