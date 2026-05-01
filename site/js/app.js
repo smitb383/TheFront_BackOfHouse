@@ -1,4 +1,20 @@
 
+// ── Image lightbox ──────────────────────────────────────────────
+function openLightbox(src) {
+  if (!src) return;
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;cursor:zoom-out;animation:lbFadeIn 0.15s ease';
+  overlay.onclick = function() { overlay.remove(); };
+  var img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'max-width:90vw;max-height:90vh;object-fit:contain;border-radius:6px;box-shadow:0 8px 40px rgba(0,0,0,0.5)';
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+  document.addEventListener('keydown', function handler(e) {
+    if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', handler); }
+  });
+}
+
 // ── Theme toggle ─────────────────────────────────────────────────
 function toggleTheme() {
   var isLight = document.body.classList.toggle('light-mode');
@@ -3979,7 +3995,7 @@ function buildVendorCard(v, store) {
 
   const allPhotoSlots = photos.map((src, idx) => `
     <div class="vendor-photo-slot">
-      <img src="${esc(src)}" alt="">
+      <img src="${esc(src)}" alt="" onclick="event.stopPropagation();openLightbox('${esc(src)}')" style="cursor:zoom-in">
       <button class="vendor-photo-remove" onclick="event.stopPropagation();removeVendorPhoto(${v.id},${idx},'${store}')">✕</button>
     </div>`).join('');
 
@@ -4006,7 +4022,7 @@ function buildVendorCard(v, store) {
           ondragleave="this.classList.remove('dragover')"
           ondrop="event.preventDefault();event.stopPropagation();this.classList.remove('dragover');handleVendorDrop(event,${v.id},'${store}')">
           ${heroPhoto
-            ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">`
+            ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}" onclick="event.stopPropagation();openLightbox('${esc(heroPhoto)}')" style="cursor:zoom-in">`
             : `<div class="vendor-row-img-empty" onclick="event.stopPropagation();pickVendorPhotos(${v.id},'${store}')">+</div>`}
         </div>
         <div class="vendor-row-name">
@@ -4026,7 +4042,7 @@ function buildVendorCard(v, store) {
               ondragleave="this.classList.remove('dragover')"
               ondrop="event.preventDefault();this.classList.remove('dragover');handleVendorDrop(event,${v.id},'${store}')">
               ${heroPhoto
-                ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}">`
+                ? `<img src="${esc(heroPhoto)}" alt="${esc(v.name)}" onclick="event.stopPropagation();openLightbox('${esc(heroPhoto)}')" style="cursor:zoom-in">`
                 : `<div class="vendor-hero-placeholder">
                      <div class="vendor-hero-placeholder-icon">+</div>
                      <div class="vendor-hero-placeholder-text">
@@ -8100,7 +8116,7 @@ function renderInvNew() {
 
       return '<div style="display:grid;grid-template-columns:48px 1fr 90px 70px 50px 80px 80px 28px;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--faint);cursor:pointer;flex-wrap:wrap" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
         '<div style="width:44px;height:44px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
-          (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
+          (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
         '</div>' +
         '<input class="field-input" value="' + esc(item.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:15px">' +
         '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
