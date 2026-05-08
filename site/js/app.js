@@ -8496,7 +8496,7 @@ function openExhibitA(vi) {
       '<div><strong>Consignment Split:</strong> ' + dPct + '% Designer / ' + sPct + '% Store</div>' +
     '</div>' +
     consignTable +
-    loanTable +
+    (vendor.name.toLowerCase().indexOf('konsensus') !== -1 ? loanTable : '') +
     '<div style="margin-top:40px;font-size:13px">' +
       '<div style="font-style:italic;margin-bottom:24px">Agreed and confirmed:</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px">' +
@@ -8710,7 +8710,7 @@ async function downloadExhibitAPDF(vi) {
 
   // Loaned items
   var loanItems = vendor.loanItems || [];
-  if (loanItems.length > 0) {
+  if (loanItems.length > 0 && vendor.name.toLowerCase().indexOf('konsensus') !== -1) {
     checkPage(40);
     drawText('Loaned Items (Display Only)', margin, y, { font: fontBold, size: 13 });
     y -= 18;
