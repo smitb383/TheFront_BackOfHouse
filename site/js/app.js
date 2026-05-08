@@ -8250,9 +8250,9 @@ function buildSizeRows(vi, ii, item, sPct, dPct) {
     var szSold = sz.sold || 0;
     var szRevenue = price * szSold;
     var szSoldBg = szSold >= (sz.qty || 0) && (sz.qty || 0) > 0 ? 'color:#88c98a' : '';
-    return '<div style="display:grid;grid-template-columns:76px 60px 1fr 80px 50px 2px 70px 70px 2px 50px 80px 70px 70px 28px;align-items:center;gap:6px;padding:2px 0;margin-left:0" onclick="event.stopPropagation()">' +
+    return '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 50px 80px 70px 70px 28px;align-items:center;gap:6px;padding:2px 0" onclick="event.stopPropagation()">' +
       '<div></div>' +
-      '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);background:var(--surface2);padding:3px 8px;border-radius:2px;text-align:center;font-weight:600">' + esc(sz.size || '') + '</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);padding-left:8px"><span style="background:var(--surface2);padding:2px 10px;border-radius:2px;font-weight:600">' + esc(sz.size || '') + '</span></div>' +
       '<div></div>' +
       '<div></div>' +
       '<input type="number" min="0" value="' + (sz.qty || 0) + '" oninput="invNewEditSize(' + vi + ',' + ii + ',' + si + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">' +
@@ -8272,7 +8272,7 @@ function buildSizeRows(vi, ii, item, sPct, dPct) {
     '<button onclick="invNewAddSize(' + vi + ',' + ii + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ size</button>' +
   '</div>';
 
-  return '<div style="border-left:2px solid var(--faint);margin-left:38px;padding-left:0">' + rows + addBtn + '</div>';
+  return '<div style="border-top:1px dashed var(--faint);padding:2px 0">' + rows + addBtn + '</div>';
 }
 
 function invNewInitSizes(vi, ii) {
