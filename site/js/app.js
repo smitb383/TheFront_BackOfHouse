@@ -8388,18 +8388,10 @@ function openExhibitA(vi) {
     '</div>';
 
   var body =
-    '<div style="margin-bottom:24px">' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 32px;font-size:14px;line-height:1.8">' +
-        '<div><strong>Designer/Brand:</strong> ' + esc(vendor.name) + '</div>' +
-        '<div><strong>Date Submitted:</strong> ' + dateStr + '</div>' +
-        '<div><strong>Contact Name:</strong> ' + esc(vendorInfo.contactName || '') + '</div>' +
-        '<div><strong>Email:</strong> ' + esc(vendorInfo.email || '') + '</div>' +
-        '<div><strong>Commission Split:</strong> ' + dPct + '% Designer / ' + sPct + '% Store</div>' +
-        '<div><strong>Instagram:</strong> ' + esc(vendorInfo.instagram || '') + '</div>' +
-      '</div>' +
-    '</div>' +
-    '<div style="font-size:11px;color:#666;margin-bottom:12px;font-family:DM Mono,monospace;letter-spacing:0.04em">' +
-      'Categories: Clothing, Accessory, Jewelry, Object, Art, Other' +
+    '<div style="margin-bottom:24px;font-size:14px;line-height:1.8;display:flex;flex-wrap:wrap;gap:8px 32px">' +
+      '<div><strong>Designer/Brand:</strong> ' + esc(vendor.name) + '</div>' +
+      '<div><strong>Date Submitted:</strong> ' + dateStr + '</div>' +
+      '<div><strong>Consignment Split:</strong> ' + dPct + '% Designer / ' + sPct + '% Store</div>' +
     '</div>' +
     consignTable +
     loanTable +
