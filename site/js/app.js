@@ -8125,7 +8125,7 @@ function renderInvNew() {
       }
 
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
-        '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 50px 80px 80px 28px;align-items:center;gap:8px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+        '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 80px 80px 28px;align-items:center;gap:8px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
             (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
           '</div>' +
@@ -8166,7 +8166,7 @@ function renderInvNew() {
 
     var vendorBody = '';
     if (!invNewCollapsed[vi]) {
-      var colHeaders = '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 50px 80px 80px 28px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+      var colHeaders = '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 80px 80px 28px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
         '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div><div style="text-align:right">Us (' + sPct + '%)</div><div style="text-align:right">Them (' + dPct + '%)</div><div></div>' +
       '</div>';
       vendorBody = '<div style="padding:4px 0 12px">' +
