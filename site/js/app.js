@@ -8114,14 +8114,16 @@ function renderInvNew() {
             '<textarea class="field-input" placeholder="Internal notes..." oninput="invNewEditItem(' + vi + ',' + ii + ',\'notes\',this.value)" style="margin-top:3px;min-height:50px;resize:vertical">' + esc(item.notes || '') + '</textarea></div>' +
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Care</label>' +
             '<input class="field-input" value="' + esc(item.care || '') + '" placeholder="e.g. Dry clean only" oninput="invNewEditItem(' + vi + ',' + ii + ',\'care\',this.value)" style="margin-top:3px"></div>' +
+          '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Dimensions</label>' +
+            '<input class="field-input" value="' + esc(item.dimensions || '') + '" placeholder="e.g. 12 x 8 x 4 in" oninput="invNewEditItem(' + vi + ',' + ii + ',\'dimensions\',this.value)" style="margin-top:3px"></div>' +
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Packaging</label>' +
             '<input class="field-input" value="' + esc(item.packaging || '') + '" placeholder="e.g. Tissue + kraft bag" oninput="invNewEditItem(' + vi + ',' + ii + ',\'packaging\',this.value)" style="margin-top:3px"></div>' +
         '</div>';
       }
 
-      return '<div style="border-bottom:1px solid var(--faint);padding:6px 0">' +
-        '<div style="display:grid;grid-template-columns:56px 1fr 90px 80px 80px 50px 100px 80px 80px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
-          '<div style="width:52px;height:52px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
+      return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
+        '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 80px 50px 80px 80px 28px;align-items:center;gap:8px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+          '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
             (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
           '</div>' +
           '<input class="field-input" value="' + esc(item.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:15px">' +
@@ -8140,7 +8142,6 @@ function renderInvNew() {
           '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">cost $</span><input type="number" min="0" value="' + (item.unitCost || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'unitCost\',+this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
           '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">sell $</span><input type="number" min="0" value="' + (item.salePrice || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',+this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
           '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
-          '<input class="field-input" value="' + esc(item.dimensions || '') + '" placeholder="Dimensions" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'dimensions\',this.value)" style="font-family:DM Mono,monospace;font-size:10px">' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + Math.round(storeNet) + '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(designerNet) + ' ' + soldDisplay + '</div>' +
           '<button onclick="event.stopPropagation();invNewDeleteItem(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
@@ -8163,8 +8164,8 @@ function renderInvNew() {
 
     var vendorBody = '';
     if (!invNewCollapsed[vi]) {
-      var colHeaders = '<div style="display:grid;grid-template-columns:56px 1fr 90px 80px 80px 50px 100px 80px 80px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
-        '<div></div><div>Item</div><div>Category</div><div>Cost</div><div>Sale $</div><div>Qty</div><div>Dimensions</div><div style="text-align:right">Us (' + sPct + '%)</div><div style="text-align:right">Them (' + dPct + '%)</div><div></div>' +
+      var colHeaders = '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 80px 50px 80px 80px 28px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+        '<div></div><div>Item</div><div>Category</div><div>Cost</div><div>Sale $</div><div>Qty</div><div style="text-align:right">Us (' + sPct + '%)</div><div style="text-align:right">Them (' + dPct + '%)</div><div></div>' +
       '</div>';
       vendorBody = '<div style="padding:4px 0 12px">' +
         colHeaders + itemRows +
@@ -8225,7 +8226,7 @@ function invNewEditItem(vi, ii, field, val) {
   data.vendors[vi].items[ii][field] = val;
   saveInvNew(data);
   // Only re-render for fields that affect totals
-  if (field === 'unitCost' || field === 'qty') renderInvNew();
+  if (field === 'unitCost' || field === 'salePrice' || field === 'qty') renderInvNew();
 }
 
 function invNewDeleteItem(vi, ii) {
@@ -8252,7 +8253,7 @@ function invNewPickPhoto(vi, ii) {
   input.onchange = async function() {
     var file = input.files[0];
     if (!file) return;
-    var compressed = await compressImage(file, 300, 0.7);
+    var compressed = await compressImage(file, 480, 0.6);
     if (window.uploadVendorPhoto) {
       try {
         var blob = await fetch(compressed).then(function(r) { return r.blob(); });
