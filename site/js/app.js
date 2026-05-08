@@ -3979,7 +3979,8 @@ function buildVendorCard(v, store) {
   const togFn = store === 'popup' ? 'togglePopupVendor'      : 'toggleVendor';
   const toastColor = store === 'popup' ? '#a8c4d4' : '#c9a8d4';
   const photos = v.photos || [];
-  const statusLabel = v.status === 'signed' ? (store === 'popup' ? 'confirmed' : 'signed') : v.status === 'sent-deck' ? 'sent deck' : v.status === 'vendor-tbd' ? 'vendor tbd' : (v.status || 'prospect');
+  const statusLabels = { 'prospect':'prospect', 'reached':'reached', 'sent-deck':'sent deck', 'sent-agreement':'sent agreement', 'signed-agreement':'signed agreement', 'signed': store==='popup'?'confirmed':'signed', 'vendor-tbd':'vendor tbd', 'backburner':'backburner', 'past':'past' };
+  const statusLabel = statusLabels[v.status] || v.status || 'prospect';
   // Location tag
   const locTag = v.locationTag || '';
   const locDisplay = locTag === 'nyc' ? 'NYC' : locTag === 'other' && v.locationOther ? v.locationOther : v.location || '';
@@ -4077,6 +4078,8 @@ function buildVendorCard(v, store) {
                 <option value="prospect"${v.status==='prospect'?' selected':''}>Prospect</option>
                 <option value="reached"${v.status==='reached'?' selected':''}>Reached out</option>
                 <option value="sent-deck"${v.status==='sent-deck'?' selected':''}>Sent deck</option>
+                <option value="sent-agreement"${v.status==='sent-agreement'?' selected':''}>Sent agreement</option>
+                <option value="signed-agreement"${v.status==='signed-agreement'?' selected':''}>Signed agreement</option>
                 <option value="signed"${v.status==='signed'?' selected':''}>${store==='popup'?'Confirmed':'Signed'}</option>
                 <option value="vendor-tbd"${v.status==='vendor-tbd'?' selected':''}>Vendor TBD</option>
                 <option value="backburner"${v.status==='backburner'?' selected':''}>Backburner</option>
