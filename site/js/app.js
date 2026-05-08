@@ -8084,10 +8084,11 @@ function renderInvNew() {
     var sPct = vendor.storePct != null ? vendor.storePct : 30;
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0;
     vendor.items.forEach(function(item) {
-      var revenue = (item.salePrice || 0) * (item.qty || 1);
-      vendorTotal += revenue;
-      vendorStore += revenue * (sPct / 100);
-      vendorDesigner += revenue * (dPct / 100);
+      var sold = item.sold || 0;
+      var soldRevenue = (item.salePrice || 0) * sold;
+      vendorTotal += soldRevenue;
+      vendorStore += soldRevenue * (sPct / 100);
+      vendorDesigner += soldRevenue * (dPct / 100);
     });
     grandTotal += vendorTotal;
     grandStore += vendorStore;
@@ -8096,16 +8097,13 @@ function renderInvNew() {
 
     var itemRows = vendor.items.map(function(item, ii) {
       var price = item.salePrice || 0;
-      var revenue = price * (item.qty || 1);
-      var storeNet = revenue * (sPct / 100);
-      var designerNet = revenue * (dPct / 100);
+      var unitUs = Math.round(price * (sPct / 100));
+      var unitThem = Math.round(price * (dPct / 100));
+      var sold = item.sold || 0;
+      var totalSales = price * sold;
+      var totalUs = Math.round(totalSales * (sPct / 100));
+      var totalThem = Math.round(totalSales * (dPct / 100));
       var isItemOpen = invNewOpenItem === vi + '-' + ii;
-      var soldDisplay = '';
-      if (item.qty > 1) {
-        soldDisplay = '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">' + (item.sold || 0) + '/' + item.qty + ' sold</span>';
-      } else {
-        soldDisplay = item.sold ? '<span style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a">SOLD</span>' : '';
-      }
 
       var detailPanel = '';
       if (isItemOpen) {
@@ -8126,7 +8124,7 @@ function renderInvNew() {
       }
 
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
-        '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 80px 80px 28px;align-items:center;gap:8px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+        '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 50px 80px 70px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
             (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
           '</div>' +
@@ -8145,8 +8143,14 @@ function renderInvNew() {
           '</select>' +
           '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input value="' + (item.salePrice || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',parseFloat(this.value)||0)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
           '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
-          '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + Math.round(storeNet) + '</div>' +
-          '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(designerNet) + ' ' + soldDisplay + '</div>' +
+          '<div style="border-left:1px solid var(--border);height:100%"></div>' +
+          '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + unitUs + '</div>' +
+          '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + unitThem + '</div>' +
+          '<div style="border-left:1px solid var(--border);height:100%"></div>' +
+          '<input type="number" min="0" value="' + sold + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
+          '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(totalSales) + '</div>' +
+          '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + totalUs + '</div>' +
+          '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + totalThem + '</div>' +
           '<button onclick="event.stopPropagation();invNewDeleteItem(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
         '</div>' +
         detailPanel +
@@ -8161,14 +8165,17 @@ function renderInvNew() {
       '<span onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:32px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:2px 4px;border-radius:3px;text-align:center"></span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
       '<span onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:32px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:2px 4px;border-radius:3px;text-align:center"></span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">sold $' + Math.round(vendorTotal) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">our $' + Math.round(vendorStore) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">theirs $' + Math.round(vendorDesigner) + '</span>' +
     '</div>';
 
     var vendorBody = '';
     if (!invNewCollapsed[vi]) {
-      var colHeaders = '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 80px 80px 28px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
-        '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div><div style="text-align:right">Us (' + sPct + '%)</div><div style="text-align:right">Them (' + dPct + '%)</div><div></div>' +
+      var colHeaders = '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 50px 80px 70px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+        '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div>' +
+        '<div></div><div style="text-align:right">Us/ea</div><div style="text-align:right">Them/ea</div>' +
+        '<div></div><div style="text-align:center">Sold</div><div style="text-align:right">Total</div><div style="text-align:right">Us</div><div style="text-align:right">Them</div><div></div>' +
       '</div>';
       vendorBody = '<div style="padding:4px 0 12px">' +
         colHeaders + itemRows +
@@ -8184,7 +8191,7 @@ function renderInvNew() {
   if (totalsEl) {
     totalsEl.innerHTML =
       '<span>Items: <strong style="color:var(--text)">' + grandItems + '</strong></span>' +
-      '<span>Total retail: <strong style="color:var(--text)">$' + grandTotal.toLocaleString() + '</strong></span>' +
+      '<span>Total sold: <strong style="color:var(--text)">$' + Math.round(grandTotal).toLocaleString() + '</strong></span>' +
       '<span>Our total: <strong style="color:#88c98a">$' + Math.round(grandStore).toLocaleString() + '</strong></span>' +
       '<span>Designer total: <strong style="color:var(--text)">$' + Math.round(grandDesigner).toLocaleString() + '</strong></span>';
   }
@@ -8229,7 +8236,7 @@ function invNewEditItem(vi, ii, field, val) {
   data.vendors[vi].items[ii][field] = val;
   saveInvNew(data);
   // Only re-render for fields that affect totals
-  if (field === 'unitCost' || field === 'salePrice' || field === 'qty') renderInvNew();
+  if (field === 'salePrice' || field === 'qty' || field === 'sold') renderInvNew();
 }
 
 function invNewDeleteItem(vi, ii) {
