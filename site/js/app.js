@@ -8173,7 +8173,7 @@ function renderInvNew() {
         }
 
         return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
-          '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 50px 60px 80px 70px 2px 50px 80px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+          '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 50px 60px 80px 70px 70px 2px 50px 80px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
             '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
               (item.photo
                 ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' +
@@ -8200,6 +8200,7 @@ function renderInvNew() {
             '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><input value="' + (upcharge || '') + '" placeholder="%" oninput="invNewEditItem(' + vi + ',' + ii + ',\'upchargePct\',parseFloat(this.value)||0)" style="width:36px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"><span style="color:var(--muted);font-size:10px">%</span></div>' +
             '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);text-align:right;font-weight:600">$' + retailPrice + '</div>' +
             '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">+$' + profitEa + '</div>' +
+            '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:right">$' + Math.round(costUsd * qty) + '</div>' +
             '<div style="border-left:1px solid var(--border);height:100%"></div>' +
             '<input type="number" min="0" value="' + sold + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
             '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + totalRevenue + '</div>' +
@@ -8341,8 +8342,8 @@ function renderInvNew() {
     if (!invNewCollapsed[vi]) {
       var colHeaders;
       if (isWholesale) {
-        colHeaders = '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 50px 60px 80px 70px 2px 50px 80px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
-          '<div></div><div>Item</div><div>Category</div><div>Cost EUR</div><div>Cost USD</div><div>Qty</div><div>Markup</div><div style="text-align:right">Retail $</div><div style="text-align:right">Profit/ea</div>' +
+        colHeaders = '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 50px 60px 80px 70px 70px 2px 50px 80px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+          '<div></div><div>Item</div><div>Category</div><div>Cost EUR</div><div>Cost USD</div><div>Qty</div><div>Markup</div><div style="text-align:right">Retail $</div><div style="text-align:right">Profit/ea</div><div style="text-align:right">Total Cost</div>' +
           '<div></div><div style="text-align:center">Sold</div><div style="text-align:right">Revenue</div><div style="text-align:right">Profit</div><div></div>' +
         '</div>';
       } else {
