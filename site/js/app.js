@@ -8401,14 +8401,12 @@ function openExhibitA(vi) {
         '<div>' +
           '<div style="border-bottom:1px solid #1a1a1a;height:40px;margin-bottom:4px"></div>' +
           '<div><strong>Store:</strong> Madeline (Del) Musarra, The Front NYC LLC</div>' +
-          '<div style="margin-top:8px;border-bottom:1px solid #ccc;height:24px"></div>' +
-          '<div style="font-size:11px;color:#666">Date</div>' +
+          '<div style="margin-top:8px"><input value="" placeholder="Date" style="border:none;border-bottom:1px solid #ccc;background:none;width:100%;font-family:inherit;font-size:inherit;padding:4px 0"></div>' +
         '</div>' +
         '<div>' +
           '<div style="border-bottom:1px solid #1a1a1a;height:40px;margin-bottom:4px"></div>' +
-          '<div><strong>Designer:</strong> ' + esc(vendor.name) + '</div>' +
-          '<div style="margin-top:8px;border-bottom:1px solid #ccc;height:24px"></div>' +
-          '<div style="font-size:11px;color:#666">Date</div>' +
+          '<div><strong>Designer:</strong> <input value="" placeholder="Full name" style="border:none;border-bottom:1px dashed #999;background:none;font-family:inherit;font-size:inherit;padding:2px 0;width:200px"></div>' +
+          '<div style="margin-top:8px"><input value="" placeholder="Date" style="border:none;border-bottom:1px solid #ccc;background:none;width:100%;font-family:inherit;font-size:inherit;padding:4px 0"></div>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -8418,8 +8416,7 @@ function openExhibitA(vi) {
       '<button class="doc-modal-close" onclick="closeDocExport()">&#x2715; Close</button>' +
       '<button class="doc-modal-print" onclick="window.print()">Print / Save PDF</button>' +
       '<div style="text-align:center;margin-bottom:8px;font-family:Cormorant Garamond,serif;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#666">The Front NYC</div>' +
-      '<div style="text-align:center;font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;margin-bottom:4px">EXHIBIT A: INVENTORY SCHEDULE</div>' +
-      '<div style="text-align:center;font-family:DM Mono,monospace;font-size:10px;color:#888;letter-spacing:0.08em;margin-bottom:32px">VENDOR CONSIGNMENT & CUSTOM SERVICES AGREEMENT</div>' +
+      '<div style="text-align:center;font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;margin-bottom:32px">EXHIBIT A: INVENTORY SCHEDULE</div>' +
       body +
     '</div>' +
   '</div>';
