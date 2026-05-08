@@ -55,18 +55,20 @@
           <button class="front-split-btn" id="fsplit-mktevents" onclick="switchFrontSide('mktevents',this)">
             <span class="front-split-icon">📣</span> Marketing & Events
           </button>
+          <div class="front-split-divider">|</div>
+          <button class="front-split-btn" id="fsplit-archive" onclick="switchFrontSide('archive',this)">
+            <span class="front-split-icon">🗄</span> Archive
+          </button>
         </div>
         <div class="sub-bar front-side-bar front-popup-nav active" id="front-popup-bar">
           <button class="tab active" data-tab="popup" onclick="showTab('front','popup',this)"><span class="tab-icon">🏮</span>Overview</button>
           <button class="tab" data-tab="schedule" onclick="showTab('front','schedule',this)"><span class="tab-icon">📋</span>Schedule</button>
           <button class="tab" data-tab="popup-pl" onclick="showTab('front','popup-pl',this)"><span class="tab-icon">💰</span>Budget & P/L</button>
           <button class="tab" data-tab="popup-resources" onclick="showTab('front','popup-resources',this)"><span class="tab-icon">📋</span>Resources</button>
-          <button class="tab" data-tab="references" onclick="showTab('front','references',this)"><span class="tab-icon">🖼</span>References</button>
         </div>
         <div class="sub-bar front-side-bar" id="front-vendors-bar">
           <button class="tab active" data-tab="popup-vendors" onclick="showTab('front','popup-vendors',this)"><span class="tab-icon">🤝</span>Vendors</button>
-          <button class="tab" data-tab="popup-inventory" onclick="showTab('front','popup-inventory',this)"><span class="tab-icon">📦</span>Inventory</button>
-          <button class="tab" data-tab="popup-inventory-new" onclick="showTab('front','popup-inventory-new',this)"><span class="tab-icon">📦</span>Inventory New</button>
+          <button class="tab" data-tab="popup-inventory-new" onclick="showTab('front','popup-inventory-new',this)"><span class="tab-icon">📦</span>Inventory</button>
         </div>
         <div class="sub-bar front-side-bar" id="front-retail-bar">
           <div class="brand-switcher">
@@ -91,6 +93,10 @@
         <div class="sub-bar front-side-bar" id="front-mktevents-bar">
           <button class="tab active" data-tab="popup-marketing" onclick="showTab('front','popup-marketing',this)"><span class="tab-icon">📣</span>Marketing</button>
           <button class="tab" data-tab="popup-events" onclick="showTab('front','popup-events',this)"><span class="tab-icon">🎭</span>Events</button>
+        </div>
+        <div class="sub-bar front-side-bar" id="front-archive-bar">
+          <button class="tab active" data-tab="references" onclick="showTab('front','references',this)"><span class="tab-icon">🖼</span>References</button>
+          <button class="tab" data-tab="popup-inventory" onclick="showTab('front','popup-inventory',this)"><span class="tab-icon">📦</span>Inventory (Old)</button>
         </div>
       </div>
 
