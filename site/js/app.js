@@ -8303,7 +8303,7 @@ function openExhibitA(vi) {
   var loanItems = (vendor.loanItems || []);
   var catLabels = { clothing:'Clothing', jewelry:'Jewelry', accessories:'Accessory', ceramics:'Object', objects:'Object', art:'Art', textiles:'Other', furniture:'Object', other:'Other' };
   var tdStyle = 'padding:8px 6px;border:1px solid #ccc';
-  var inputStyle = 'border:none;border-bottom:1px dashed #999;background:none;width:100%;font-family:inherit;font-size:inherit;padding:2px 0';
+  var inputStyle = 'border:none;background:none;width:100%;font-family:inherit;font-size:inherit;padding:2px 0;outline:none';
 
   // Consignment table
   var totalRetail = 0;
@@ -8363,8 +8363,8 @@ function openExhibitA(vi) {
       '<td style="' + tdStyle + '"><input value="' + esc(item.category || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'category\',this.value)"></td>' +
       '<td style="' + tdStyle + '"><input value="' + esc(item.dimensions || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'dimensions\',this.value)"></td>' +
       '<td style="' + tdStyle + '"><input value="' + esc(item.material || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'material\',this.value)"></td>' +
-      '<td style="text-align:center;' + tdStyle + '"><input type="number" min="1" value="' + qty + '" style="width:36px;border:none;border-bottom:1px dashed #999;background:none;font-family:inherit;font-size:inherit;text-align:center;padding:2px 0" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'qty\',+this.value);openExhibitA(' + vi + ')"></td>' +
-      '<td style="text-align:right;' + tdStyle + '"><input value="' + (val || '') + '" placeholder="0" style="width:60px;border:none;border-bottom:1px dashed #999;background:none;font-family:inherit;font-size:inherit;text-align:right;padding:2px 0" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'value\',parseFloat(this.value)||0);openExhibitA(' + vi + ')"></td>' +
+      '<td style="text-align:center;' + tdStyle + '"><input type="number" min="1" value="' + qty + '" style="width:36px;border:none;background:none;font-family:inherit;font-size:inherit;text-align:center;padding:2px 0;outline:none" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'qty\',+this.value);openExhibitA(' + vi + ')"></td>' +
+      '<td style="text-align:right;' + tdStyle + '"><input value="' + (val || '') + '" placeholder="0" style="width:60px;border:none;background:none;font-family:inherit;font-size:inherit;text-align:right;padding:2px 0;outline:none" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'value\',parseFloat(this.value)||0);openExhibitA(' + vi + ')"></td>' +
     '</tr>';
   }).join('');
 
@@ -8401,12 +8401,12 @@ function openExhibitA(vi) {
         '<div>' +
           '<div style="border-bottom:1px solid #1a1a1a;height:40px;margin-bottom:4px"></div>' +
           '<div><strong>Store:</strong> Madeline (Del) Musarra, The Front NYC LLC</div>' +
-          '<div style="margin-top:8px"><input value="" placeholder="Date" style="border:none;border-bottom:1px solid #ccc;background:none;width:100%;font-family:inherit;font-size:inherit;padding:4px 0"></div>' +
+          '<div style="margin-top:8px"><input value="" placeholder="Date" style="border:none;border-bottom:1px solid #ccc;background:none;width:100%;font-family:inherit;font-size:inherit;padding:4px 0;outline:none"></div>' +
         '</div>' +
         '<div>' +
           '<div style="border-bottom:1px solid #1a1a1a;height:40px;margin-bottom:4px"></div>' +
-          '<div><strong>Designer:</strong> <input value="" placeholder="Full name" style="border:none;border-bottom:1px dashed #999;background:none;font-family:inherit;font-size:inherit;padding:2px 0;width:200px"></div>' +
-          '<div style="margin-top:8px"><input value="" placeholder="Date" style="border:none;border-bottom:1px solid #ccc;background:none;width:100%;font-family:inherit;font-size:inherit;padding:4px 0"></div>' +
+          '<div><strong>Designer:</strong> <input value="" placeholder="Full name" style="border:none;border-bottom:1px solid #ccc;background:none;font-family:inherit;font-size:inherit;padding:2px 0;width:200px;outline:none"></div>' +
+          '<div style="margin-top:8px"><input value="" placeholder="Date" style="border:none;border-bottom:1px solid #ccc;background:none;width:100%;font-family:inherit;font-size:inherit;padding:4px 0;outline:none"></div>' +
         '</div>' +
       '</div>' +
     '</div>';
