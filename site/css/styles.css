@@ -221,6 +221,14 @@ body::before {
 
 .ws-inner { max-width: 800px; margin: 0 auto; padding: 44px 24px 0; }
 
+/* Inventory New — break out of ws-inner to use full width */
+#front-popup-inventory-new {
+  width: 100vw; position: relative; left: 50%; right: 50%;
+  margin-left: -50vw; margin-right: -50vw;
+  max-width: 100vw !important; padding: 16px 40px 80px !important;
+  box-sizing: border-box;
+}
+
 /* ── GROUPED NAV ── */
 .nav-shell { margin-bottom: 28px; }
 
