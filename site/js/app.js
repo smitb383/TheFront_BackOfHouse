@@ -8035,6 +8035,7 @@ document.addEventListener('DOMContentLoaded', checkApiKeyOnLoad);
 var INV_NEW_KEY = 'popup_inv_new_v1';
 var invNewCollapsed = {};
 var invNewOpenItem = null;
+var invNewView = 'list'; // 'list' or 'gallery'
 
 function getInvNew() {
   try { return JSON.parse(localStorage.getItem(INV_NEW_KEY) || 'null'); } catch(e) { return null; }
@@ -8142,7 +8143,7 @@ function renderInvNew() {
             '<option value="furniture"' + (item.category === 'furniture' ? ' selected' : '') + '>Furniture</option>' +
             '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
           '</select>' +
-          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" min="0" value="' + (item.salePrice || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',+this.value)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input value="' + (item.salePrice || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',parseFloat(this.value)||0)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
           '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + Math.round(storeNet) + '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(designerNet) + ' ' + soldDisplay + '</div>' +
@@ -8268,7 +8269,117 @@ function invNewPickPhoto(vi, ii) {
       invNewEditItem(vi, ii, 'photo', compressed);
     }
     renderInvNew();
+    if (invNewView === 'gallery') renderInvNewGallery();
   };
   input.click();
+}
+
+function invNewSetView(view) {
+  invNewView = view;
+  var listEl = document.getElementById('inv-new-list');
+  var galleryEl = document.getElementById('inv-new-gallery');
+  var btnList = document.getElementById('inv-new-view-list');
+  var btnGallery = document.getElementById('inv-new-view-gallery');
+  if (!listEl || !galleryEl) return;
+  if (view === 'gallery') {
+    listEl.style.display = 'none';
+    galleryEl.style.display = 'block';
+    if (btnList) btnList.classList.remove('active');
+    if (btnGallery) btnGallery.classList.add('active');
+    renderInvNewGallery();
+  } else {
+    listEl.style.display = 'block';
+    galleryEl.style.display = 'none';
+    if (btnList) btnList.classList.add('active');
+    if (btnGallery) btnGallery.classList.remove('active');
+  }
+}
+
+function renderInvNewGallery() {
+  var el = document.getElementById('inv-new-gallery');
+  if (!el) return;
+  var data = invNewSyncConfirmed();
+  if (!data.vendors.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-family:Cormorant Garamond,serif;font-style:italic">No items yet.</div>';
+    return;
+  }
+
+  // Flatten all items with vendor info
+  var allItems = [];
+  data.vendors.forEach(function(vendor) {
+    vendor.items.forEach(function(item) {
+      allItems.push({ item: item, vendorName: vendor.name });
+    });
+  });
+
+  if (!allItems.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-family:Cormorant Garamond,serif;font-style:italic">No items added yet. Add items in the list view.</div>';
+    return;
+  }
+
+  // Group by category
+  var categories = {};
+  var catOrder = ['clothing','jewelry','accessories','ceramics','objects','art','textiles','furniture','other'];
+  allItems.forEach(function(entry) {
+    var cat = entry.item.category || 'uncategorized';
+    if (!categories[cat]) categories[cat] = [];
+    categories[cat].push(entry);
+  });
+
+  // Sort items within each category by vendor name so same-designer items are together
+  Object.keys(categories).forEach(function(cat) {
+    categories[cat].sort(function(a, b) { return a.vendorName.localeCompare(b.vendorName); });
+  });
+
+  // Build ordered category list
+  var orderedCats = catOrder.filter(function(c) { return categories[c]; });
+  Object.keys(categories).forEach(function(c) {
+    if (orderedCats.indexOf(c) === -1) orderedCats.push(c);
+  });
+
+  var catLabels = { clothing:'Clothing', jewelry:'Jewelry', accessories:'Accessories', ceramics:'Ceramics', objects:'Objects', art:'Art', textiles:'Textiles', furniture:'Furniture', other:'Other', uncategorized:'Uncategorized' };
+
+  var html = orderedCats.map(function(cat) {
+    var items = categories[cat];
+
+    // Group consecutive items by vendor
+    var groups = [];
+    var currentVendor = null;
+    items.forEach(function(entry) {
+      if (entry.vendorName !== currentVendor) {
+        groups.push({ vendor: entry.vendorName, items: [entry.item] });
+        currentVendor = entry.vendorName;
+      } else {
+        groups[groups.length - 1].items.push(entry.item);
+      }
+    });
+
+    var cardsHtml = groups.map(function(group) {
+      var vendorLabel = '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);padding:8px 0 4px">' + esc(group.vendor) + '</div>';
+      var itemCards = group.items.map(function(item) {
+        var photoHtml = item.photo
+          ? '<img src="' + esc(item.photo) + '" style="width:100%;height:200px;object-fit:cover;cursor:zoom-in" onclick="openLightbox(\'' + esc(item.photo) + '\')">'
+          : '<div style="width:100%;height:200px;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:24px">+</div>';
+        return '<div style="width:180px;flex-shrink:0">' +
+          '<div style="border-radius:6px;overflow:hidden;border:1px solid var(--faint)">' +
+            photoHtml +
+            '<div style="padding:8px 10px">' +
+              '<div style="font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(item.name || 'Untitled') + '</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);margin-top:2px">$' + (item.salePrice || 0) + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      return vendorLabel + '<div style="display:flex;gap:12px;flex-wrap:wrap">' + itemCards + '</div>';
+    }).join('');
+
+    return '<div style="margin-bottom:28px">' +
+      '<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:4px">' + (catLabels[cat] || cat) + '</div>' +
+      cardsHtml +
+    '</div>';
+  }).join('');
+
+  el.innerHTML = html;
 }
 

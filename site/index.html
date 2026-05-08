@@ -2343,10 +2343,19 @@
             <div class="view-title">Inventory New</div>
             <div class="view-desc">Confirmed vendors auto-populate here. Add items under each designer with pricing and consignment splits.</div>
           </div>
-          <button class="add-vendor-btn" onclick="invNewAddVendor()">+ Add vendor manually</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="add-vendor-btn" onclick="invNewAddVendor()">+ Add vendor manually</button>
+          </div>
         </div>
-        <div id="inv-new-totals" style="display:flex;gap:24px;padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:16px;font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)"></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap">
+          <div id="inv-new-totals" style="display:flex;gap:24px;flex:1;font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)"></div>
+          <div style="display:flex;gap:4px">
+            <button id="inv-new-view-list" class="filter-btn active" onclick="invNewSetView('list')" style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;cursor:pointer">List</button>
+            <button id="inv-new-view-gallery" class="filter-btn" onclick="invNewSetView('gallery')" style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;cursor:pointer">Gallery</button>
+          </div>
+        </div>
         <div id="inv-new-list"></div>
+        <div id="inv-new-gallery" style="display:none"></div>
       </div>
 
       <!-- OLD BUDGET (hidden, kept for data compat) -->
