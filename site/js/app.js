@@ -8083,7 +8083,7 @@ function renderInvNew() {
     var sPct = vendor.storePct != null ? vendor.storePct : 30;
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0;
     vendor.items.forEach(function(item) {
-      var revenue = (item.salePrice || item.unitCost || 0) * (item.qty || 1);
+      var revenue = (item.salePrice || 0) * (item.qty || 1);
       vendorTotal += revenue;
       vendorStore += revenue * (sPct / 100);
       vendorDesigner += revenue * (dPct / 100);
@@ -8094,7 +8094,7 @@ function renderInvNew() {
     grandItems += vendor.items.length;
 
     var itemRows = vendor.items.map(function(item, ii) {
-      var price = item.salePrice || item.unitCost || 0;
+      var price = item.salePrice || 0;
       var revenue = price * (item.qty || 1);
       var storeNet = revenue * (sPct / 100);
       var designerNet = revenue * (dPct / 100);
@@ -8125,7 +8125,7 @@ function renderInvNew() {
       }
 
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
-        '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 80px 50px 80px 80px 28px;align-items:center;gap:8px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+        '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 50px 80px 80px 28px;align-items:center;gap:8px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
             (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
           '</div>' +
@@ -8142,8 +8142,7 @@ function renderInvNew() {
             '<option value="furniture"' + (item.category === 'furniture' ? ' selected' : '') + '>Furniture</option>' +
             '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
           '</select>' +
-          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">cost $</span><input type="number" min="0" value="' + (item.unitCost || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'unitCost\',+this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
-          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">sell $</span><input type="number" min="0" value="' + (item.salePrice || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',+this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" min="0" value="' + (item.salePrice || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',+this.value)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
           '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + Math.round(storeNet) + '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(designerNet) + ' ' + soldDisplay + '</div>' +
@@ -8167,8 +8166,8 @@ function renderInvNew() {
 
     var vendorBody = '';
     if (!invNewCollapsed[vi]) {
-      var colHeaders = '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 80px 50px 80px 80px 28px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
-        '<div></div><div>Item</div><div>Category</div><div>Cost</div><div>Sale $</div><div>Qty</div><div style="text-align:right">Us (' + sPct + '%)</div><div style="text-align:right">Them (' + dPct + '%)</div><div></div>' +
+      var colHeaders = '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 50px 80px 80px 28px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+        '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div><div style="text-align:right">Us (' + sPct + '%)</div><div style="text-align:right">Them (' + dPct + '%)</div><div></div>' +
       '</div>';
       vendorBody = '<div style="padding:4px 0 12px">' +
         colHeaders + itemRows +
