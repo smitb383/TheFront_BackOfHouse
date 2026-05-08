@@ -8042,14 +8042,9 @@ function saveInvNew(d) { localStorage.setItem(INV_NEW_KEY, JSON.stringify(d)); }
 function invNewSyncConfirmed() {
   var data = getInvNew() || { vendors: [] };
   var popupVendors = getPopupVendors();
-  var confirmed = popupVendors.filter(function(v) { return v.inventoryStatus === 'confirmed-stock' || v.inventoryStatus === 'received-stock'; });
-  // Remove vendors that no longer qualify
-  var confirmedIds = confirmed.map(function(v) { return v.id; });
-  data.vendors = data.vendors.filter(function(iv) {
-    return confirmedIds.indexOf(iv.vendorId) !== -1;
-  });
-  // Add new qualifying vendors
-  confirmed.forEach(function(v) {
+  var qualifying = popupVendors.filter(function(v) { return v.inventoryStatus === 'received-linesheet' || v.inventoryStatus === 'confirmed-stock' || v.inventoryStatus === 'received-stock'; });
+  // Add new qualifying vendors (never remove existing ones)
+  qualifying.forEach(function(v) {
     var exists = data.vendors.find(function(iv) { return iv.vendorId === v.id; });
     if (!exists) {
       data.vendors.push({
@@ -8071,7 +8066,7 @@ function renderInvNew() {
   if (!list) return;
   var data = invNewSyncConfirmed();
   if (!data.vendors.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-family:Cormorant Garamond,serif;font-style:italic">No vendors with confirmed stock yet. Set a vendor\'s inventory status to "Confirmed stock" or "Received stock" to see them here.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-family:Cormorant Garamond,serif;font-style:italic">No vendors with line sheets yet. Set a vendor\'s inventory status to "Received line sheet", "Confirmed stock", or "Received stock" to see them here.</div>';
     if (totalsEl) totalsEl.innerHTML = '';
     return;
   }
