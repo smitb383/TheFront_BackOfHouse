@@ -8477,9 +8477,9 @@ async function downloadExhibitAPDF(vi) {
   var rgb = PDFLib.rgb;
   var form = pdfDoc.getForm();
 
-  var pageW = 792; // landscape letter
-  var pageH = 612;
-  var margin = 40;
+  var pageW = 612; // portrait letter
+  var pageH = 792;
+  var margin = 36;
   var usableW = pageW - margin * 2;
 
   function addPage() {
@@ -8524,26 +8524,24 @@ async function downloadExhibitAPDF(vi) {
   // Header info
   drawText('Designer/Brand: ', margin, y, { font: fontBold, size: headerSize });
   drawText(vendor.name, margin + fontBold.widthOfTextAtSize('Designer/Brand: ', headerSize), y, { size: headerSize });
-  drawText('Date Submitted: ' + dateStr, pageW / 2, y, { size: headerSize });
   y -= 16;
-  drawText('Consignment Split: ' + dPct + '% Designer / ' + sPct + '% Store', margin, y, { size: headerSize });
+  drawText('Date Submitted: ' + dateStr, margin, y, { size: headerSize });
+  drawText('Consignment Split: ' + dPct + '% Designer / ' + sPct + '% Store', margin + 220, y, { size: headerSize });
   y -= 24;
 
   // Consignment table
   drawText('Consignment Items', margin, y, { font: fontBold, size: 13 });
   y -= 18;
 
-  // Column layout: #, Item, Cat, Dimensions*, Material*, Qty, Price, Designer, Store
+  // Column layout: #, Item, Cat, Qty, Price, Designer, Store — then Dimensions & Material on second line
   var cols = [
-    { label: '#', w: 24, align: 'center' },
-    { label: 'ITEM NAME', w: 160, align: 'left' },
-    { label: 'CATEGORY', w: 70, align: 'left' },
-    { label: 'DIMENSIONS', w: 110, align: 'left', editable: true },
-    { label: 'MATERIAL', w: 120, align: 'left', editable: true },
-    { label: 'QTY', w: 30, align: 'center' },
-    { label: 'PRICE', w: 55, align: 'right' },
-    { label: 'DESIGNER (' + dPct + '%)', w: 72, align: 'right' },
-    { label: 'STORE (' + sPct + '%)', w: 65, align: 'right' }
+    { label: '#', w: 20, align: 'center' },
+    { label: 'ITEM NAME', w: 130, align: 'left' },
+    { label: 'CATEGORY', w: 62, align: 'left' },
+    { label: 'QTY', w: 26, align: 'center' },
+    { label: 'PRICE', w: 50, align: 'right' },
+    { label: 'DESIGNER (' + dPct + '%)', w: 68, align: 'right' },
+    { label: 'STORE (' + sPct + '%)', w: 58, align: 'right' }
   ];
 
   // Draw header row
@@ -8556,12 +8554,13 @@ async function downloadExhibitAPDF(vi) {
   });
   y -= hdrH + 2;
 
-  // Draw consignment rows
-  var rowH = 20;
+  // Draw consignment rows — two lines per item: data row + dimensions/material fields
+  var rowH = 16;
+  var fieldH = 18;
   var totalRetail = 0;
   var totalQty = 0;
   vendor.items.forEach(function(item, idx) {
-    checkPage(rowH + 4);
+    checkPage(rowH + fieldH + 8);
     var price = item.salePrice || 0;
     var qty = item.qty || 1;
     totalRetail += price * qty;
@@ -8575,26 +8574,30 @@ async function downloadExhibitAPDF(vi) {
       { val: String(idx + 1), w: cols[0].w },
       { val: item.name || '', w: cols[1].w },
       { val: catLabels[item.category] || item.category || '', w: cols[2].w },
-      { val: item.dimensions || '', w: cols[3].w, field: 'dim_' + idx },
-      { val: item.material || '', w: cols[4].w, field: 'mat_' + idx },
-      { val: String(qty), w: cols[5].w },
-      { val: '$' + price, w: cols[6].w, align: 'right' },
-      { val: '$' + Math.round(price * (dPct / 100)), w: cols[7].w, align: 'right' },
-      { val: '$' + Math.round(price * (sPct / 100)), w: cols[8].w, align: 'right' }
+      { val: String(qty), w: cols[3].w },
+      { val: '$' + price, w: cols[4].w, align: 'right' },
+      { val: '$' + Math.round(price * (dPct / 100)), w: cols[5].w, align: 'right' },
+      { val: '$' + Math.round(price * (sPct / 100)), w: cols[6].w, align: 'right' }
     ];
 
     rowData.forEach(function(cell) {
-      if (cell.field) {
-        addTextField(cell.field, rx, y - rowH + 4, cell.w - 4, rowH - 4, cell.val);
-      } else if (cell.align === 'right') {
+      if (cell.align === 'right') {
         var tw = font.widthOfTextAtSize(cell.val, fontSize);
-        drawText(cell.val, rx + cell.w - tw - 4, y - 12, {});
+        drawText(cell.val, rx + cell.w - tw - 4, y - 11, {});
       } else {
-        drawText(cell.val, rx, y - 12, {});
+        drawText(cell.val, rx, y - 11, {});
       }
       rx += cell.w;
     });
     y -= rowH;
+
+    // Second line: Dimensions and Material editable fields
+    var halfW = (usableW - 8) / 2;
+    drawText('Dimensions:', margin + 4, y - 4, { size: 7, color: rgb(0.5, 0.5, 0.5) });
+    addTextField('dim_' + idx, margin + 60, y - fieldH + 6, halfW - 60, fieldH - 4, item.dimensions || '');
+    drawText('Material:', margin + halfW + 12, y - 4, { size: 7, color: rgb(0.5, 0.5, 0.5) });
+    addTextField('mat_' + idx, margin + halfW + 56, y - fieldH + 6, halfW - 52, fieldH - 4, item.material || '');
+    y -= fieldH + 2;
   });
 
   // Consignment totals
@@ -8611,13 +8614,13 @@ async function downloadExhibitAPDF(vi) {
     y -= 18;
 
     var loanCols = [
-      { label: '#', w: 24 },
-      { label: 'ITEM NAME', w: 180, editable: true },
-      { label: 'CATEGORY', w: 80, editable: true },
-      { label: 'DIMENSIONS', w: 120, editable: true },
-      { label: 'MATERIAL', w: 130, editable: true },
-      { label: 'QTY', w: 35 },
-      { label: 'ITEM VALUE', w: 80, editable: true }
+      { label: '#', w: 20 },
+      { label: 'ITEM NAME', w: 130, editable: true },
+      { label: 'CATEGORY', w: 65, editable: true },
+      { label: 'DIMENSIONS', w: 110, editable: true },
+      { label: 'MATERIAL', w: 110, editable: true },
+      { label: 'QTY', w: 30 },
+      { label: 'ITEM VALUE', w: 65, editable: true }
     ];
 
     // Loan header
