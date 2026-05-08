@@ -8316,16 +8316,20 @@ function renderInvNew() {
     }
 
     var statsHtml;
+    var shipCostNum = parseFloat(vendor.shippingCost) || 0;
     if (isWholesale) {
-      var totalCostWithShip = vendorTotalCost + (parseFloat(vendor.shippingCost) || 0);
+      var totalCostWithShip = vendorTotalCost + shipCostNum;
       statsHtml = statBlock('Total Value', vendorMerchValue) +
-        statBlock('Cost', totalCostWithShip, 'var(--muted)') +
+        statBlock('Cost (+ship)', totalCostWithShip, 'var(--muted)') +
         statBlock('Sold', vendorTotal) +
         statBlock('Profit', vendorTotalProfit, '#88c98a');
     } else {
+      var wePayShipping = vendor.shippingCoveredBy === 'us' && shipCostNum > 0;
+      var afterShipping = vendorStore - (wePayShipping ? shipCostNum : 0);
       statsHtml = statBlock('Total Value', vendorMerchValue) +
         statBlock('Sold', vendorTotal) +
         statBlock('Our Take', vendorStore, '#88c98a') +
+        (wePayShipping ? statBlock('After Shipping', afterShipping, '#88c98a') : '') +
         statBlock('Their Take', vendorDesigner);
     }
 
