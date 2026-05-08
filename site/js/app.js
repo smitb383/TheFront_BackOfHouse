@@ -8290,7 +8290,8 @@ function invNewEditVendor(vi, field, val) {
   if (!data || !data.vendors[vi]) return;
   data.vendors[vi][field] = val;
   saveInvNew(data);
-  renderInvNew();
+  // Only re-render for fields that affect layout; skip for text inputs like shipping
+  if (field !== 'shippingCost' && field !== 'shippingCoveredBy') renderInvNew();
 }
 
 function buildSizeRows(vi, ii, item, sPct, dPct) {
