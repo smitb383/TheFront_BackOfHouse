@@ -8299,46 +8299,93 @@ function openExhibitA(vi) {
   var popupVendors = getPopupVendors ? getPopupVendors() : [];
   var vendorInfo = popupVendors.find(function(v) { return v.id === vendor.vendorId; }) || {};
 
+  // Separate consignment and loaned items
+  var loanItems = (vendor.loanItems || []);
+  var catLabels = { clothing:'Clothing', jewelry:'Jewelry', accessories:'Accessory', ceramics:'Object', objects:'Object', art:'Art', textiles:'Other', furniture:'Object', other:'Other' };
+  var tdStyle = 'padding:8px 6px;border:1px solid #ccc';
+  var inputStyle = 'border:none;border-bottom:1px dashed #999;background:none;width:100%;font-family:inherit;font-size:inherit;padding:2px 0';
+
+  // Consignment table
   var totalRetail = 0;
   var totalQty = 0;
-  var loanQty = 0;
-  var loanValue = 0;
-
-  var rows = vendor.items.map(function(item, idx) {
+  var consignNum = 0;
+  var consignRows = vendor.items.map(function(item, idx) {
     var price = item.salePrice || 0;
     var qty = item.qty || 1;
-    var status = item.exhibitStatus || 'For Sale';
-    var designerCut = status === 'Loan' ? '' : '$' + Math.round(price * (dPct / 100));
-    var storeCut = status === 'Loan' ? '' : '$' + Math.round(price * (sPct / 100));
-    if (status === 'Loan') {
-      loanQty += qty;
-      loanValue += price * qty;
-    } else {
-      totalRetail += price * qty;
-      totalQty += qty;
-    }
-    var catLabels = { clothing:'Clothing', jewelry:'Jewelry', accessories:'Accessory', ceramics:'Object', objects:'Object', art:'Art', textiles:'Other', furniture:'Object', other:'Other' };
+    totalRetail += price * qty;
+    totalQty += qty;
+    consignNum++;
     return '<tr>' +
-      '<td style="text-align:center;padding:8px 6px;border:1px solid #ccc">' + (idx + 1) + '</td>' +
-      '<td style="padding:8px 6px;border:1px solid #ccc">' +
+      '<td style="text-align:center;' + tdStyle + '">' + consignNum + '</td>' +
+      '<td style="' + tdStyle + '">' +
         (item.photo ? '<img src="' + esc(item.photo) + '" style="width:48px;height:48px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:8px">' : '') +
         esc(item.name || '') +
       '</td>' +
-      '<td style="padding:8px 6px;border:1px solid #ccc">' + (catLabels[item.category] || item.category || '') + '</td>' +
-      '<td style="padding:8px 6px;border:1px solid #ccc"><input value="' + esc(item.dimensions || '') + '" placeholder="—" style="border:none;border-bottom:1px dashed #999;background:none;width:100%;font-family:inherit;font-size:inherit;padding:2px 0" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'dimensions\',this.value)"></td>' +
-      '<td style="padding:8px 6px;border:1px solid #ccc"><input value="' + esc(item.material || '') + '" placeholder="—" style="border:none;border-bottom:1px dashed #999;background:none;width:100%;font-family:inherit;font-size:inherit;padding:2px 0" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'material\',this.value)"></td>' +
-      '<td style="text-align:center;padding:8px 6px;border:1px solid #ccc">' + qty + '</td>' +
-      '<td style="text-align:center;padding:8px 6px;border:1px solid #ccc">' +
-        '<select onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'exhibitStatus\',this.value);openExhibitA(' + vi + ')" style="border:none;background:none;font-family:inherit;font-size:inherit;cursor:pointer">' +
-          '<option value="For Sale"' + (status === 'For Sale' ? ' selected' : '') + '>For Sale</option>' +
-          '<option value="Loan"' + (status === 'Loan' ? ' selected' : '') + '>Loan</option>' +
-        '</select>' +
-      '</td>' +
-      '<td style="text-align:right;padding:8px 6px;border:1px solid #ccc">$' + price + '</td>' +
-      '<td style="text-align:right;padding:8px 6px;border:1px solid #ccc">' + designerCut + '</td>' +
-      '<td style="text-align:right;padding:8px 6px;border:1px solid #ccc">' + storeCut + '</td>' +
+      '<td style="' + tdStyle + '">' + (catLabels[item.category] || item.category || '') + '</td>' +
+      '<td style="' + tdStyle + '"><input value="' + esc(item.dimensions || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'dimensions\',this.value)"></td>' +
+      '<td style="' + tdStyle + '"><input value="' + esc(item.material || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'material\',this.value)"></td>' +
+      '<td style="text-align:center;' + tdStyle + '">' + qty + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + price + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + Math.round(price * (dPct / 100)) + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + Math.round(price * (sPct / 100)) + '</td>' +
     '</tr>';
   }).join('');
+
+  var consignTable =
+    '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-bottom:8px">Consignment Items</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
+      '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
+        '<th style="' + tdStyle + ';width:30px">#</th>' +
+        '<th style="' + tdStyle + ';text-align:left">Item Name</th>' +
+        '<th style="' + tdStyle + ';text-align:left;width:80px">Category</th>' +
+        '<th style="' + tdStyle + ';text-align:left;width:120px">Dimensions</th>' +
+        '<th style="' + tdStyle + ';text-align:left;width:140px">Material</th>' +
+        '<th style="' + tdStyle + ';width:35px">Qty</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:70px">Designer (' + dPct + '%)</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:60px">Store (' + sPct + '%)</th>' +
+      '</tr></thead>' +
+      '<tbody>' + consignRows + '</tbody>' +
+    '</table>' +
+    '<div style="margin-top:8px;font-size:13px;line-height:1.6">' +
+      'Total Items Consigned: <strong>' + totalQty + '</strong> &nbsp;&nbsp; Total Retail Value: <strong>$' + totalRetail.toLocaleString() + '</strong>' +
+    '</div>';
+
+  // Loaned items table
+  var loanTotal = 0;
+  var loanRows = loanItems.map(function(item, idx) {
+    var val = item.value || 0;
+    var qty = item.qty || 1;
+    loanTotal += val * qty;
+    return '<tr>' +
+      '<td style="text-align:center;' + tdStyle + '">' + (idx + 1) + '</td>' +
+      '<td style="' + tdStyle + '"><input value="' + esc(item.name || '') + '" placeholder="Item name" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'name\',this.value)"></td>' +
+      '<td style="' + tdStyle + '"><input value="' + esc(item.category || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'category\',this.value)"></td>' +
+      '<td style="' + tdStyle + '"><input value="' + esc(item.dimensions || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'dimensions\',this.value)"></td>' +
+      '<td style="' + tdStyle + '"><input value="' + esc(item.material || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'material\',this.value)"></td>' +
+      '<td style="text-align:center;' + tdStyle + '"><input type="number" min="1" value="' + qty + '" style="width:36px;border:none;border-bottom:1px dashed #999;background:none;font-family:inherit;font-size:inherit;text-align:center;padding:2px 0" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'qty\',+this.value);openExhibitA(' + vi + ')"></td>' +
+      '<td style="text-align:right;' + tdStyle + '"><input value="' + (val || '') + '" placeholder="0" style="width:60px;border:none;border-bottom:1px dashed #999;background:none;font-family:inherit;font-size:inherit;text-align:right;padding:2px 0" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'value\',parseFloat(this.value)||0);openExhibitA(' + vi + ')"></td>' +
+    '</tr>';
+  }).join('');
+
+  var loanTable =
+    '<div style="margin-top:28px;font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-bottom:8px">Loaned Items (Display Only — Not for Sale)</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
+      '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
+        '<th style="' + tdStyle + ';width:30px">#</th>' +
+        '<th style="' + tdStyle + ';text-align:left">Item Name</th>' +
+        '<th style="' + tdStyle + ';text-align:left;width:80px">Category</th>' +
+        '<th style="' + tdStyle + ';text-align:left;width:120px">Dimensions</th>' +
+        '<th style="' + tdStyle + ';text-align:left;width:140px">Material</th>' +
+        '<th style="' + tdStyle + ';width:35px">Qty</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:80px">Item Value</th>' +
+      '</tr></thead>' +
+      '<tbody>' + loanRows + '</tbody>' +
+    '</table>' +
+    '<div style="margin-top:4px"><button onclick="exhibitAAddLoan(' + vi + ')" style="background:none;border:1px dashed #999;color:#666;font-family:DM Mono,monospace;font-size:10px;padding:4px 12px;cursor:pointer;border-radius:3px;text-transform:uppercase;letter-spacing:0.04em">+ Add loaned item</button></div>' +
+    '<div style="margin-top:8px;font-size:13px;line-height:1.6">' +
+      'Total Items on Loan: <strong>' + loanItems.length + '</strong> &nbsp;&nbsp; Total Replacement Value: <strong>$' + loanTotal.toLocaleString() + '</strong>' +
+    '</div>';
 
   var body =
     '<div style="margin-bottom:24px">' +
@@ -8351,32 +8398,11 @@ function openExhibitA(vi) {
         '<div><strong>Instagram:</strong> ' + esc(vendorInfo.instagram || '') + '</div>' +
       '</div>' +
     '</div>' +
-    '<div style="font-size:11px;color:#666;margin-bottom:8px;font-family:DM Mono,monospace;letter-spacing:0.04em">' +
-      'Categories: Clothing, Accessory, Jewelry, Object, Art, Other &nbsp;|&nbsp; Status: For Sale or Loan' +
+    '<div style="font-size:11px;color:#666;margin-bottom:12px;font-family:DM Mono,monospace;letter-spacing:0.04em">' +
+      'Categories: Clothing, Accessory, Jewelry, Object, Art, Other' +
     '</div>' +
-    '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
-      '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;width:30px">#</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:left">Item Name</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:left;width:80px">Category</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:left;width:120px">Dimensions</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:left;width:140px">Material</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;width:35px">Qty</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;width:70px">Status</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:right;width:60px">Price</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:right;width:70px">Designer (' + dPct + '%)</th>' +
-        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:right;width:60px">Store (' + sPct + '%)</th>' +
-      '</tr></thead>' +
-      '<tbody>' + rows + '</tbody>' +
-    '</table>' +
-    '<div style="margin-top:20px;font-size:13px;line-height:1.8">' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 32px">' +
-        '<div>Total Items Consigned: <strong>' + totalQty + '</strong></div>' +
-        '<div>Total Retail Value: <strong>$' + totalRetail.toLocaleString() + '</strong></div>' +
-        '<div>Total Items on Loan: <strong>' + loanQty + '</strong></div>' +
-        '<div>Total Replacement Value: <strong>$' + loanValue.toLocaleString() + '</strong></div>' +
-      '</div>' +
-    '</div>' +
+    consignTable +
+    loanTable +
     '<div style="margin-top:40px;font-size:13px">' +
       '<div style="font-style:italic;margin-bottom:24px">Agreed and confirmed:</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px">' +
@@ -8419,6 +8445,24 @@ function exhibitAUpdateField(vi, ii, field, val) {
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   data.vendors[vi].items[ii][field] = val;
   saveInvNew(data);
+}
+
+function exhibitAUpdateLoan(vi, idx, field, val) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  if (!data.vendors[vi].loanItems) data.vendors[vi].loanItems = [];
+  if (!data.vendors[vi].loanItems[idx]) return;
+  data.vendors[vi].loanItems[idx][field] = val;
+  saveInvNew(data);
+}
+
+function exhibitAAddLoan(vi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  if (!data.vendors[vi].loanItems) data.vendors[vi].loanItems = [];
+  data.vendors[vi].loanItems.push({ name: '', category: '', dimensions: '', material: '', qty: 1, value: 0 });
+  saveInvNew(data);
+  openExhibitA(vi);
 }
 
 function invNewSetView(view) {
