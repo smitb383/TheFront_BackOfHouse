@@ -8229,12 +8229,12 @@ function renderInvNew() {
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
       '<span style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
         '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">split:</span>' +
-        '<input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
+        '<input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
         '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
-        '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
+        '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
       '</span>' +
       shippingHtml +
-      '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--text);font-weight:600">merch $' + Math.round(vendorMerchValue).toLocaleString() + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--text);font-weight:600">total value $' + Math.round(vendorMerchValue).toLocaleString() + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">sold $' + Math.round(vendorTotal).toLocaleString() + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:11px;color:#88c98a">our $' + Math.round(vendorStore).toLocaleString() + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">theirs $' + Math.round(vendorDesigner).toLocaleString() + '</span>' +
@@ -8265,7 +8265,7 @@ function renderInvNew() {
   if (totalsEl) {
     totalsEl.innerHTML =
       '<span>Items: <strong style="color:var(--text)">' + grandItems + '</strong></span>' +
-      '<span>Merch value: <strong style="color:var(--text)">$' + Math.round(grandMerchValue).toLocaleString() + '</strong></span>' +
+      '<span>Total value: <strong style="color:var(--text)">$' + Math.round(grandMerchValue).toLocaleString() + '</strong></span>' +
       '<span>Shipping: <strong style="color:var(--text)">$' + Math.round(grandShipping).toLocaleString() + '</strong></span>' +
       '<span>Total sold: <strong style="color:var(--text)">$' + Math.round(grandTotal).toLocaleString() + '</strong></span>' +
       '<span>Our total: <strong style="color:#88c98a">$' + Math.round(grandStore).toLocaleString() + '</strong></span>' +
