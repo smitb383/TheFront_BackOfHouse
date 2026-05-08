@@ -8084,11 +8084,20 @@ function renderInvNew() {
     var sPct = vendor.storePct != null ? vendor.storePct : 30;
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0;
     vendor.items.forEach(function(item) {
-      var sold = item.sold || 0;
-      var soldRevenue = (item.salePrice || 0) * sold;
-      vendorTotal += soldRevenue;
-      vendorStore += soldRevenue * (sPct / 100);
-      vendorDesigner += soldRevenue * (dPct / 100);
+      var price = item.salePrice || 0;
+      if (item.sizes && item.sizes.length) {
+        item.sizes.forEach(function(sz) {
+          var soldRevenue = price * (sz.sold || 0);
+          vendorTotal += soldRevenue;
+          vendorStore += soldRevenue * (sPct / 100);
+          vendorDesigner += soldRevenue * (dPct / 100);
+        });
+      } else {
+        var soldRevenue = price * (item.sold || 0);
+        vendorTotal += soldRevenue;
+        vendorStore += soldRevenue * (sPct / 100);
+        vendorDesigner += soldRevenue * (dPct / 100);
+      }
     });
     grandTotal += vendorTotal;
     grandStore += vendorStore;
@@ -8099,8 +8108,15 @@ function renderInvNew() {
       var price = item.salePrice || 0;
       var unitUs = Math.round(price * (sPct / 100));
       var unitThem = Math.round(price * (dPct / 100));
-      var sold = item.sold || 0;
-      var totalSales = price * sold;
+      var hasSizes = item.sizes && item.sizes.length > 0;
+      var totalQty = 0, totalSold = 0;
+      if (hasSizes) {
+        item.sizes.forEach(function(sz) { totalQty += (sz.qty || 0); totalSold += (sz.sold || 0); });
+      } else {
+        totalQty = item.qty || 1;
+        totalSold = item.sold || 0;
+      }
+      var totalSales = price * totalSold;
       var totalUs = Math.round(totalSales * (sPct / 100));
       var totalThem = Math.round(totalSales * (dPct / 100));
       var isItemOpen = invNewOpenItem === vi + '-' + ii;
@@ -8120,7 +8136,8 @@ function renderInvNew() {
             '<input class="field-input" value="' + esc(item.dimensions || '') + '" placeholder="e.g. 12 x 8 x 4 in" oninput="invNewEditItem(' + vi + ',' + ii + ',\'dimensions\',this.value)" style="margin-top:3px"></div>' +
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Packaging</label>' +
             '<input class="field-input" value="' + esc(item.packaging || '') + '" placeholder="e.g. Tissue + kraft bag" oninput="invNewEditItem(' + vi + ',' + ii + ',\'packaging\',this.value)" style="margin-top:3px"></div>' +
-        '</div>';
+        '</div>' +
+        (item.category === 'clothing' && !hasSizes ? '<div style="padding:6px 0"><button onclick="event.stopPropagation();invNewInitSizes(' + vi + ',' + ii + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:4px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Enable size tracking</button></div>' : '');
       }
 
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
@@ -8146,17 +8163,22 @@ function renderInvNew() {
             '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
           '</select>' +
           '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input value="' + (item.salePrice || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',parseFloat(this.value)||0)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
-          '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
+          (hasSizes
+            ? '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:center">' + totalQty + '</div>'
+            : '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">') +
           '<div style="border-left:1px solid var(--border);height:100%"></div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + unitUs + '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + unitThem + '</div>' +
           '<div style="border-left:1px solid var(--border);height:100%"></div>' +
-          '<input type="number" min="0" value="' + sold + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
+          (hasSizes
+            ? '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:center">' + totalSold + '</div>'
+            : '<input type="number" min="0" value="' + (item.sold || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">') +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(totalSales) + '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + totalUs + '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + totalThem + '</div>' +
           '<button onclick="event.stopPropagation();invNewDeleteItem(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
         '</div>' +
+        (hasSizes ? buildSizeRows(vi, ii, item, sPct, dPct) : '') +
         detailPanel +
       '</div>';
     }).join('');
@@ -8218,6 +8240,86 @@ function invNewEditVendor(vi, field, val) {
   var data = getInvNew();
   if (!data || !data.vendors[vi]) return;
   data.vendors[vi][field] = val;
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function buildSizeRows(vi, ii, item, sPct, dPct) {
+  var price = item.salePrice || 0;
+  var rows = item.sizes.map(function(sz, si) {
+    var szSold = sz.sold || 0;
+    var szRevenue = price * szSold;
+    var szSoldBg = szSold >= (sz.qty || 0) && (sz.qty || 0) > 0 ? 'color:#88c98a' : '';
+    return '<div style="display:grid;grid-template-columns:76px 60px 1fr 80px 50px 2px 70px 70px 2px 50px 80px 70px 70px 28px;align-items:center;gap:6px;padding:2px 0;margin-left:0" onclick="event.stopPropagation()">' +
+      '<div></div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);background:var(--surface2);padding:3px 8px;border-radius:2px;text-align:center;font-weight:600">' + esc(sz.size || '') + '</div>' +
+      '<div></div>' +
+      '<div></div>' +
+      '<input type="number" min="0" value="' + (sz.qty || 0) + '" oninput="invNewEditSize(' + vi + ',' + ii + ',' + si + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">' +
+      '<div></div>' +
+      '<div></div>' +
+      '<div></div>' +
+      '<div></div>' +
+      '<input type="number" min="0" value="' + szSold + '" oninput="invNewEditSize(' + vi + ',' + ii + ',' + si + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center;' + szSoldBg + '">' +
+      '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;text-align:right">$' + Math.round(szRevenue * (sPct / 100)) + '</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue * (dPct / 100)) + '</div>' +
+      '<button onclick="invNewRemoveSize(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>' +
+    '</div>';
+  }).join('');
+
+  var addBtn = '<div style="padding:2px 0 4px 76px" onclick="event.stopPropagation()">' +
+    '<button onclick="invNewAddSize(' + vi + ',' + ii + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ size</button>' +
+  '</div>';
+
+  return '<div style="border-left:2px solid var(--faint);margin-left:38px;padding-left:0">' + rows + addBtn + '</div>';
+}
+
+function invNewInitSizes(vi, ii) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  var item = data.vendors[vi].items[ii];
+  var qty = item.qty || 1;
+  item.sizes = [
+    { size: 'S', qty: 0, sold: 0 },
+    { size: 'M', qty: 0, sold: 0 },
+    { size: 'L', qty: 0, sold: 0 }
+  ];
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewAddSize(vi, ii) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  var item = data.vendors[vi].items[ii];
+  if (!item.sizes) item.sizes = [];
+  var defaultSizes = ['XS','S','M','L','XL'];
+  var existing = item.sizes.map(function(s) { return s.size; });
+  var next = '';
+  for (var i = 0; i < defaultSizes.length; i++) {
+    if (existing.indexOf(defaultSizes[i]) === -1) { next = defaultSizes[i]; break; }
+  }
+  if (!next) next = prompt('Size name:') || '';
+  if (!next) return;
+  item.sizes.push({ size: next, qty: 0, sold: 0 });
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewRemoveSize(vi, ii, si) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  data.vendors[vi].items[ii].sizes.splice(si, 1);
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewEditSize(vi, ii, si, field, val) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  if (!data.vendors[vi].items[ii].sizes || !data.vendors[vi].items[ii].sizes[si]) return;
+  data.vendors[vi].items[ii].sizes[si][field] = val;
   saveInvNew(data);
   renderInvNew();
 }
