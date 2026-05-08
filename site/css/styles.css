@@ -2157,9 +2157,10 @@ body::before {
   color: #bbb;
 }
 @media print {
+  body > *:not(.doc-modal-overlay) { display: none !important; }
+  .doc-modal-overlay { position: static; background: none; display: block !important; }
   .doc-modal-close, .doc-modal-print { display: none !important; }
-  .doc-modal-overlay { position: static; background: none; }
-  .doc-modal { padding: 40px; min-height: auto; }
+  .doc-modal { padding: 40px; min-height: auto; box-shadow: none; }
 }
 
 .ws-data-btns {
