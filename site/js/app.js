@@ -8308,9 +8308,29 @@ function renderInvNew() {
         '</span>';
     }
 
-    var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="display:flex;align-items:center;gap:14px;padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border);flex-wrap:wrap">' +
-      '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] ? '0' : '90') + 'deg)">&#9654;</span>' +
-      '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);flex:1;min-width:120px">' + esc(vendor.name) + '</span>' +
+    // Stat block helper: small label + large dollar
+    var lblS = 'font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)';
+    var valS = 'font-family:DM Mono,monospace;font-size:14px;font-weight:600';
+    function statBlock(label, amount, color) {
+      return '<div style="text-align:center;min-width:70px"><div style="' + lblS + '">' + label + '</div><div style="' + valS + ';color:' + (color || 'var(--text)') + '">$' + Math.round(amount).toLocaleString() + '</div></div>';
+    }
+
+    var statsHtml;
+    if (isWholesale) {
+      var totalCostWithShip = vendorTotalCost + (parseFloat(vendor.shippingCost) || 0);
+      statsHtml = statBlock('Total Value', vendorMerchValue) +
+        statBlock('Cost', totalCostWithShip, 'var(--muted)') +
+        statBlock('Sold', vendorTotal) +
+        statBlock('Profit', vendorTotalProfit, '#88c98a');
+    } else {
+      statsHtml = statBlock('Total Value', vendorMerchValue) +
+        statBlock('Sold', vendorTotal) +
+        statBlock('Our Take', vendorStore, '#88c98a') +
+        statBlock('Their Take', vendorDesigner);
+    }
+
+    // Row 1: name + controls
+    var controlsHtml =
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
       '<span onclick="event.stopPropagation()"><select onchange="invNewEditVendor(' + vi + ',\'pricingModel\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:3px 6px;border-radius:3px">' +
         '<option value="consignment"' + (!isWholesale ? ' selected' : '') + '>Consignment</option>' +
@@ -8327,15 +8347,16 @@ function renderInvNew() {
             '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
             '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
           '</span>') +
-      shippingHtml +
-      '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--text);font-weight:600">total value $' + Math.round(vendorMerchValue).toLocaleString() + '</span>' +
-      (isWholesale
-        ? '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted)">cost $' + Math.round(vendorTotalCost).toLocaleString() + '</span>' +
-          '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">sold $' + Math.round(vendorTotal).toLocaleString() + '</span>' +
-          '<span style="font-family:DM Mono,monospace;font-size:11px;color:#88c98a">profit $' + Math.round(vendorTotalProfit).toLocaleString() + '</span>'
-        : '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">sold $' + Math.round(vendorTotal).toLocaleString() + '</span>' +
-          '<span style="font-family:DM Mono,monospace;font-size:11px;color:#88c98a">our $' + Math.round(vendorStore).toLocaleString() + '</span>' +
-          '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">theirs $' + Math.round(vendorDesigner).toLocaleString() + '</span>') +
+      shippingHtml;
+
+    var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
+      '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
+        '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] ? '0' : '90') + 'deg)">&#9654;</span>' +
+        '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);min-width:120px">' + esc(vendor.name) + '</span>' +
+        controlsHtml +
+        '<div style="flex:1"></div>' +
+        '<div style="display:flex;gap:20px;align-items:center">' + statsHtml + '</div>' +
+      '</div>' +
     '</div>';
 
     var vendorBody = '';
