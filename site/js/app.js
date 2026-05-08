@@ -2204,6 +2204,7 @@ function showTab(project, tab, btn) {
   if (tab === 'chashama-budget') setTimeout(function(){ initCshBudget(); }, 20);
   if (tab === 'chashama-pl') setTimeout(function(){ initCshPL(); }, 20);
   if (tab === 'popup-vendors') setTimeout(function(){ renderPopupVendors(); }, 20);
+  if (tab === 'store-buildout') setTimeout(function(){ renderBuildout(); }, 20);
 }
 
 // Auto-rerender vendors when realtime updates come in from the other founder
@@ -8912,6 +8913,291 @@ function renderInvNewGallery() {
       cardsHtml +
     '</div>';
   }).join('');
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  STORE BUILD OUT
+// ═══════════════════════════════════════════════════════════════
+var BUILDOUT_KEY = 'store_buildout_v1';
+
+function getBuildout() {
+  try { return JSON.parse(localStorage.getItem(BUILDOUT_KEY)) || { items: [] }; } catch(e) { return { items: [] }; }
+}
+function saveBuildout(d) { localStorage.setItem(BUILDOUT_KEY, JSON.stringify(d)); }
+
+function buildoutAddItem() {
+  var d = getBuildout();
+  d.items.push({
+    id: 'bo_' + Date.now(),
+    name: '',
+    type: 'fabricated',
+    description: '',
+    dimensions: '',
+    materialDesc: '',
+    materialPhotos: [],
+    photo: '',
+    refDrawings: [],
+    refImages: [],
+    links: [],
+    status: 'tbd',
+    price: '',
+    qty: 1,
+    notes: ''
+  });
+  saveBuildout(d);
+  renderBuildout();
+}
+
+function buildoutEditItem(idx, field, val) {
+  var d = getBuildout();
+  if (!d.items[idx]) return;
+  d.items[idx][field] = val;
+  saveBuildout(d);
+  if (field === 'type') renderBuildout();
+}
+
+function buildoutDeleteItem(idx) {
+  var d = getBuildout();
+  d.items.splice(idx, 1);
+  saveBuildout(d);
+  renderBuildout();
+}
+
+function buildoutPickPhoto(idx, field) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async function() {
+    var file = input.files[0];
+    if (!file) return;
+    var compressed = await compressImage(file, 480, 0.6);
+    buildoutEditItem(idx, field, compressed);
+    renderBuildout();
+  };
+  input.click();
+}
+
+function buildoutAddPhoto(idx, field) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  input.onchange = async function() {
+    var d = getBuildout();
+    if (!d.items[idx]) return;
+    if (!d.items[idx][field]) d.items[idx][field] = [];
+    for (var i = 0; i < input.files.length; i++) {
+      var compressed = await compressImage(input.files[i], 480, 0.6);
+      d.items[idx][field].push(compressed);
+    }
+    saveBuildout(d);
+    renderBuildout();
+  };
+  input.click();
+}
+
+function buildoutRemovePhoto(idx, field, pi) {
+  var d = getBuildout();
+  if (!d.items[idx] || !d.items[idx][field]) return;
+  d.items[idx][field].splice(pi, 1);
+  saveBuildout(d);
+  renderBuildout();
+}
+
+function buildoutAddLink(idx) {
+  var d = getBuildout();
+  if (!d.items[idx]) return;
+  if (!d.items[idx].links) d.items[idx].links = [];
+  d.items[idx].links.push('');
+  saveBuildout(d);
+  renderBuildout();
+}
+
+function buildoutEditLink(idx, li, val) {
+  var d = getBuildout();
+  if (!d.items[idx] || !d.items[idx].links) return;
+  d.items[idx].links[li] = val;
+  saveBuildout(d);
+}
+
+function buildoutRemoveLink(idx, li) {
+  var d = getBuildout();
+  if (!d.items[idx] || !d.items[idx].links) return;
+  d.items[idx].links.splice(li, 1);
+  saveBuildout(d);
+  renderBuildout();
+}
+
+function renderBuildout() {
+  var el = document.getElementById('buildout-list');
+  if (!el) return;
+  var d = getBuildout();
+  if (!d.items.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-family:Cormorant Garamond,serif;font-style:italic">No items yet. Click + Add Item to start building your store list.</div>';
+    return;
+  }
+
+  // Sort: fabricated first, then purchased
+  var sorted = d.items.map(function(item, i) { return { item: item, idx: i }; });
+  var fabricated = sorted.filter(function(e) { return e.item.type === 'fabricated'; });
+  var purchased = sorted.filter(function(e) { return e.item.type !== 'fabricated'; });
+
+  var lbl = 'font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px';
+  var inputS = 'background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:100%;box-sizing:border-box';
+
+  function photoThumb(src, idx, field, pi) {
+    return '<div style="position:relative;width:80px;height:80px;border-radius:4px;overflow:hidden;flex-shrink:0">' +
+      '<img src="' + esc(src) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="openLightbox(\'' + esc(src) + '\')">' +
+      '<span onclick="buildoutRemovePhoto(' + idx + ',\'' + field + '\',' + pi + ')" style="position:absolute;top:2px;right:2px;width:14px;height:14px;background:rgba(0,0,0,0.6);color:#fff;font-size:9px;line-height:14px;text-align:center;border-radius:50%;cursor:pointer">x</span>' +
+    '</div>';
+  }
+
+  function buildCard(entry) {
+    var item = entry.item;
+    var i = entry.idx;
+    var isFab = item.type === 'fabricated';
+
+    // Main photo
+    var mainPhoto = '<div style="width:100%;height:180px;border-radius:6px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:10px">' +
+      (item.photo
+        ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="openLightbox(\'' + esc(item.photo) + '\')">' +
+          '<span onclick="buildoutEditItem(' + i + ',\'photo\',\'\');renderBuildout()" style="position:absolute;top:6px;right:6px;width:18px;height:18px;background:rgba(0,0,0,0.6);color:#fff;font-size:10px;line-height:18px;text-align:center;border-radius:50%;cursor:pointer">x</span>' +
+          '<span onclick="buildoutPickPhoto(' + i + ',\'photo\')" style="position:absolute;bottom:6px;right:6px;width:18px;height:18px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;line-height:18px;text-align:center;border-radius:50%;cursor:pointer">+</span>'
+        : '<span style="color:var(--muted);font-size:20px;cursor:pointer" onclick="buildoutPickPhoto(' + i + ',\'photo\')">+ photo</span>') +
+    '</div>';
+
+    // Type toggle
+    var typeToggle = '<div style="' + lbl + '">Type</div>' +
+      '<select onchange="buildoutEditItem(' + i + ',\'type\',this.value)" style="' + inputS + '">' +
+        '<option value="fabricated"' + (item.type === 'fabricated' ? ' selected' : '') + '>Custom Fabricated</option>' +
+        '<option value="purchased"' + (item.type !== 'fabricated' ? ' selected' : '') + '>Purchased / Ready-made</option>' +
+      '</select>';
+
+    var nameField = '<div style="' + lbl + '">Item Name</div>' +
+      '<input value="' + esc(item.name || '') + '" placeholder="e.g. Display shelf unit" oninput="buildoutEditItem(' + i + ',\'name\',this.value)" style="' + inputS + ';font-family:Cormorant Garamond,serif;font-size:16px;font-weight:600">';
+
+    var descField = '<div style="' + lbl + ';margin-top:8px">Description</div>' +
+      '<textarea placeholder="What is this item, how will it be used..." oninput="buildoutEditItem(' + i + ',\'description\',this.value)" style="' + inputS + ';min-height:48px;resize:vertical;font-family:Cormorant Garamond,serif;font-size:13px">' + esc(item.description || '') + '</textarea>';
+
+    var qtyField = '<div style="' + lbl + ';margin-top:8px">Qty</div>' +
+      '<input type="number" min="1" value="' + (item.qty || 1) + '" oninput="buildoutEditItem(' + i + ',\'qty\',+this.value)" style="' + inputS + ';width:60px">';
+
+    var deleteBtn = '<button onclick="buildoutDeleteItem(' + i + ')" style="background:none;border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:4px 10px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-top:12px">Delete</button>';
+
+    if (!isFab) {
+      // Purchased: card with links, status, ref images, price
+      var statusOpts = ['tbd','sourcing','agreed','purchased','arrived'];
+      var statusLabels = { tbd:'TBD', sourcing:'Sourcing', agreed:'Agreed', purchased:'Purchased', arrived:'Arrived' };
+      var statusColors = { tbd:'#a8a8a8', sourcing:'#e2c97e', agreed:'#a8c4d4', purchased:'#a8d4a8', arrived:'#88c98a' };
+      var curStatus = item.status || 'tbd';
+      var statusBtns = statusOpts.map(function(s) {
+        var active = curStatus === s;
+        return '<button onclick="buildoutEditItem(' + i + ',\'status\',\'' + s + '\');renderBuildout()" style="background:' + (active ? statusColors[s] : 'var(--surface2)') + ';border:1px solid ' + (active ? statusColors[s] : 'var(--faint)') + ';color:' + (active ? '#1a1a18' : 'var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 8px;border-radius:2px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">' + statusLabels[s] + '</button>';
+      }).join('');
+
+      var priceField = '<div style="' + lbl + ';margin-top:8px">Price</div>' +
+        '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input value="' + (item.price || '') + '" placeholder="0" oninput="buildoutEditItem(' + i + ',\'price\',this.value)" style="' + inputS + ';width:80px"></div>';
+
+      // Links
+      var links = item.links || [];
+      var linkRows = links.map(function(lnk, li) {
+        return '<div style="display:flex;gap:4px;align-items:center;margin-top:4px">' +
+          '<input value="' + esc(lnk || '') + '" placeholder="https://..." oninput="buildoutEditLink(' + i + ',' + li + ',this.value)" style="' + inputS + ';flex:1">' +
+          '<button onclick="buildoutRemoveLink(' + i + ',' + li + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>' +
+        '</div>';
+      }).join('');
+      var linksSection = '<div style="' + lbl + ';margin-top:8px">Where to Buy (Links)</div>' +
+        linkRows +
+        '<button onclick="buildoutAddLink(' + i + ')" style="margin-top:4px;background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:2px 8px;border-radius:2px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ add link</button>';
+
+      // Reference images
+      var refPhotos = (item.refImages || []).map(function(src, pi) {
+        return photoThumb(src, i, 'refImages', pi);
+      }).join('');
+      var refImgSection = '<div style="' + lbl + ';margin-top:8px">Reference Images</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
+          refPhotos +
+          '<div onclick="buildoutAddPhoto(' + i + ',\'refImages\')" style="width:80px;height:80px;border-radius:4px;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:18px;border:1px dashed var(--faint);flex-shrink:0">+</div>' +
+        '</div>';
+
+      return '<div style="border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--surface)">' +
+        mainPhoto +
+        nameField +
+        '<div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">' + statusBtns + '</div>' +
+        descField +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">' +
+          '<div>' + priceField + '</div>' +
+          '<div>' + qtyField + '</div>' +
+        '</div>' +
+        linksSection +
+        refImgSection +
+        '<div style="margin-top:8px">' + typeToggle + '</div>' +
+        deleteBtn +
+      '</div>';
+    }
+
+    // Fabricated: full card
+    var dimField = '<div style="' + lbl + ';margin-top:8px">Dimensions</div>' +
+      '<input value="' + esc(item.dimensions || '') + '" placeholder="e.g. 72 x 24 x 36 in" oninput="buildoutEditItem(' + i + ',\'dimensions\',this.value)" style="' + inputS + '">';
+
+    var matDescField = '<div style="' + lbl + ';margin-top:8px">Material / Treatment Description</div>' +
+      '<textarea placeholder="e.g. Baltic birch plywood, whitewash finish..." oninput="buildoutEditItem(' + i + ',\'materialDesc\',this.value)" style="' + inputS + ';min-height:48px;resize:vertical;font-family:Cormorant Garamond,serif;font-size:13px">' + esc(item.materialDesc || '') + '</textarea>';
+
+    // Material/treatment reference photos
+    var matPhotos = (item.materialPhotos || []).map(function(src, pi) {
+      return photoThumb(src, i, 'materialPhotos', pi);
+    }).join('');
+    var matPhotoSection = '<div style="' + lbl + ';margin-top:8px">Material / Treatment Reference Images</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+        matPhotos +
+        '<div onclick="buildoutAddPhoto(' + i + ',\'materialPhotos\')" style="width:80px;height:80px;border-radius:4px;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:18px;border:1px dashed var(--faint);flex-shrink:0">+</div>' +
+      '</div>';
+
+    // Reference drawings
+    var refPhotos = (item.refDrawings || []).map(function(src, pi) {
+      return photoThumb(src, i, 'refDrawings', pi);
+    }).join('');
+    var refSection = '<div style="' + lbl + ';margin-top:8px">Reference Drawings</div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+        refPhotos +
+        '<div onclick="buildoutAddPhoto(' + i + ',\'refDrawings\')" style="width:80px;height:80px;border-radius:4px;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:18px;border:1px dashed var(--faint);flex-shrink:0">+</div>' +
+      '</div>';
+
+    return '<div style="border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--surface)">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+        '<div>' + mainPhoto + nameField + descField + '</div>' +
+        '<div>' +
+          typeToggle +
+          dimField +
+          qtyField +
+          matDescField +
+          matPhotoSection +
+          refSection +
+        '</div>' +
+      '</div>' +
+      deleteBtn +
+    '</div>';
+  }
+
+  var html = '';
+  if (fabricated.length) {
+    html += '<div style="margin-bottom:20px">' +
+      '<div style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px">Custom Fabrication</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+        fabricated.map(buildCard).join('') +
+      '</div>' +
+    '</div>';
+  }
+  if (purchased.length) {
+    html += '<div style="margin-bottom:20px">' +
+      '<div style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px">Purchased / Ready-made</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">' +
+        purchased.map(buildCard).join('') +
+      '</div>' +
+    '</div>';
+  }
 
   el.innerHTML = html;
 }

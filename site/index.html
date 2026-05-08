@@ -65,6 +65,7 @@
           <button class="tab" data-tab="schedule" onclick="showTab('front','schedule',this)"><span class="tab-icon">📋</span>Schedule</button>
           <button class="tab" data-tab="popup-pl" onclick="showTab('front','popup-pl',this)"><span class="tab-icon">💰</span>Budget & P/L</button>
           <button class="tab" data-tab="popup-resources" onclick="showTab('front','popup-resources',this)"><span class="tab-icon">📋</span>Resources</button>
+          <button class="tab" data-tab="store-buildout" onclick="showTab('front','store-buildout',this)"><span class="tab-icon">🔨</span>Store Build Out</button>
         </div>
         <div class="sub-bar front-side-bar" id="front-vendors-bar">
           <button class="tab active" data-tab="popup-vendors" onclick="showTab('front','popup-vendors',this)"><span class="tab-icon">🤝</span>Vendors</button>
@@ -2331,6 +2332,18 @@
           <div class="funding-item"><div class="funding-type">SBA Microloan</div><div class="funding-name">SBA Microloan via Grameen America or Pursuit NYC</div><div class="funding-desc">Up to $50k, lower interest than conventional loans.</div><textarea class="funding-notes-input" data-key="fund-sba" placeholder="My notes / status / deadline…" oninput="autosaveBP(this)"></textarea></div>
         </div>
         <div class="field-group"><div class="field-label">Other funding leads</div><textarea class="field-textarea bp-field" data-key="fin-other-funding" placeholder="Other foundations, crowdfunding, potential investors…" oninput="autosaveBP(this)"></textarea></div>
+      </div>
+
+      <!-- ═══ STORE BUILD OUT ═══ -->
+      <div class="ws-view" id="front-store-buildout">
+        <div class="view-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div class="view-title">Store Build Out</div>
+            <div class="view-desc">Fixtures, furniture, and build items for the popup space. Custom fabrication items grouped at top.</div>
+          </div>
+          <button class="add-vendor-btn" onclick="buildoutAddItem()">+ Add Item</button>
+        </div>
+        <div id="buildout-list"></div>
       </div>
 
       <!-- ═══ INVENTORY (separate tab) ═══ -->
