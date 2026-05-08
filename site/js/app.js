@@ -8030,7 +8030,6 @@ document.addEventListener('DOMContentLoaded', checkApiKeyOnLoad);
 //  INVENTORY NEW — Card-based consignment inventory
 // ═══════════════════════════════════════════════════════════════
 var INV_NEW_KEY = 'popup_inv_new_v1';
-var INV_NEW_SPLIT = { designer: 70, store: 30 };
 var invNewCollapsed = {};
 var invNewOpenItem = null;
 
@@ -8050,10 +8049,13 @@ function invNewSyncConfirmed() {
       data.vendors.push({
         vendorId: v.id,
         name: v.name || 'Unnamed',
+        designerPct: 70,
+        storePct: 30,
         items: []
       });
     } else {
       exists.name = v.name || exists.name;
+      if (exists.designerPct === undefined) { exists.designerPct = 70; exists.storePct = 30; }
     }
   });
   saveInvNew(data);
@@ -8074,12 +8076,14 @@ function renderInvNew() {
   var grandTotal = 0, grandStore = 0, grandDesigner = 0, grandItems = 0;
 
   var html = data.vendors.map(function(vendor, vi) {
+    var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
+    var sPct = vendor.storePct != null ? vendor.storePct : 30;
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0;
     vendor.items.forEach(function(item) {
-      var subtotal = (item.unitCost || 0) * (item.qty || 1);
-      vendorTotal += subtotal;
-      vendorStore += subtotal * (INV_NEW_SPLIT.store / 100);
-      vendorDesigner += subtotal * (INV_NEW_SPLIT.designer / 100);
+      var revenue = (item.salePrice || item.unitCost || 0) * (item.qty || 1);
+      vendorTotal += revenue;
+      vendorStore += revenue * (sPct / 100);
+      vendorDesigner += revenue * (dPct / 100);
     });
     grandTotal += vendorTotal;
     grandStore += vendorStore;
@@ -8087,9 +8091,10 @@ function renderInvNew() {
     grandItems += vendor.items.length;
 
     var itemRows = vendor.items.map(function(item, ii) {
-      var subtotal = (item.unitCost || 0) * (item.qty || 1);
-      var storeNet = subtotal * (INV_NEW_SPLIT.store / 100);
-      var designerNet = subtotal * (INV_NEW_SPLIT.designer / 100);
+      var price = item.salePrice || item.unitCost || 0;
+      var revenue = price * (item.qty || 1);
+      var storeNet = revenue * (sPct / 100);
+      var designerNet = revenue * (dPct / 100);
       var isItemOpen = invNewOpenItem === vi + '-' + ii;
       var soldDisplay = '';
       if (item.qty > 1) {
@@ -8102,11 +8107,11 @@ function renderInvNew() {
       if (isItemOpen) {
         detailPanel = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 0 4px;border-top:1px dashed var(--faint)">' +
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Description</label>' +
-            '<textarea class="field-input" placeholder="Item description…" oninput="invNewEditItem(' + vi + ',' + ii + ',\'description\',this.value)" style="margin-top:3px;min-height:50px;resize:vertical">' + esc(item.description || '') + '</textarea></div>' +
+            '<textarea class="field-input" placeholder="Item description..." oninput="invNewEditItem(' + vi + ',' + ii + ',\'description\',this.value)" style="margin-top:3px;min-height:50px;resize:vertical">' + esc(item.description || '') + '</textarea></div>' +
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Material</label>' +
             '<input class="field-input" value="' + esc(item.material || '') + '" placeholder="e.g. 100% silk" oninput="invNewEditItem(' + vi + ',' + ii + ',\'material\',this.value)" style="margin-top:3px"></div>' +
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Notes</label>' +
-            '<textarea class="field-input" placeholder="Internal notes…" oninput="invNewEditItem(' + vi + ',' + ii + ',\'notes\',this.value)" style="margin-top:3px;min-height:50px;resize:vertical">' + esc(item.notes || '') + '</textarea></div>' +
+            '<textarea class="field-input" placeholder="Internal notes..." oninput="invNewEditItem(' + vi + ',' + ii + ',\'notes\',this.value)" style="margin-top:3px;min-height:50px;resize:vertical">' + esc(item.notes || '') + '</textarea></div>' +
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Care</label>' +
             '<input class="field-input" value="' + esc(item.care || '') + '" placeholder="e.g. Dry clean only" oninput="invNewEditItem(' + vi + ',' + ii + ',\'care\',this.value)" style="margin-top:3px"></div>' +
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Packaging</label>' +
@@ -8115,7 +8120,7 @@ function renderInvNew() {
       }
 
       return '<div style="border-bottom:1px solid var(--faint);padding:6px 0">' +
-        '<div style="display:grid;grid-template-columns:56px 1fr 90px 70px 50px 100px 70px 80px 80px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+        '<div style="display:grid;grid-template-columns:56px 1fr 90px 80px 80px 50px 100px 80px 80px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:52px;height:52px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
             (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
           '</div>' +
@@ -8132,7 +8137,8 @@ function renderInvNew() {
             '<option value="furniture"' + (item.category === 'furniture' ? ' selected' : '') + '>Furniture</option>' +
             '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
           '</select>' +
-          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" min="0" value="' + (item.unitCost || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'unitCost\',+this.value)" style="width:55px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">cost $</span><input type="number" min="0" value="' + (item.unitCost || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'unitCost\',+this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">sell $</span><input type="number" min="0" value="' + (item.salePrice || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',+this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
           '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
           '<input class="field-input" value="' + esc(item.dimensions || '') + '" placeholder="Dimensions" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'dimensions\',this.value)" style="font-family:DM Mono,monospace;font-size:10px">' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + Math.round(storeNet) + '</div>' +
@@ -8147,14 +8153,18 @@ function renderInvNew() {
       '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] ? '0' : '90') + 'deg)">&#9654;</span>' +
       '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);flex:1">' + esc(vendor.name) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">split: </span>' +
+      '<span onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:32px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:2px 4px;border-radius:3px;text-align:center"></span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
+      '<span onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:32px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:2px 4px;border-radius:3px;text-align:center"></span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">our $' + Math.round(vendorStore) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">theirs $' + Math.round(vendorDesigner) + '</span>' +
     '</div>';
 
     var vendorBody = '';
     if (!invNewCollapsed[vi]) {
-      var colHeaders = '<div style="display:grid;grid-template-columns:56px 1fr 90px 70px 50px 100px 70px 80px 80px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
-        '<div></div><div>Item</div><div>Category</div><div>Unit $</div><div>Qty</div><div>Dimensions</div><div style="text-align:right">Our net</div><div style="text-align:right">Designer</div><div></div>' +
+      var colHeaders = '<div style="display:grid;grid-template-columns:56px 1fr 90px 80px 80px 50px 100px 80px 80px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+        '<div></div><div>Item</div><div>Category</div><div>Cost</div><div>Sale $</div><div>Qty</div><div>Dimensions</div><div style="text-align:right">Us (' + sPct + '%)</div><div style="text-align:right">Them (' + dPct + '%)</div><div></div>' +
       '</div>';
       vendorBody = '<div style="padding:4px 0 12px">' +
         colHeaders + itemRows +
@@ -8171,8 +8181,8 @@ function renderInvNew() {
     totalsEl.innerHTML =
       '<span>Items: <strong style="color:var(--text)">' + grandItems + '</strong></span>' +
       '<span>Total retail: <strong style="color:var(--text)">$' + grandTotal.toLocaleString() + '</strong></span>' +
-      '<span>Our split (30%): <strong style="color:#88c98a">$' + Math.round(grandStore).toLocaleString() + '</strong></span>' +
-      '<span>Designer split (70%): <strong style="color:var(--text)">$' + Math.round(grandDesigner).toLocaleString() + '</strong></span>';
+      '<span>Our total: <strong style="color:#88c98a">$' + Math.round(grandStore).toLocaleString() + '</strong></span>' +
+      '<span>Designer total: <strong style="color:var(--text)">$' + Math.round(grandDesigner).toLocaleString() + '</strong></span>';
   }
 }
 
@@ -8188,12 +8198,20 @@ function invNewToggleItem(vi, ii) {
   renderInvNew();
 }
 
+function invNewEditVendor(vi, field, val) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  data.vendors[vi][field] = val;
+  saveInvNew(data);
+  renderInvNew();
+}
+
 function invNewAddItem(vi) {
   var data = getInvNew();
   if (!data || !data.vendors[vi]) return;
   data.vendors[vi].items.push({
     id: 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-    name: '', category: '', unitCost: 0, qty: 1,
+    name: '', category: '', unitCost: 0, salePrice: 0, qty: 1,
     photo: '', material: '', care: '', packaging: '', dimensions: '',
     description: '', notes: '', sold: 0
   });
