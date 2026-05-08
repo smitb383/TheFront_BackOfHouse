@@ -8507,7 +8507,7 @@ async function downloadExhibitAPDF(vi) {
     var field = form.createTextField(name);
     field.setText(val || '');
     field.addToPage(page, { x: x, y: yPos, width: w, height: h,
-      borderWidth: 0, backgroundColor: rgb(1, 1, 1) });
+      borderWidth: 0.5, borderColor: rgb(0.75, 0.75, 0.75), backgroundColor: rgb(0.98, 0.97, 0.95) });
     try { field.setFontSize(fontSize); } catch(e) {}
   }
 
