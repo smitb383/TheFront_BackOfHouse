@@ -8235,7 +8235,6 @@ function renderInvNew() {
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">sold $' + Math.round(vendorTotal) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">our $' + Math.round(vendorStore) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">theirs $' + Math.round(vendorDesigner) + '</span>' +
-      '<button onclick="event.stopPropagation();openExhibitA(' + vi + ')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-left:4px">Exhibit A</button>' +
     '</div>';
 
     var vendorBody = '';
@@ -8248,7 +8247,10 @@ function renderInvNew() {
       '</div>';
       vendorBody = '<div style="padding:4px 0 12px">' +
         colHeaders + itemRows +
-        '<button onclick="invNewAddItem(' + vi + ')" style="margin-top:10px;background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Add item</button>' +
+        '<div style="display:flex;gap:8px;margin-top:10px">' +
+          '<button onclick="invNewAddItem(' + vi + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Add item</button>' +
+          '<button onclick="openExhibitA(' + vi + ')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">Exhibit A</button>' +
+        '</div>' +
       '</div>';
     }
 
