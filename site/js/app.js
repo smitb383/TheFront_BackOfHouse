@@ -8172,6 +8172,7 @@ function renderInvNew() {
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">sold $' + Math.round(vendorTotal) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">our $' + Math.round(vendorStore) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">theirs $' + Math.round(vendorDesigner) + '</span>' +
+      '<button onclick="event.stopPropagation();openExhibitA(' + vi + ')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-left:4px">Exhibit A</button>' +
     '</div>';
 
     var vendorBody = '';
@@ -8283,6 +8284,141 @@ function invNewPickPhoto(vi, ii) {
     if (invNewView === 'gallery') renderInvNewGallery();
   };
   input.click();
+}
+
+function openExhibitA(vi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  var vendor = data.vendors[vi];
+  var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
+  var sPct = vendor.storePct != null ? vendor.storePct : 30;
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Look up vendor contact info from popup vendors
+  var popupVendors = getPopupVendors ? getPopupVendors() : [];
+  var vendorInfo = popupVendors.find(function(v) { return v.id === vendor.vendorId; }) || {};
+
+  var totalRetail = 0;
+  var totalQty = 0;
+  var loanQty = 0;
+  var loanValue = 0;
+
+  var rows = vendor.items.map(function(item, idx) {
+    var price = item.salePrice || 0;
+    var qty = item.qty || 1;
+    var status = item.exhibitStatus || 'For Sale';
+    var designerCut = status === 'Loan' ? '' : '$' + Math.round(price * (dPct / 100));
+    var storeCut = status === 'Loan' ? '' : '$' + Math.round(price * (sPct / 100));
+    if (status === 'Loan') {
+      loanQty += qty;
+      loanValue += price * qty;
+    } else {
+      totalRetail += price * qty;
+      totalQty += qty;
+    }
+    var catLabels = { clothing:'Clothing', jewelry:'Jewelry', accessories:'Accessory', ceramics:'Object', objects:'Object', art:'Art', textiles:'Other', furniture:'Object', other:'Other' };
+    return '<tr>' +
+      '<td style="text-align:center;padding:8px 6px;border:1px solid #ccc">' + (idx + 1) + '</td>' +
+      '<td style="padding:8px 6px;border:1px solid #ccc">' +
+        (item.photo ? '<img src="' + esc(item.photo) + '" style="width:48px;height:48px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:8px">' : '') +
+        esc(item.name || '') +
+      '</td>' +
+      '<td style="padding:8px 6px;border:1px solid #ccc">' + (catLabels[item.category] || item.category || '') + '</td>' +
+      '<td style="padding:8px 6px;border:1px solid #ccc"><input value="' + esc(item.dimensions || '') + '" placeholder="—" style="border:none;border-bottom:1px dashed #999;background:none;width:100%;font-family:inherit;font-size:inherit;padding:2px 0" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'dimensions\',this.value)"></td>' +
+      '<td style="padding:8px 6px;border:1px solid #ccc"><input value="' + esc(item.material || '') + '" placeholder="—" style="border:none;border-bottom:1px dashed #999;background:none;width:100%;font-family:inherit;font-size:inherit;padding:2px 0" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'material\',this.value)"></td>' +
+      '<td style="text-align:center;padding:8px 6px;border:1px solid #ccc">' + qty + '</td>' +
+      '<td style="text-align:center;padding:8px 6px;border:1px solid #ccc">' +
+        '<select onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'exhibitStatus\',this.value);openExhibitA(' + vi + ')" style="border:none;background:none;font-family:inherit;font-size:inherit;cursor:pointer">' +
+          '<option value="For Sale"' + (status === 'For Sale' ? ' selected' : '') + '>For Sale</option>' +
+          '<option value="Loan"' + (status === 'Loan' ? ' selected' : '') + '>Loan</option>' +
+        '</select>' +
+      '</td>' +
+      '<td style="text-align:right;padding:8px 6px;border:1px solid #ccc">$' + price + '</td>' +
+      '<td style="text-align:right;padding:8px 6px;border:1px solid #ccc">' + designerCut + '</td>' +
+      '<td style="text-align:right;padding:8px 6px;border:1px solid #ccc">' + storeCut + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var body =
+    '<div style="margin-bottom:24px">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 32px;font-size:14px;line-height:1.8">' +
+        '<div><strong>Designer/Brand:</strong> ' + esc(vendor.name) + '</div>' +
+        '<div><strong>Date Submitted:</strong> ' + dateStr + '</div>' +
+        '<div><strong>Contact Name:</strong> ' + esc(vendorInfo.contactName || '') + '</div>' +
+        '<div><strong>Email:</strong> ' + esc(vendorInfo.email || '') + '</div>' +
+        '<div><strong>Commission Split:</strong> ' + dPct + '% Designer / ' + sPct + '% Store</div>' +
+        '<div><strong>Instagram:</strong> ' + esc(vendorInfo.instagram || '') + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:#666;margin-bottom:8px;font-family:DM Mono,monospace;letter-spacing:0.04em">' +
+      'Categories: Clothing, Accessory, Jewelry, Object, Art, Other &nbsp;|&nbsp; Status: For Sale or Loan' +
+    '</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
+      '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;width:30px">#</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:left">Item Name</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:left;width:80px">Category</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:left;width:120px">Dimensions</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:left;width:140px">Material</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;width:35px">Qty</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;width:70px">Status</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:right;width:60px">Price</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:right;width:70px">Designer (' + dPct + '%)</th>' +
+        '<th style="padding:8px 6px;border:1px solid #ccc;text-align:right;width:60px">Store (' + sPct + '%)</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>' +
+    '<div style="margin-top:20px;font-size:13px;line-height:1.8">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 32px">' +
+        '<div>Total Items Consigned: <strong>' + totalQty + '</strong></div>' +
+        '<div>Total Retail Value: <strong>$' + totalRetail.toLocaleString() + '</strong></div>' +
+        '<div>Total Items on Loan: <strong>' + loanQty + '</strong></div>' +
+        '<div>Total Replacement Value: <strong>$' + loanValue.toLocaleString() + '</strong></div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:40px;font-size:13px">' +
+      '<div style="font-style:italic;margin-bottom:24px">Agreed and confirmed:</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px">' +
+        '<div>' +
+          '<div style="border-bottom:1px solid #1a1a1a;height:40px;margin-bottom:4px"></div>' +
+          '<div><strong>Store:</strong> Madeline (Del) Musarra, The Front NYC LLC</div>' +
+          '<div style="margin-top:8px;border-bottom:1px solid #ccc;height:24px"></div>' +
+          '<div style="font-size:11px;color:#666">Date</div>' +
+        '</div>' +
+        '<div>' +
+          '<div style="border-bottom:1px solid #1a1a1a;height:40px;margin-bottom:4px"></div>' +
+          '<div><strong>Designer:</strong> ' + esc(vendor.name) + '</div>' +
+          '<div style="margin-top:8px;border-bottom:1px solid #ccc;height:24px"></div>' +
+          '<div style="font-size:11px;color:#666">Date</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  var modal = '<div class="doc-modal-overlay" id="doc-modal-overlay">' +
+    '<div class="doc-modal" style="max-width:900px">' +
+      '<button class="doc-modal-close" onclick="closeDocExport()">&#x2715; Close</button>' +
+      '<button class="doc-modal-print" onclick="window.print()">Print / Save PDF</button>' +
+      '<div style="text-align:center;margin-bottom:8px;font-family:Cormorant Garamond,serif;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#666">The Front NYC</div>' +
+      '<div style="text-align:center;font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;margin-bottom:4px">EXHIBIT A: INVENTORY SCHEDULE</div>' +
+      '<div style="text-align:center;font-family:DM Mono,monospace;font-size:10px;color:#888;letter-spacing:0.08em;margin-bottom:32px">VENDOR CONSIGNMENT & CUSTOM SERVICES AGREEMENT</div>' +
+      body +
+    '</div>' +
+  '</div>';
+
+  // Remove existing modal if open
+  var existing = document.getElementById('doc-modal-overlay');
+  if (existing) existing.remove();
+
+  document.body.insertAdjacentHTML('beforeend', modal);
+  document.body.style.overflow = 'hidden';
+}
+
+function exhibitAUpdateField(vi, ii, field, val) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  data.vendors[vi].items[ii][field] = val;
+  saveInvNew(data);
 }
 
 function invNewSetView(view) {
