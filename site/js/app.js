@@ -8125,8 +8125,12 @@ function renderInvNew() {
 
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
         '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 50px 80px 70px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
-          '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">' +
-            (item.photo ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
+          '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
+            (item.photo
+              ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' +
+                '<span onclick="event.stopPropagation();invNewEditItem(' + vi + ',' + ii + ',\'photo\',\'\');renderInvNew()" style="position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,0.6);color:#fff;font-size:10px;line-height:16px;text-align:center;border-radius:50%;cursor:pointer" title="Remove photo">x</span>' +
+                '<span onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')" style="position:absolute;bottom:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;line-height:16px;text-align:center;border-radius:50%;cursor:pointer" title="Replace photo">+</span>'
+              : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
           '</div>' +
           '<input class="field-input" value="' + esc(item.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:15px">' +
           '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
