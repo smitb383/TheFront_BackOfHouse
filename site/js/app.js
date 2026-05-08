@@ -8100,23 +8100,40 @@ function renderInvNew() {
     var isNonNYC = vendorInfo.locationTag !== 'nyc';
     var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
     var sPct = vendor.storePct != null ? vendor.storePct : 30;
+    var isWholesale = vendor.pricingModel === 'wholesale';
+    var eurRate = vendor.eurRate || 1.08;
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0, vendorMerchValue = 0;
+    var vendorTotalCost = 0, vendorTotalProfit = 0;
     vendor.items.forEach(function(item) {
-      var price = item.salePrice || 0;
-      if (item.sizes && item.sizes.length) {
-        item.sizes.forEach(function(sz) {
-          vendorMerchValue += price * (sz.qty || 0);
-          var soldRevenue = price * (sz.sold || 0);
+      if (isWholesale) {
+        var costEur = item.costEur || 0;
+        var costUsd = Math.round(costEur * eurRate * 100) / 100;
+        var upcharge = item.upchargePct || 0;
+        var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
+        var qty = item.qty || 1;
+        var sold = item.sold || 0;
+        vendorTotalCost += costUsd * qty;
+        vendorMerchValue += retailPrice * qty;
+        var profitPerItem = retailPrice - costUsd;
+        vendorTotalProfit += profitPerItem * sold;
+        vendorTotal += retailPrice * sold;
+      } else {
+        var price = item.salePrice || 0;
+        if (item.sizes && item.sizes.length) {
+          item.sizes.forEach(function(sz) {
+            vendorMerchValue += price * (sz.qty || 0);
+            var soldRevenue = price * (sz.sold || 0);
+            vendorTotal += soldRevenue;
+            vendorStore += soldRevenue * (sPct / 100);
+            vendorDesigner += soldRevenue * (dPct / 100);
+          });
+        } else {
+          vendorMerchValue += price * (item.qty || 1);
+          var soldRevenue = price * (item.sold || 0);
           vendorTotal += soldRevenue;
           vendorStore += soldRevenue * (sPct / 100);
           vendorDesigner += soldRevenue * (dPct / 100);
-        });
-      } else {
-        vendorMerchValue += price * (item.qty || 1);
-        var soldRevenue = price * (item.sold || 0);
-        vendorTotal += soldRevenue;
-        vendorStore += soldRevenue * (sPct / 100);
-        vendorDesigner += soldRevenue * (dPct / 100);
+        }
       }
     });
     grandTotal += vendorTotal;
@@ -8127,6 +8144,73 @@ function renderInvNew() {
     grandShipping += parseFloat(vendor.shippingCost) || 0;
 
     var itemRows = vendor.items.map(function(item, ii) {
+      var isItemOpen = invNewOpenItem === vi + '-' + ii;
+
+      // ── Wholesale item row ──
+      if (isWholesale) {
+        var costEur = item.costEur || 0;
+        var costUsd = Math.round(costEur * eurRate * 100) / 100;
+        var upcharge = item.upchargePct || 0;
+        var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
+        var profitEa = retailPrice - Math.round(costUsd);
+        var qty = item.qty || 1;
+        var sold = item.sold || 0;
+        var totalProfit = profitEa * sold;
+        var totalRevenue = retailPrice * sold;
+
+        var wsDetail = '';
+        if (isItemOpen) {
+          wsDetail = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 0 4px;border-top:1px dashed var(--faint)">' +
+            '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Description</label>' +
+              '<textarea class="field-input" placeholder="Item description..." oninput="invNewEditItem(' + vi + ',' + ii + ',\'description\',this.value)" style="margin-top:3px;min-height:50px;resize:vertical">' + esc(item.description || '') + '</textarea></div>' +
+            '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Material</label>' +
+              '<input class="field-input" value="' + esc(item.material || '') + '" placeholder="e.g. ceramic" oninput="invNewEditItem(' + vi + ',' + ii + ',\'material\',this.value)" style="margin-top:3px"></div>' +
+            '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Notes</label>' +
+              '<textarea class="field-input" placeholder="Internal notes..." oninput="invNewEditItem(' + vi + ',' + ii + ',\'notes\',this.value)" style="margin-top:3px;min-height:50px;resize:vertical">' + esc(item.notes || '') + '</textarea></div>' +
+            '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Dimensions</label>' +
+              '<input class="field-input" value="' + esc(item.dimensions || '') + '" placeholder="e.g. 12 x 8 in" oninput="invNewEditItem(' + vi + ',' + ii + ',\'dimensions\',this.value)" style="margin-top:3px"></div>' +
+          '</div>';
+        }
+
+        return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
+          '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 50px 60px 80px 70px 2px 50px 80px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+            '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
+              (item.photo
+                ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' +
+                  '<span onclick="event.stopPropagation();invNewEditItem(' + vi + ',' + ii + ',\'photo\',\'\');renderInvNew()" style="position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,0.6);color:#fff;font-size:10px;line-height:16px;text-align:center;border-radius:50%;cursor:pointer">x</span>' +
+                  '<span onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')" style="position:absolute;bottom:2px;right:2px;width:16px;height:16px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;line-height:16px;text-align:center;border-radius:50%;cursor:pointer">+</span>'
+                : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
+            '</div>' +
+            '<input class="field-input" value="' + esc(item.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:15px">' +
+            '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
+              '<option value=""' + (!item.category ? ' selected' : '') + '>-- cat --</option>' +
+              '<option value="clothing"' + (item.category === 'clothing' ? ' selected' : '') + '>Clothing</option>' +
+              '<option value="jewelry"' + (item.category === 'jewelry' ? ' selected' : '') + '>Jewelry</option>' +
+              '<option value="accessories"' + (item.category === 'accessories' ? ' selected' : '') + '>Accessories</option>' +
+              '<option value="ceramics"' + (item.category === 'ceramics' ? ' selected' : '') + '>Ceramics</option>' +
+              '<option value="objects"' + (item.category === 'objects' ? ' selected' : '') + '>Objects</option>' +
+              '<option value="art"' + (item.category === 'art' ? ' selected' : '') + '>Art</option>' +
+              '<option value="textiles"' + (item.category === 'textiles' ? ' selected' : '') + '>Textiles</option>' +
+              '<option value="furniture"' + (item.category === 'furniture' ? ' selected' : '') + '>Furniture</option>' +
+              '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
+            '</select>' +
+            '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:var(--muted);font-size:10px">EUR</span><input value="' + (costEur || '') + '" placeholder="0" oninput="invNewEditItem(' + vi + ',' + ii + ',\'costEur\',parseFloat(this.value)||0)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+            '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:right">$' + costUsd.toFixed(0) + '</div>' +
+            '<input type="number" min="1" value="' + qty + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
+            '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><input value="' + (upcharge || '') + '" placeholder="%" oninput="invNewEditItem(' + vi + ',' + ii + ',\'upchargePct\',parseFloat(this.value)||0)" style="width:36px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"><span style="color:var(--muted);font-size:10px">%</span></div>' +
+            '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);text-align:right;font-weight:600">$' + retailPrice + '</div>' +
+            '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">+$' + profitEa + '</div>' +
+            '<div style="border-left:1px solid var(--border);height:100%"></div>' +
+            '<input type="number" min="0" value="' + sold + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
+            '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + totalRevenue + '</div>' +
+            '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right;font-weight:600">$' + totalProfit + '</div>' +
+            '<button onclick="event.stopPropagation();invNewDeleteItem(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
+          '</div>' +
+          wsDetail +
+        '</div>';
+      }
+
+      // ── Consignment item row ──
       var price = item.salePrice || 0;
       var unitUs = Math.round(price * (sPct / 100));
       var unitThem = Math.round(price * (dPct / 100));
@@ -8227,27 +8311,48 @@ function renderInvNew() {
       '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] ? '0' : '90') + 'deg)">&#9654;</span>' +
       '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);flex:1;min-width:120px">' + esc(vendor.name) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
-      '<span style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
-        '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">split:</span>' +
-        '<input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
-        '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
-        '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
-      '</span>' +
+      '<span onclick="event.stopPropagation()"><select onchange="invNewEditVendor(' + vi + ',\'pricingModel\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:3px 6px;border-radius:3px">' +
+        '<option value="consignment"' + (!isWholesale ? ' selected' : '') + '>Consignment</option>' +
+        '<option value="wholesale"' + (isWholesale ? ' selected' : '') + '>Wholesale</option>' +
+      '</select></span>' +
+      (isWholesale
+        ? '<span style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
+            '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">EUR rate:</span>' +
+            '<input value="' + eurRate + '" oninput="invNewEditVendor(' + vi + ',\'eurRate\',parseFloat(this.value)||1)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
+          '</span>'
+        : '<span style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
+            '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">split:</span>' +
+            '<input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
+            '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
+            '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
+          '</span>') +
       shippingHtml +
       '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--text);font-weight:600">total value $' + Math.round(vendorMerchValue).toLocaleString() + '</span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">sold $' + Math.round(vendorTotal).toLocaleString() + '</span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:11px;color:#88c98a">our $' + Math.round(vendorStore).toLocaleString() + '</span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">theirs $' + Math.round(vendorDesigner).toLocaleString() + '</span>' +
+      (isWholesale
+        ? '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted)">cost $' + Math.round(vendorTotalCost).toLocaleString() + '</span>' +
+          '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">sold $' + Math.round(vendorTotal).toLocaleString() + '</span>' +
+          '<span style="font-family:DM Mono,monospace;font-size:11px;color:#88c98a">profit $' + Math.round(vendorTotalProfit).toLocaleString() + '</span>'
+        : '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">sold $' + Math.round(vendorTotal).toLocaleString() + '</span>' +
+          '<span style="font-family:DM Mono,monospace;font-size:11px;color:#88c98a">our $' + Math.round(vendorStore).toLocaleString() + '</span>' +
+          '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">theirs $' + Math.round(vendorDesigner).toLocaleString() + '</span>') +
     '</div>';
 
     var vendorBody = '';
     if (!invNewCollapsed[vi]) {
-      var colHeaders = '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 50px 80px 70px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
-        '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div>' +
-        '<div></div><div style="text-align:right">Us/ea</div><div style="text-align:right">Them/ea</div>' +
-        '<div></div><div style="text-align:right">Value</div>' +
-        '<div></div><div style="text-align:center">Sold</div><div style="text-align:right">Total</div><div style="text-align:right">Us</div><div style="text-align:right">Them</div><div></div>' +
-      '</div>';
+      var colHeaders;
+      if (isWholesale) {
+        colHeaders = '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 50px 60px 80px 70px 2px 50px 80px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+          '<div></div><div>Item</div><div>Category</div><div>Cost EUR</div><div>Cost USD</div><div>Qty</div><div>Markup</div><div style="text-align:right">Retail $</div><div style="text-align:right">Profit/ea</div>' +
+          '<div></div><div style="text-align:center">Sold</div><div style="text-align:right">Revenue</div><div style="text-align:right">Profit</div><div></div>' +
+        '</div>';
+      } else {
+        colHeaders = '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 50px 80px 70px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+          '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div>' +
+          '<div></div><div style="text-align:right">Us/ea</div><div style="text-align:right">Them/ea</div>' +
+          '<div></div><div style="text-align:right">Value</div>' +
+          '<div></div><div style="text-align:center">Sold</div><div style="text-align:right">Total</div><div style="text-align:right">Us</div><div style="text-align:right">Them</div><div></div>' +
+        '</div>';
+      }
       vendorBody = '<div style="padding:4px 0 12px">' +
         colHeaders + itemRows +
         '<div style="display:flex;gap:8px;margin-top:10px">' +
@@ -8291,7 +8396,7 @@ function invNewEditVendor(vi, field, val) {
   data.vendors[vi][field] = val;
   saveInvNew(data);
   // Only re-render for fields that affect layout; skip for text inputs like shipping
-  if (field !== 'shippingCost' && field !== 'shippingCoveredBy') renderInvNew();
+  if (field !== 'shippingCost' && field !== 'shippingCoveredBy' && field !== 'eurRate') renderInvNew();
 }
 
 function buildSizeRows(vi, ii, item, sPct, dPct) {
@@ -8395,7 +8500,7 @@ function invNewEditItem(vi, ii, field, val) {
   data.vendors[vi].items[ii][field] = val;
   saveInvNew(data);
   // Only re-render for fields that affect totals
-  if (field === 'salePrice' || field === 'qty' || field === 'sold') renderInvNew();
+  if (field === 'salePrice' || field === 'qty' || field === 'sold' || field === 'costEur' || field === 'upchargePct') renderInvNew();
 }
 
 function invNewDeleteItem(vi, ii) {
