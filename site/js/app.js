@@ -8414,7 +8414,8 @@ function openExhibitA(vi) {
   var modal = '<div class="doc-modal-overlay" id="doc-modal-overlay">' +
     '<div class="doc-modal" style="max-width:900px">' +
       '<button class="doc-modal-close" onclick="closeDocExport()">&#x2715; Close</button>' +
-      '<button class="doc-modal-print" onclick="window.print()">Print / Save PDF</button>' +
+      '<button class="doc-modal-print" onclick="window.print()">Print</button>' +
+      '<button class="doc-modal-print" onclick="downloadExhibitAPDF(' + vi + ')" style="right:200px">Download Editable PDF</button>' +
       '<div style="text-align:center;margin-bottom:8px;font-family:Cormorant Garamond,serif;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#666">The Front NYC</div>' +
       '<div style="text-align:center;font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;margin-bottom:32px">EXHIBIT A: INVENTORY SCHEDULE</div>' +
       body +
@@ -8452,6 +8453,253 @@ function exhibitAAddLoan(vi) {
   data.vendors[vi].loanItems.push({ name: '', category: '', dimensions: '', material: '', qty: 1, value: 0 });
   saveInvNew(data);
   openExhibitA(vi);
+}
+
+async function downloadExhibitAPDF(vi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  var vendor = data.vendors[vi];
+  var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
+  var sPct = vendor.storePct != null ? vendor.storePct : 30;
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  var popupVendors = getPopupVendors ? getPopupVendors() : [];
+  var vendorInfo = popupVendors.find(function(v) { return v.id === vendor.vendorId; }) || {};
+  var catLabels = { clothing:'Clothing', jewelry:'Jewelry', accessories:'Accessory', ceramics:'Object', objects:'Object', art:'Art', textiles:'Other', furniture:'Object', other:'Other' };
+
+  var PDFLib = window.PDFLib;
+  var pdfDoc = await PDFLib.PDFDocument.create();
+  var font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+  var fontBold = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  var fontSize = 9;
+  var headerSize = 11;
+  var titleSize = 18;
+  var rgb = PDFLib.rgb;
+  var form = pdfDoc.getForm();
+
+  var pageW = 792; // landscape letter
+  var pageH = 612;
+  var margin = 40;
+  var usableW = pageW - margin * 2;
+
+  function addPage() {
+    return pdfDoc.addPage([pageW, pageH]);
+  }
+
+  var page = addPage();
+  var y = pageH - margin;
+
+  function drawText(text, x, yPos, options) {
+    var f = (options && options.font) || font;
+    var s = (options && options.size) || fontSize;
+    var c = (options && options.color) || rgb(0.1, 0.1, 0.1);
+    page.drawText(text, { x: x, y: yPos, size: s, font: f, color: c });
+  }
+
+  function checkPage(needed) {
+    if (y - needed < margin) {
+      page = addPage();
+      y = pageH - margin;
+    }
+  }
+
+  function addTextField(name, x, yPos, w, h, val) {
+    var field = form.createTextField(name);
+    field.setText(val || '');
+    field.addToPage(page, { x: x, y: yPos, width: w, height: h,
+      borderWidth: 0, backgroundColor: rgb(1, 1, 1) });
+    try { field.setFontSize(fontSize); } catch(e) {}
+  }
+
+  // Title
+  var titleText = 'THE FRONT NYC';
+  var titleW = fontBold.widthOfTextAtSize(titleText, 10);
+  drawText(titleText, (pageW - titleW) / 2, y, { font: fontBold, size: 10, color: rgb(0.4, 0.4, 0.4) });
+  y -= 24;
+  var exhText = 'EXHIBIT A: INVENTORY SCHEDULE';
+  var exhW = fontBold.widthOfTextAtSize(exhText, titleSize);
+  drawText(exhText, (pageW - exhW) / 2, y, { font: fontBold, size: titleSize });
+  y -= 28;
+
+  // Header info
+  drawText('Designer/Brand: ', margin, y, { font: fontBold, size: headerSize });
+  drawText(vendor.name, margin + fontBold.widthOfTextAtSize('Designer/Brand: ', headerSize), y, { size: headerSize });
+  drawText('Date Submitted: ' + dateStr, pageW / 2, y, { size: headerSize });
+  y -= 16;
+  drawText('Consignment Split: ' + dPct + '% Designer / ' + sPct + '% Store', margin, y, { size: headerSize });
+  y -= 24;
+
+  // Consignment table
+  drawText('Consignment Items', margin, y, { font: fontBold, size: 13 });
+  y -= 18;
+
+  // Column layout: #, Item, Cat, Dimensions*, Material*, Qty, Price, Designer, Store
+  var cols = [
+    { label: '#', w: 24, align: 'center' },
+    { label: 'ITEM NAME', w: 160, align: 'left' },
+    { label: 'CATEGORY', w: 70, align: 'left' },
+    { label: 'DIMENSIONS', w: 110, align: 'left', editable: true },
+    { label: 'MATERIAL', w: 120, align: 'left', editable: true },
+    { label: 'QTY', w: 30, align: 'center' },
+    { label: 'PRICE', w: 55, align: 'right' },
+    { label: 'DESIGNER (' + dPct + '%)', w: 72, align: 'right' },
+    { label: 'STORE (' + sPct + '%)', w: 65, align: 'right' }
+  ];
+
+  // Draw header row
+  var hdrH = 16;
+  page.drawRectangle({ x: margin, y: y - hdrH + 4, width: usableW, height: hdrH, color: rgb(0.91, 0.89, 0.85) });
+  var cx = margin + 4;
+  cols.forEach(function(col) {
+    drawText(col.label, cx, y - 8, { font: fontBold, size: 7 });
+    cx += col.w;
+  });
+  y -= hdrH + 2;
+
+  // Draw consignment rows
+  var rowH = 20;
+  var totalRetail = 0;
+  var totalQty = 0;
+  vendor.items.forEach(function(item, idx) {
+    checkPage(rowH + 4);
+    var price = item.salePrice || 0;
+    var qty = item.qty || 1;
+    totalRetail += price * qty;
+    totalQty += qty;
+
+    // Row border
+    page.drawLine({ start: { x: margin, y: y }, end: { x: margin + usableW, y: y }, thickness: 0.5, color: rgb(0.8, 0.8, 0.8) });
+
+    var rx = margin + 4;
+    var rowData = [
+      { val: String(idx + 1), w: cols[0].w },
+      { val: item.name || '', w: cols[1].w },
+      { val: catLabels[item.category] || item.category || '', w: cols[2].w },
+      { val: item.dimensions || '', w: cols[3].w, field: 'dim_' + idx },
+      { val: item.material || '', w: cols[4].w, field: 'mat_' + idx },
+      { val: String(qty), w: cols[5].w },
+      { val: '$' + price, w: cols[6].w, align: 'right' },
+      { val: '$' + Math.round(price * (dPct / 100)), w: cols[7].w, align: 'right' },
+      { val: '$' + Math.round(price * (sPct / 100)), w: cols[8].w, align: 'right' }
+    ];
+
+    rowData.forEach(function(cell) {
+      if (cell.field) {
+        addTextField(cell.field, rx, y - rowH + 4, cell.w - 4, rowH - 4, cell.val);
+      } else if (cell.align === 'right') {
+        var tw = font.widthOfTextAtSize(cell.val, fontSize);
+        drawText(cell.val, rx + cell.w - tw - 4, y - 12, {});
+      } else {
+        drawText(cell.val, rx, y - 12, {});
+      }
+      rx += cell.w;
+    });
+    y -= rowH;
+  });
+
+  // Consignment totals
+  y -= 8;
+  checkPage(20);
+  drawText('Total Items Consigned: ' + totalQty + '     Total Retail Value: $' + totalRetail.toLocaleString(), margin, y, { font: fontBold, size: 10 });
+  y -= 28;
+
+  // Loaned items
+  var loanItems = vendor.loanItems || [];
+  if (loanItems.length > 0) {
+    checkPage(40);
+    drawText('Loaned Items (Display Only)', margin, y, { font: fontBold, size: 13 });
+    y -= 18;
+
+    var loanCols = [
+      { label: '#', w: 24 },
+      { label: 'ITEM NAME', w: 180, editable: true },
+      { label: 'CATEGORY', w: 80, editable: true },
+      { label: 'DIMENSIONS', w: 120, editable: true },
+      { label: 'MATERIAL', w: 130, editable: true },
+      { label: 'QTY', w: 35 },
+      { label: 'ITEM VALUE', w: 80, editable: true }
+    ];
+
+    // Loan header
+    page.drawRectangle({ x: margin, y: y - hdrH + 4, width: usableW, height: hdrH, color: rgb(0.91, 0.89, 0.85) });
+    cx = margin + 4;
+    loanCols.forEach(function(col) {
+      drawText(col.label, cx, y - 8, { font: fontBold, size: 7 });
+      cx += col.w;
+    });
+    y -= hdrH + 2;
+
+    var loanTotal = 0;
+    loanItems.forEach(function(item, idx) {
+      checkPage(rowH + 4);
+      var val = item.value || 0;
+      var qty = item.qty || 1;
+      loanTotal += val * qty;
+
+      page.drawLine({ start: { x: margin, y: y }, end: { x: margin + usableW, y: y }, thickness: 0.5, color: rgb(0.8, 0.8, 0.8) });
+
+      var rx = margin + 4;
+      var loanData = [
+        { val: String(idx + 1), w: loanCols[0].w },
+        { val: item.name || '', w: loanCols[1].w, field: 'loan_name_' + idx },
+        { val: item.category || '', w: loanCols[2].w, field: 'loan_cat_' + idx },
+        { val: item.dimensions || '', w: loanCols[3].w, field: 'loan_dim_' + idx },
+        { val: item.material || '', w: loanCols[4].w, field: 'loan_mat_' + idx },
+        { val: String(qty), w: loanCols[5].w },
+        { val: val ? '$' + val : '', w: loanCols[6].w, field: 'loan_val_' + idx }
+      ];
+
+      loanData.forEach(function(cell) {
+        if (cell.field) {
+          addTextField(cell.field, rx, y - rowH + 4, cell.w - 4, rowH - 4, cell.val);
+        } else {
+          drawText(cell.val, rx, y - 12, {});
+        }
+        rx += cell.w;
+      });
+      y -= rowH;
+    });
+
+    y -= 8;
+    checkPage(20);
+    drawText('Total Items on Loan: ' + loanItems.length + '     Total Replacement Value: $' + loanTotal.toLocaleString(), margin, y, { font: fontBold, size: 10 });
+    y -= 28;
+  }
+
+  // Signature section
+  checkPage(100);
+  y -= 12;
+  drawText('Agreed and confirmed:', margin, y, { size: 11 });
+  y -= 30;
+
+  // Store signature
+  page.drawLine({ start: { x: margin, y: y }, end: { x: margin + 260, y: y }, thickness: 1, color: rgb(0.1, 0.1, 0.1) });
+  y -= 14;
+  drawText('Store: Madeline (Del) Musarra, The Front NYC LLC', margin, y, { font: fontBold, size: 10 });
+  y -= 18;
+  drawText('Date:', margin, y, { size: 10 });
+  addTextField('store_date', margin + 32, y - 4, 150, 16, '');
+  y -= 20;
+
+  // Designer signature
+  y -= 16;
+  page.drawLine({ start: { x: margin, y: y }, end: { x: margin + 260, y: y }, thickness: 1, color: rgb(0.1, 0.1, 0.1) });
+  y -= 14;
+  drawText('Designer:', margin, y, { font: fontBold, size: 10 });
+  addTextField('designer_name', margin + 56, y - 4, 200, 16, '');
+  y -= 18;
+  drawText('Date:', margin, y, { size: 10 });
+  addTextField('designer_date', margin + 32, y - 4, 150, 16, '');
+
+  // Flatten nothing — keep all form fields editable
+  var pdfBytes = await pdfDoc.save();
+  var blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = vendor.name.replace(/[^a-zA-Z0-9]/g, '_') + '_ExhibitA.pdf';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function invNewSetView(view) {
