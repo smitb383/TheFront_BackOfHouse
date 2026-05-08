@@ -8097,7 +8097,7 @@ function renderInvNew() {
 
   var html = data.vendors.map(function(vendor, vi) {
     var vendorInfo = popupVendorsAll.find(function(v) { return v.id === vendor.vendorId; }) || {};
-    var isNonNYC = vendorInfo.locationTag && vendorInfo.locationTag !== 'nyc';
+    var isNonNYC = vendorInfo.locationTag !== 'nyc';
     var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
     var sPct = vendor.storePct != null ? vendor.storePct : 30;
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0, vendorMerchValue = 0;
@@ -8222,19 +8222,21 @@ function renderInvNew() {
         '</span>';
     }
 
-    var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="display:flex;align-items:center;gap:10px;padding:12px 0;cursor:pointer;border-bottom:1px solid var(--border);flex-wrap:wrap">' +
+    var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="display:flex;align-items:center;gap:14px;padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border);flex-wrap:wrap">' +
       '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] ? '0' : '90') + 'deg)">&#9654;</span>' +
-      '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);flex:1">' + esc(vendor.name) + '</span>' +
+      '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);flex:1;min-width:120px">' + esc(vendor.name) + '</span>' +
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">split: </span>' +
-      '<span onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center"></span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
-      '<span onclick="event.stopPropagation()"><input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center"></span>' +
+      '<span style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
+        '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">split:</span>' +
+        '<input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
+        '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
+        '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
+      '</span>' +
       shippingHtml +
-      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">merch $' + Math.round(vendorMerchValue) + '</span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">sold $' + Math.round(vendorTotal) + '</span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">our $' + Math.round(vendorStore) + '</span>' +
-      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">theirs $' + Math.round(vendorDesigner) + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--text);font-weight:600">merch $' + Math.round(vendorMerchValue).toLocaleString() + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">sold $' + Math.round(vendorTotal).toLocaleString() + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:11px;color:#88c98a">our $' + Math.round(vendorStore).toLocaleString() + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text)">theirs $' + Math.round(vendorDesigner).toLocaleString() + '</span>' +
     '</div>';
 
     var vendorBody = '';
