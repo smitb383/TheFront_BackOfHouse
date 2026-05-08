@@ -8478,7 +8478,8 @@ function invNewEditSize(vi, ii, si, field, val) {
   if (!data.vendors[vi].items[ii].sizes || !data.vendors[vi].items[ii].sizes[si]) return;
   data.vendors[vi].items[ii].sizes[si][field] = val;
   saveInvNew(data);
-  renderInvNew();
+  clearTimeout(_invNewRenderTimer);
+  _invNewRenderTimer = setTimeout(renderInvNew, 800);
 }
 
 function invNewAddItem(vi) {
@@ -8494,13 +8495,18 @@ function invNewAddItem(vi) {
   renderInvNew();
 }
 
+var _invNewRenderTimer = null;
 function invNewEditItem(vi, ii, field, val) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   data.vendors[vi].items[ii][field] = val;
   saveInvNew(data);
-  // Only re-render for fields that affect totals
-  if (field === 'salePrice' || field === 'qty' || field === 'sold' || field === 'costEur' || field === 'upchargePct') renderInvNew();
+  // Debounce re-render so typing doesn't jump the page
+  if (field === 'category') { renderInvNew(); return; }
+  if (field === 'salePrice' || field === 'qty' || field === 'sold' || field === 'costEur' || field === 'upchargePct') {
+    clearTimeout(_invNewRenderTimer);
+    _invNewRenderTimer = setTimeout(renderInvNew, 800);
+  }
 }
 
 function invNewDeleteItem(vi, ii) {
