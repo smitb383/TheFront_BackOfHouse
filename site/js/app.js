@@ -3980,8 +3980,12 @@ function buildVendorCard(v, store) {
   const togFn = store === 'popup' ? 'togglePopupVendor'      : 'toggleVendor';
   const toastColor = store === 'popup' ? '#a8c4d4' : '#c9a8d4';
   const photos = v.photos || [];
-  const statusLabels = { 'prospect':'prospect', 'reached':'reached', 'sent-deck':'sent deck', 'sent-agreement':'sent agreement', 'signed-agreement':'signed agreement', 'signed': store==='popup'?'confirmed':'signed', 'vendor-tbd':'vendor tbd', 'backburner':'backburner', 'past':'past' };
+  const statusLabels = { 'prospect':'prospect', 'reached':'reached', 'sent-deck':'sent deck', 'signed': store==='popup'?'confirmed':'signed', 'vendor-tbd':'vendor tbd', 'backburner':'backburner', 'past':'past' };
   const statusLabel = statusLabels[v.status] || v.status || 'prospect';
+  const agreementLabels = { '':'', 'not-sent':'not sent', 'sent':'sent', 'signed':'signed' };
+  const agreementColors = { 'not-sent':'#a8a8a8', 'sent':'#e2c97e', 'signed':'#88c98a' };
+  const agr = v.agreement || '';
+  const agrBadge = agr ? `<span style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.04em;padding:2px 6px;border-radius:2px;margin-left:6px;background:${agreementColors[agr]||'var(--border)'};color:#1a1a18">${agreementLabels[agr]||agr}</span>` : '';
   // Location tag
   const locTag = v.locationTag || '';
   const locDisplay = locTag === 'nyc' ? 'NYC' : locTag === 'other' && v.locationOther ? v.locationOther : v.location || '';
@@ -4029,7 +4033,7 @@ function buildVendorCard(v, store) {
         </div>
         <div class="vendor-row-name">
           ${esc(v.name) || '<span style="color:var(--muted);font-style:italic">Unnamed</span>'}
-          <span class="vendor-status status-${v.status}">${statusLabel}</span>${priorityBadge}${invBadge}
+          <span class="vendor-status status-${v.status}">${statusLabel}</span>${agrBadge}${priorityBadge}${invBadge}
         </div>
         <div class="vendor-row-cell vendor-row-location">${locTag === 'nyc' ? '<span style="background:#e2c97e;color:#1a1a18;font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:0.04em">NYC</span>' : esc(locDisplay)}</div>
         <div class="vendor-row-cell vendor-row-price">${esc(v.priceRange || '')}</div>
@@ -4079,12 +4083,18 @@ function buildVendorCard(v, store) {
                 <option value="prospect"${v.status==='prospect'?' selected':''}>Prospect</option>
                 <option value="reached"${v.status==='reached'?' selected':''}>Reached out</option>
                 <option value="sent-deck"${v.status==='sent-deck'?' selected':''}>Sent deck</option>
-                <option value="sent-agreement"${v.status==='sent-agreement'?' selected':''}>Sent agreement</option>
-                <option value="signed-agreement"${v.status==='signed-agreement'?' selected':''}>Signed agreement</option>
                 <option value="signed"${v.status==='signed'?' selected':''}>${store==='popup'?'Confirmed':'Signed'}</option>
                 <option value="vendor-tbd"${v.status==='vendor-tbd'?' selected':''}>Vendor TBD</option>
                 <option value="backburner"${v.status==='backburner'?' selected':''}>Backburner</option>
                 <option value="past"${v.status==='past'?' selected':''}>Past</option>
+              </select>
+            </div>
+            <div class="vendor-field"><label>Agreement</label>
+              <select onchange="${updFn}(${v.id},'agreement',this.value)">
+                <option value=""${!v.agreement?' selected':''}>—</option>
+                <option value="not-sent"${v.agreement==='not-sent'?' selected':''}>Not sent</option>
+                <option value="sent"${v.agreement==='sent'?' selected':''}>Sent</option>
+                <option value="signed"${v.agreement==='signed'?' selected':''}>Signed</option>
               </select>
             </div>
             <div class="vendor-field"><label>Priority</label>
@@ -4267,9 +4277,12 @@ function renderPopupVendors() {
   const list = document.getElementById('popup-vendor-list');
   if (!list) return;
   const statusFilter = document.getElementById('pvendor-status-filter')?.value || 'all';
+  const agreementFilter = document.getElementById('pvendor-agreement-filter')?.value || 'all';
   const locationFilter = document.getElementById('pvendor-location-filter')?.value || 'all';
   let vendors = getPopupVendors();
   if (statusFilter !== 'all') vendors = vendors.filter(v => v.status === statusFilter);
+  if (agreementFilter === 'none') vendors = vendors.filter(v => !v.agreement);
+  else if (agreementFilter !== 'all') vendors = vendors.filter(v => v.agreement === agreementFilter);
   if (popupVendorCatFilter !== 'all') vendors = vendors.filter(v => (v.discipline || 'Other') === popupVendorCatFilter);
   if (locationFilter === 'nyc') vendors = vendors.filter(v => v.locationTag === 'nyc');
   if (locationFilter === 'non-nyc') vendors = vendors.filter(v => v.locationTag && v.locationTag !== 'nyc');
