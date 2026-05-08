@@ -8091,7 +8091,7 @@ function renderInvNew() {
     return;
   }
 
-  var grandTotal = 0, grandStore = 0, grandDesigner = 0, grandItems = 0, grandMerchValue = 0;
+  var grandTotal = 0, grandStore = 0, grandDesigner = 0, grandItems = 0, grandMerchValue = 0, grandShipping = 0;
 
   var popupVendorsAll = getPopupVendors ? getPopupVendors() : [];
 
@@ -8124,6 +8124,7 @@ function renderInvNew() {
     grandDesigner += vendorDesigner;
     grandItems += vendor.items.length;
     grandMerchValue += vendorMerchValue;
+    grandShipping += parseFloat(vendor.shippingCost) || 0;
 
     var itemRows = vendor.items.map(function(item, ii) {
       var price = item.salePrice || 0;
@@ -8265,6 +8266,7 @@ function renderInvNew() {
     totalsEl.innerHTML =
       '<span>Items: <strong style="color:var(--text)">' + grandItems + '</strong></span>' +
       '<span>Merch value: <strong style="color:var(--text)">$' + Math.round(grandMerchValue).toLocaleString() + '</strong></span>' +
+      '<span>Shipping: <strong style="color:var(--text)">$' + Math.round(grandShipping).toLocaleString() + '</strong></span>' +
       '<span>Total sold: <strong style="color:var(--text)">$' + Math.round(grandTotal).toLocaleString() + '</strong></span>' +
       '<span>Our total: <strong style="color:#88c98a">$' + Math.round(grandStore).toLocaleString() + '</strong></span>' +
       '<span>Designer total: <strong style="color:var(--text)">$' + Math.round(grandDesigner).toLocaleString() + '</strong></span>';
