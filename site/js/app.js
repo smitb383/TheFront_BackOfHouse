@@ -8054,7 +8054,27 @@ var invNewView = 'list'; // 'list' or 'gallery'
 function getInvNew() {
   try { return JSON.parse(localStorage.getItem(INV_NEW_KEY) || 'null'); } catch(e) { return null; }
 }
-function saveInvNew(d) { localStorage.setItem(INV_NEW_KEY, JSON.stringify(d)); }
+function saveInvNew(d) {
+  try {
+    localStorage.setItem(INV_NEW_KEY, JSON.stringify(d));
+  } catch(e) {
+    console.error('[inv] Save failed — localStorage may be full. Attempting cleanup...');
+    // Try stripping base64 photos to free space
+    var clean = JSON.parse(JSON.stringify(d));
+    var stripped = 0;
+    clean.vendors.forEach(function(v) {
+      (v.items || []).forEach(function(item) {
+        if (item.photo && item.photo.startsWith('data:')) { item.photo = ''; stripped++; }
+      });
+    });
+    if (stripped > 0) {
+      console.warn('[inv] Stripped ' + stripped + ' base64 photos to save space');
+      try { localStorage.setItem(INV_NEW_KEY, JSON.stringify(clean)); } catch(e2) {
+        console.error('[inv] Still cannot save after cleanup');
+      }
+    }
+  }
+}
 
 function invNewSyncConfirmed() {
   var data = getInvNew() || { vendors: [] };
@@ -8518,6 +8538,12 @@ function invNewAddItem(vi) {
     description: '', notes: '', sold: 0
   });
   saveInvNew(data);
+  // Verify save worked
+  var check = getInvNew();
+  if (!check || !check.vendors[vi] || check.vendors[vi].items.length !== data.vendors[vi].items.length) {
+    console.error('[inv] Item add failed to persist! localStorage may be full.');
+    alert('Warning: Item may not have saved. Your browser storage might be full. Try clearing old data or using a different browser.');
+  }
   renderInvNew();
 }
 
