@@ -7972,6 +7972,7 @@ function openApiKeyModal() {
   var backdrop = document.getElementById('api-key-backdrop');
   var input = document.getElementById('api-key-input');
   var status = document.getElementById('api-key-status');
+  if (!modal || !input || !status || !backdrop) return;
   var existing = getApiKey();
   if (existing) {
     input.value = existing;
