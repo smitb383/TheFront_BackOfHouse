@@ -9298,7 +9298,9 @@ function renderBuildout() {
       '<input value="' + esc(item.name || '') + '" placeholder="e.g. Display shelf unit" oninput="buildoutEditItem(' + i + ',\'name\',this.value)" style="' + inputS + ';font-family:Cormorant Garamond,serif;font-size:16px;font-weight:600">';
 
     var descField = '<div style="' + lbl + ';margin-top:8px">Description</div>' +
-      '<textarea placeholder="What is this item, how will it be used..." oninput="buildoutEditItem(' + i + ',\'description\',this.value)" style="' + inputS + ';min-height:48px;resize:vertical;font-family:Cormorant Garamond,serif;font-size:13px">' + esc(item.description || '') + '</textarea>';
+      '<textarea placeholder="What is this item, how will it be used..." oninput="buildoutEditItem(' + i + ',\'description\',this.value)" style="' + inputS + ';min-height:48px;resize:vertical;font-family:Cormorant Garamond,serif;font-size:13px">' + esc(item.description || '') + '</textarea>' +
+      '<div style="' + lbl + ';margin-top:8px">Open Questions</div>' +
+      '<textarea placeholder="Unresolved questions, decisions needed..." oninput="buildoutEditItem(' + i + ',\'openQuestions\',this.value)" style="' + inputS + ';min-height:48px;resize:vertical;font-family:Cormorant Garamond,serif;font-size:13px">' + esc(item.openQuestions || '') + '</textarea>';
 
     var qtyField = '<div style="' + lbl + ';margin-top:8px">Qty</div>' +
       '<input type="number" min="1" value="' + (item.qty || 1) + '" oninput="buildoutEditItem(' + i + ',\'qty\',+this.value)" style="' + inputS + ';width:60px">';
