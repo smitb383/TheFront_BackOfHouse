@@ -136,7 +136,7 @@ function _flushWrites() {
     if (res.error) { console.error('[data] Sync error:', res.error.message); return; }
     // Daily snapshot: for any critical key we just wrote, mirror to a dated snapshot row.
     // Caps automatically because the key includes YYYY-MM-DD (one snapshot per day, max).
-    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1', 'popup_vendors_v1', 'front_vendors_v1'];
+    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1', 'popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1'];
     var today = new Date().toISOString().slice(0, 10);
     var snapRows = [];
     rows.forEach(function(r) {

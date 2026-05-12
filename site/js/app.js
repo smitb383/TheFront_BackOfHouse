@@ -8082,6 +8082,7 @@ function invNewSyncConfirmed() {
   var popupVendors = getPopupVendors();
   var qualifying = popupVendors.filter(function(v) { return v.inventoryStatus === 'received-linesheet' || v.inventoryStatus === 'confirmed-stock' || v.inventoryStatus === 'received-stock'; });
   // Add new qualifying vendors (never remove existing ones)
+  var changed = false;
   qualifying.forEach(function(v) {
     var exists = data.vendors.find(function(iv) { return iv.vendorId === v.id; });
     if (!exists) {
@@ -8092,12 +8093,15 @@ function invNewSyncConfirmed() {
         storePct: 30,
         items: []
       });
+      changed = true;
     } else {
-      exists.name = v.name || exists.name;
-      if (exists.designerPct === undefined) { exists.designerPct = 70; exists.storePct = 30; }
+      if (v.name && v.name !== exists.name) { exists.name = v.name; changed = true; }
+      if (exists.designerPct === undefined) { exists.designerPct = 70; exists.storePct = 30; changed = true; }
     }
   });
-  saveInvNew(data);
+  // Only write back if we actually added/changed something — prevents
+  // stale local data from overwriting good Supabase data on first render
+  if (changed) saveInvNew(data);
   return data;
 }
 
