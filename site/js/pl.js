@@ -303,9 +303,8 @@ function calcPL(scenario, inventory) {
     }
 
     var sale = scenario.itemSales && scenario.itemSales[item.id];
-    var sold = sale ? sale.sold : true;
-    var sales = sale ? sale.qty : (item.qty || 1);
-    if (!sold) sales = 0;
+    // "sell" qty: user override from P&L scenario, defaults to inventory qty
+    var sales = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
     var gross = sales * item.price;
     var commission;
     if (item.isInHouse && item.costPerUnit) {
@@ -330,8 +329,7 @@ function calcPL(scenario, inventory) {
       item: item,
       qtySold: sales,
       grossRevenue: gross,
-      ourCut: commission,
-      sold: sold
+      ourCut: commission
     });
   });
 
@@ -627,10 +625,8 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
       var group = vendorMap[vn];
       group.items.forEach(function(item) {
         var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sold = sale ? sale.sold : true;
-        if (!sold) return;
-        var qty = sale ? sale.qty : (item.qty || 1);
-        var gross = qty * item.price;
+        var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+        var gross = sellQty * item.price;
         groupGross += gross;
         groupOurCut += gross * (item.commissionPct / 100);
       });
@@ -647,12 +643,10 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
       var vendorGross = 0, vendorCut = 0, vendorItemCount = 0, vendorMerchValue = 0;
       group.items.forEach(function(item) {
         var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sold = sale ? sale.sold : true;
-        var qty = (sale ? sale.qty : (item.qty || 1));
+        var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
         vendorMerchValue += item.price * (item.qty || 1);
-        if (!sold) qty = 0;
-        vendorGross += qty * item.price;
-        vendorCut += qty * item.price * (item.commissionPct / 100);
+        vendorGross += sellQty * item.price;
+        vendorCut += sellQty * item.price * (item.commissionPct / 100);
         vendorItemCount++;
       });
       var isVendorOpen = document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')) &&
@@ -668,19 +662,20 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
         '<div class="pl-vendor-collapse-body">';
 
       group.items.forEach(function(item) {
+        var invQty = item.qty || 1;
         var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sold = sale ? sale.sold : true;
-        var qty = sale ? sale.qty : (item.qty || 1);
-        var gross = qty * item.price;
+        var sellQty = (sale && sale.qty != null) ? sale.qty : invQty;
+        var gross = sellQty * item.price;
         var cut = gross * (item.commissionPct / 100);
+        var dimmed = sellQty === 0;
 
-        h += '<div class="pl-rev-spreadrow' + (sold ? '' : ' pl-not-sold') + '">' +
+        h += '<div class="pl-rev-spreadrow' + (dimmed ? ' pl-not-sold' : '') + '">' +
           '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
           '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
-          '<span class="pl-rev-sr-num">×' + (item.qty || 1) + '</span>' +
+          '<span class="pl-rev-sr-num" style="color:var(--muted)">inv ' + invQty + '</span>' +
+          '<span class="pl-rev-sr-num" onclick="event.stopPropagation()">sell <input type="number" min="0" max="' + invQty + '" value="' + sellQty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" data-inv-qty="' + invQty + '" onchange="updateItemSellQty(this)"></span>' +
           '<span class="pl-rev-sr-num">' + item.commissionPct + '%</span>' +
-          '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(cut) + '</span>' +
-          '<span class="pl-rev-sr-status"><span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sells' : 'won\'t sell') + '</span></span>' +
+          '<span class="pl-rev-sr-num pl-rev-sr-cut' + (dimmed ? ' pl-cut-muted' : '') + '">$' + fmt(cut) + '</span>' +
         '</div>';
       });
 
@@ -699,11 +694,9 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
     vendorList.forEach(function(vn) {
       vendorMap[vn].items.forEach(function(item) {
         var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sold = sale ? sale.sold : true;
-        if (!sold) return;
-        var qty = sale ? sale.qty : (item.qty || 1);
-        var gross = qty * item.price;
-        var profit = item.costPerUnit ? gross - (qty * item.costPerUnit) : gross;
+        var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+        var gross = sellQty * item.price;
+        var profit = item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
         groupGross += gross;
         groupProfit += profit;
       });
@@ -719,11 +712,9 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
       var vendorGross = 0, vendorProfit = 0, vendorItemCount = 0;
       group.items.forEach(function(item) {
         var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sold = sale ? sale.sold : true;
-        var qty = (sale ? sale.qty : (item.qty || 1));
-        if (!sold) qty = 0;
-        var gross = qty * item.price;
-        var profit = item.costPerUnit ? gross - (qty * item.costPerUnit) : gross;
+        var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+        var gross = sellQty * item.price;
+        var profit = item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
         vendorGross += gross;
         vendorProfit += profit;
         vendorItemCount++;
@@ -741,19 +732,20 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
         '<div class="pl-vendor-collapse-body">';
 
       group.items.forEach(function(item) {
+        var invQty = item.qty || 1;
         var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sold = sale ? sale.sold : true;
-        var qty = sale ? sale.qty : (item.qty || 1);
-        var gross = qty * item.price;
-        var profit = item.costPerUnit ? gross - (qty * item.costPerUnit) : gross;
+        var sellQty = (sale && sale.qty != null) ? sale.qty : invQty;
+        var gross = sellQty * item.price;
+        var profit = item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
+        var dimmed = sellQty === 0;
 
-        h += '<div class="pl-rev-spreadrow' + (sold ? '' : ' pl-not-sold') + '">' +
+        h += '<div class="pl-rev-spreadrow' + (dimmed ? ' pl-not-sold' : '') + '">' +
           '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
           '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
-          '<span class="pl-rev-sr-num">×' + (item.qty || 1) + '</span>' +
+          '<span class="pl-rev-sr-num" style="color:var(--muted)">inv ' + invQty + '</span>' +
+          '<span class="pl-rev-sr-num" onclick="event.stopPropagation()">sell <input type="number" min="0" max="' + invQty + '" value="' + sellQty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" data-inv-qty="' + invQty + '" onchange="updateItemSellQty(this)"></span>' +
           '<span class="pl-rev-sr-num">cost $' + fmt(item.costPerUnit || 0) + '</span>' +
-          '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(profit) + '</span>' +
-          '<span class="pl-rev-sr-status"><span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sells' : 'won\'t sell') + '</span></span>' +
+          '<span class="pl-rev-sr-num pl-rev-sr-cut' + (dimmed ? ' pl-cut-muted' : '') + '">$' + fmt(profit) + '</span>' +
         '</div>';
       });
 
@@ -1262,13 +1254,14 @@ function updateItemCommission(input) {
   renderPL();
 }
 
-function toggleItemSold(itemId) {
+function updateItemSellQty(input) {
   var data = getPLData();
   var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
   if (!scenario.itemSales) scenario.itemSales = {};
-  var existing = scenario.itemSales[itemId] || { qty: 1, sold: true };
-  existing.sold = !existing.sold;
-  scenario.itemSales[itemId] = existing;
+  var id = input.dataset.itemId;
+  var val = parseInt(input.value);
+  if (isNaN(val) || val < 0) val = 0;
+  scenario.itemSales[id] = { qty: val };
   savePLData(data);
   renderPL();
 }
