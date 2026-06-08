@@ -2219,6 +2219,16 @@ window.addEventListener('kv-updated', function(e) {
     var list = document.getElementById('vendor-list');
     if (list) renderVendors();
   }
+  // Re-render budget tables when budget keys change remotely
+  if (key === 'budget_upfront_v1') renderBudget('upfront');
+  if (key === 'budget_monthly_v1') renderBudget('monthly');
+  if (key === 'budget_popup_v1') renderBudget('popup');
+  // Re-render P&L when pl_data_v1 changes remotely
+  if (key === 'pl_data_v1' && typeof renderPL === 'function') renderPL();
+  // Re-render cash P&L when cshpl keys change remotely
+  if (key.indexOf('cshpl_') === 0 && typeof cshplRender === 'function') cshplRender();
+  // Re-render revenue projection
+  if (key === 'popup_rev_proj_v1') { revData = null; if (typeof renderRevProj === 'function') renderRevProj(); }
 });
 
 
@@ -8116,7 +8126,7 @@ function renderInvNew() {
     return;
   }
 
-  var grandTotal = 0, grandStore = 0, grandDesigner = 0, grandItems = 0, grandMerchValue = 0, grandShipping = 0;
+  var grandTotal = 0, grandStore = 0, grandDesigner = 0, grandItems = 0, grandMerchValue = 0, grandShipping = 0, grandMaxTakeHome = 0;
 
   var popupVendorsAll = getPopupVendors ? getPopupVendors() : [];
 
@@ -8161,12 +8171,23 @@ function renderInvNew() {
         }
       }
     });
+    // Max take-home: what we'd earn if everything sold
+    var shipCostForMax = parseFloat(vendor.shippingCost) || 0;
+    var wePayShipForMax = vendor.shippingCoveredBy === 'us' && shipCostForMax > 0;
+    var vendorMaxTakeHome;
+    if (isWholesale) {
+      vendorMaxTakeHome = vendorMerchValue - vendorTotalCost - (wePayShipForMax ? shipCostForMax : 0);
+    } else {
+      vendorMaxTakeHome = vendorMerchValue * (sPct / 100) - (wePayShipForMax ? shipCostForMax : 0);
+    }
+
     grandTotal += vendorTotal;
     grandStore += vendorStore;
     grandDesigner += vendorDesigner;
     grandItems += vendor.items.length;
     grandMerchValue += vendorMerchValue;
-    grandShipping += parseFloat(vendor.shippingCost) || 0;
+    grandShipping += shipCostForMax;
+    grandMaxTakeHome += vendorMaxTakeHome;
 
     var itemRows = vendor.items.map(function(item, ii) {
       var isItemOpen = invNewOpenItem === vi + '-' + ii;
@@ -8422,6 +8443,7 @@ function renderInvNew() {
     totalsEl.innerHTML =
       '<span>Items: <strong style="color:var(--text)">' + grandItems + '</strong></span>' +
       '<span>Total value: <strong style="color:var(--text)">$' + Math.round(grandMerchValue).toLocaleString() + '</strong></span>' +
+      '<span>Max take-home: <strong style="color:#88c98a">$' + Math.round(grandMaxTakeHome).toLocaleString() + '</strong></span>' +
       '<span>Shipping: <strong style="color:var(--text)">$' + Math.round(grandShipping).toLocaleString() + '</strong></span>' +
       '<span>Total sold: <strong style="color:var(--text)">$' + Math.round(grandTotal).toLocaleString() + '</strong></span>' +
       '<span>Our total: <strong style="color:#88c98a">$' + Math.round(grandStore).toLocaleString() + '</strong></span>' +

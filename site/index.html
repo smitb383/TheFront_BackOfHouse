@@ -1578,7 +1578,15 @@
             var el = document.getElementById('popup-graphic-scope-list');
             if (!el) return;
             var list = getGraphicScope();
-            if (!list) { list = GRAPHIC_SCOPE_SEED.slice(); saveGraphicScope(list); }
+            if (!list) {
+              // Only seed if Supabase pull is done (or unavailable) — prevents overwriting real data
+              if (!window._sbPullDone && window._sbReady) {
+                el.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:20px">Loading graphic scope…</div>';
+                return;
+              }
+              list = GRAPHIC_SCOPE_SEED.slice();
+              saveGraphicScope(list);
+            }
             if (list.length === 0) {
               el.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:20px">No assets yet — click "+ Add Asset" to start.</div>';
               return;

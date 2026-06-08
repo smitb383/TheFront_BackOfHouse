@@ -132,11 +132,13 @@ function _flushWrites() {
 
   if (rows.length === 0) return;
 
+  console.log('[data] Flushing ' + rows.length + ' keys to Supabase:', rows.map(function(r){ return r.key; }));
   sb.from('kv_store').upsert(rows, { onConflict: 'key' }).then(function(res) {
-    if (res.error) { console.error('[data] Sync error:', res.error.message); return; }
+    if (res.error) { console.error('[data] Sync error:', res.error.message, res.error); return; }
+    console.log('[data] Successfully synced ' + rows.length + ' keys to Supabase');
     // Daily snapshot: for any critical key we just wrote, mirror to a dated snapshot row.
     // Caps automatically because the key includes YYYY-MM-DD (one snapshot per day, max).
-    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1', 'popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1'];
+    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1', 'popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1', 'popup_graphic_scope_v1'];
     var today = new Date().toISOString().slice(0, 10);
     var snapRows = [];
     rows.forEach(function(r) {
@@ -305,7 +307,13 @@ function _startRealtime() {
         window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: key, source: 'realtime' } }));
       }
     })
-    .subscribe();
+    .subscribe(function(status, err) {
+      console.log('[realtime] Subscription status:', status);
+      if (err) console.error('[realtime] Subscription error:', err);
+      if (status === 'CHANNEL_ERROR') {
+        console.error('[realtime] Channel error — Realtime may not be enabled on kv_store table. Enable it in Supabase Dashboard → Database → Replication.');
+      }
+    });
 }
 
 // ── Boot sequence ──
@@ -439,6 +447,41 @@ function _migrateVisualImgs() {
     }
   });
 }
+
+// Flush any pending writes before the page unloads (prevents data loss on tab close / refresh)
+window.addEventListener('beforeunload', function() {
+  if (Object.keys(_writeQueue).length > 0) {
+    var rows = [];
+    Object.keys(_writeQueue).forEach(function(key) {
+      var raw = _writeQueue[key];
+      var val;
+      try { val = JSON.parse(raw); } catch(e) { val = raw; }
+      rows.push({ key: key, value: val });
+    });
+    _writeQueue = {};
+    if (rows.length === 0) return;
+    // Use fetch with keepalive so the request survives page close
+    var url = SUPABASE_URL + '/rest/v1/kv_store';
+    try {
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(rows),
+        keepalive: true
+      });
+      console.log('[data] Keepalive flush fired for ' + rows.length + ' keys on unload');
+    } catch(e) {
+      console.warn('[data] Keepalive flush failed, attempting normal flush');
+      rows.forEach(function(r) { _writeQueue[r.key] = JSON.stringify(r.value); });
+      _flushWrites();
+    }
+  }
+});
 
 (function() {
   _initSB();
