@@ -195,6 +195,95 @@ function getActiveScenario() {
   return d.scenarios.find(function(s) { return s.id === id; }) || d.scenarios[0];
 }
 
+// ── Live inventory adapter ──
+// Reads popup_inv_new_v1 (the real inventory) and converts to the flat
+// item format that calcPL() consumes. This is the bridge between the
+// Inventory tab and the P&L.
+
+function inventoryToPLItems() {
+  var inv = (typeof getInvNew === 'function') ? getInvNew() : null;
+  if (!inv || !inv.vendors || !inv.vendors.length) return [];
+
+  var items = [];
+  var totalShipping = 0;
+  inv.vendors.forEach(function(vendor) {
+    var isWholesale = vendor.pricingModel === 'wholesale';
+    var sPct = vendor.storePct != null ? vendor.storePct : 30;
+    var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
+    var eurRate = vendor.eurRate || 1.08;
+    var shipCost = parseFloat(vendor.shippingCost) || 0;
+    var wePayShip = vendor.shippingCoveredBy === 'us' && shipCost > 0;
+
+    vendor.items.forEach(function(item) {
+      if (isWholesale) {
+        var costEur = item.costEur || 0;
+        var costUsd = Math.round(costEur * eurRate * 100) / 100;
+        var upcharge = item.upchargePct || 0;
+        var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
+        var qty = item.qty || 1;
+        var sold = item.sold || 0;
+
+        items.push({
+          id: 'invnew_' + vendor.vendorId + '_' + item.id,
+          name: item.name || '(untitled)',
+          vendor: vendor.name || '',
+          vendorId: vendor.vendorId,
+          price: retailPrice,
+          isInHouse: true,
+          commissionPct: 100,
+          costPerUnit: costUsd,
+          qty: qty,
+          totalSold: sold,
+          pricingModel: 'wholesale',
+          category: item.category || ''
+        });
+      } else {
+        var price = item.salePrice || 0;
+        var totalQty = 0, totalSold = 0;
+        if (item.sizes && item.sizes.length) {
+          item.sizes.forEach(function(sz) {
+            totalQty += (sz.qty || 0);
+            totalSold += (sz.sold || 0);
+          });
+        } else {
+          totalQty = item.qty || 1;
+          totalSold = item.sold || 0;
+        }
+
+        items.push({
+          id: 'invnew_' + vendor.vendorId + '_' + item.id,
+          name: item.name || '(untitled)',
+          vendor: vendor.name || '',
+          vendorId: vendor.vendorId,
+          price: price,
+          isInHouse: false,
+          commissionPct: sPct,
+          designerPct: dPct,
+          qty: totalQty,
+          totalSold: totalSold,
+          pricingModel: 'consignment',
+          category: item.category || ''
+        });
+      }
+    });
+
+    if (wePayShip) {
+      totalShipping += shipCost;
+      items.push({
+        id: 'invnew_ship_' + vendor.vendorId,
+        name: vendor.name + ' — Shipping',
+        vendor: vendor.name || '',
+        vendorId: vendor.vendorId,
+        isShippingDeduction: true,
+        shippingAmount: shipCost,
+        price: 0, qty: 0, totalSold: 0, isInHouse: false, commissionPct: 0
+      });
+    }
+  });
+  items._totalShipping = totalShipping;
+  return items;
+}
+
 // ── Calculations ──
 
 function calcPL(scenario, inventory) {
@@ -204,16 +293,35 @@ function calcPL(scenario, inventory) {
   var totalTransactions = 0;
   var itemBreakdown = [];
   var consignGross = 0, consignCut = 0, merchGross = 0, merchCut = 0;
+  var shippingDeductions = 0;
 
   inventory.forEach(function(item) {
+    // Handle shipping deduction pseudo-items
+    if (item.isShippingDeduction) {
+      shippingDeductions += (item.shippingAmount || 0);
+      return;
+    }
+
     var sale = scenario.itemSales && scenario.itemSales[item.id];
     var sold = sale ? sale.sold : true;
-    var sales = sale ? sale.qty : 1;
+    var sales = sale ? sale.qty : (item.qty || 1);
     if (!sold) sales = 0;
     var gross = sales * item.price;
-    var commission = item.isInHouse ? gross : gross * (item.commissionPct / 100);
-    if (item.isInHouse) { merchGross += gross; merchCut += commission; }
-    else { consignGross += gross; consignCut += commission; }
+    var commission;
+    if (item.isInHouse && item.costPerUnit) {
+      // Wholesale: our cut is revenue minus COGS
+      commission = gross - (sales * item.costPerUnit);
+      merchGross += gross;
+      merchCut += commission;
+    } else if (item.isInHouse) {
+      commission = gross;
+      merchGross += gross;
+      merchCut += commission;
+    } else {
+      commission = gross * (item.commissionPct / 100);
+      consignGross += gross;
+      consignCut += commission;
+    }
     totalRevenue += gross;
     ourCut += commission;
     totalTransactions += sales;
@@ -226,6 +334,9 @@ function calcPL(scenario, inventory) {
       sold: sold
     });
   });
+
+  // Deduct shipping we cover
+  ourCut -= shippingDeductions;
 
   // Add other revenue (events, branded goods, etc.)
   (scenario.otherRevenue || []).forEach(function(r) {
@@ -265,8 +376,10 @@ function calcPL(scenario, inventory) {
   });
 
   // Merch production costs (units produced × cost per unit)
+  // Skip wholesale items — their COGS is already deducted in commission calc above
   inventory.forEach(function(item) {
     if (!item.isInHouse) return;
+    if (item.pricingModel === 'wholesale') return;
     var unitsProduced = item.unitsProduced || item.qty || 1;
     totalVariable += unitsProduced * (item.costPerUnit || 0);
   });
@@ -295,7 +408,8 @@ function calcPL(scenario, inventory) {
 function renderPL() {
   var data = getPLData() || initPLData();
   var scenario = getActiveScenario();
-  var calc = calcPL(scenario, data.inventory);
+  var liveInventory = inventoryToPLItems();
+  var calc = calcPL(scenario, liveInventory);
 
   var isBusiness = scenario.id === 'business';
   var isFunding = data.activeScenario === 'funding';
@@ -328,8 +442,8 @@ function renderPL() {
     if (varEl) varEl.innerHTML = '';
   } else {
     // Popup tabs: full revenue + variable costs + calculators
-    renderRevenueSection(data, scenario, calc);
-    renderVariableCosts(scenario, calc, data);
+    renderRevenueSection(data, scenario, calc, liveInventory);
+    renderVariableCosts(scenario, calc, data, liveInventory);
     initBECalc();
   }
 
@@ -467,16 +581,18 @@ function renderPLSummary(calc, scenario) {
     '</div>';
 }
 
-function renderRevenueSection(data, scenario, calc) {
+function renderRevenueSection(data, scenario, calc, liveInventory) {
   var el = document.getElementById('pl-revenue');
   if (!el) return;
+
+  var items = (liveInventory || []).filter(function(i) { return !i.isShippingDeduction; });
 
   // Group inventory by vendor
   var vendorMap = {};
   var vendorOrder = [];
-  data.inventory.forEach(function(item) {
+  items.forEach(function(item) {
     var key = item.vendor || 'Other';
-    if (!vendorMap[key]) { vendorMap[key] = { items: [], isInHouse: item.isInHouse, commissionPct: item.commissionPct }; vendorOrder.push(key); }
+    if (!vendorMap[key]) { vendorMap[key] = { items: [], isInHouse: item.isInHouse, commissionPct: item.commissionPct, pricingModel: item.pricingModel }; vendorOrder.push(key); }
     vendorMap[key].items.push(item);
   });
 
@@ -485,57 +601,66 @@ function renderRevenueSection(data, scenario, calc) {
     vendorMap[key].items.sort(function(a, b) { return (b.price || 0) - (a.price || 0); });
   });
 
-  var html = '<div class="pl-section-header"><span class="pl-section-title">Revenue</span><span class="pl-section-total">$' + fmt(calc.ourCut) + '</span></div>';
+  var shippingTotal = liveInventory._totalShipping || 0;
+  var html = '<div class="pl-section-header"><span class="pl-section-title">Revenue <span style="font-size:9px;color:var(--muted);font-weight:normal;letter-spacing:0.1em;margin-left:6px">FROM INVENTORY</span></span><span class="pl-section-total">$' + fmt(calc.ourCut) + '</span></div>';
 
-  // Split vendors into consignment vs in-house
+  if (!items.length) {
+    html += '<div style="padding:20px;color:var(--muted);font-style:italic;font-family:Cormorant Garamond,serif;font-size:14px">No inventory items yet. Add items in the <a href="#" onclick="showTab(\'front\',\'popup-inventory-new\',document.querySelector(\'[data-tab=popup-inventory-new]\'));return false" style="color:var(--front)">Inventory tab</a> and they\'ll appear here automatically.</div>';
+    el.innerHTML = html;
+    return;
+  }
+
+  // Split vendors into consignment vs wholesale
   var consignmentVendors = [];
-  var merchVendors = [];
+  var wholesaleVendors = [];
   vendorOrder.forEach(function(vendorName) {
     var group = vendorMap[vendorName];
-    if (group.isInHouse) merchVendors.push(vendorName);
+    if (group.isInHouse) wholesaleVendors.push(vendorName);
     else consignmentVendors.push(vendorName);
   });
 
   function renderConsignmentGroup(vendorList) {
     if (!vendorList.length) return '';
     var groupGross = 0;
-    var groupTotal = 0;
-    var currentConsignRate = 30;
+    var groupOurCut = 0;
     vendorList.forEach(function(vn) {
-      vendorMap[vn].items.forEach(function(item) {
-        if (item.commissionPct && !item.isInHouse) currentConsignRate = item.commissionPct;
+      var group = vendorMap[vn];
+      group.items.forEach(function(item) {
         var sale = scenario.itemSales && scenario.itemSales[item.id];
         var sold = sale ? sale.sold : true;
         if (!sold) return;
-        var qty = sale ? sale.qty : 1;
+        var qty = sale ? sale.qty : (item.qty || 1);
         var gross = qty * item.price;
         groupGross += gross;
-        groupTotal += gross * (currentConsignRate / 100);
+        groupOurCut += gross * (item.commissionPct / 100);
       });
     });
 
     var h = '<div class="pl-cost-cat">' +
-      '<span class="pl-cost-cat-name">Consignment <span class="pl-consign-rate-wrap" onclick="event.stopPropagation()"><input type="number" min="0" max="100" class="pl-consign-rate-input" value="' + currentConsignRate + '" onchange="updateAllConsignRate(this.value)">%</span></span>' +
-      '<span class="pl-consign-header-nums"><span class="pl-consign-gross">$' + fmt(groupGross) + '</span><span class="pl-consign-cut">$' + fmt(groupTotal) + '</span></span>' +
+      '<span class="pl-cost-cat-name">Consignment</span>' +
+      '<span class="pl-consign-header-nums"><span class="pl-consign-gross">$' + fmt(groupGross) + ' gross</span><span class="pl-consign-cut">$' + fmt(groupOurCut) + ' ours</span></span>' +
     '</div>';
 
     vendorList.forEach(function(vendorName) {
       var group = vendorMap[vendorName];
-      var vendorGross = 0, vendorCut = 0;
+      var vendorRate = group.commissionPct || 30;
+      var vendorGross = 0, vendorCut = 0, vendorItemCount = 0, vendorMerchValue = 0;
       group.items.forEach(function(item) {
         var sale = scenario.itemSales && scenario.itemSales[item.id];
         var sold = sale ? sale.sold : true;
-        var qty = (sale ? sale.qty : 1);
+        var qty = (sale ? sale.qty : (item.qty || 1));
+        vendorMerchValue += item.price * (item.qty || 1);
         if (!sold) qty = 0;
         vendorGross += qty * item.price;
-        vendorCut += qty * item.price * (currentConsignRate / 100);
+        vendorCut += qty * item.price * (item.commissionPct / 100);
+        vendorItemCount++;
       });
       var isVendorOpen = document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')) &&
         document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')).classList.contains('open');
 
       h += '<div class="pl-vendor-collapse' + (isVendorOpen ? ' open' : '') + '" id="pl-vgroup-' + esc(vendorName.replace(/\s/g,'_')) + '">' +
         '<div class="pl-vendor-collapse-top" onclick="toggleVendorGroup(\'' + esc(vendorName.replace(/\s/g,'_')) + '\')">' +
-          '<span class="pl-vendor-collapse-name">' + esc(vendorName) + '</span>' +
+          '<span class="pl-vendor-collapse-name">' + esc(vendorName) + ' <span style="font-size:9px;color:var(--muted);font-weight:normal">' + vendorRate + '% · ' + vendorItemCount + ' items</span></span>' +
           '<span class="pl-vendor-collapse-gross">$' + fmt(vendorGross) + '</span>' +
           '<span class="pl-vendor-collapse-cut">$' + fmt(vendorCut) + '</span>' +
           '<span class="pl-cost-chevron">›</span>' +
@@ -545,16 +670,89 @@ function renderRevenueSection(data, scenario, calc) {
       group.items.forEach(function(item) {
         var sale = scenario.itemSales && scenario.itemSales[item.id];
         var sold = sale ? sale.sold : true;
-        var qty = sale ? sale.qty : 1;
+        var qty = sale ? sale.qty : (item.qty || 1);
         var gross = qty * item.price;
-        var cut = gross * (currentConsignRate / 100);
+        var cut = gross * (item.commissionPct / 100);
 
         h += '<div class="pl-rev-spreadrow' + (sold ? '' : ' pl-not-sold') + '">' +
           '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
           '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
-          '<span class="pl-rev-sr-num" onclick="event.stopPropagation()"><input type="number" min="0" value="' + qty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
-          '<span class="pl-rev-sr-num">' + currentConsignRate + '%</span>' +
+          '<span class="pl-rev-sr-num">×' + (item.qty || 1) + '</span>' +
+          '<span class="pl-rev-sr-num">' + item.commissionPct + '%</span>' +
           '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(cut) + '</span>' +
+          '<span class="pl-rev-sr-status"><span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sells' : 'won\'t sell') + '</span></span>' +
+        '</div>';
+      });
+
+      h += '<div style="padding:4px 8px;font-size:9px;color:var(--muted);font-family:DM Mono,monospace;display:flex;justify-content:space-between">' +
+        '<span>Value: $' + fmt(vendorMerchValue) + '</span>' +
+        '<span>Max take-home: $' + fmt(Math.round(vendorMerchValue * vendorRate / 100)) + '</span>' +
+      '</div>';
+      h += '</div></div>';
+    });
+    return h;
+  }
+
+  function renderWholesaleGroup(vendorList) {
+    if (!vendorList.length) return '';
+    var groupGross = 0, groupProfit = 0;
+    vendorList.forEach(function(vn) {
+      vendorMap[vn].items.forEach(function(item) {
+        var sale = scenario.itemSales && scenario.itemSales[item.id];
+        var sold = sale ? sale.sold : true;
+        if (!sold) return;
+        var qty = sale ? sale.qty : (item.qty || 1);
+        var gross = qty * item.price;
+        var profit = item.costPerUnit ? gross - (qty * item.costPerUnit) : gross;
+        groupGross += gross;
+        groupProfit += profit;
+      });
+    });
+
+    var h = '<div class="pl-cost-cat">' +
+      '<span class="pl-cost-cat-name">Wholesale</span>' +
+      '<span class="pl-consign-header-nums"><span class="pl-consign-gross">$' + fmt(groupGross) + ' revenue</span><span class="pl-consign-cut">$' + fmt(groupProfit) + ' profit</span></span>' +
+    '</div>';
+
+    vendorList.forEach(function(vendorName) {
+      var group = vendorMap[vendorName];
+      var vendorGross = 0, vendorProfit = 0, vendorItemCount = 0;
+      group.items.forEach(function(item) {
+        var sale = scenario.itemSales && scenario.itemSales[item.id];
+        var sold = sale ? sale.sold : true;
+        var qty = (sale ? sale.qty : (item.qty || 1));
+        if (!sold) qty = 0;
+        var gross = qty * item.price;
+        var profit = item.costPerUnit ? gross - (qty * item.costPerUnit) : gross;
+        vendorGross += gross;
+        vendorProfit += profit;
+        vendorItemCount++;
+      });
+      var isVendorOpen = document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')) &&
+        document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')).classList.contains('open');
+
+      h += '<div class="pl-vendor-collapse' + (isVendorOpen ? ' open' : '') + '" id="pl-vgroup-' + esc(vendorName.replace(/\s/g,'_')) + '">' +
+        '<div class="pl-vendor-collapse-top" onclick="toggleVendorGroup(\'' + esc(vendorName.replace(/\s/g,'_')) + '\')">' +
+          '<span class="pl-vendor-collapse-name">' + esc(vendorName) + ' <span style="font-size:9px;color:var(--muted);font-weight:normal">' + vendorItemCount + ' items</span></span>' +
+          '<span class="pl-vendor-collapse-gross">$' + fmt(vendorGross) + '</span>' +
+          '<span class="pl-vendor-collapse-cut">$' + fmt(vendorProfit) + '</span>' +
+          '<span class="pl-cost-chevron">›</span>' +
+        '</div>' +
+        '<div class="pl-vendor-collapse-body">';
+
+      group.items.forEach(function(item) {
+        var sale = scenario.itemSales && scenario.itemSales[item.id];
+        var sold = sale ? sale.sold : true;
+        var qty = sale ? sale.qty : (item.qty || 1);
+        var gross = qty * item.price;
+        var profit = item.costPerUnit ? gross - (qty * item.costPerUnit) : gross;
+
+        h += '<div class="pl-rev-spreadrow' + (sold ? '' : ' pl-not-sold') + '">' +
+          '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
+          '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
+          '<span class="pl-rev-sr-num">×' + (item.qty || 1) + '</span>' +
+          '<span class="pl-rev-sr-num">cost $' + fmt(item.costPerUnit || 0) + '</span>' +
+          '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(profit) + '</span>' +
           '<span class="pl-rev-sr-status"><span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sells' : 'won\'t sell') + '</span></span>' +
         '</div>';
       });
@@ -564,59 +762,13 @@ function renderRevenueSection(data, scenario, calc) {
     return h;
   }
 
-  function renderMerchGroup(vendorList) {
-    if (!vendorList.length) return '';
-    var groupTotal = 0;
-    vendorList.forEach(function(vn) {
-      vendorMap[vn].items.forEach(function(item) {
-        var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sold = sale ? sale.sold : true;
-        if (!sold) return;
-        var qty = sale ? sale.qty : 1;
-        groupTotal += qty * item.price;
-      });
-    });
-
-    var h = '<div class="pl-cost-cat"><span class="pl-cost-cat-name">The Front Merch</span><span class="pl-cost-cat-total">$' + fmt(groupTotal) + '</span></div>';
-
-    vendorList.forEach(function(vendorName) {
-      var group = vendorMap[vendorName];
-      group.items.forEach(function(item, idx) {
-        var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sold = sale ? sale.sold : true;
-        var qty = sale ? sale.qty : 1;
-        var gross = qty * item.price;
-        var isOpen = document.getElementById('pl-merch-' + item.id) && document.getElementById('pl-merch-' + item.id).classList.contains('open');
-
-        h += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + (sold ? '' : ' pl-not-sold') + '" id="pl-merch-' + item.id + '">' +
-          '<div class="pl-cost-top">' +
-            '<span class="pl-rev-item-name" onclick="toggleMerchCard(\'' + item.id + '\')">' + esc(item.name || '(untitled)') + '</span>' +
-            '<span class="pl-rev-item-price">$' + fmt(item.price) + '</span>' +
-            '<span class="pl-rev-item-qty" onclick="event.stopPropagation()">×<input type="number" min="0" value="' + qty + '" class="pl-cost-amt-num" style="width:40px" data-item-id="' + item.id + '" onchange="updateItemQty(this)"></span>' +
-            '<span class="pl-rev-sr-num pl-rev-sr-cut' + (sold ? '' : ' pl-cut-muted') + '">$' + fmt(gross) + '</span>' +
-            '<span class="pl-rev-sold-label' + (sold ? ' sold' : '') + '" onclick="toggleItemSold(\'' + item.id + '\')">' + (sold ? 'sells' : 'won\'t sell') + '</span>' +
-            '<span class="pl-cost-chevron" onclick="toggleMerchCard(\'' + item.id + '\')">›</span>' +
-          '</div>' +
-          '<div class="pl-cost-body">' +
-            '<div class="pl-cost-fields">' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Item name</div><input class="pl-cost-field-input" value="' + esc(item.name) + '" data-inv-id="' + item.id + '" data-field="name" onchange="updateInventoryItem(this)"></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Sell price ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (item.price || 0) + '" data-inv-id="' + item.id + '" data-field="price" onchange="updateInventoryItem(this);renderPL()"></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Cost per unit ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (item.costPerUnit || 0) + '" data-inv-id="' + item.id + '" data-field="costPerUnit" onchange="updateInventoryItem(this);renderPL()"></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Category</div><input class="pl-cost-field-input" value="' + esc(item.category || '') + '" placeholder="e.g. tote bag, zine…" data-inv-id="' + item.id + '" data-field="category" onchange="updateInventoryItem(this)"></div>' +
-              '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Description, cost to produce, etc." data-inv-id="' + item.id + '" data-field="notes" onchange="updateInventoryItem(this)">' + esc(item.notes || '') + '</textarea></div>' +
-            '</div>' +
-            '<button class="pl-cost-delete-btn" onclick="deleteMerchItem(\'' + item.id + '\')">Delete item</button>' +
-          '</div>' +
-        '</div>';
-      });
-    });
-
-    h += '<button class="pl-add-row-btn" onclick="addMerchItem()">+ Add merch item</button>';
-    return h;
-  }
-
   html += renderConsignmentGroup(consignmentVendors);
-  html += renderMerchGroup(merchVendors);
+  html += renderWholesaleGroup(wholesaleVendors);
+
+  // Shipping deduction summary
+  if (shippingTotal > 0) {
+    html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">Shipping (we cover)</span><span class="pl-cost-cat-total" style="color:#e07070">-$' + fmt(shippingTotal) + '</span></div>';
+  }
 
   // Other revenue
   if (!scenario.otherRevenue) scenario.otherRevenue = [
@@ -667,7 +819,7 @@ function updateOtherRevItem(input) {
     // Update total without full re-render
     var total = 0;
     scenario.otherRevenue.forEach(function(r) { total += (r.amount || 0); });
-    var calc = calcPL(scenario, data.inventory);
+    var calc = calcPL(scenario, inventoryToPLItems());
     renderPLSummary(calc, scenario);
   }
 }
@@ -681,7 +833,7 @@ function updateOtherRevField(input) {
     item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
     savePLData(data);
     if (field === 'amount') {
-      var calc = calcPL(scenario, data.inventory);
+      var calc = calcPL(scenario, inventoryToPLItems());
       renderPLSummary(calc, scenario);
     }
   }
@@ -724,7 +876,7 @@ function updateBECalc() {
 
   var blended = (ownedPct * 1.0 + consignPct * (consignRate / 100)) / 100;
   // Use TOTAL costs (fixed + variable) from actual calc
-  var calc = calcPL(scenario, data.inventory);
+  var calc = calcPL(scenario, inventoryToPLItems());
   var totalCosts = calc.totalFixed + calc.totalVariable;
 
   var beGross = blended > 0 ? Math.ceil(totalCosts / blended) : 0;
@@ -777,7 +929,7 @@ function updatePLCalc() {
   var consignPct = totalGross > 0 ? Math.round((consignSales / totalGross) * 100) : 0;
   var merchPct = totalGross > 0 ? Math.round((merchSales / totalGross) * 100) : 0;
 
-  var calc = calcPL(scenario, data.inventory);
+  var calc = calcPL(scenario, inventoryToPLItems());
   var totalCosts = calc.totalFixed + calc.totalVariable;
   var netPL = totalReturn - totalCosts;
   var plClass = netPL >= 0 ? 'pl-positive' : 'pl-negative';
@@ -842,7 +994,7 @@ function runProfitTarget() {
   scenario.targetPredMerch = hasKnownMerch ? knownMerch : '';
   savePLData(data);
 
-  var calc = calcPL(scenario, data.inventory);
+  var calc = calcPL(scenario, inventoryToPLItems());
   var totalCosts = calc.totalFixed + calc.totalVariable;
   var needed = totalCosts + targetProfit;
 
@@ -1032,7 +1184,7 @@ function renderFixedCosts(scenario) {
   el.innerHTML = html;
 }
 
-function renderVariableCosts(scenario, calc, data) {
+function renderVariableCosts(scenario, calc, data, liveInventory) {
   var el = document.getElementById('pl-variable');
   if (!el) return;
   var total = calc.totalVariable;
@@ -1055,18 +1207,16 @@ function renderVariableCosts(scenario, calc, data) {
     '</div>';
   });
 
-  // Front Merch Production Costs
-  var merchItems = (data ? data.inventory : []).filter(function(i) { return i.isInHouse; });
-  if (merchItems.length) {
-    html += '<div class="pl-cost-cat" style="margin-top:14px"><span class="pl-cost-cat-name">Front Merch Production</span></div>';
-    merchItems.forEach(function(item) {
-      var unitsProduced = item.unitsProduced || item.qty || 1;
-      var costPerUnit = item.costPerUnit || 0;
-      var totalCost = unitsProduced * costPerUnit;
+  // Wholesale COGS from live inventory
+  var wholesaleItems = (liveInventory || []).filter(function(i) { return i.isInHouse && i.costPerUnit && !i.isShippingDeduction; });
+  if (wholesaleItems.length) {
+    html += '<div class="pl-cost-cat" style="margin-top:14px"><span class="pl-cost-cat-name">Wholesale COGS</span></div>';
+    wholesaleItems.forEach(function(item) {
+      var qty = item.qty || 1;
+      var totalCost = qty * item.costPerUnit;
       html += '<div class="pl-cost-row pl-merch-vc-row">' +
         '<span class="pl-cost-name">' + esc(item.name || '(untitled)') + '</span>' +
-        '<span class="pl-vc-field" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-vc-input" value="' + costPerUnit + '" placeholder="0" data-inv-id="' + item.id + '" data-field="costPerUnit" onchange="updateInventoryItem(this);renderPL()"> /unit</span>' +
-        '<span class="pl-vc-field" onclick="event.stopPropagation()">×<input type="number" min="0" class="pl-vc-input" value="' + unitsProduced + '" data-inv-id="' + item.id + '" data-field="unitsProduced" onchange="updateInventoryItem(this);renderPL()"> produced</span>' +
+        '<span class="pl-cost-note">$' + fmt(item.costPerUnit) + '/unit × ' + qty + '</span>' +
         '<span class="pl-cost-amt">$' + fmt(totalCost) + '</span>' +
       '</div>';
     });
@@ -1140,9 +1290,10 @@ function updateFixedCost(input) {
   cost[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
   savePLData(data);
   // Only re-render summary, not the whole thing (to keep focus)
-  var calc = calcPL(scenario, data.inventory);
+  var liveInv = inventoryToPLItems();
+  var calc = calcPL(scenario, liveInv);
   renderPLSummary(calc);
-  renderVariableCosts(scenario, calc);
+  renderVariableCosts(scenario, calc, data, liveInv);
   // Update section totals
   var total = 0;
   (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0); });

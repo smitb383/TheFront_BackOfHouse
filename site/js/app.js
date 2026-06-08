@@ -2229,6 +2229,8 @@ window.addEventListener('kv-updated', function(e) {
   if (key.indexOf('cshpl_') === 0 && typeof cshplRender === 'function') cshplRender();
   // Re-render revenue projection
   if (key === 'popup_rev_proj_v1') { revData = null; if (typeof renderRevProj === 'function') renderRevProj(); }
+  // Re-render P&L when inventory changes (P&L revenue pulls from inventory)
+  if (key === 'popup_inv_new_v1' && typeof renderPL === 'function') renderPL();
 });
 
 
