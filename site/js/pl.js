@@ -204,9 +204,12 @@ function inventoryToPLItems() {
   var inv = (typeof getInvNew === 'function') ? getInvNew() : null;
   if (!inv || !inv.vendors || !inv.vendors.length) return [];
 
+  var popupVendorsAll = (typeof getPopupVendors === 'function') ? getPopupVendors() : [];
+
   var items = [];
   var totalShipping = 0;
   inv.vendors.forEach(function(vendor) {
+    var vendorInfo = popupVendorsAll.find(function(v) { return v.id === vendor.vendorId; }) || {};
     var isWholesale = vendor.pricingModel === 'wholesale';
     var sPct = vendor.storePct != null ? vendor.storePct : 30;
     var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
@@ -267,15 +270,19 @@ function inventoryToPLItems() {
       }
     });
 
-    if (wePayShip) {
-      totalShipping += shipCost;
+    // Track shipping for all non-NYC vendors (whether we pay or they do)
+    if (shipCost > 0) {
+      if (wePayShip) totalShipping += shipCost;
       items.push({
         id: 'invnew_ship_' + vendor.vendorId,
-        name: vendor.name + ' — Shipping',
+        name: vendor.name || '',
         vendor: vendor.name || '',
         vendorId: vendor.vendorId,
         isShippingDeduction: true,
         shippingAmount: shipCost,
+        shippingCoveredBy: vendor.shippingCoveredBy || 'vendor',
+        vendorLocation: vendorInfo ? vendorInfo.location || vendorInfo.locationOther || '' : '',
+        itemCount: vendor.items.length,
         price: 0, qty: 0, totalSold: 0, isInHouse: false, commissionPct: 0
       });
     }
@@ -296,9 +303,11 @@ function calcPL(scenario, inventory) {
   var shippingDeductions = 0;
 
   inventory.forEach(function(item) {
-    // Handle shipping deduction pseudo-items
+    // Handle shipping deduction pseudo-items — only deduct what we cover
     if (item.isShippingDeduction) {
-      shippingDeductions += (item.shippingAmount || 0);
+      if (item.shippingCoveredBy === 'us') {
+        shippingDeductions += (item.shippingAmount || 0);
+      }
       return;
     }
 
@@ -757,9 +766,46 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
   html += renderConsignmentGroup(consignmentVendors);
   html += renderWholesaleGroup(wholesaleVendors);
 
-  // Shipping deduction summary
-  if (shippingTotal > 0) {
-    html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">Shipping (we cover)</span><span class="pl-cost-cat-total" style="color:#e07070">-$' + fmt(shippingTotal) + '</span></div>';
+  // Shipping section — collapsible per-vendor breakdown
+  var shippingItems = (liveInventory || []).filter(function(i) { return i.isShippingDeduction; });
+  if (shippingItems.length) {
+    var totalAllShipping = 0;
+    shippingItems.forEach(function(s) { totalAllShipping += s.shippingAmount; });
+
+    html += '<div class="pl-cost-cat">' +
+      '<span class="pl-cost-cat-name">Shipping</span>' +
+      '<span class="pl-consign-header-nums">' +
+        '<span class="pl-consign-gross">$' + fmt(totalAllShipping) + ' total</span>' +
+        (shippingTotal > 0 ? '<span class="pl-consign-cut" style="color:#e07070">-$' + fmt(shippingTotal) + ' ours</span>' : '') +
+      '</span>' +
+    '</div>';
+
+    shippingItems.forEach(function(shipItem) {
+      var coveredByUs = shipItem.shippingCoveredBy === 'us';
+      var coveredLabel = coveredByUs ? 'We cover' : 'Vendor covers';
+      var coveredColor = coveredByUs ? '#e07070' : '#88c98a';
+      var isOpen = document.getElementById('pl-ship-' + shipItem.vendorId) &&
+        document.getElementById('pl-ship-' + shipItem.vendorId).classList.contains('open');
+
+      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-ship-' + shipItem.vendorId + '">' +
+        '<div class="pl-cost-top" onclick="var el=document.getElementById(\'pl-ship-' + shipItem.vendorId + '\');if(el)el.classList.toggle(\'open\')">' +
+          '<span class="pl-cost-name" style="flex:1">' + esc(shipItem.name) + '</span>' +
+          '<span style="font-family:DM Mono,monospace;font-size:9px;color:' + coveredColor + ';margin-right:8px">' + coveredLabel + '</span>' +
+          '<span class="pl-cost-amt" style="' + (coveredByUs ? 'color:#e07070' : '') + '">$' + fmt(shipItem.shippingAmount) + '</span>' +
+          '<span class="pl-cost-chevron">›</span>' +
+        '</div>' +
+        '<div class="pl-cost-body">' +
+          '<div style="padding:8px 12px;font-family:DM Mono,monospace;font-size:10px;color:var(--muted);display:flex;flex-direction:column;gap:4px">' +
+            (shipItem.vendorLocation ? '<div>Location: <span style="color:var(--text)">' + esc(shipItem.vendorLocation) + '</span></div>' : '') +
+            '<div>Items shipping: <span style="color:var(--text)">' + shipItem.itemCount + '</span></div>' +
+            '<div>Cost: <span style="color:var(--text)">$' + fmt(shipItem.shippingAmount) + '</span></div>' +
+            '<div>Covered by: <span style="color:' + coveredColor + '">' + coveredLabel + '</span></div>' +
+            (coveredByUs ? '<div style="margin-top:4px;color:#e07070">Deducted from our revenue</div>' : '<div style="margin-top:4px;color:#88c98a">No impact on our P&L</div>') +
+          '</div>' +
+          '<div style="padding:4px 12px 8px"><a href="#" onclick="showTab(\'front\',\'popup-inventory-new\',document.querySelector(\'[data-tab=popup-inventory-new]\'));return false" style="font-family:DM Mono,monospace;font-size:9px;color:var(--front)">Edit in Inventory →</a></div>' +
+        '</div>' +
+      '</div>';
+    });
   }
 
   // Other revenue
