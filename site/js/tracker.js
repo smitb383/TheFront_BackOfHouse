@@ -38,17 +38,13 @@
     var installStart = addDays(open, -3); // Jul 20
     var installEnd = addDays(open, -1);   // Jul 22
 
-    // Pre-Launch ends day before install starts (no gap)
-    var preLaunchEnd = addDays(installStart, -1);
+    // Pre-Launch: Jul 9–19 (fixed)
+    var preLaunchStart = parseD('2026-07-09');
+    var preLaunchEnd = parseD('2026-07-19');
 
-    // Split gap between foundation and install into Design & Pre-Launch
-    var totalGap = Math.round((preLaunchEnd - addDays(foundEnd, 1)) / 86400000) + 1;
-    var preLaunchDays = Math.min(Math.round(totalGap * 0.35), totalGap);
-    var preLaunchStart = addDays(preLaunchEnd, -(preLaunchDays - 1));
-
-    // Design & Outreach: immediately after foundation through day before pre-launch (no gap)
+    // Design & Outreach: after foundation through day before pre-launch
     var designStart = addDays(foundEnd, 1);
-    var designEnd = addDays(preLaunchStart, -1);
+    var designEnd = addDays(preLaunchStart, -1); // Jul 8
 
     // Open: Jul 23 through Aug 23 (Tue-Sun 11am-8pm, closed Mon)
     var openEnd = parseD('2026-08-23');
