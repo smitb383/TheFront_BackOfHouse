@@ -1202,13 +1202,20 @@
 
       if (isCollapsed) return; // skip task rows if collapsed
 
+      // White backdrop for the entire label column area of this workstream's tasks
+      var taskGroupHeight = wsTasks.length * TASK_ROW_HEIGHT;
+      var taskGroup = h('div', { style:{ position:'relative' } });
+      // Sticky white column behind all task labels
+      var stickyBg = h('div', { style:{ position:'sticky', left:'0', width:labelWidth+'px', height:taskGroupHeight+'px', background:'#ffffff', zIndex:'3', marginBottom:(-taskGroupHeight)+'px', borderRight:'1px solid var(--border)' } });
+      taskGroup.appendChild(stickyBg);
+
       wsTasks.forEach(function(t) {
         var row = h('div', { className:'trk-timeline-row' });
 
-        // Task label — sticky so it stays visible during horizontal scroll, dim completed tasks
+        // Task label — sticky, transparent bg (white column behind handles coverage)
         var isDone = t.status === 'DONE';
         var taskLabel = h('div', {
-          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', paddingRight:'8px', boxSizing:'border-box', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none', position:'sticky', left:'0', zIndex:'4', background:'#ffffff' },
+          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', paddingRight:'8px', boxSizing:'border-box', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none', position:'sticky', left:'0', zIndex:'4' },
           title: t.title + (isDone ? ' (done)' : ''),
           onClick: function(){ showDetail(t.id); }
         });
@@ -1251,12 +1258,13 @@
         }
 
         row.appendChild(barArea);
-        body.appendChild(row);
+        taskGroup.appendChild(row);
 
         barPositions[t.id] = { row: rowIndex, left: barLeft, right: barLeft + barWidth, cy: pixelY + TASK_ROW_HEIGHT / 2 };
         pixelY += TASK_ROW_HEIGHT;
         rowIndex++;
       });
+      body.appendChild(taskGroup);
     });
 
     // Dependency lines (SVG)
