@@ -182,7 +182,7 @@
   var filterWorkstream = 'ALL';
   var filterAssignee = 'ALL';
   var collapsedWorkstreams = {};
-  var timelineZoom = 0.4;
+  var timelineZoom = 1.4;
   var listSortField = 'dueDate';
   var listSortAsc = true;
 
@@ -1049,7 +1049,7 @@
     zoomRow.appendChild(h('button', { className:'trk-btn', onClick:function(){ timelineZoom = Math.max(0.3, timelineZoom - 0.2); renderTracker(); } }, '\u2212'));
     zoomRow.appendChild(h('span', { className:'trk-mono', style:{ padding:'4px 8px', color:'var(--muted)' } }, Math.round(timelineZoom * 100) + '%'));
     zoomRow.appendChild(h('button', { className:'trk-btn', onClick:function(){ timelineZoom = Math.min(3, timelineZoom + 0.2); renderTracker(); } }, '+'));
-    zoomRow.appendChild(h('button', { className:'trk-btn', style:{ marginLeft:'8px' }, onClick:function(){ timelineZoom = 0.4; renderTracker(); } }, 'Reset'));
+    zoomRow.appendChild(h('button', { className:'trk-btn', style:{ marginLeft:'8px' }, onClick:function(){ timelineZoom = 1.4; renderTracker(); } }, 'Reset'));
     wrap.appendChild(zoomRow);
 
     var projStart = '2026-03-30';
@@ -1193,9 +1193,12 @@
       var labelRow = h('div', { className:'trk-timeline-ws-row', style:{ display:'flex', alignItems:'center', height:'32px', background:wsBg, opacity:'0.9', cursor:'pointer' },
         onClick: function() { collapsedWorkstreams[wsKey] = !collapsedWorkstreams[wsKey]; renderTracker(); }
       });
-      labelRow.appendChild(h('span', { style:{ fontSize:'10px', color:wsColor, marginRight:'6px', display:'inline-block', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)', transition:'transform 0.2s' } }, '\u25B6'));
-      labelRow.appendChild(h('div', { className:'trk-timeline-ws-label', style:{ color:wsColor } }, wsDot(ws, 10), ws));
-      labelRow.appendChild(h('span', { className:'trk-mono', style:{ marginLeft:'8px', fontSize:'9px', color:wsColor, opacity:'0.6' } }, wsTasks.length + ' tasks'));
+      // Sticky white label cell for the workstream header
+      var wsLabelCell = h('div', { style:{ width:labelWidth+'px', minWidth:labelWidth+'px', height:'32px', display:'flex', alignItems:'center', paddingLeft:'10px', boxSizing:'border-box', position:'sticky', left:'0', zIndex:'5', background:'#fff' } });
+      wsLabelCell.appendChild(h('span', { style:{ fontSize:'10px', color:wsColor, marginRight:'6px', display:'inline-block', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)', transition:'transform 0.2s' } }, '\u25B6'));
+      wsLabelCell.appendChild(h('div', { className:'trk-timeline-ws-label', style:{ color:wsColor } }, wsDot(ws, 10), ws));
+      wsLabelCell.appendChild(h('span', { className:'trk-mono', style:{ marginLeft:'8px', fontSize:'9px', color:wsColor, opacity:'0.6' } }, wsTasks.length + ' tasks'));
+      labelRow.appendChild(wsLabelCell);
       labelRow.appendChild(h('div', { style:{ flex:'1', height:'1px', background:wsColor, opacity:'0.3' } }));
       body.appendChild(labelRow);
       pixelY += WS_ROW_HEIGHT;
@@ -1209,7 +1212,7 @@
         // Task label — sticky so it stays visible during horizontal scroll, dim completed tasks
         var isDone = t.status === 'DONE';
         var taskLabel = h('div', {
-          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', paddingRight:'8px', boxSizing:'border-box', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none', position:'sticky', left:'0', zIndex:'4', background:wsBg, borderRight:'1px solid ' + wsColor + '33' },
+          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', paddingRight:'8px', boxSizing:'border-box', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none', position:'sticky', left:'0', zIndex:'4', background:'#fff' },
           title: t.title + (isDone ? ' (done)' : ''),
           onClick: function(){ showDetail(t.id); }
         });
