@@ -1476,260 +1476,242 @@
 
       <div class="ws-view pl-fullwidth" id="front-popup-brand-scope" class="pl-fullwidth">
         <div class="view-header">
-          <div><div class="view-title">334 Pop Up — Graphic Scope</div>
-          <div class="view-desc">Every graphic asset that needs to be produced. For each one: who owns it, where it'll be made, and any ideation notes. Add, edit, or delete items freely.</div></div>
+          <div><div class="view-title">Graphic Scope</div>
+          <div class="view-desc">All graphic assets to produce. Track status, subtasks, and details for each.</div></div>
           <div><button class="trk-btn" style="background:var(--front);color:#000;border-color:var(--front)" onclick="addGraphicScopeItem()">+ Add Asset</button></div>
         </div>
-        <div class="ws-section" style="margin-bottom:28px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)">Possible Graphic Designers</div>
-            <button class="trk-btn" style="font-size:10px;padding:5px 12px" onclick="addGraphicDesigner()">+ Add Designer</button>
-          </div>
-          <div id="graphic-designers-list"></div>
-        </div>
+        <!-- Summary bar -->
+        <div id="gs-summary-bar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
 
-        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">Asset Scope</div>
+        <!-- Asset list -->
         <div class="ws-section">
-          <div id="popup-graphic-scope-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px"></div>
+          <div id="popup-graphic-scope-list"></div>
         </div>
         <script>
-          // ── GRAPHIC DESIGNERS ROSTER ──
-          var GD_KEY = 'popup_graphic_designers_v1';
-          function getGraphicDesigners() {
-            try { var raw = localStorage.getItem(GD_KEY); if (raw) { var arr = JSON.parse(raw); if (Array.isArray(arr)) return arr; } } catch(e) {}
-            return [];
-          }
-          function saveGraphicDesigners(list) { localStorage.setItem(GD_KEY, JSON.stringify(list)); }
-          function addGraphicDesigner() {
-            var list = getGraphicDesigners();
-            list.push({ id: Date.now(), name:'', link:'', notes:'' });
-            saveGraphicDesigners(list);
-            renderGraphicDesigners();
-          }
-          function editGraphicDesigner(id, field, val) {
-            var list = getGraphicDesigners();
-            var d = list.find(function(x){ return x.id === id; });
-            if (d) { d[field] = val; saveGraphicDesigners(list); }
-          }
-          function removeGraphicDesigner(id) {
-            if (!confirm('Remove this designer?')) return;
-            saveGraphicDesigners(getGraphicDesigners().filter(function(x){ return x.id !== id; }));
-            renderGraphicDesigners();
-          }
-          function renderGraphicDesigners() {
-            var el = document.getElementById('graphic-designers-list');
-            if (!el) return;
-            var list = getGraphicDesigners();
-            if (!list.length) {
-              el.innerHTML = '<div style="color:var(--muted);font-style:italic;font-family:Cormorant Garamond,serif;font-size:14px;padding:12px 0">No designers added yet.</div>';
-              return;
-            }
-            el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">' + list.map(function(d) {
-              var linkDisplay = d.link ? d.link.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : '';
-              return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;gap:10px;align-items:flex-start">' +
-                '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
-                  '<input type="text" value="' + escAttr(d.name) + '" placeholder="Designer name" oninput="editGraphicDesigner(' + d.id + ',\'name\',this.value)" style="background:none;border:none;border-bottom:1px solid var(--faint);color:var(--text);font-family:Cormorant Garamond,serif;font-size:16px;font-weight:600;outline:none;padding:2px 0;width:100%">' +
-                  '<input type="text" value="' + escAttr(d.link) + '" placeholder="IG or portfolio link" oninput="editGraphicDesigner(' + d.id + ',\'link\',this.value)" style="background:none;border:none;color:#82a4d4;font-family:DM Mono,monospace;font-size:10px;outline:none;padding:2px 0;width:100%">' +
-                  '<textarea placeholder="Notes…" oninput="editGraphicDesigner(' + d.id + ',\'notes\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);border-radius:3px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:13px;outline:none;padding:6px 8px;min-height:36px;resize:vertical;width:100%;box-sizing:border-box">' + escHtml(d.notes) + '</textarea>' +
-                '</div>' +
-                '<button onclick="removeGraphicDesigner(' + d.id + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px" title="Remove">✕</button>' +
-              '</div>';
-            }).join('') + '</div>';
-          }
-          document.addEventListener('DOMContentLoaded', renderGraphicDesigners);
-          if (document.readyState !== 'loading') renderGraphicDesigners();
-
           // ── GRAPHIC SCOPE ──
           var GRAPHIC_SCOPE_KEY = 'popup_graphic_scope_v1';
-          var GRAPHIC_TYPE_CYCLE = ['', 'physical', 'digital', 'both'];
+          var GS_STATUSES = [
+            { id:'not-started', label:'Not started', bg:'#555',    fg:'#fff' },
+            { id:'designing',   label:'Designing',   bg:'#EF9F27', fg:'#000' },
+            { id:'design-done', label:'Design done',  bg:'#378ADD', fg:'#fff' },
+            { id:'ordered',     label:'Ordered',     bg:'#D85A30', fg:'#fff' },
+            { id:'received',    label:'Received',    bg:'#1D9E75', fg:'#fff' }
+          ];
+          var GS_STATUS_MAP = {};
+          GS_STATUSES.forEach(function(s){ GS_STATUS_MAP[s.id] = s; });
           var GRAPHIC_TYPE_COLORS = {
-            'physical': { bg:'#FAC775', fg:'#000' },
-            'digital':  { bg:'#B5D4F4', fg:'#000' },
-            'both':     { bg:'#9FE1CB', fg:'#000' }
+            'physical': '#FAC775',
+            'digital':  '#B5D4F4',
+            'both':     '#9FE1CB'
           };
           var GRAPHIC_SCOPE_SEED = [
-            { title:'Logo / Wordmark',                          type:'both',     tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Typography & Color System',                type:'digital',  tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Vinyl Signage — Exterior',                 type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Window Graphics',                          type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Interior Signage / Wayfinding',            type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Hang Tags & Maker Cards',                  type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Shopping Bags',                            type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Tissue / Packaging',                       type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Flyer / Opening Invite',                   type:'both',     tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Website Design',                           type:'digital',  tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Social Media Templates',                   type:'digital',  tags:[], owner:'', content:'', vendors:'', ideation:'' },
-            { title:'Merch Graphics (stickers, tattoos, etc.)', type:'physical', tags:[], owner:'', content:'', vendors:'', ideation:'' }
+            { title:'Logo / Wordmark',              type:'both',     status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Typography & Color System',    type:'digital',  status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Vinyl Signage — Exterior',     type:'physical', status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Window Graphics',              type:'physical', status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Interior Signage / Wayfinding',type:'physical', status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Hang Tags & Maker Cards',      type:'physical', status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Shopping Bags',                type:'physical', status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Tissue / Packaging',           type:'physical', status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Flyer / Opening Invite',       type:'both',     status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Website Design',               type:'digital',  status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Social Media Templates',       type:'digital',  status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] },
+            { title:'Merch Graphics',               type:'physical', status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] }
           ];
+          var _gsExpandedIdx = null;
+
           function getGraphicScope() {
-            try {
-              var raw = localStorage.getItem(GRAPHIC_SCOPE_KEY);
-              if (raw) {
-                var arr = JSON.parse(raw);
-                if (Array.isArray(arr)) return arr;
-              }
-            } catch(e) {}
+            try { var raw = localStorage.getItem(GRAPHIC_SCOPE_KEY); if (raw) { var arr = JSON.parse(raw); if (Array.isArray(arr)) return arr; } } catch(e) {}
             return null;
           }
           function saveGraphicScope(list) { localStorage.setItem(GRAPHIC_SCOPE_KEY, JSON.stringify(list)); }
           function escAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
           function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+          function renderGSSummary(list) {
+            var bar = document.getElementById('gs-summary-bar');
+            if (!bar) return;
+            var counts = {};
+            GS_STATUSES.forEach(function(s){ counts[s.id] = 0; });
+            list.forEach(function(item){ counts[item.status || 'not-started'] = (counts[item.status || 'not-started'] || 0) + 1; });
+            var done = counts['received'] || 0;
+            bar.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px"><span style="font-size:14px;color:var(--text);font-weight:700">' + list.length + '</span> assets</div>' +
+              '<div style="font-family:DM Mono,monospace;font-size:10px;color:#1D9E75;display:flex;align-items:center;gap:4px"><span style="font-size:14px;font-weight:700">' + done + '/' + list.length + '</span> done</div>' +
+              '<div style="flex:1"></div>' +
+              GS_STATUSES.map(function(s){
+                return '<div style="display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;background:' + s.bg + '22;border:1px solid ' + s.bg + '44">' +
+                  '<span style="width:8px;height:8px;border-radius:50%;background:' + s.bg + '"></span>' +
+                  '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--text)">' + (counts[s.id] || 0) + '</span>' +
+                  '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">' + s.label + '</span>' +
+                '</div>';
+              }).join('');
+          }
+
           function renderGraphicScope() {
             var el = document.getElementById('popup-graphic-scope-list');
             if (!el) return;
             var list = getGraphicScope();
             if (!list) {
-              // Only seed if Supabase pull is done (or unavailable) — prevents overwriting real data
               if (!window._sbPullDone && window._sbReady) {
-                el.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:20px">Loading graphic scope…</div>';
+                el.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:20px">Loading…</div>';
                 return;
               }
               list = GRAPHIC_SCOPE_SEED.slice();
               saveGraphicScope(list);
             }
-            if (list.length === 0) {
+            // Ensure defaults
+            list.forEach(function(item) {
+              if (!item.status) item.status = 'not-started';
+              if (!item.subtasks) item.subtasks = [];
+            });
+
+            renderGSSummary(list);
+
+            if (!list.length) {
               el.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:20px">No assets yet — click "+ Add Asset" to start.</div>';
               return;
             }
-            // Group by type
+
             var GROUPS = [
-              { key:'both',     label:'Both' },
               { key:'physical', label:'Physical' },
               { key:'digital',  label:'Digital' },
-              { key:'',         label:'Untyped' }
+              { key:'both',     label:'Both' },
+              { key:'',         label:'Other' }
             ];
-            var renderCard = function(item, i) {
-              if (!Array.isArray(item.tags)) item.tags = [];
-              if (typeof item.type === 'undefined') item.type = '';
-              var typeStyle = GRAPHIC_TYPE_COLORS[item.type];
-              var typeChip = item.type
-                ? '<button onclick="cycleGraphicType(' + i + ')" title="Click to cycle type" style="background:' + typeStyle.bg + ';color:' + typeStyle.fg + ';border:none;border-radius:10px;padding:3px 10px;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer">' + item.type + '</button>'
-                : '<button onclick="cycleGraphicType(' + i + ')" title="Click to set type" style="background:transparent;color:var(--muted);border:1px dashed var(--faint);border-radius:10px;padding:2px 10px;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer">+ type</button>';
-              var tagChips = item.tags.map(function(t, ti) {
-                return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);border-radius:10px;padding:2px 4px 2px 8px;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.05em">' + escHtml(t) + '<button onclick="removeGraphicTag(' + i + ',' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 2px">✕</button></span>';
-              }).join('');
-              return '<div draggable="true" data-gs-idx="' + i + '" ondragstart="gsStartDrag(event,' + i + ')" ondragover="gsOverDrag(event,this)" ondragleave="this.style.borderTop=\'1px solid var(--border)\'" ondrop="gsDrop(event,' + i + ')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:10px;cursor:default">' +
-                '<div style="display:flex;align-items:center;gap:8px">' +
-                  '<span style="cursor:grab;color:var(--muted);font-size:12px;padding:0 2px" title="Drag to reorder">⠿</span>' +
-                  '<input type="text" value="' + escAttr(item.title) + '" placeholder="Asset title…" style="flex:1;background:none;border:none;border-bottom:1px solid var(--faint);color:var(--text);font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600;outline:none;padding:4px 0" oninput="editGraphicScope(' + i + ',\'title\',this.value)">' +
-                  '<button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 8px" title="Delete asset" onclick="removeGraphicScope(' + i + ')">✕</button>' +
-                '</div>' +
-                '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">' +
-                  typeChip + tagChips +
-                  '<input type="text" placeholder="+ tag" onkeydown="if(event.key===\'Enter\'){addGraphicTag(' + i + ',this.value);this.value=\'\';event.preventDefault();}" style="background:transparent;border:none;border-bottom:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;outline:none;padding:2px 4px;width:70px">' +
-                '</div>' +
-                '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Responsible</div>' +
-                  '<input type="text" value="' + escAttr(item.owner) + '" placeholder="Brooke / Del / vendor name…" style="width:100%;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box" oninput="editGraphicScope(' + i + ',\'owner\',this.value)"></div>' +
-                '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Content</div>' +
-                  '<textarea placeholder="What goes on this — copy, imagery, specs…" style="width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical" oninput="editGraphicScope(' + i + ',\'content\',this.value)">' + escHtml(item.content) + '</textarea></div>' +
-                '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Plan for making</div>' +
-                  '<textarea placeholder="Where it\'ll be made, quotes, lead time…" style="width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical" oninput="editGraphicScope(' + i + ',\'vendors\',this.value)">' + escHtml(item.vendors) + '</textarea></div>' +
-                '<div><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:0.05em;margin-bottom:4px">Notes</div>' +
-                  '<textarea placeholder="Visual direction, references, open questions…" style="width:100%;min-height:80px;background:var(--surface2);border:1px solid var(--faint);border-radius:4px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical" oninput="editGraphicScope(' + i + ',\'ideation\',this.value)">' + escHtml(item.ideation) + '</textarea></div>' +
-              '</div>';
-            };
-            // Switch container to vertical sections (override the inline grid)
-            el.style.display = 'flex';
-            el.style.flexDirection = 'column';
-            el.style.gap = '24px';
+
             var html = '';
             GROUPS.forEach(function(g) {
               var members = [];
-              list.forEach(function(item, idx) {
-                if ((item.type || '') === g.key) members.push({ item: item, idx: idx });
+              list.forEach(function(item, idx) { if ((item.type || '') === g.key) members.push({ item:item, idx:idx }); });
+              if (!members.length) return;
+              var dotColor = GRAPHIC_TYPE_COLORS[g.key] || 'var(--muted)';
+              html += '<div style="margin-bottom:20px">' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)">' +
+                  '<span style="width:10px;height:10px;border-radius:50%;background:' + dotColor + '"></span>' +
+                  '<span style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)">' + g.label + '</span>' +
+                  '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + members.length + '</span>' +
+                '</div>';
+
+              members.forEach(function(m) {
+                var item = m.item, i = m.idx;
+                var st = GS_STATUS_MAP[item.status] || GS_STATUSES[0];
+                var isOpen = _gsExpandedIdx === i;
+                var subDone = item.subtasks.filter(function(s){ return s.done; }).length;
+                var subTotal = item.subtasks.length;
+                var subLabel = subTotal > 0 ? subDone + '/' + subTotal : '';
+                var statusOpts = GS_STATUSES.map(function(s){
+                  return '<option value="' + s.id + '"' + (item.status === s.id ? ' selected' : '') + '>' + s.label + '</option>';
+                }).join('');
+
+                // Row
+                html += '<div style="border-bottom:1px solid var(--border)">' +
+                  '<div onclick="gsToggleExpand(' + i + ')" style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer">' +
+                    '<span style="width:8px;height:8px;border-radius:50%;background:' + dotColor + ';flex-shrink:0"></span>' +
+                    '<input type="text" value="' + escAttr(item.title) + '" placeholder="Asset title…" onclick="event.stopPropagation()" oninput="editGraphicScope(' + i + ',\'title\',this.value)" style="flex:1;background:none;border:none;color:var(--text);font-family:Cormorant Garamond,serif;font-size:14px;outline:none;padding:2px 0;min-width:0">' +
+                    '<select onclick="event.stopPropagation()" onchange="editGraphicScope(' + i + ',\'status\',this.value);renderGraphicScope()" style="background:' + st.bg + ';color:' + st.fg + ';border:none;border-radius:10px;padding:3px 8px;font-family:DM Mono,monospace;font-size:9px;letter-spacing:0.04em;cursor:pointer;outline:none;-webkit-appearance:none;text-align:center;min-width:80px">' + statusOpts + '</select>' +
+                    (subLabel ? '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (subDone === subTotal ? '#1D9E75' : 'var(--muted)') + '">' + subLabel + '</span>' : '') +
+                    '<span style="font-size:10px;color:var(--muted);transform:rotate(' + (isOpen ? '90deg' : '0deg') + ');transition:transform 0.15s">&#x25B6;</span>' +
+                  '</div>';
+
+                // Expanded detail
+                if (isOpen) {
+                  html += '<div style="padding:8px 20px 14px;background:var(--surface);border-top:1px solid var(--border)">' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">' +
+                      '<div><div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:3px">Content / Specs</div>' +
+                        '<textarea placeholder="Copy, imagery, dimensions…" oninput="editGraphicScope(' + i + ',\'content\',this.value)" style="width:100%;min-height:50px;background:var(--surface2);border:1px solid var(--faint);border-radius:3px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:13px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical">' + escHtml(item.content) + '</textarea></div>' +
+                      '<div><div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:3px">Plan for Making</div>' +
+                        '<textarea placeholder="Where, how, lead time, cost…" oninput="editGraphicScope(' + i + ',\'vendors\',this.value)" style="width:100%;min-height:50px;background:var(--surface2);border:1px solid var(--faint);border-radius:3px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:13px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical">' + escHtml(item.vendors) + '</textarea></div>' +
+                    '</div>' +
+                    '<div style="margin-bottom:10px"><div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:3px">Notes</div>' +
+                      '<textarea placeholder="References, open questions…" oninput="editGraphicScope(' + i + ',\'ideation\',this.value)" style="width:100%;min-height:40px;background:var(--surface2);border:1px solid var(--faint);border-radius:3px;color:var(--text);font-family:Cormorant Garamond,serif;font-size:13px;outline:none;padding:6px 8px;box-sizing:border-box;resize:vertical">' + escHtml(item.ideation) + '</textarea></div>' +
+                    // Subtasks
+                    '<div style="margin-bottom:8px"><div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:6px">Subtasks</div>' +
+                      item.subtasks.map(function(sub, si) {
+                        return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0">' +
+                          '<input type="checkbox"' + (sub.done ? ' checked' : '') + ' onchange="gsToggleSub(' + i + ',' + si + ')" style="cursor:pointer">' +
+                          '<input type="text" value="' + escAttr(sub.text) + '" oninput="gsEditSub(' + i + ',' + si + ',this.value)" style="flex:1;background:none;border:none;border-bottom:1px solid var(--faint);color:' + (sub.done ? 'var(--muted)' : 'var(--text)') + ';font-family:Cormorant Garamond,serif;font-size:13px;outline:none;padding:2px 0;' + (sub.done ? 'text-decoration:line-through' : '') + '">' +
+                          '<button onclick="gsDeleteSub(' + i + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 4px">✕</button>' +
+                        '</div>';
+                      }).join('') +
+                      '<button onclick="gsAddSub(' + i + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:4px 10px;border-radius:3px;cursor:pointer;margin-top:4px">+ Add subtask</button>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:8px;align-items:center">' +
+                      '<select onclick="event.stopPropagation()" onchange="gsChangeType(' + i + ',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 8px;border-radius:3px;outline:none">' +
+                        '<option value=""' + (!item.type ? ' selected' : '') + '>No type</option>' +
+                        '<option value="physical"' + (item.type === 'physical' ? ' selected' : '') + '>Physical</option>' +
+                        '<option value="digital"' + (item.type === 'digital' ? ' selected' : '') + '>Digital</option>' +
+                        '<option value="both"' + (item.type === 'both' ? ' selected' : '') + '>Both</option>' +
+                      '</select>' +
+                      '<div style="flex:1"></div>' +
+                      '<button onclick="removeGraphicScope(' + i + ')" style="background:none;border:none;color:#e07070;font-family:DM Mono,monospace;font-size:10px;cursor:pointer;padding:4px 8px">Delete asset</button>' +
+                    '</div>' +
+                  '</div>';
+                }
+                html += '</div>';
               });
-              if (members.length === 0) return;
-              var headerColor = GRAPHIC_TYPE_COLORS[g.key];
-              var dot = headerColor
-                ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + headerColor.bg + '"></span>'
-                : '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:transparent;border:1px dashed var(--faint)"></span>';
-              html += '<div>' +
-                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">' +
-                  dot +
-                  '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text)">' + g.label + '</div>' +
-                  '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + members.length + '</div>' +
-                '</div>' +
-                '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">' +
-                  members.map(function(m) { return renderCard(m.item, m.idx); }).join('') +
-                '</div>' +
-              '</div>';
+              html += '</div>';
             });
             el.innerHTML = html;
           }
+
+          function gsToggleExpand(i) { _gsExpandedIdx = _gsExpandedIdx === i ? null : i; renderGraphicScope(); }
           function editGraphicScope(i, field, val) {
             var list = getGraphicScope() || [];
             if (!list[i]) return;
             list[i][field] = val;
             saveGraphicScope(list);
+            if (field === 'status') renderGSSummary(list);
           }
-          function cycleGraphicType(i) {
+          function gsChangeType(i, val) {
             var list = getGraphicScope() || [];
             if (!list[i]) return;
-            var cur = list[i].type || '';
-            var idx = GRAPHIC_TYPE_CYCLE.indexOf(cur);
-            list[i].type = GRAPHIC_TYPE_CYCLE[(idx + 1) % GRAPHIC_TYPE_CYCLE.length];
+            list[i].type = val;
             saveGraphicScope(list);
             renderGraphicScope();
           }
-          function addGraphicTag(i, val) {
-            val = (val || '').trim();
-            if (!val) return;
+          function gsToggleSub(i, si) {
             var list = getGraphicScope() || [];
-            if (!list[i]) return;
-            if (!Array.isArray(list[i].tags)) list[i].tags = [];
-            list[i].tags.push(val);
+            if (!list[i] || !list[i].subtasks[si]) return;
+            list[i].subtasks[si].done = !list[i].subtasks[si].done;
             saveGraphicScope(list);
             renderGraphicScope();
           }
-          function removeGraphicTag(i, ti) {
+          function gsEditSub(i, si, val) {
             var list = getGraphicScope() || [];
-            if (!list[i] || !Array.isArray(list[i].tags)) return;
-            list[i].tags.splice(ti, 1);
+            if (!list[i] || !list[i].subtasks[si]) return;
+            list[i].subtasks[si].text = val;
+            saveGraphicScope(list);
+          }
+          function gsDeleteSub(i, si) {
+            var list = getGraphicScope() || [];
+            if (!list[i]) return;
+            list[i].subtasks.splice(si, 1);
+            saveGraphicScope(list);
+            renderGraphicScope();
+          }
+          function gsAddSub(i) {
+            var list = getGraphicScope() || [];
+            if (!list[i]) return;
+            if (!list[i].subtasks) list[i].subtasks = [];
+            list[i].subtasks.push({ id: Date.now(), text:'', done:false });
             saveGraphicScope(list);
             renderGraphicScope();
           }
           function addGraphicScopeItem() {
             var list = getGraphicScope() || [];
-            list.push({ title:'', type:'', tags:[], owner:'', content:'', vendors:'', ideation:'' });
+            list.push({ title:'', type:'', status:'not-started', content:'', vendors:'', ideation:'', subtasks:[] });
             saveGraphicScope(list);
+            _gsExpandedIdx = list.length - 1;
             renderGraphicScope();
           }
           function removeGraphicScope(i) {
             if (!confirm('Delete this asset?')) return;
             var list = getGraphicScope() || [];
             list.splice(i, 1);
+            _gsExpandedIdx = null;
             saveGraphicScope(list);
             renderGraphicScope();
           }
-          var _gsDragIdx = null;
-          function gsStartDrag(e, idx) {
-            _gsDragIdx = idx;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', idx);
-            e.target.closest('[data-gs-idx]').style.opacity = '0.4';
-          }
-          function gsOverDrag(e, el) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            el.style.borderTop = '2px solid var(--front)';
-          }
-          function gsDrop(e, targetIdx) {
-            e.preventDefault();
-            var el = e.target.closest('[data-gs-idx]');
-            if (el) el.style.borderTop = '1px solid var(--border)';
-            if (_gsDragIdx === null || _gsDragIdx === targetIdx) { _gsDragIdx = null; return; }
-            var list = getGraphicScope() || [];
-            var item = list.splice(_gsDragIdx, 1)[0];
-            var newIdx = targetIdx > _gsDragIdx ? targetIdx - 1 : targetIdx;
-            list.splice(newIdx, 0, item);
-            saveGraphicScope(list);
-            _gsDragIdx = null;
-            renderGraphicScope();
-          }
-          document.addEventListener('dragend', function() {
-            _gsDragIdx = null;
-            document.querySelectorAll('[data-gs-idx]').forEach(function(el) { el.style.opacity = '1'; el.style.borderTop = '1px solid var(--border)'; });
-          });
           document.addEventListener('DOMContentLoaded', renderGraphicScope);
           if (document.readyState !== 'loading') renderGraphicScope();
           window.addEventListener('supabase-ready', function() { setTimeout(renderGraphicScope, 500); });

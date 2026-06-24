@@ -1471,6 +1471,34 @@
     notesArea.addEventListener('input', function(e){ t.notes = e.target.value; saveTasks(); });
     panel.appendChild(notesArea);
 
+    // Live graphic scope progress for task 42 (Graphic production)
+    if (t.id === 42) {
+      try {
+        var gsRaw = localStorage.getItem('popup_graphic_scope_v1');
+        var gsItems = gsRaw ? JSON.parse(gsRaw) : [];
+        if (Array.isArray(gsItems) && gsItems.length) {
+          var gsDone = gsItems.filter(function(g){ return g.status === 'received'; }).length;
+          var gsInProgress = gsItems.filter(function(g){ return g.status === 'designing' || g.status === 'design-done' || g.status === 'ordered'; }).length;
+          var gsBox = h('div', { style:{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'4px', padding:'10px 12px', marginBottom:'8px' } });
+          gsBox.appendChild(h('div', { className:'trk-mono', style:{ fontSize:'9px', color:'var(--muted)', marginBottom:'6px', textTransform:'uppercase', letterSpacing:'0.08em' } }, 'Graphic Scope Progress'));
+          gsBox.appendChild(h('div', { style:{ fontSize:'14px', fontFamily:"'Cormorant Garamond',serif", color:'var(--text)' } },
+            gsDone + '/' + gsItems.length + ' done' + (gsInProgress ? '  ·  ' + gsInProgress + ' in progress' : '')
+          ));
+          // Progress bar
+          var pctDone = Math.round(gsDone / gsItems.length * 100);
+          var pctActive = Math.round(gsInProgress / gsItems.length * 100);
+          var barWrap = h('div', { style:{ height:'6px', background:'var(--border)', borderRadius:'3px', marginTop:'6px', overflow:'hidden', display:'flex' } });
+          barWrap.appendChild(h('div', { style:{ width:pctDone+'%', background:'#1D9E75' } }));
+          barWrap.appendChild(h('div', { style:{ width:pctActive+'%', background:'#EF9F27' } }));
+          gsBox.appendChild(barWrap);
+          gsBox.appendChild(h('a', { href:'#', style:{ fontFamily:"'DM Mono',monospace", fontSize:'9px', color:'var(--front)', marginTop:'6px', display:'inline-block' },
+            onClick: function(e){ e.preventDefault(); showTab('front','popup-brand-scope',document.querySelector('[data-tab=popup-brand-scope]')); }
+          }, 'Open Graphic Scope →'));
+          panel.appendChild(gsBox);
+        }
+      } catch(ex) {}
+    }
+
     // Depends On (Blocked By) — editable
     panel.appendChild(h('label', null, 'Depends On'));
     var depList = h('div', { style:{ display:'flex', flexDirection:'column', gap:'2px', marginBottom:'4px' } });
