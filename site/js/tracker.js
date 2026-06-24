@@ -82,7 +82,6 @@
 { id:3, title:'Sign lease', workstream:'Hester Space', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-06-23', startDate:'2026-06-23', deps:[], notes:'46 Hester St. Signed Tue Jun 23. Open Jul 23 \u2013 Aug 23. Load-in access Jul 20 at 7pm. Must be out by 10pm Aug 24.' },
 { id:14, title:'Pay deposit', workstream:'Hester Space', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-06-23', startDate:'2026-06-23', deps:[3], notes:'Paid Tue Jun 23 with lease signing.' },
 { id:62, title:'Get COI & share info with space', workstream:'Hester Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-27', startDate:'2026-06-24', deps:[3], notes:'Get certificate of insurance. Share COI + any required info with 46 Hester. Must happen this week.' },
-{ id:13, title:'Get liability insurance (COI)', workstream:'Hester Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-27', startDate:'2026-06-24', deps:[9,10], notes:'$2M aggregate. Get COI with 46 Hester as additional insured. Share with space immediately.' },
 { id:15, title:'Pay remaining rent ($4,500)', workstream:'Hester Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-19', startDate:'2026-07-19', deps:[14], notes:'Due day before receiving keys / start of load-in (Jul 19). Remaining balance after deposit.' },
 { id:56, title:'Get access to space', workstream:'Hester Space', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-07-20', startDate:'2026-07-20', deps:[15], notes:'46 Hester St. Access begins 7pm Jul 20. Keys for load-in.' },
 
@@ -111,11 +110,11 @@
       // ── Brand ──
 { id:16, title:'Define brand identity', workstream:'Brand', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', deps:[], notes:'Research, core messaging, logo, typography, colors for The Front.' },
 { id:41, title:'Brand identity created', workstream:'Brand', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-05-01', deps:[16], notes:'Logo, type, color, tagline locked.' },
-{ id:42, title:'Graphic production', workstream:'Brand', status:'IN_PROGRESS', priority:'HIGH', assignee:'Del', dueDate:'2026-07-15', startDate:'2026-05-15', deps:[41], notes:'Social templates, signage files, tag/bag/packaging design, merch graphics. Underway.' },
-{ id:18, title:'Design window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-05', startDate:'2026-06-25', deps:[42], notes:'46 Hester window front. Part of graphic production.' },
-{ id:19, title:'Order window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-12', startDate:'2026-07-05', deps:[18], notes:'Must arrive before Jul 20 load-in.' },
+{ id:42, title:'Graphic production', workstream:'Brand', status:'IN_PROGRESS', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-15', startDate:'2026-05-15', deps:[41], notes:'Social templates, signage files, tag/bag/packaging design, merch graphics. Underway.' },
+{ id:18, title:'Design window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-05', startDate:'2026-06-25', deps:[42], notes:'46 Hester window front. Part of graphic production.' },
+{ id:19, title:'Order window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-12', startDate:'2026-07-05', deps:[18], notes:'Must arrive before Jul 20 load-in.' },
 { id:25, title:'Order tags, bags & packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-10', startDate:'2026-06-25', deps:[42], notes:'Must arrive before load-in.' },
-{ id:26, title:'Assemble packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-18', startDate:'2026-07-10', deps:[25], notes:'Everything pre-assembled so no time is spent on this in the space.' },
+{ id:26, title:'Assemble packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Both', dueDate:'2026-07-18', startDate:'2026-07-10', deps:[25], notes:'Everything pre-assembled so no time is spent on this in the space.' },
 
       // ── Merch ──
 { id:70, title:'Baby-tee \u2014 design', workstream:'Merch', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-06-20', startDate:'2026-06-10', deps:[], notes:'Design complete.' },
