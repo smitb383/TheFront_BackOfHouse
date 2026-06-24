@@ -527,25 +527,27 @@
       if (newWrap) {
         if (!_timelineHasScrolledToToday) {
           // Use rAF + setTimeout to ensure the DOM is fully laid out before scrolling
-          requestAnimationFrame(function() { setTimeout(function() {
-            var projStart = '2026-03-30';
-            var todayDayOffset = daysBetween(projStart, todayStr());
-            // Read the actual scrollWidth of the content and the visible width
-            var scrollW = newWrap.scrollWidth;
-            var viewW = newWrap.clientWidth;
-            var lastPhaseEnd = parseD(PHASES[PHASES.length - 1].end);
-            lastPhaseEnd.setDate(lastPhaseEnd.getDate() + 2);
-            var projEnd = lastPhaseEnd.getFullYear() + '-' + String(lastPhaseEnd.getMonth()+1).padStart(2,'0') + '-' + String(lastPhaseEnd.getDate()).padStart(2,'0');
-            var totalDays = daysBetween(projStart, projEnd);
-            // scrollWidth includes the label column, so todayPx is relative to chart area
-            var labelWidth = 150;
-            var chartWidth = scrollW - labelWidth;
-            var dayW = chartWidth / totalDays;
-            var todayPx = todayDayOffset * dayW;
-            // Position today ~15% from the left edge of the viewport
-            newWrap.scrollLeft = Math.max(0, todayPx - viewW * 0.15);
-            _timelineHasScrolledToToday = true;
-          }, 30); });
+          (function(wrap) {
+            requestAnimationFrame(function() { setTimeout(function() {
+              var scrollW = wrap.scrollWidth;
+              var viewW = wrap.clientWidth;
+              // If element is hidden (display:none), dimensions are 0 — don't lock the flag
+              if (scrollW === 0 || viewW === 0) return;
+              var projStart = '2026-03-30';
+              var todayDayOffset = daysBetween(projStart, todayStr());
+              var lastPhaseEnd = parseD(PHASES[PHASES.length - 1].end);
+              lastPhaseEnd.setDate(lastPhaseEnd.getDate() + 2);
+              var projEnd = lastPhaseEnd.getFullYear() + '-' + String(lastPhaseEnd.getMonth()+1).padStart(2,'0') + '-' + String(lastPhaseEnd.getDate()).padStart(2,'0');
+              var totalDays = daysBetween(projStart, projEnd);
+              var labelWidth = 150;
+              var chartWidth = scrollW - labelWidth;
+              var dayW = chartWidth / totalDays;
+              var todayPx = todayDayOffset * dayW;
+              // Position today ~15% from the left edge of the viewport
+              wrap.scrollLeft = Math.max(0, todayPx - viewW * 0.15);
+              _timelineHasScrolledToToday = true;
+            }, 30); });
+          })(newWrap);
         } else {
           newWrap.scrollLeft = timelineScrollX;
         }
