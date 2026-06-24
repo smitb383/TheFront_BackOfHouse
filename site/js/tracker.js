@@ -522,23 +522,26 @@
       var newWrap = root.querySelector('.trk-timeline-wrap');
       if (newWrap) {
         if (!_timelineHasScrolledToToday) {
-          // Position today near the left edge (about 15% in from left)
-          // so completed tasks scroll behind and upcoming work is in view
-          var projStart = '2026-03-30';
-          var todayDayOffset = daysBetween(projStart, todayStr());
-          var el = document.getElementById('front-schedule');
-          var availWidth = (el ? el.offsetWidth : window.innerWidth) - 150 - 80;
-          var baseWidth = Math.max(availWidth, 600);
-          var chartWidth = Math.round(baseWidth * timelineZoom);
-          var lastPhaseEnd = parseD(PHASES[PHASES.length - 1].end);
-          lastPhaseEnd.setDate(lastPhaseEnd.getDate() + 2);
-          var projEnd = lastPhaseEnd.getFullYear() + '-' + String(lastPhaseEnd.getMonth()+1).padStart(2,'0') + '-' + String(lastPhaseEnd.getDate()).padStart(2,'0');
-          var totalDays = daysBetween(projStart, projEnd);
-          var dayW = chartWidth / totalDays;
-          var todayPx = todayDayOffset * dayW;
-          var viewportWidth = newWrap.clientWidth;
-          newWrap.scrollLeft = Math.max(0, todayPx - viewportWidth * 0.15);
-          _timelineHasScrolledToToday = true;
+          // Use rAF + setTimeout to ensure the DOM is fully laid out before scrolling
+          requestAnimationFrame(function() { setTimeout(function() {
+            var projStart = '2026-03-30';
+            var todayDayOffset = daysBetween(projStart, todayStr());
+            // Read the actual scrollWidth of the content and the visible width
+            var scrollW = newWrap.scrollWidth;
+            var viewW = newWrap.clientWidth;
+            var lastPhaseEnd = parseD(PHASES[PHASES.length - 1].end);
+            lastPhaseEnd.setDate(lastPhaseEnd.getDate() + 2);
+            var projEnd = lastPhaseEnd.getFullYear() + '-' + String(lastPhaseEnd.getMonth()+1).padStart(2,'0') + '-' + String(lastPhaseEnd.getDate()).padStart(2,'0');
+            var totalDays = daysBetween(projStart, projEnd);
+            // scrollWidth includes the label column, so todayPx is relative to chart area
+            var labelWidth = 150;
+            var chartWidth = scrollW - labelWidth;
+            var dayW = chartWidth / totalDays;
+            var todayPx = todayDayOffset * dayW;
+            // Position today ~15% from the left edge of the viewport
+            newWrap.scrollLeft = Math.max(0, todayPx - viewW * 0.15);
+            _timelineHasScrolledToToday = true;
+          }, 30); });
         } else {
           newWrap.scrollLeft = timelineScrollX;
         }
