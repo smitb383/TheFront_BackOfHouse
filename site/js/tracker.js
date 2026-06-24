@@ -1186,7 +1186,7 @@
       var wsBg = (WORKSTREAMS[ws] || {}).bg || '#eee';
       var wsKey = ws.replace(/\s/g, '_');
       var isCollapsed = collapsedWorkstreams[wsKey];
-      var labelRow = h('div', { className:'trk-timeline-ws-row', style:{ display:'flex', alignItems:'center', height:'32px', background:wsBg, opacity:'0.9', cursor:'pointer' },
+      var labelRow = h('div', { className:'trk-timeline-ws-row', style:{ display:'flex', alignItems:'center', height:'32px', background:wsBg, opacity:'0.9', cursor:'pointer', width:(labelWidth + chartWidth)+'px', minWidth:(labelWidth + chartWidth)+'px' },
         onClick: function() { collapsedWorkstreams[wsKey] = !collapsedWorkstreams[wsKey]; renderTracker(); }
       });
       // Sticky label cell for the workstream header — uses workstream color
