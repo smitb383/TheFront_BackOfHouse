@@ -473,6 +473,8 @@
   /* ═══════════════════════════════════════════
      RENDER MAIN
   ═══════════════════════════════════════════ */
+  var _timelineHasScrolledToToday = false;
+
   function renderTracker() {
     var root = document.getElementById('front-schedule');
     if (!root) return;
@@ -495,6 +497,34 @@
     else root.appendChild(renderList());
 
     if (selectedTaskId !== null) root.appendChild(renderDetail(selectedTaskId));
+
+    // Scroll timeline to today on first load, restore position on re-renders
+    if (currentView === 'timeline') {
+      var newWrap = root.querySelector('.trk-timeline-wrap');
+      if (newWrap) {
+        if (!_timelineHasScrolledToToday) {
+          // Center today in the viewport
+          var projStart = '2026-03-30';
+          var todayDayOffset = daysBetween(projStart, todayStr());
+          var el = document.getElementById('front-schedule');
+          var availWidth = (el ? el.offsetWidth : window.innerWidth) - 150 - 80;
+          var baseWidth = Math.max(availWidth, 600);
+          var chartWidth = Math.round(baseWidth * timelineZoom);
+          var lastPhaseEnd = parseD(PHASES[PHASES.length - 1].end);
+          lastPhaseEnd.setDate(lastPhaseEnd.getDate() + 2);
+          var projEnd = lastPhaseEnd.getFullYear() + '-' + String(lastPhaseEnd.getMonth()+1).padStart(2,'0') + '-' + String(lastPhaseEnd.getDate()).padStart(2,'0');
+          var totalDays = daysBetween(projStart, projEnd);
+          var dayW = chartWidth / totalDays;
+          var todayPx = todayDayOffset * dayW;
+          var viewportWidth = newWrap.clientWidth;
+          newWrap.scrollLeft = Math.max(0, todayPx - viewportWidth / 2);
+          _timelineHasScrolledToToday = true;
+        } else {
+          newWrap.scrollLeft = timelineScrollX;
+        }
+      }
+    }
+    window.scrollTo(0, scrollY);
   }
 
   // Open/close detail panel WITHOUT re-rendering the whole page
