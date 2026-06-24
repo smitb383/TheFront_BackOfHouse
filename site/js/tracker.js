@@ -182,7 +182,7 @@
   var filterWorkstream = 'ALL';
   var filterAssignee = 'ALL';
   var collapsedWorkstreams = {};
-  var timelineZoom = 1;
+  var timelineZoom = 0.4;
   var listSortField = 'dueDate';
   var listSortAsc = true;
 
@@ -1049,7 +1049,7 @@
     zoomRow.appendChild(h('button', { className:'trk-btn', onClick:function(){ timelineZoom = Math.max(0.3, timelineZoom - 0.2); renderTracker(); } }, '\u2212'));
     zoomRow.appendChild(h('span', { className:'trk-mono', style:{ padding:'4px 8px', color:'var(--muted)' } }, Math.round(timelineZoom * 100) + '%'));
     zoomRow.appendChild(h('button', { className:'trk-btn', onClick:function(){ timelineZoom = Math.min(3, timelineZoom + 0.2); renderTracker(); } }, '+'));
-    zoomRow.appendChild(h('button', { className:'trk-btn', style:{ marginLeft:'8px' }, onClick:function(){ timelineZoom = 1; renderTracker(); } }, 'Reset'));
+    zoomRow.appendChild(h('button', { className:'trk-btn', style:{ marginLeft:'8px' }, onClick:function(){ timelineZoom = 0.4; renderTracker(); } }, 'Reset'));
     wrap.appendChild(zoomRow);
 
     var projStart = '2026-03-30';
