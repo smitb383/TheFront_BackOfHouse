@@ -542,9 +542,12 @@
               var labelWidth = 150;
               var chartWidth = scrollW - labelWidth;
               var dayW = chartWidth / totalDays;
-              var todayPx = todayDayOffset * dayW;
-              // Position today ~15% from the left edge of the viewport
-              wrap.scrollLeft = Math.max(0, todayPx - viewW * 0.15);
+              // Today line is at this pixel offset in the scroll content
+              var todayPx = todayDayOffset * dayW + labelWidth;
+              // The sticky label takes up labelWidth of the viewport, so the
+              // visible chart area starts at labelWidth. Position today just
+              // past the label column with a small margin.
+              wrap.scrollLeft = Math.max(0, todayPx - labelWidth - 60);
               _timelineHasScrolledToToday = true;
             }, 30); });
           })(newWrap);
@@ -1187,7 +1190,7 @@
       var wsBg = (WORKSTREAMS[ws] || {}).bg || '#eee';
       var wsKey = ws.replace(/\s/g, '_');
       var isCollapsed = collapsedWorkstreams[wsKey];
-      var labelRow = h('div', { className:'trk-timeline-ws-row', style:{ display:'flex', alignItems:'center', height:'32px', background:wsBg, opacity:'0.9', cursor:'pointer' },
+      var labelRow = h('div', { className:'trk-timeline-ws-row', style:{ display:'flex', alignItems:'center', height:'32px', background:wsBg, opacity:'0.9', cursor:'pointer', position:'sticky', left:'0', zIndex:'5', minWidth:'fit-content' },
         onClick: function() { collapsedWorkstreams[wsKey] = !collapsedWorkstreams[wsKey]; renderTracker(); }
       });
       labelRow.appendChild(h('span', { style:{ fontSize:'10px', color:wsColor, marginRight:'6px', display:'inline-block', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)', transition:'transform 0.2s' } }, '\u25B6'));
@@ -1203,10 +1206,10 @@
       wsTasks.forEach(function(t) {
         var row = h('div', { className:'trk-timeline-row' });
 
-        // Task label — dim completed tasks
+        // Task label — sticky so it stays visible during horizontal scroll, dim completed tasks
         var isDone = t.status === 'DONE';
         var taskLabel = h('div', {
-          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none' },
+          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none', position:'sticky', left:'0', zIndex:'4', background:'var(--bg)' },
           title: t.title + (isDone ? ' (done)' : ''),
           onClick: function(){ showDetail(t.id); }
         });
