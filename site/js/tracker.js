@@ -20,6 +20,7 @@
     'Vendors':               { bg: '#9FE1CB', dot: '#1D9E75' },
     'Fit Out':               { bg: '#FAC775', dot: '#BA7517' },
     'Marketing & Events':  { bg: '#CECBF6', dot: '#7F77DD' },
+    'Cafe':                { bg: '#E8D5C4', dot: '#8B6B4A' },
   };
 
   // Phases derived from opening date. Foundation is fixed. Others adjust.
