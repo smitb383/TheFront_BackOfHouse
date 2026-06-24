@@ -10,7 +10,7 @@
   /* ── Constants ── */
   var LS_KEY = 'tracker_data_v1';
   var LS_FOCUS_KEY = 'tracker_focus_v1';
-  var TRACKER_SEED_VERSION = 10;
+  var TRACKER_SEED_VERSION = 11;
 
   var WORKSTREAMS = {
     'Planning':              { bg: '#B5D4F4', dot: '#378ADD' },
@@ -118,12 +118,15 @@
 { id:26, title:'Assemble packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-18', startDate:'2026-07-10', deps:[25], notes:'Everything pre-assembled so no time is spent on this in the space.' },
 
       // ── Merch ──
-{ id:43, title:'Merch ideation', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-06-30', startDate:'2026-06-20', deps:[41], notes:'Define what we are making: temp tattoos, stickers, fans, lighters, totes, etc.' },
-{ id:44, title:'Merch design files', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-07-05', startDate:'2026-06-30', deps:[43,42], notes:'Design files must meet vendor specs (bleed, resolution, format).' },
-{ id:45, title:'Merch costing & quotes', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-05', startDate:'2026-06-30', deps:[43], notes:'Get unit costs + MOQs. Build into budget model.' },
-{ id:46, title:'Approve merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-08', startDate:'2026-07-05', deps:[44,45], notes:'Both design and cost approved before ordering.' },
-{ id:47, title:'Place merch orders', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-10', startDate:'2026-07-08', deps:[46], notes:'Need to arrive before load-in Jul 20.' },
-{ id:48, title:'Receive & QC merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-19', startDate:'2026-07-15', deps:[47], notes:'Check all items against order before load-in.' },
+{ id:70, title:'Baby-tee \u2014 design', workstream:'Merch', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-06-20', startDate:'2026-06-10', deps:[], notes:'Design complete.' },
+{ id:71, title:'Baby-tee \u2014 ordering', workstream:'Merch', status:'IN PROGRESS', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-05', startDate:'2026-06-24', deps:[70], notes:'In progress. Need to check and confirm printing color, paper, and shipping details with maker.' },
+{ id:72, title:'Baby-tee \u2014 get shipping timeline from maker', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-27', startDate:'2026-06-24', deps:[71], notes:'Need to confirm shipping timeline to make sure tees arrive before load-in Jul 20.' },
+{ id:73, title:'Baby-tee \u2014 shipping', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-18', startDate:'2026-07-10', deps:[71], notes:'Not started yet. Must arrive before load-in.' },
+{ id:74, title:'Stickers \u2014 design', workstream:'Merch', status:'DONE', priority:'MED', assignee:'Del', dueDate:'2026-06-20', startDate:'2026-06-10', deps:[], notes:'Design done.' },
+{ id:75, title:'Stickers \u2014 finalize merchant & pricing', workstream:'Merch', status:'IN PROGRESS', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-01', startDate:'2026-06-24', deps:[74], notes:'Finalizing merchant selection and pricing now.' },
+{ id:76, title:'Stickers \u2014 place order', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-05', startDate:'2026-07-01', deps:[75], notes:'Order once merchant and pricing confirmed.' },
+{ id:77, title:'Stickers \u2014 shipping', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-18', startDate:'2026-07-10', deps:[76], notes:'Must arrive before load-in.' },
+{ id:78, title:'Decide on larger t-shirt \u2014 discuss & plan', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Both', dueDate:'2026-06-27', startDate:'2026-06-24', deps:[], notes:'This week: discuss whether to do a larger t-shirt in addition to baby-tee. Decide and plan production if yes.' },
 
       // ── Marketing & Events ──
 { id:17, title:'Set up social accounts', workstream:'Marketing & Events', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-06-30', startDate:'2026-06-20', deps:[42], notes:'Instagram primary. Content cadence tied to launch countdown.' },
@@ -139,6 +142,11 @@
         { id:'s62_1', text:'Contact insurance broker / get COI', done:false },
         { id:'s62_2', text:'Add 46 Hester as additional insured', done:false },
         { id:'s62_3', text:'Send COI + required info to space', done:false }
+      ],
+      71: [ // Baby-tee ordering
+        { id:'s71_1', text:'Check and confirm printing color', done:false },
+        { id:'s71_2', text:'Confirm paper stock', done:false },
+        { id:'s71_3', text:'Confirm shipping details with maker', done:false }
       ]
     };
 
