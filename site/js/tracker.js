@@ -178,9 +178,35 @@
       var raw = localStorage.getItem(LS_KEY);
       if (raw) {
         var data = JSON.parse(raw);
-        if (Array.isArray(data.tasks) && data.tasks.length > 0) {
+        // If saved data exists and is current seed version, use it
+        if (Array.isArray(data.tasks) && data.tasks.length > 0 && data._seedVersion === TRACKER_SEED_VERSION) {
           tasks = data.tasks;
           _isSeeded = false;
+          return;
+        }
+        // Old seed version — re-seed with new tasks but preserve any
+        // user-added tasks (ids >= 100) and done/status from matching ids
+        if (Array.isArray(data.tasks) && data.tasks.length > 0 && data._seedVersion !== TRACKER_SEED_VERSION) {
+          var oldMap = {};
+          data.tasks.forEach(function(t) { oldMap[t.id] = t; });
+          var newTasks = buildSeedTasks();
+          // Carry forward status/done from old tasks that still exist in new seed
+          newTasks.forEach(function(t) {
+            if (oldMap[t.id]) {
+              if (oldMap[t.id].status) t.status = oldMap[t.id].status;
+              if (oldMap[t.id].subtasks && oldMap[t.id].subtasks.length) t.subtasks = oldMap[t.id].subtasks;
+            }
+          });
+          // Keep user-added tasks (id >= 100)
+          data.tasks.forEach(function(t) {
+            if (t.id >= 100) newTasks.push(t);
+          });
+          tasks = newTasks;
+          _isSeeded = false;
+          // Save immediately so the migration persists
+          var payload = { _seedVersion: TRACKER_SEED_VERSION, tasks: tasks };
+          localStorage.setItem(LS_KEY, JSON.stringify(payload));
+          console.log('[tracker] Migrated to seed version ' + TRACKER_SEED_VERSION);
           return;
         }
       }
@@ -229,8 +255,13 @@
       try {
         var data = JSON.parse(localStorage.getItem(LS_KEY));
         if (data && Array.isArray(data.tasks) && data.tasks.length > 0) {
-          tasks = data.tasks;
-          _isSeeded = false;
+          // If remote data is old seed version, run migration instead of loading as-is
+          if (data._seedVersion !== TRACKER_SEED_VERSION) {
+            loadTasks(); // will handle migration
+          } else {
+            tasks = data.tasks;
+            _isSeeded = false;
+          }
           if (typeof renderTracker === 'function') renderTracker();
         }
       } catch(ex) {}
