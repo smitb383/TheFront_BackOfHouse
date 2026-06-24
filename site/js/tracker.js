@@ -503,6 +503,10 @@
     var timelineWrap = root.querySelector('.trk-timeline-wrap');
     var timelineScrollX = timelineWrap ? timelineWrap.scrollLeft : 0;
 
+    // Lock the container height so the page doesn't jump during re-render
+    var prevHeight = root.offsetHeight;
+    root.style.minHeight = prevHeight + 'px';
+
     root.innerHTML = '';
     injectStyles();
 
@@ -547,7 +551,9 @@
         }
       }
     }
+    // Restore vertical scroll and release height lock
     window.scrollTo(0, scrollY);
+    requestAnimationFrame(function() { root.style.minHeight = ''; });
   }
 
   // Open/close detail panel WITHOUT re-rendering the whole page
