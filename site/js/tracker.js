@@ -10,11 +10,11 @@
   /* ── Constants ── */
   var LS_KEY = 'tracker_data_v1';
   var LS_FOCUS_KEY = 'tracker_focus_v1';
-  var TRACKER_SEED_VERSION = 8;
+  var TRACKER_SEED_VERSION = 9;
 
   var WORKSTREAMS = {
     'Planning':              { bg: '#B5D4F4', dot: '#378ADD' },
-    '334 Space':              { bg: '#F5C4B3', dot: '#D85A30' },
+    'Hester Space':          { bg: '#F5C4B3', dot: '#D85A30' },
     'Brand':                 { bg: '#F4C0D1', dot: '#D4537E' },
     'Merch':                 { bg: '#FAEEDA', dot: '#EF9F27' },
     'Vendors':               { bg: '#9FE1CB', dot: '#1D9E75' },
@@ -23,7 +23,7 @@
   };
 
   // Phases derived from opening date. Foundation is fixed. Others adjust.
-  var OPENING_DATE = '2026-06-25';
+  var OPENING_DATE = '2026-07-23';
   var FOUNDATION_START = '2026-03-30';
   var FOUNDATION_END = '2026-04-13';
 
@@ -34,9 +34,9 @@
 
     var foundEnd = parseD(FOUNDATION_END);
 
-    // Install: 5 days before opening, ends day before opening
-    var installStart = addDays(open, -5);
-    var installEnd = addDays(open, -1);
+    // Load-in: Jul 20 (7pm access) through Jul 22
+    var installStart = addDays(open, -3); // Jul 20
+    var installEnd = addDays(open, -1);   // Jul 22
 
     // Pre-Launch ends day before install starts (no gap)
     var preLaunchEnd = addDays(installStart, -1);
@@ -50,12 +50,12 @@
     var designStart = addDays(foundEnd, 1);
     var designEnd = addDays(preLaunchStart, -1);
 
-    // Open: opening day through +24 days
-    var openEnd = addDays(open, 24);
+    // Open: Jul 23 through Aug 23 (Tue-Sun 11am-8pm, closed Mon)
+    var openEnd = parseD('2026-08-23');
 
-    // Close: immediately after open (no gap), 2 days (deinstall + turnover)
-    var closeStart = addDays(openEnd, 1);
-    var closeEnd = addDays(closeStart, 1);
+    // Close/Deinstall: Aug 24 — must be out by 10pm
+    var closeStart = parseD('2026-08-24');
+    var closeEnd = parseD('2026-08-24');
 
     return [
       { name: 'Foundation',        start: FOUNDATION_START, end: FOUNDATION_END, color: '#378ADD' },
@@ -69,102 +69,63 @@
 
   var PHASES = buildPhases();
 
-  var MILESTONE_IDS = [9, 3, 41, 10, 14, 13, 42, 23, 24, 20, 15, 29, 34, 35, 36, 55, 56];
-  var MAJOR_MILESTONE_IDS = [35, 36, 55, 56]; // Opening, Close, Turnover, Get Access — extra prominent
+  var MILESTONE_IDS = [9, 3, 10, 14, 13, 62, 23, 24, 15, 29, 34, 35, 36, 49, 56];
+  var MAJOR_MILESTONE_IDS = [35, 36, 49, 56]; // Opening, Last day, Deinstall, Get Access
 
-  /* ── Seed Data (all 54 tasks) ── */
+  /* ── Seed Data ── */
   function buildSeedTasks() {
     var raw = [
-{ id:1, title:'Get AC repair quote', workstream:'334 Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-04', startDate:'2026-03-30', deps:[], notes:'Landlord open to splitting cost. Use as leverage for lease extension + deinstall days.' },
-{ id:2, title:'Finalize lease terms', workstream:'334 Space', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-09', startDate:'2026-04-01', deps:[1], notes:'Merge of lease term negotiation + compiling changes. Includes: new dates for taking on space, new price if any, AC quotes, new deposit dates, possible payment structure changes. Del\'s LLC will need to eventually sign — if not ready by signing, transfer later and notify 334 Broome.' },
-{ id:3, title:'Sign lease', workstream:'334 Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-10', startDate:'2026-04-09', deps:[2,51], notes:'Milestone cutoff: Apr 10. Must reflect: open Jun 25, close Jul 19, install Jun 20-24, deinstall Jul 20-21, AC cost split. Del\'s LLC signs if ready, otherwise Del signs personally and transfers later.' },
-{ id:4, title:'Secure domain names', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-04', startDate:'2026-03-30', deps:[], notes:'thefrontny, frontnyc, thefrontgallery, thefrontstore + variations.' },
-{ id:5, title:'Draft P&L initial', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-10', startDate:'2026-03-30', deps:[], notes:'Initial P&L draft. Commission revenue projections, upfront costs.' },
-      { id:6, title:'Draft project timeline', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', deps:[], notes:'Launch Jun 25 (Thu). Turnover Jun 15. Fabrication May 28\u2013Jun 14.' },
-{ id:7, title:'Set up project workspace', workstream:'Planning', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-04-13', startDate:'2026-03-30', deps:[], notes:'GitHub repo, Supabase, Vercel, tracker. Back of House workspace.' },
-      { id:8, title:'Connect with Caroline', workstream:'Marketing & Events', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-04-06', startDate:'2026-03-30', deps:[], notes:'Key contact \u2014 bring in early.' },
-{ id:9, title:'Register LLC', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-06', startDate:'2026-03-30', deps:[], notes:'Lease currently in Del\'s personal name — must reassign to LLC.' },
+      // ── Planning (LLC, EIN, sales tax, Square) ──
+{ id:9, title:'Register LLC', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-06', startDate:'2026-03-30', deps:[], notes:'Required for lease, sales tax, vendor agreements.' },
 { id:10, title:'Get EIN', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-06', deps:[9], notes:'Required for sales tax cert and vendor agreements.' },
-{ id:11, title:'Transfer lease to LLC', workstream:'334 Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-17', startDate:'2026-04-10', deps:[3,9], notes:'Can happen as soon as lease is signed or after. Coordinate with Amir Badawi / Patjen Realty Corp. If LLC not ready at signing, Del signs personally then transfers.' },
-{ id:12, title:'Apply for sales tax cert', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-13', deps:[10], notes:'20-day lead time. Must be active before opening.' },
-      { id:13, title:'Get liability insurance', workstream:'334 Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-10', startDate:'2026-04-20', deps:[9,10], notes:'Additional insureds: Amir Badawi (334 Broome St Apt 16) + Patjen Realty Corp (151 Hester St).' },
-      { id:14, title:'Pay deposit ($1,750)', workstream:'334 Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-05-15', deps:[13], notes:'Non-refundable. Cash / Venmo @amir-H-Badawi / Zelle (713) 410-9531 / PayPal amir.h.badawi@gmail.com' },
-      { id:15, title:'Pay rent ($3,500)', workstream:'334 Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-14', startDate:'2026-06-14', deps:[14], notes:'Due June 14. $300/day overtime if overstayed beyond agreed end date.' },
-{ id:16, title:'Define brand identity', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', deps:[], notes:'One month process. Includes research, core messaging, logo, typography, colors for The Front + 334 popup.' },
-      { id:17, title:'Set up social accounts', workstream:'Marketing & Events', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', deps:[42], notes:'Instagram primary. Social templates must be produced before content goes live. Content cadence tied to launch countdown.' },
-{ id:18, title:'Design window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-01', startDate:'2026-05-15', deps:[41], notes:'Full glass window front. Part of graphic production phase.' },
-      { id:19, title:'Order window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-10', startDate:'2026-05-15', deps:[18], notes:'Must arrive before Jun 15 so it\u2019s ready for install week.' },
-      { id:20, title:'Launch website', workstream:'Marketing & Events', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-01', startDate:'2026-04-20', deps:[16,4], notes:'GitHub \u2192 Vercel. Vanilla HTML/CSS/JS. Supabase backend.' },
-      { id:21, title:'Press outreach', workstream:'Marketing & Events', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-10', startDate:'2026-06-01', deps:[20], notes:'Website should be live before pitching press.' },
-      { id:22, title:'Launch marketing push', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-20', startDate:'2026-06-10', deps:[17,21], notes:'Build to Jun 25 launch. Invites, Instagram, event listings.' },
-      { id:23, title:'Confirm vendor roster', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', deps:[40], notes:'Deck already out by this point. Follow up with all targets, confirm who\u2019s in. Verconiik + Harlot Hands confirmed.' },
-      { id:24, title:'Sign vendor agreements', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-01', startDate:'2026-05-25', deps:[54], notes:'All vendors signed before product comes in. Agreement includes agreed item list, 70/30 split, Square POS, payment within 7 days of close.' },
-      { id:25, title:'Order tags, bags & packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-05-30', startDate:'2026-05-15', deps:[42], notes:'Graphic production must be done before ordering. Must arrive before Jun 14. Merch: temp tattoos, stickers, fans, lighters.' },
-      { id:26, title:'Assemble packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-06-14', startDate:'2026-06-01', deps:[25], notes:'Everything pre-assembled so no time is spent on this in the space.' },
-      { id:27, title:'Design space layout', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-01', deps:[16], notes:'Clothing area, nook shelving, plinths, dressing room zone. Drives fabrication scope.' },
-      { id:28, title:'Purchase build materials', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-28', startDate:'2026-05-01', deps:[27], notes:'Paint, hardware, shelving materials, plinth materials. Everything in hand before fabrication starts.' },
-      { id:29, title:'Fabrication', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-14', startDate:'2026-05-28', deps:[28], notes:'2.5 weeks offsite. Everything built before we enter the space Jun 15.' },
-      { id:30, title:'Schedule deliveries', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-15', startDate:'2026-06-01', deps:[29], notes:'Schedule delivery for Jun 22\u201323, after hard install done and paint dry.' },
-      { id:31, title:'Painting', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-21', startDate:'2026-06-20', deps:[56,29], notes:'Jun 20-21 (Sat-Sun). First thing in install window. AJ leads.' },
-      { id:32, title:'Hard install', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-22', startDate:'2026-06-22', deps:[31], notes:'Jun 22 (Mon). All fabricated pieces go up. AJ leads.' },
-      { id:33, title:'Delivery & placement', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-23', startDate:'2026-06-22', deps:[32,30], notes:'Jun 22\u201323 (Mon\u2013Tue). Mirrors, lighting fixtures, furniture in after paint is dry.' },
-      { id:34, title:'Styling & final touches', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-24', startDate:'2026-06-23', deps:[33,19,26], notes:'Jun 23\u201324 (Tue\u2013Wed). Vinyl signage up, vendor product placed, tags on, everything dressed. Space ready for Thu open.' },
-      { id:35, title:'Opening night', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-25', startDate:'2026-06-25', deps:[34,22,24], notes:'Thu Jun 25. Operating Tue\u2013Sun. Run through Sun Jul 19.' },
-      { id:36, title:'Last day', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-19', startDate:'2026-07-19', deps:[35], notes:'Full day Jul 19. End of ~25-day run.' },
-      { id:39, title:'Create vendor deck', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-10', startDate:'2026-04-06', deps:[5], notes:'Deck communicates concept, terms (70/30), space, programming. Should feel on-brand even if identity isn\u2019t fully locked yet.' },
-      { id:40, title:'Send vendor deck', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-10', deps:[39], notes:'Confirmed: Verconiik, Harlot Hands. Identify and reach all new targets this week.' },
-{ id:41, title:'Brand identity created', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-05-01', deps:[16], notes:'Full identity created: logo, type, color, tagline. Nothing goes to print, to social, or to vendors until this is done.' },
-      { id:42, title:'Graphic production', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', deps:[41], notes:'Lead time before anything prints or goes live. Includes: social templates, signage files, tag/bag/packaging design, merch graphics. All assets must clear production before ordering or releasing.' },
-      { id:43, title:'Merch ideation', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-04-30', startDate:'2026-04-20', deps:[41], notes:'Contingent on graphic identity being locked. Define what we\u2019re making: temp tattoos, stickers, fans, lighters, totes, etc.' },
-      { id:44, title:'Merch design files', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-05-10', startDate:'2026-04-30', deps:[43,42], notes:'Design files must meet vendor specs (bleed, resolution, format). One round of revisions built in.' },
-      { id:45, title:'Merch costing & quotes', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-05-10', startDate:'2026-04-30', deps:[43], notes:'Get unit costs + MOQs for each item. Build into budget model \u2014 retail price, margin, breakeven quantity.' },
-      { id:46, title:'Approve merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-15', startDate:'2026-05-10', deps:[44,45], notes:'Both design and cost must be approved before ordering. No changes after this.' },
-      { id:47, title:'Place merch orders', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-05-20', startDate:'2026-05-15', deps:[46], notes:'1 month production + shipping lead time. Must order by May 20 to arrive before Jun 20.' },
-      { id:48, title:'Receive & QC merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-06-20', startDate:'2026-06-10', deps:[47], notes:'Arrives ~Jun 10\u201320. Check all items against order. Any issues need time to resolve before launch.' },
-      { id:49, title:'Deinstall', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-22', startDate:'2026-07-20', deps:[36], notes:'Jul 20-22. Remove all fixtures, product, signage. Space must be returned in original condition.' },
-{ id:51, title:'Meet with 334', workstream:'334 Space', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-04-08', startDate:'2026-04-06', deps:[2], notes:'Go over: new dates for taking on space, new price, AC repair quotes and cost split, new deposit dates, possible payment changes for lease. Confirm all verbally before contract revision.' },
-      { id:52, title:'Draft vendor agreement', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-20', startDate:'2026-04-10', deps:[9], notes:'Terms: 70% vendor / 30% The Front. Vendor fills in: item list, descriptions, quantities, sale prices. Square POS (2.6% fee). Includes liability, pickup terms, payment schedule.' },
-      { id:53, title:'Collect vendor inventory', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-20', deps:[40,52], notes:'Each vendor provides full inventory: item name, description, qty, proposed sale price. We review and agree before agreement is countersigned. Verconiik + Harlot Hands first.' },
-      { id:54, title:'Approve vendor pricing', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-25', startDate:'2026-05-15', deps:[53], notes:'Go through each vendor\u2019s item list. Confirm pricing makes sense for the space and customer. Flag anything to negotiate. This informs how we set up Square and the floor plan.' },
-      { id:55, title:'Turnover space', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-07-22', startDate:'2026-07-22', deps:[49], notes:'End of Jul 22. Space returned to 334 Broome in original condition. Final walkthrough with landlord.' },
-      { id:56, title:'Get access to space', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-06-20', startDate:'2026-06-20', deps:[15], notes:'Lease begins Jun 20. First day of install access.' },
+{ id:12, title:'Apply for sales tax cert', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-01', startDate:'2026-04-13', deps:[10], notes:'20-day lead time. Must be active before opening Jul 23.' },
+{ id:60, title:'Set up Square POS', workstream:'Planning', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-15', startDate:'2026-07-01', deps:[12], notes:'Square reader, iPad setup, test transactions. 2.6% + $0.10 per transaction.' },
+{ id:61, title:'Prepare & display permits', workstream:'Planning', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-07-20', startDate:'2026-07-10', deps:[12], notes:'NYC DCA, signage permits if needed. Have ready for load-in week.' },
+
+      // ── Hester Space ──
+{ id:3, title:'Sign lease', workstream:'Hester Space', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-06-23', startDate:'2026-06-23', deps:[], notes:'46 Hester St. Signed Tue Jun 23. Open Jul 23 \u2013 Aug 23. Load-in access Jul 20 at 7pm. Must be out by 10pm Aug 24.' },
+{ id:14, title:'Pay deposit', workstream:'Hester Space', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-06-23', startDate:'2026-06-23', deps:[3], notes:'Paid Tue Jun 23 with lease signing.' },
+{ id:62, title:'Get COI & share info with space', workstream:'Hester Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-27', startDate:'2026-06-24', deps:[3], notes:'Get certificate of insurance. Share COI + any required info with 46 Hester. Must happen this week.' },
+{ id:13, title:'Get liability insurance (COI)', workstream:'Hester Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-27', startDate:'2026-06-24', deps:[9,10], notes:'$2M aggregate. Get COI with 46 Hester as additional insured. Share with space immediately.' },
+{ id:15, title:'Pay remaining rent ($4,500)', workstream:'Hester Space', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-19', startDate:'2026-07-19', deps:[14], notes:'Due day before receiving keys / start of load-in (Jul 19). Remaining balance after deposit.' },
+{ id:56, title:'Get access to space', workstream:'Hester Space', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-07-20', startDate:'2026-07-20', deps:[15], notes:'46 Hester St. Access begins 7pm Jul 20. Keys for load-in.' },
+
+      // ── Fit Out (load-in Jul 20\u201322, deinstall Aug 24) ──
+{ id:27, title:'Design space layout', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-01', startDate:'2026-06-25', deps:[], notes:'46 Hester layout. Clothing area, shelving, plinths, dressing room zone. Drives fabrication scope.' },
+{ id:28, title:'Purchase build materials', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-10', startDate:'2026-07-01', deps:[27], notes:'Paint, hardware, shelving materials, plinth materials. Everything in hand before load-in.' },
+{ id:29, title:'Fabrication', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-19', startDate:'2026-07-05', deps:[28], notes:'Offsite fabrication. Everything built before we enter the space Jul 20.' },
+{ id:31, title:'Painting & prep', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-21', startDate:'2026-07-20', deps:[56,29], notes:'Jul 20 evening + Jul 21. First thing in load-in window.' },
+{ id:32, title:'Hard install', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-21', startDate:'2026-07-21', deps:[31], notes:'Jul 21. All fabricated pieces go up.' },
+{ id:33, title:'Delivery & placement', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-22', startDate:'2026-07-21', deps:[32], notes:'Jul 21\u201322. Furniture, lighting, fixtures placed after paint is dry.' },
+{ id:34, title:'Styling & final touches', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-22', startDate:'2026-07-22', deps:[33], notes:'Jul 22. Vinyl signage up, vendor product placed, tags on, everything dressed. Space ready for Jul 23 open.' },
+{ id:49, title:'Deinstall & move out', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Both', dueDate:'2026-08-24', startDate:'2026-08-24', deps:[36], notes:'Aug 24. Remove all fixtures, product, signage. Must be fully out by 10:00 PM.' },
+{ id:63, title:'Order paint samples (oil slick)', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-30', startDate:'2026-06-27', deps:[], notes:'Oil slick paint samples. Order/pick up this weekend.' },
+{ id:64, title:'Fab scrap trip', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-30', startDate:'2026-06-27', deps:[], notes:'Scrap materials run for fabrication.' },
+{ id:65, title:'Get paint samples from Home Depot', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-30', startDate:'2026-06-27', deps:[], notes:'Pick up paint samples / swatches at Home Depot.' },
+
+      // ── Vendors ──
+{ id:23, title:'Confirm vendor roster', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', deps:[], notes:'Follow up with all targets, confirm who is in.' },
+{ id:24, title:'Sign vendor agreements', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-01', startDate:'2026-06-15', deps:[], notes:'All vendors signed before product comes in. 70/30 split, Square POS, payment within 7 days of close.' },
+{ id:53, title:'Collect vendor inventory', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-10', startDate:'2026-06-15', deps:[23], notes:'Each vendor provides full inventory: item name, description, qty, sale price.' },
+
+      // ── Brand ──
+{ id:18, title:'Design window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-05', startDate:'2026-06-25', deps:[], notes:'46 Hester window front. Part of graphic production.' },
+{ id:19, title:'Order window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-12', startDate:'2026-07-05', deps:[18], notes:'Must arrive before Jul 20 load-in.' },
+{ id:25, title:'Order tags, bags & packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-10', startDate:'2026-06-25', deps:[], notes:'Must arrive before load-in. Merch: temp tattoos, stickers, fans, lighters.' },
+
+      // ── Marketing & Events ──
+{ id:22, title:'Launch marketing push', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-18', startDate:'2026-07-08', deps:[], notes:'Build to Jul 23 opening. Invites, Instagram, event listings.' },
+{ id:35, title:'Opening night', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-23', startDate:'2026-07-23', deps:[34,22,24], notes:'Wed Jul 23. Open to public Tue\u2013Sun 11am\u20138pm. Closed Mondays.' },
+{ id:36, title:'Last day', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-08-23', startDate:'2026-08-23', deps:[35], notes:'Sun Aug 23. Final day open to public.' },
     ];
-    // Subtasks for specific tasks
+    // Subtasks
     var taskSubtasks = {
-      2: [ // Finalize lease terms
-        { id:'s2_1', text:'Redline/redraft lease with updated terms', done:false },
-        { id:'s2_2', text:'Send revised lease to 334 Broome for review', done:false },
-        { id:'s2_3', text:'Review and agree on final terms', done:false },
-        { id:'s2_4', text:'Circulate final draft for signature', done:false },
-        { id:'s2_5', text:'Note: Del\'s LLC will need to sign — if not ready, transfer later', done:false }
-      ],
-      5: [ // Draft P&L initial
-        { id:'s5_1', text:'Draft P&L initial', done:true },
-        { id:'s5_2', text:'Review with Del', done:false },
-        { id:'s5_3', text:'Update with actual items and predicted costs', done:false },
-        { id:'s5_4', text:'Assign cost responsibilities', done:false },
-        { id:'s5_5', text:'Set P&L timeline', done:false }
-      ],
-      16: [ // Define brand identity
-        { id:'s16_1', text:'Research history of The Front', done:false },
-        { id:'s16_2', text:'Tagline and core messaging for The Front', done:false },
-        { id:'s16_3', text:'Core messaging and territorial framing for 334 popup', done:false },
-        { id:'s16_4', text:'Decide on name of the volume (a.k.a. 334 popup)', done:false },
-        { id:'s16_5', text:'Logo ideation for The Front brand', done:false },
-        { id:'s16_6', text:'Typography, colors ideation — The Front', done:false },
-        { id:'s16_7', text:'Ideation for popup brand spinoff — colors, typography', done:false },
-        { id:'s16_8', text:'Decide on outside graphic design support', done:false },
-        { id:'s16_9', text:'If yes: find designers and negotiate scope', done:false }
-      ],
-      51: [ // Meet with 334
-        { id:'s51_1', text:'Go over new dates for taking on the space', done:false },
-        { id:'s51_2', text:'Discuss new price if any', done:false },
-        { id:'s51_3', text:'Present AC repair quotes and cost split', done:false },
-        { id:'s51_4', text:'Discuss new deposit dates', done:false },
-        { id:'s51_5', text:'Discuss possible payment structure changes', done:false },
-        { id:'s51_6', text:'Confirm all terms verbally before contract revision', done:false }
+      62: [ // Get COI & share with space
+        { id:'s62_1', text:'Contact insurance broker / get COI', done:false },
+        { id:'s62_2', text:'Add 46 Hester as additional insured', done:false },
+        { id:'s62_3', text:'Send COI + required info to space', done:false }
       ]
-    };
+    };    };
 
     return raw.map(function(t) {
       t.subtasks = taskSubtasks[t.id] || [];

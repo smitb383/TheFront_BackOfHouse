@@ -12,8 +12,8 @@ function savePLData(d) { d._seedVersion = PL_SEED_VERSION; localStorage.setItem(
 
 // Default fixed costs — defined here so migratePLData can reference them
 var PL_DEFAULT_FIXED_COSTS = [
-  { id: 'fc_rent', name: '334 Broome rent', amount: 3500, category: 'space', note: 'Flat fee June 18 - July 16' },
-  { id: 'fc_insurance', name: 'General liability insurance', amount: 200, category: 'space', note: '$2M aggregate required — Amir Badawi + Patjen Realty as additional insureds' },
+  { id: 'fc_rent', name: '46 Hester rent', amount: 9000, category: 'space', note: 'Jul 23 – Aug 23. Deposit paid Jun 23. Remaining $4,500 due Jul 19.' },
+  { id: 'fc_insurance', name: 'General liability insurance (COI)', amount: 200, category: 'space', note: '$2M aggregate required — 46 Hester as additional insured' },
   { id: 'fc_cleaning', name: 'Cleaning supplies', amount: 30, category: 'space', note: 'Pre-install clean, weekly sweep during run' },
   { id: 'fc_extcords', name: 'Extension cords / power strips', amount: 25, category: 'space', note: 'For lighting, iPad charger, event AV' },
   { id: 'fc_ac', name: 'AC repair', amount: 0, category: 'space', note: 'AC does not work — landlord open to splitting repair cost. Talk to Mike. Amount TBD' },

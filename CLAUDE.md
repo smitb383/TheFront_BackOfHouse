@@ -63,9 +63,13 @@ docs/
 - Monospace UI labels (DM Mono 9px uppercase), serif content text (Cormorant Garamond)
 
 ## Important context
-- Lease: June 18 – July 16, 2026, $3,500 flat
+- Venue: 46 Hester St, LES
+- Lease signed: Jun 23, 2026. Deposit paid same day.
+- Open to public: Jul 23 – Aug 23, 2026, Tue–Sun 11am–8pm (closed Mon)
+- Load-in access: Jul 20, 7pm
+- Deinstall/out by: 10pm Aug 24, 2026
+- Remaining rent ($4,500) due Jul 19
 - Commission model: 70/30 split (vendor/store)
-- Landlord: Amir Badawi / 334Broome / Patjen Realty Corp
-- Insurance required: $2M GL aggregate
+- Insurance required: $2M GL aggregate, 46 Hester as additional insured
 - POS: Square (2.6% fee)
 - No LLC/EIN yet — in progress
