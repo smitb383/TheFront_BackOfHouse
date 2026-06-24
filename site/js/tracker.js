@@ -522,7 +522,8 @@
       var newWrap = root.querySelector('.trk-timeline-wrap');
       if (newWrap) {
         if (!_timelineHasScrolledToToday) {
-          // Center today in the viewport
+          // Position today near the left edge (about 15% in from left)
+          // so completed tasks scroll behind and upcoming work is in view
           var projStart = '2026-03-30';
           var todayDayOffset = daysBetween(projStart, todayStr());
           var el = document.getElementById('front-schedule');
@@ -536,7 +537,7 @@
           var dayW = chartWidth / totalDays;
           var todayPx = todayDayOffset * dayW;
           var viewportWidth = newWrap.clientWidth;
-          newWrap.scrollLeft = Math.max(0, todayPx - viewportWidth / 2);
+          newWrap.scrollLeft = Math.max(0, todayPx - viewportWidth * 0.15);
           _timelineHasScrolledToToday = true;
         } else {
           newWrap.scrollLeft = timelineScrollX;
@@ -1191,10 +1192,11 @@
       wsTasks.forEach(function(t) {
         var row = h('div', { className:'trk-timeline-row' });
 
-        // Task label
+        // Task label — dim completed tasks
+        var isDone = t.status === 'DONE';
         var taskLabel = h('div', {
-          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px' },
-          title: t.title,
+          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none' },
+          title: t.title + (isDone ? ' (done)' : ''),
           onClick: function(){ showDetail(t.id); }
         });
         if (t.isMilestone) taskLabel.appendChild(diamondIcon(6));
