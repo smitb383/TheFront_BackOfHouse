@@ -125,7 +125,7 @@
         { id:'s62_2', text:'Add 46 Hester as additional insured', done:false },
         { id:'s62_3', text:'Send COI + required info to space', done:false }
       ]
-    };    };
+    };
 
     return raw.map(function(t) {
       t.subtasks = taskSubtasks[t.id] || [];
