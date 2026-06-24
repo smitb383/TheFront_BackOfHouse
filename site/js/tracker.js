@@ -1190,7 +1190,7 @@
       var wsBg = (WORKSTREAMS[ws] || {}).bg || '#eee';
       var wsKey = ws.replace(/\s/g, '_');
       var isCollapsed = collapsedWorkstreams[wsKey];
-      var labelRow = h('div', { className:'trk-timeline-ws-row', style:{ display:'flex', alignItems:'center', height:'32px', background:wsBg, opacity:'0.9', cursor:'pointer', position:'sticky', left:'0', zIndex:'5', minWidth:'fit-content' },
+      var labelRow = h('div', { className:'trk-timeline-ws-row', style:{ display:'flex', alignItems:'center', height:'32px', background:wsBg, opacity:'0.9', cursor:'pointer' },
         onClick: function() { collapsedWorkstreams[wsKey] = !collapsedWorkstreams[wsKey]; renderTracker(); }
       });
       labelRow.appendChild(h('span', { style:{ fontSize:'10px', color:wsColor, marginRight:'6px', display:'inline-block', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)', transition:'transform 0.2s' } }, '\u25B6'));
@@ -1209,7 +1209,7 @@
         // Task label — sticky so it stays visible during horizontal scroll, dim completed tasks
         var isDone = t.status === 'DONE';
         var taskLabel = h('div', {
-          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none', position:'sticky', left:'0', zIndex:'4', background:'var(--bg)' },
+          style:{ width:labelWidth+'px', minWidth:labelWidth+'px', paddingLeft:'16px', paddingRight:'8px', boxSizing:'border-box', fontFamily:"'Cormorant Garamond',serif", fontSize:'11px', color: isDone ? 'var(--muted)' : 'var(--text)', opacity: isDone ? '0.45' : '1', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', textDecoration: isDone ? 'line-through' : 'none', position:'sticky', left:'0', zIndex:'4', background:'var(--surface)', borderRight:'1px solid var(--border)' },
           title: t.title + (isDone ? ' (done)' : ''),
           onClick: function(){ showDetail(t.id); }
         });
