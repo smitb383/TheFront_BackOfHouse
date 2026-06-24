@@ -10,7 +10,7 @@
   /* ── Constants ── */
   var LS_KEY = 'tracker_data_v1';
   var LS_FOCUS_KEY = 'tracker_focus_v1';
-  var TRACKER_SEED_VERSION = 9;
+  var TRACKER_SEED_VERSION = 10;
 
   var WORKSTREAMS = {
     'Planning':              { bg: '#B5D4F4', dot: '#378ADD' },
@@ -104,17 +104,36 @@
 { id:65, title:'Get paint samples from Home Depot', workstream:'Fit Out', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-06-30', startDate:'2026-06-27', deps:[], notes:'Pick up paint samples / swatches at Home Depot.' },
 
       // ── Vendors ──
-{ id:23, title:'Confirm vendor roster', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', deps:[], notes:'Follow up with all targets, confirm who is in.' },
-{ id:24, title:'Sign vendor agreements', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-01', startDate:'2026-06-15', deps:[], notes:'All vendors signed before product comes in. 70/30 split, Square POS, payment within 7 days of close.' },
+{ id:39, title:'Create vendor deck', workstream:'Vendors', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-04-10', startDate:'2026-04-06', deps:[], notes:'Deck communicates concept, terms (70/30), space, programming.' },
+{ id:40, title:'Send vendor deck', workstream:'Vendors', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-04-13', startDate:'2026-04-10', deps:[39], notes:'Sent to all targets.' },
+{ id:52, title:'Draft vendor agreement', workstream:'Vendors', status:'DONE', priority:'HIGH', assignee:'Brooke', dueDate:'2026-04-20', startDate:'2026-04-10', deps:[9], notes:'Terms: 70% vendor / 30% The Front. Square POS (2.6% fee). Includes liability, pickup terms, payment schedule.' },
+{ id:23, title:'Confirm vendor roster', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', deps:[40], notes:'Follow up with all targets, confirm who is in.' },
 { id:53, title:'Collect vendor inventory', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-10', startDate:'2026-06-15', deps:[23], notes:'Each vendor provides full inventory: item name, description, qty, sale price.' },
+{ id:54, title:'Approve vendor pricing', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-15', startDate:'2026-07-01', deps:[53], notes:'Confirm pricing makes sense for the space and customer. Flag anything to negotiate.' },
+{ id:24, title:'Sign vendor agreements', workstream:'Vendors', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-18', startDate:'2026-07-01', deps:[54], notes:'All vendors signed before product comes in. 70/30 split, Square POS, payment within 7 days of close.' },
 
       // ── Brand ──
-{ id:18, title:'Design window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-05', startDate:'2026-06-25', deps:[], notes:'46 Hester window front. Part of graphic production.' },
+{ id:16, title:'Define brand identity', workstream:'Brand', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-04-15', deps:[], notes:'Research, core messaging, logo, typography, colors for The Front.' },
+{ id:41, title:'Brand identity created', workstream:'Brand', status:'DONE', priority:'HIGH', assignee:'Del', dueDate:'2026-05-15', startDate:'2026-05-01', deps:[16], notes:'Logo, type, color, tagline locked.' },
+{ id:42, title:'Graphic production', workstream:'Brand', status:'IN_PROGRESS', priority:'HIGH', assignee:'Del', dueDate:'2026-07-15', startDate:'2026-05-15', deps:[41], notes:'Social templates, signage files, tag/bag/packaging design, merch graphics. Underway.' },
+{ id:18, title:'Design window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-05', startDate:'2026-06-25', deps:[42], notes:'46 Hester window front. Part of graphic production.' },
 { id:19, title:'Order window signage', workstream:'Brand', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-12', startDate:'2026-07-05', deps:[18], notes:'Must arrive before Jul 20 load-in.' },
-{ id:25, title:'Order tags, bags & packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-10', startDate:'2026-06-25', deps:[], notes:'Must arrive before load-in. Merch: temp tattoos, stickers, fans, lighters.' },
+{ id:25, title:'Order tags, bags & packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-10', startDate:'2026-06-25', deps:[42], notes:'Must arrive before load-in.' },
+{ id:26, title:'Assemble packaging', workstream:'Brand', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-18', startDate:'2026-07-10', deps:[25], notes:'Everything pre-assembled so no time is spent on this in the space.' },
+
+      // ── Merch ──
+{ id:43, title:'Merch ideation', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-06-30', startDate:'2026-06-20', deps:[41], notes:'Define what we are making: temp tattoos, stickers, fans, lighters, totes, etc.' },
+{ id:44, title:'Merch design files', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-07-05', startDate:'2026-06-30', deps:[43,42], notes:'Design files must meet vendor specs (bleed, resolution, format).' },
+{ id:45, title:'Merch costing & quotes', workstream:'Merch', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-05', startDate:'2026-06-30', deps:[43], notes:'Get unit costs + MOQs. Build into budget model.' },
+{ id:46, title:'Approve merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-08', startDate:'2026-07-05', deps:[44,45], notes:'Both design and cost approved before ordering.' },
+{ id:47, title:'Place merch orders', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-10', startDate:'2026-07-08', deps:[46], notes:'Need to arrive before load-in Jul 20.' },
+{ id:48, title:'Receive & QC merch', workstream:'Merch', status:'TODO', priority:'HIGH', assignee:'Brooke', dueDate:'2026-07-19', startDate:'2026-07-15', deps:[47], notes:'Check all items against order before load-in.' },
 
       // ── Marketing & Events ──
-{ id:22, title:'Launch marketing push', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-18', startDate:'2026-07-08', deps:[], notes:'Build to Jul 23 opening. Invites, Instagram, event listings.' },
+{ id:17, title:'Set up social accounts', workstream:'Marketing & Events', status:'TODO', priority:'MED', assignee:'Del', dueDate:'2026-06-30', startDate:'2026-06-20', deps:[42], notes:'Instagram primary. Content cadence tied to launch countdown.' },
+{ id:20, title:'Launch website', workstream:'Marketing & Events', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-10', startDate:'2026-06-25', deps:[16], notes:'Vanilla HTML/CSS/JS. Supabase backend.' },
+{ id:21, title:'Press outreach', workstream:'Marketing & Events', status:'TODO', priority:'MED', assignee:'Brooke', dueDate:'2026-07-15', startDate:'2026-07-05', deps:[20], notes:'Website should be live before pitching press.' },
+{ id:22, title:'Launch marketing push', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-18', startDate:'2026-07-08', deps:[17,21], notes:'Build to Jul 23 opening. Invites, Instagram, event listings.' },
 { id:35, title:'Opening night', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-07-23', startDate:'2026-07-23', deps:[34,22,24], notes:'Wed Jul 23. Open to public Tue\u2013Sun 11am\u20138pm. Closed Mondays.' },
 { id:36, title:'Last day', workstream:'Marketing & Events', status:'TODO', priority:'HIGH', assignee:'Del', dueDate:'2026-08-23', startDate:'2026-08-23', deps:[35], notes:'Sun Aug 23. Final day open to public.' },
     ];
