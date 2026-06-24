@@ -207,29 +207,25 @@
           _isSeeded = false;
           return;
         }
-        // Old seed version — re-seed with new tasks but preserve any
-        // user-added tasks (ids >= 100) and done/status from matching ids
+        // Old seed version — keep ALL existing user data as-is, only ADD
+        // new seed tasks that don't exist in the live data yet.
+        // User edits (renames, status, subtasks, deletions, assignees) are NEVER overwritten.
         if (Array.isArray(data.tasks) && data.tasks.length > 0 && data._seedVersion !== TRACKER_SEED_VERSION) {
-          var oldMap = {};
-          data.tasks.forEach(function(t) { oldMap[t.id] = t; });
-          var newTasks = buildSeedTasks();
-          // Carry forward status/done from old tasks that still exist in new seed
-          newTasks.forEach(function(t) {
-            if (oldMap[t.id]) {
-              if (oldMap[t.id].status) t.status = oldMap[t.id].status;
-              if (oldMap[t.id].subtasks && oldMap[t.id].subtasks.length) t.subtasks = oldMap[t.id].subtasks;
+          var existingIds = {};
+          data.tasks.forEach(function(t) { existingIds[t.id] = true; });
+          var seedTasks = buildSeedTasks();
+          var added = 0;
+          seedTasks.forEach(function(st) {
+            if (!existingIds[st.id]) {
+              data.tasks.push(st);
+              added++;
             }
           });
-          // Keep user-added tasks (id >= 100)
-          data.tasks.forEach(function(t) {
-            if (t.id >= 100) newTasks.push(t);
-          });
-          tasks = newTasks;
+          tasks = data.tasks;
           _isSeeded = false;
-          // Save immediately so the migration persists
           var payload = { _seedVersion: TRACKER_SEED_VERSION, tasks: tasks };
           localStorage.setItem(LS_KEY, JSON.stringify(payload));
-          console.log('[tracker] Migrated to seed version ' + TRACKER_SEED_VERSION);
+          console.log('[tracker] Migrated to seed version ' + TRACKER_SEED_VERSION + ', added ' + added + ' new tasks (preserved all existing)');
           return;
         }
       }
