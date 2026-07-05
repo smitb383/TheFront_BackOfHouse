@@ -3,7 +3,7 @@
 // ============================================
 
 var PL_KEY = 'pl_data_v1';
-var PL_SEED_VERSION = 5; // bump to merge new defaults while keeping user edits
+var PL_SEED_VERSION = 6; // bump to merge new defaults while keeping user edits
 
 function getPLData() {
   try { return JSON.parse(localStorage.getItem(PL_KEY)) || null; } catch(e) { return null; }
@@ -13,7 +13,7 @@ function savePLData(d) { d._seedVersion = PL_SEED_VERSION; localStorage.setItem(
 // Default fixed costs — defined here so migratePLData can reference them
 var PL_DEFAULT_FIXED_COSTS = [
   { id: 'fc_rent', name: '46 Hester rent', amount: 9000, category: 'space', note: 'Jul 23 – Aug 23. Deposit paid Jun 23. Remaining $4,500 due Jul 19.' },
-  { id: 'fc_insurance', name: 'General liability insurance (COI)', amount: 200, category: 'space', note: '$2M aggregate required — 46 Hester as additional insured' },
+  { id: 'fc_insurance', name: 'General liability insurance (COI)', amount: 200, category: 'space', refund: 0, note: '$2M aggregate required — 46 Hester as additional insured. Upfront premium paid, prorated refund when policy cancelled after popup ends.' },
   { id: 'fc_cleaning', name: 'Cleaning supplies', amount: 30, category: 'space', note: 'Pre-install clean, weekly sweep during run' },
   { id: 'fc_extcords', name: 'Extension cords / power strips', amount: 25, category: 'space', note: 'For lighting, iPad charger, event AV' },
   { id: 'fc_ac', name: 'AC repair', amount: 0, category: 'space', note: 'AC does not work — landlord open to splitting repair cost. Talk to Mike. Amount TBD' },
@@ -32,6 +32,10 @@ var PL_DEFAULT_FIXED_COSTS = [
   { id: 'fc_tissue', name: 'Tissue / packaging', amount: 50, category: 'retail supplies', note: 'Branded tissue, bags' },
   { id: 'fc_opening', name: 'Opening night drinks / snacks', amount: 150, category: 'events', note: 'Wine + sparkling water + simple snacks for 40-60 people' },
   { id: 'fc_photographer', name: 'Photographer — opening night', amount: 0, category: 'events', note: 'Dedicated shooter for space and crowd' },
+  { id: 'fc_cafe_equipment', name: 'Cafe equipment', amount: 0, category: 'cafe', note: 'Espresso machine, grinder, drip setup, etc.' },
+  { id: 'fc_cafe_supplies', name: 'Cafe supplies (cups, lids, napkins)', amount: 0, category: 'cafe', note: 'Disposable cups, lids, stirrers, napkins, sleeves' },
+  { id: 'fc_cafe_beans', name: 'Coffee beans / tea', amount: 0, category: 'cafe', note: 'Initial stock of beans, tea, milk/oat milk, sweeteners' },
+  { id: 'fc_cafe_permit', name: 'Food service permit', amount: 0, category: 'cafe', note: 'NYC temporary food service permit if required' },
   { id: 'fc_flyers', name: 'Opening flyers (print run)', amount: 80, category: 'marketing', note: '200-300 flyers, postcard size, for LES/SoHo/Nolita drops' },
   { id: 'fc_socialgraphics', name: 'Launch social graphics', amount: 0, category: 'marketing', note: 'Save-the-date, vendor spotlights, countdown assets' },
   { id: 'fc_pressrelease', name: 'Press release', amount: 0, category: 'marketing', note: '200-word pitch + image for Hint, Time Out, local blogs' },
@@ -357,17 +361,20 @@ function calcPL(scenario, inventory) {
   }
 
   // Fixed costs — contingency auto-calculates as 10% of all other fixed costs
+  // Refunds reduce the net cost of an item (e.g. prorated insurance refund)
   var totalFixed = 0;
   var nonContingencyTotal = 0;
   (scenario.fixedCosts || []).forEach(function(c) {
     if (c.id === 'fc_contingency' || (c.name && c.name.toLowerCase().indexOf('contingency') >= 0)) return;
-    nonContingencyTotal += (c.amount || 0);
+    var net = (c.amount || 0) - (c.refund || 0);
+    nonContingencyTotal += net;
   });
   (scenario.fixedCosts || []).forEach(function(c) {
     if (c.id === 'fc_contingency' || (c.name && c.name.toLowerCase().indexOf('contingency') >= 0)) {
       c.amount = Math.round(nonContingencyTotal * 0.10);
     }
-    totalFixed += (c.amount || 0);
+    var net = (c.amount || 0) - (c.refund || 0);
+    totalFixed += net;
   });
 
   // Variable costs
@@ -1151,7 +1158,7 @@ function goToInventoryItem(vendorName) {
   }, 50);
 }
 
-var FC_CATEGORIES = ['space','retail','fit out','retail supplies','events','marketing','branding','operations','misc'];
+var FC_CATEGORIES = ['space','cafe','retail','fit out','retail supplies','events','marketing','branding','operations','misc'];
 var FC_STATUSES = ['needed','sourcing','ordered','done'];
 var FC_STATUS_COLORS = { needed:'#e07070', sourcing:'#e2c97e', ordered:'#a8c4d4', done:'#88c98a' };
 
@@ -1159,7 +1166,7 @@ function renderFixedCosts(scenario) {
   var el = document.getElementById('pl-fixed');
   if (!el) return;
   var total = 0;
-  (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0); });
+  (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0) - (c.refund || 0); });
 
   var html = '<div class="pl-section-header"><span class="pl-section-title">Fixed Costs</span><span class="pl-section-total">$' + fmt(total) + '</span></div>';
 
@@ -1181,7 +1188,7 @@ function renderFixedCosts(scenario) {
 
   catOrder.forEach(function(cat) {
     var catTotal = 0;
-    cats[cat].forEach(function(c) { catTotal += (c.amount || 0); });
+    cats[cat].forEach(function(c) { catTotal += (c.amount || 0) - (c.refund || 0); });
     html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(cat) + '</span><span class="pl-cost-cat-total">$' + fmt(catTotal) + '</span></div>';
 
     cats[cat].forEach(function(c) {
@@ -1195,11 +1202,16 @@ function renderFixedCosts(scenario) {
         return '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
       }).join('');
 
+      var hasRefund = c.refund && c.refund > 0;
+      var netCost = (c.amount || 0) - (c.refund || 0);
+      var refundBadge = hasRefund ? '<span class="pl-refund-badge" onclick="toggleCostCard(\'' + c.id + '\')">net $' + fmt(netCost) + '</span>' : '';
+
       html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-cost-' + c.id + '" data-drag-id="' + c.id + '" data-drag-type="fixed" ondragover="plDragOver(event)" ondrop="plDrop(event)">' +
         '<div class="pl-cost-top">' +
           '<div class="pl-drag-handle" draggable="true" title="Drag to reorder" ondragstart="plDragStart(event)" ondragend="plDragEnd(event)">⠿</div>' +
           '<div class="pl-cost-status-dot" style="background:' + statColor + '" onclick="toggleCostCard(\'' + c.id + '\')"></div>' +
           '<input class="pl-cost-name-inline" value="' + esc(c.name || '') + '" placeholder="Item name" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)" onclick="event.stopPropagation()">' +
+          refundBadge +
           '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
           '<span class="pl-cost-chevron" onclick="toggleCostCard(\'' + c.id + '\')">›</span>' +
         '</div>' +
@@ -1209,6 +1221,7 @@ function renderFixedCosts(scenario) {
             '<div class="pl-cost-field"><div class="pl-cost-field-label">Status</div><select class="pl-cost-status-sel" data-cost-id="' + c.id + '" data-field="status" onchange="updateFixedCost(this);renderFixedCosts(getActiveScenario())" style="border-color:' + statColor + '44;color:' + statColor + '">' + statOpts + '</select></div>' +
             '<div class="pl-cost-field"><div class="pl-cost-field-label">Where to get it</div><input class="pl-cost-field-input" value="' + esc(c.source || '') + '" placeholder="Vendor, store, link…" data-cost-id="' + c.id + '" data-field="source" onchange="updateFixedCost(this)"></div>' +
             '<div class="pl-cost-field"><div class="pl-cost-field-label">Who\'s responsible</div><select class="pl-cost-field-select" data-cost-id="' + c.id + '" data-field="who" onchange="updateFixedCost(this)"><option value=""' + (!c.who ? ' selected' : '') + '>—</option><option value="Brooke"' + (c.who === 'Brooke' ? ' selected' : '') + '>Brooke</option><option value="Del"' + (c.who === 'Del' ? ' selected' : '') + '>Del</option><option value="334 Broome"' + (c.who === '334 Broome' ? ' selected' : '') + '>334 Broome</option></select></div>' +
+            '<div class="pl-cost-field"><div class="pl-cost-field-label">Refund (prorated return)</div><div class="pl-cost-refund-wrap"><span class="pl-dollar-sign">$</span><input class="pl-cost-field-input pl-cost-refund-input" type="number" min="0" value="' + (c.refund || 0) + '" placeholder="0" data-cost-id="' + c.id + '" data-field="refund" onchange="updateFixedCost(this)">' + (hasRefund ? '<span class="pl-refund-net">net $' + fmt(netCost) + '</span>' : '') + '</div></div>' +
             '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details, alternatives…" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea></div>' +
           '</div>' +
           '<button class="pl-cost-delete-btn" onclick="deleteFixedCost(\'' + c.id + '\')">Delete item</button>' +
@@ -1245,11 +1258,12 @@ function renderVariableCosts(scenario, calc, data, liveInventory) {
     '</div>';
   });
 
-  // Wholesale COGS from live inventory
-  var wholesaleItems = (liveInventory || []).filter(function(i) { return i.isInHouse && i.costPerUnit && !i.isShippingDeduction; });
-  if (wholesaleItems.length) {
-    html += '<div class="pl-cost-cat" style="margin-top:14px"><span class="pl-cost-cat-name">Wholesale COGS</span></div>';
-    wholesaleItems.forEach(function(item) {
+  // Merch production COGS (non-wholesale in-house items only)
+  // Wholesale COGS are already shown in the Wholesale revenue section
+  var merchCOGSItems = (liveInventory || []).filter(function(i) { return i.isInHouse && i.costPerUnit && !i.isShippingDeduction && i.pricingModel !== 'wholesale'; });
+  if (merchCOGSItems.length) {
+    html += '<div class="pl-cost-cat" style="margin-top:14px"><span class="pl-cost-cat-name">Merch COGS</span></div>';
+    merchCOGSItems.forEach(function(item) {
       var qty = item.qty || 1;
       var totalCost = qty * item.costPerUnit;
       html += '<div class="pl-cost-row pl-merch-vc-row">' +
@@ -1326,16 +1340,23 @@ function updateFixedCost(input) {
   var cost = (scenario.fixedCosts || []).find(function(c) { return c.id === input.dataset.costId; });
   if (!cost) return;
   var field = input.dataset.field;
-  cost[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
+  cost[field] = (field === 'amount' || field === 'refund') ? (parseFloat(input.value) || 0) : input.value;
   savePLData(data);
   // Only re-render summary, not the whole thing (to keep focus)
   var liveInv = inventoryToPLItems();
   var calc = calcPL(scenario, liveInv);
-  renderPLSummary(calc);
+  renderPLSummary(calc, scenario);
   renderVariableCosts(scenario, calc, data, liveInv);
-  // Update section totals
+  // For refund changes, re-render fixed costs fully so badges update
+  if (field === 'refund') {
+    renderFixedCosts(scenario);
+    var card = document.getElementById('pl-cost-' + input.dataset.costId);
+    if (card) card.classList.add('open');
+    return;
+  }
+  // Update section totals (net of refunds)
   var total = 0;
-  (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0); });
+  (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0) - (c.refund || 0); });
   var header = document.querySelector('#pl-fixed .pl-section-total');
   if (header) header.textContent = '$' + fmt(total);
 }

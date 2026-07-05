@@ -3797,6 +3797,29 @@ body::before {
   padding:0 2px; outline:none; text-align:right;
 }
 .pl-cost-amt-num:focus { border-bottom-color:var(--front); }
+
+/* Refund badge (inline, next to item name) */
+.pl-refund-badge {
+  font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.06em;
+  color:#88c98a; background:#88c98a18; border:1px solid #88c98a33;
+  padding:2px 6px; border-radius:2px; flex-shrink:0; cursor:pointer;
+  text-transform:uppercase; margin-left:4px;
+}
+/* Refund field in expanded card */
+.pl-cost-refund-wrap {
+  display:flex; align-items:center; gap:4px;
+}
+.pl-dollar-sign {
+  font-family:'DM Mono',monospace; font-size:12px; color:var(--muted);
+}
+.pl-cost-refund-input {
+  width:80px;
+}
+.pl-refund-net {
+  font-family:'DM Mono',monospace; font-size:10px; color:#88c98a;
+  margin-left:6px; white-space:nowrap;
+}
+
 .pl-cost-status-sel {
   background:var(--surface2); border:1px solid var(--border);
   font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.08em;
