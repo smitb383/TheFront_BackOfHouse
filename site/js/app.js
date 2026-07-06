@@ -8663,13 +8663,12 @@ function openExhibitA(vi) {
     consignNum++;
     return '<tr>' +
       '<td style="text-align:center;' + tdStyle + '">' + consignNum + '</td>' +
-      '<td style="' + tdStyle + '">' +
-        (item.photo ? '<img src="' + esc(item.photo) + '" style="width:48px;height:48px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:8px">' : '') +
-        esc(item.name || '') +
+      '<td style="text-align:center;' + tdStyle + ';width:56px">' +
+        (item.photo ? '<img src="' + esc(item.photo) + '" style="width:48px;height:48px;object-fit:cover;border-radius:3px">' : '<span style="color:#ccc">—</span>') +
       '</td>' +
+      '<td style="' + tdStyle + '">' + esc(item.name || '') + '</td>' +
       '<td style="' + tdStyle + '">' + (catLabels[item.category] || item.category || '') + '</td>' +
       '<td style="' + tdStyle + '"><input value="' + esc(item.dimensions || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'dimensions\',this.value)"></td>' +
-      '<td style="' + tdStyle + '"><input value="' + esc(item.material || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'material\',this.value)"></td>' +
       '<td style="text-align:center;' + tdStyle + '">' + qty + '</td>' +
       '<td style="text-align:right;' + tdStyle + '">$' + price + '</td>' +
       '<td style="text-align:right;' + tdStyle + '">$' + Math.round(price * (dPct / 100)) + '</td>' +
@@ -8682,10 +8681,10 @@ function openExhibitA(vi) {
     '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
       '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
         '<th style="' + tdStyle + ';width:30px">#</th>' +
+        '<th style="' + tdStyle + ';width:56px">Image</th>' +
         '<th style="' + tdStyle + ';text-align:left">Item Name</th>' +
         '<th style="' + tdStyle + ';text-align:left;width:80px">Category</th>' +
         '<th style="' + tdStyle + ';text-align:left;width:120px">Dimensions</th>' +
-        '<th style="' + tdStyle + ';text-align:left;width:140px">Material</th>' +
         '<th style="' + tdStyle + ';width:35px">Qty</th>' +
         '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
         '<th style="' + tdStyle + ';text-align:right;width:70px">Designer (' + dPct + '%)</th>' +
@@ -8708,7 +8707,6 @@ function openExhibitA(vi) {
       '<td style="' + tdStyle + '"><input value="' + esc(item.name || '') + '" placeholder="Item name" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'name\',this.value)"></td>' +
       '<td style="' + tdStyle + '"><input value="' + esc(item.category || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'category\',this.value)"></td>' +
       '<td style="' + tdStyle + '"><input value="' + esc(item.dimensions || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'dimensions\',this.value)"></td>' +
-      '<td style="' + tdStyle + '"><input value="' + esc(item.material || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'material\',this.value)"></td>' +
       '<td style="text-align:center;' + tdStyle + '"><input type="number" min="1" value="' + qty + '" style="width:36px;border:none;background:none;font-family:inherit;font-size:inherit;text-align:center;padding:2px 0;outline:none" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'qty\',+this.value);openExhibitA(' + vi + ')"></td>' +
       '<td style="text-align:right;' + tdStyle + '"><input value="' + (val || '') + '" placeholder="0" style="width:60px;border:none;background:none;font-family:inherit;font-size:inherit;text-align:right;padding:2px 0;outline:none" onchange="exhibitAUpdateLoan(' + vi + ',' + idx + ',\'value\',parseFloat(this.value)||0);openExhibitA(' + vi + ')"></td>' +
     '</tr>';
@@ -8722,7 +8720,6 @@ function openExhibitA(vi) {
         '<th style="' + tdStyle + ';text-align:left">Item Name</th>' +
         '<th style="' + tdStyle + ';text-align:left;width:80px">Category</th>' +
         '<th style="' + tdStyle + ';text-align:left;width:120px">Dimensions</th>' +
-        '<th style="' + tdStyle + ';text-align:left;width:140px">Material</th>' +
         '<th style="' + tdStyle + ';width:35px">Qty</th>' +
         '<th style="' + tdStyle + ';text-align:right;width:80px">Item Value</th>' +
       '</tr></thead>' +
@@ -8879,11 +8876,12 @@ async function downloadExhibitAPDF(vi) {
   drawText('Consignment Items', margin, y, { font: fontBold, size: 13 });
   y -= 18;
 
-  // Column layout: #, Item, Cat, Qty, Price, Designer, Store — then Dimensions & Material on second line
+  // Column layout: #, Item, Cat, Dims, Qty, Price, Designer, Store
   var cols = [
     { label: '#', w: 20, align: 'center' },
     { label: 'ITEM NAME', w: 130, align: 'left' },
-    { label: 'CATEGORY', w: 62, align: 'left' },
+    { label: 'CATEGORY', w: 58, align: 'left' },
+    { label: 'DIMENSIONS', w: 80, align: 'left' },
     { label: 'QTY', w: 26, align: 'center' },
     { label: 'PRICE', w: 50, align: 'right' },
     { label: 'DESIGNER (' + dPct + '%)', w: 68, align: 'right' },
@@ -8900,13 +8898,12 @@ async function downloadExhibitAPDF(vi) {
   });
   y -= hdrH + 2;
 
-  // Draw consignment rows — two lines per item: data row + dimensions/material fields
+  // Draw consignment rows
   var rowH = 16;
-  var fieldH = 18;
   var totalRetail = 0;
   var totalQty = 0;
   vendor.items.forEach(function(item, idx) {
-    checkPage(rowH + fieldH + 8);
+    checkPage(rowH + 4);
     var price = item.salePrice || 0;
     var qty = item.qty || 1;
     totalRetail += price * qty;
@@ -8920,10 +8917,11 @@ async function downloadExhibitAPDF(vi) {
       { val: String(idx + 1), w: cols[0].w },
       { val: item.name || '', w: cols[1].w },
       { val: catLabels[item.category] || item.category || '', w: cols[2].w },
-      { val: String(qty), w: cols[3].w },
-      { val: '$' + price, w: cols[4].w, align: 'right' },
-      { val: '$' + Math.round(price * (dPct / 100)), w: cols[5].w, align: 'right' },
-      { val: '$' + Math.round(price * (sPct / 100)), w: cols[6].w, align: 'right' }
+      { val: item.dimensions || '', w: cols[3].w },
+      { val: String(qty), w: cols[4].w },
+      { val: '$' + price, w: cols[5].w, align: 'right' },
+      { val: '$' + Math.round(price * (dPct / 100)), w: cols[6].w, align: 'right' },
+      { val: '$' + Math.round(price * (sPct / 100)), w: cols[7].w, align: 'right' }
     ];
 
     rowData.forEach(function(cell) {
@@ -8936,14 +8934,6 @@ async function downloadExhibitAPDF(vi) {
       rx += cell.w;
     });
     y -= rowH;
-
-    // Second line: Dimensions and Material editable fields
-    var halfW = (usableW - 8) / 2;
-    drawText('Dimensions:', margin + 4, y - 4, { size: 7, color: rgb(0.5, 0.5, 0.5) });
-    addTextField('dim_' + idx, margin + 60, y - fieldH + 6, halfW - 60, fieldH - 4, item.dimensions || '');
-    drawText('Material:', margin + halfW + 12, y - 4, { size: 7, color: rgb(0.5, 0.5, 0.5) });
-    addTextField('mat_' + idx, margin + halfW + 56, y - fieldH + 6, halfW - 52, fieldH - 4, item.material || '');
-    y -= fieldH + 2;
   });
 
   // Consignment totals
@@ -8961,12 +8951,11 @@ async function downloadExhibitAPDF(vi) {
 
     var loanCols = [
       { label: '#', w: 20 },
-      { label: 'ITEM NAME', w: 130, editable: true },
-      { label: 'CATEGORY', w: 65, editable: true },
-      { label: 'DIMENSIONS', w: 110, editable: true },
-      { label: 'MATERIAL', w: 110, editable: true },
+      { label: 'ITEM NAME', w: 170, editable: true },
+      { label: 'CATEGORY', w: 80, editable: true },
+      { label: 'DIMENSIONS', w: 140, editable: true },
       { label: 'QTY', w: 30 },
-      { label: 'ITEM VALUE', w: 65, editable: true }
+      { label: 'ITEM VALUE', w: 90, editable: true }
     ];
 
     // Loan header
@@ -8993,9 +8982,8 @@ async function downloadExhibitAPDF(vi) {
         { val: item.name || '', w: loanCols[1].w, field: 'loan_name_' + idx },
         { val: item.category || '', w: loanCols[2].w, field: 'loan_cat_' + idx },
         { val: item.dimensions || '', w: loanCols[3].w, field: 'loan_dim_' + idx },
-        { val: item.material || '', w: loanCols[4].w, field: 'loan_mat_' + idx },
-        { val: String(qty), w: loanCols[5].w },
-        { val: val ? '$' + val : '', w: loanCols[6].w, field: 'loan_val_' + idx }
+        { val: String(qty), w: loanCols[4].w },
+        { val: val ? '$' + val : '', w: loanCols[5].w, field: 'loan_val_' + idx }
       ];
 
       loanData.forEach(function(cell) {
