@@ -70,18 +70,10 @@ function migratePLData(existing) {
     var existingIds = {};
     (s.fixedCosts || []).forEach(function(c) { existingIds[c.id] = true; });
 
+    // Only add NEW items — never touch existing items (name, amount, category, notes)
     PL_DEFAULT_FIXED_COSTS.forEach(function(dc) {
       if (!existingIds[dc.id]) {
         s.fixedCosts.push(JSON.parse(JSON.stringify(dc)));
-      }
-    });
-
-    // Update categories
-    var defaultMap = {};
-    PL_DEFAULT_FIXED_COSTS.forEach(function(dc) { defaultMap[dc.id] = dc; });
-    s.fixedCosts.forEach(function(c) {
-      if (defaultMap[c.id] && defaultMap[c.id].category !== c.category) {
-        c.category = defaultMap[c.id].category;
       }
     });
 
