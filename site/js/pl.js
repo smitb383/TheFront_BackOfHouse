@@ -346,8 +346,7 @@ function calcPL(scenario, inventory) {
     });
   });
 
-  // Deduct shipping we cover
-  ourCut -= shippingDeductions;
+  // Shipping we cover is tracked as a fixed cost (not a revenue deduction)
 
   // Add other revenue (events, branded goods, etc.)
   (scenario.otherRevenue || []).forEach(function(r) {
@@ -376,6 +375,9 @@ function calcPL(scenario, inventory) {
     var net = (c.amount || 0) - (c.refund || 0);
     totalFixed += net;
   });
+
+  // Add shipping costs we cover (from live inventory)
+  totalFixed += shippingDeductions;
 
   // Variable costs
   var totalVariable = 0;
@@ -413,7 +415,8 @@ function calcPL(scenario, inventory) {
     netPL: netPL,
     breakeven: breakeven,
     totalTransactions: totalTransactions,
-    itemBreakdown: itemBreakdown
+    itemBreakdown: itemBreakdown,
+    shippingCosts: shippingDeductions
   };
 }
 
@@ -461,7 +464,7 @@ function renderPL() {
     initBECalc();
   }
 
-  renderFixedCosts(scenario);
+  renderFixedCosts(scenario, liveInventory);
 }
 
 function renderScenarioBar(data) {
@@ -615,7 +618,6 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
     vendorMap[key].items.sort(function(a, b) { return (b.price || 0) - (a.price || 0); });
   });
 
-  var shippingTotal = liveInventory._totalShipping || 0;
   var html = '<div class="pl-section-header"><span class="pl-section-title">Revenue <span style="font-size:9px;color:var(--muted);font-weight:normal;letter-spacing:0.1em;margin-left:6px">FROM INVENTORY</span></span><span class="pl-section-total">$' + fmt(calc.ourCut) + '</span></div>';
 
   if (!items.length) {
@@ -772,48 +774,6 @@ function renderRevenueSection(data, scenario, calc, liveInventory) {
 
   html += renderConsignmentGroup(consignmentVendors);
   html += renderWholesaleGroup(wholesaleVendors);
-
-  // Shipping section — collapsible per-vendor breakdown
-  var shippingItems = (liveInventory || []).filter(function(i) { return i.isShippingDeduction; });
-  if (shippingItems.length) {
-    var totalAllShipping = 0;
-    shippingItems.forEach(function(s) { totalAllShipping += s.shippingAmount; });
-
-    html += '<div class="pl-cost-cat">' +
-      '<span class="pl-cost-cat-name">Shipping</span>' +
-      '<span class="pl-consign-header-nums">' +
-        '<span class="pl-consign-gross">$' + fmt(totalAllShipping) + ' total</span>' +
-        (shippingTotal > 0 ? '<span class="pl-consign-cut" style="color:#e07070">-$' + fmt(shippingTotal) + ' ours</span>' : '') +
-      '</span>' +
-    '</div>';
-
-    shippingItems.forEach(function(shipItem) {
-      var coveredByUs = shipItem.shippingCoveredBy === 'us';
-      var coveredLabel = coveredByUs ? 'We cover' : 'Vendor covers';
-      var coveredColor = coveredByUs ? '#e07070' : '#88c98a';
-      var isOpen = document.getElementById('pl-ship-' + shipItem.vendorId) &&
-        document.getElementById('pl-ship-' + shipItem.vendorId).classList.contains('open');
-
-      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-ship-' + shipItem.vendorId + '">' +
-        '<div class="pl-cost-top" onclick="var el=document.getElementById(\'pl-ship-' + shipItem.vendorId + '\');if(el)el.classList.toggle(\'open\')">' +
-          '<span class="pl-cost-name" style="flex:1">' + esc(shipItem.name) + '</span>' +
-          '<span style="font-family:DM Mono,monospace;font-size:9px;color:' + coveredColor + ';margin-right:8px">' + coveredLabel + '</span>' +
-          '<span class="pl-cost-amt" style="' + (coveredByUs ? 'color:#e07070' : '') + '">$' + fmt(shipItem.shippingAmount) + '</span>' +
-          '<span class="pl-cost-chevron">›</span>' +
-        '</div>' +
-        '<div class="pl-cost-body">' +
-          '<div style="padding:8px 12px;font-family:DM Mono,monospace;font-size:10px;color:var(--muted);display:flex;flex-direction:column;gap:4px">' +
-            (shipItem.vendorLocation ? '<div>Location: <span style="color:var(--text)">' + esc(shipItem.vendorLocation) + '</span></div>' : '') +
-            '<div>Items shipping: <span style="color:var(--text)">' + shipItem.itemCount + '</span></div>' +
-            '<div>Cost: <span style="color:var(--text)">$' + fmt(shipItem.shippingAmount) + '</span></div>' +
-            '<div>Covered by: <span style="color:' + coveredColor + '">' + coveredLabel + '</span></div>' +
-            (coveredByUs ? '<div style="margin-top:4px;color:#e07070">Deducted from our revenue</div>' : '<div style="margin-top:4px;color:#88c98a">No impact on our P&L</div>') +
-          '</div>' +
-          '<div style="padding:4px 12px 8px"><a href="#" onclick="showTab(\'front\',\'popup-inventory-new\',document.querySelector(\'[data-tab=popup-inventory-new]\'));return false" style="font-family:DM Mono,monospace;font-size:9px;color:var(--front)">Edit in Inventory →</a></div>' +
-        '</div>' +
-      '</div>';
-    });
-  }
 
   // Other revenue
   if (!scenario.otherRevenue) scenario.otherRevenue = [
@@ -1162,11 +1122,17 @@ var FC_CATEGORIES = ['space','cafe','retail','fit out','retail supplies','events
 var FC_STATUSES = ['needed','sourcing','ordered','done'];
 var FC_STATUS_COLORS = { needed:'#e07070', sourcing:'#e2c97e', ordered:'#a8c4d4', done:'#88c98a' };
 
-function renderFixedCosts(scenario) {
+function renderFixedCosts(scenario, liveInventory) {
   var el = document.getElementById('pl-fixed');
   if (!el) return;
+  if (!liveInventory) liveInventory = inventoryToPLItems();
   var total = 0;
   (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0) - (c.refund || 0); });
+  // Add shipping we cover
+  var shippingItems = (liveInventory || []).filter(function(i) { return i.isShippingDeduction; });
+  var shippingWeCover = 0;
+  shippingItems.forEach(function(s) { if (s.shippingCoveredBy === 'us') shippingWeCover += (s.shippingAmount || 0); });
+  total += shippingWeCover;
 
   var html = '<div class="pl-section-header"><span class="pl-section-title">Fixed Costs</span><span class="pl-section-total">$' + fmt(total) + '</span></div>';
 
@@ -1230,6 +1196,41 @@ function renderFixedCosts(scenario) {
     });
     html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'' + esc(cat) + '\')">+ Add to ' + esc(cat) + '</button>';
   });
+
+  // Shipping category (pulled from inventory, not editable here)
+  if (shippingItems.length) {
+    var totalAllShipping = 0;
+    shippingItems.forEach(function(s) { totalAllShipping += (s.shippingAmount || 0); });
+    html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">shipping</span><span class="pl-cost-cat-total">$' + fmt(shippingWeCover) + (totalAllShipping !== shippingWeCover ? ' <span style="font-size:9px;color:var(--muted);font-weight:normal">($' + fmt(totalAllShipping) + ' total)</span>' : '') + '</span></div>';
+
+    shippingItems.forEach(function(shipItem) {
+      var coveredByUs = shipItem.shippingCoveredBy === 'us';
+      var coveredLabel = coveredByUs ? 'We cover' : 'Vendor covers';
+      var coveredColor = coveredByUs ? '#e07070' : '#88c98a';
+      var isOpen = document.getElementById('pl-ship-' + shipItem.vendorId) &&
+        document.getElementById('pl-ship-' + shipItem.vendorId).classList.contains('open');
+
+      html += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-ship-' + shipItem.vendorId + '">' +
+        '<div class="pl-cost-top" onclick="var el=document.getElementById(\'pl-ship-' + shipItem.vendorId + '\');if(el)el.classList.toggle(\'open\')">' +
+          '<div class="pl-cost-status-dot" style="background:' + coveredColor + '"></div>' +
+          '<span class="pl-cost-name" style="flex:1">' + esc(shipItem.name) + '</span>' +
+          '<span style="font-family:DM Mono,monospace;font-size:9px;color:' + coveredColor + ';margin-right:8px">' + coveredLabel + '</span>' +
+          '<span class="pl-cost-amt">$' + fmt(shipItem.shippingAmount) + '</span>' +
+          '<span class="pl-cost-chevron">›</span>' +
+        '</div>' +
+        '<div class="pl-cost-body">' +
+          '<div style="padding:8px 12px;font-family:DM Mono,monospace;font-size:10px;color:var(--muted);display:flex;flex-direction:column;gap:4px">' +
+            (shipItem.vendorLocation ? '<div>Location: <span style="color:var(--text)">' + esc(shipItem.vendorLocation) + '</span></div>' : '') +
+            '<div>Items shipping: <span style="color:var(--text)">' + shipItem.itemCount + '</span></div>' +
+            '<div>Cost: <span style="color:var(--text)">$' + fmt(shipItem.shippingAmount) + '</span></div>' +
+            '<div>Covered by: <span style="color:' + coveredColor + '">' + coveredLabel + '</span></div>' +
+            (coveredByUs ? '<div style="margin-top:4px;color:#e07070">Added to our fixed costs</div>' : '<div style="margin-top:4px;color:#88c98a">No impact on our P&L</div>') +
+          '</div>' +
+          '<div style="padding:4px 12px 8px"><a href="#" onclick="showTab(\'front\',\'popup-inventory-new\',document.querySelector(\'[data-tab=popup-inventory-new]\'));return false" style="font-family:DM Mono,monospace;font-size:9px;color:var(--front)">Edit in Inventory →</a></div>' +
+        '</div>' +
+      '</div>';
+    });
+  }
 
   html += '<button class="pl-add-row-btn" style="margin-top:12px" onclick="addFixedCost()">+ Add to new category</button>';
   el.innerHTML = html;
@@ -1349,14 +1350,15 @@ function updateFixedCost(input) {
   renderVariableCosts(scenario, calc, data, liveInv);
   // For refund changes, re-render fixed costs fully so badges update
   if (field === 'refund') {
-    renderFixedCosts(scenario);
+    renderFixedCosts(scenario, liveInv);
     var card = document.getElementById('pl-cost-' + input.dataset.costId);
     if (card) card.classList.add('open');
     return;
   }
-  // Update section totals (net of refunds)
+  // Update section totals (net of refunds + shipping)
   var total = 0;
   (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0) - (c.refund || 0); });
+  total += calc.shippingCosts || 0;
   var header = document.querySelector('#pl-fixed .pl-section-total');
   if (header) header.textContent = '$' + fmt(total);
 }
