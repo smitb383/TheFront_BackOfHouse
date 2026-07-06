@@ -3,7 +3,7 @@
 // ============================================
 
 var PL_KEY = 'pl_data_v1';
-var PL_SEED_VERSION = 6; // bump to merge new defaults while keeping user edits
+var PL_SEED_VERSION = 7; // bump to merge new defaults while keeping user edits
 
 function getPLData() {
   try { return JSON.parse(localStorage.getItem(PL_KEY)) || null; } catch(e) { return null; }
@@ -77,6 +77,14 @@ function migratePLData(existing) {
       }
     });
 
+    // Fix Square per-txn fee from $0.10 to $0.15
+    (s.variableCosts || []).forEach(function(vc) {
+      if (vc.id === 'vc_square' && vc.perTxn === 0.10) {
+        vc.perTxn = 0.15;
+        vc.note = '2.6% + $0.15 per transaction';
+      }
+    });
+
     // Remove business items from popup budget (they go to the business tab)
     s.fixedCosts = s.fixedCosts.filter(function(c) {
       return c.category !== 'business' && c.id !== 'fc_llc' && c.id !== 'fc_domains' && c.id !== 'fc_hosting';
@@ -144,7 +152,7 @@ function initPLData() {
   var fixedCosts = JSON.parse(JSON.stringify(PL_DEFAULT_FIXED_COSTS));
 
   var variableCosts = [
-    { id: 'vc_square', name: 'Square processing fee', rate: 2.6, perTxn: 0.10, type: 'pct_of_sales', note: '2.6% + $0.10 per transaction' },
+    { id: 'vc_square', name: 'Square processing fee', rate: 2.6, perTxn: 0.15, type: 'pct_of_sales', note: '2.6% + $0.15 per transaction' },
     { id: 'vc_packaging', name: 'Packaging per sale', rate: 0, perTxn: 1.50, type: 'per_txn', note: 'Bag + tissue per transaction' }
   ];
 
