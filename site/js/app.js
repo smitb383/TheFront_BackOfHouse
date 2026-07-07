@@ -9665,7 +9665,7 @@ function _renderCalendarInner() {
   html += '</div>';
 
   if (calView === 'calendar') {
-    html += renderCalMonthGrid(filtered);
+    html += renderCalMonthGrid(filtered, data);
   } else {
     html += renderCalTable(filtered);
   }
@@ -9789,7 +9789,34 @@ function calRenderEditPanel(root, data) {
   }
 }
 
-function renderCalMonthGrid(posts) {
+function calGetEventColor(post, data) {
+  if (post.platform !== 'event') return null;
+  if (!data || !data.eventSeries) return null;
+  var title = (post.title || '').toLowerCase();
+  var match = null;
+  data.eventSeries.forEach(function(s) {
+    var sName = (s.name || '').toLowerCase();
+    if (sName && title.indexOf(sName) >= 0) match = s.color;
+    // Also match partial: "opening" in "OPENING EVENT", "dj" in "Rasor & Tape DJ Session", etc.
+    if (!match && sName) {
+      var words = sName.split(/\s+/);
+      var matched = words.some(function(w) { return w.length > 3 && title.indexOf(w) >= 0; });
+      if (matched) match = s.color;
+    }
+  });
+  // Fallback: match known patterns
+  if (!match) {
+    if (title.indexOf('opening') >= 0) match = '#e2c97e';
+    else if (title.indexOf('closing') >= 0) match = '#e07070';
+    else if (title.indexOf('rasor') >= 0 || title.indexOf('tape') >= 0 || title.indexOf('dj') >= 0) match = '#b8a0e0';
+    else if (title.indexOf('sucre') >= 0 || title.indexOf('nails') >= 0 || title.indexOf('press') >= 0) match = '#e0845a';
+    else if (title.indexOf('elise') >= 0 || title.indexOf('chez') >= 0) match = '#6aaad8';
+    else if (title.indexOf('weekend') >= 0) match = '#82bfbb';
+  }
+  return match;
+}
+
+function renderCalMonthGrid(posts, data) {
   var html = '';
   // Month header
   var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -9832,7 +9859,9 @@ function renderCalMonthGrid(posts) {
     html += '<div class="cal-cell' + (isToday ? ' cal-cell-today' : '') + (hasPosts ? ' cal-cell-has' : '') + '" onclick="addCalPost(\'' + dateStr + '\')">';
     html += '<div class="cal-cell-num"><span class="cal-cell-day">' + dayName + '</span> ' + day + '</div>';
     dayPosts.forEach(function(p) {
-      html += '<div class="cal-card' + (p.done ? ' cal-card-done' : '') + '" onclick="event.stopPropagation(); editCalPost(\'' + p.id + '\')">';
+      var cardColor = calGetEventColor(p, data);
+      var cardStyle = cardColor ? 'border-left:3px solid ' + cardColor + ';' : '';
+      html += '<div class="cal-card' + (p.done ? ' cal-card-done' : '') + '" style="' + cardStyle + '" onclick="event.stopPropagation(); editCalPost(\'' + p.id + '\')">';
       html += '<span class="cal-card-icon">' + calPlatformIcon(p.platform) + '</span>';
       html += '<span class="cal-card-title">' + (p.title || '(untitled)') + '</span>';
       if (p.tags && p.tags.length) {
