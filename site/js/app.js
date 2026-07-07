@@ -9966,11 +9966,6 @@ function renderEventSeries(data) {
     html += '<div class="cal-series-card" style="border-left:4px solid ' + sColor + '">';
     // Header
     html += '<div class="cal-series-header">';
-    html += '<div class="cal-series-color-wrap">';
-    ES_COLORS.forEach(function(c) {
-      html += '<span class="cal-series-color-dot' + (sColor === c ? ' active' : '') + '" style="background:' + c + '" onclick="calSaveSeriesField(\'' + series.id + '\',\'color\',\'' + c + '\'); renderCalendar()"></span>';
-    });
-    html += '</div>';
     html += '<input class="cal-series-name" value="' + (series.name || '').replace(/"/g, '&quot;') + '" placeholder="Event series name…" oninput="calSaveSeriesField(\'' + series.id + '\',\'name\',this.value)">';
     html += '<div class="cal-series-header-right">';
     html += '<label class="cal-series-confirmed"><input type="checkbox"' + (series.datesConfirmed ? ' checked' : '') + ' onchange="calSaveSeriesField(\'' + series.id + '\',\'datesConfirmed\',this.checked)"> <span class="cal-series-conf-label">' + (series.datesConfirmed ? 'Dates confirmed' : 'Dates TBD') + '</span></label>';
