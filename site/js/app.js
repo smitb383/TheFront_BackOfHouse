@@ -9549,7 +9549,7 @@ function _initCalDataInner() {
       data.ideas.push(JSON.parse(JSON.stringify(seed)));
     }
   });
-  // Auto-generate promo posts 5 days before each event (if not already present)
+  // Auto-generate promo posts 4 days before each event (if not already present)
   var eventPosts = data.posts.filter(function(p) { return p.platform === 'event'; });
   var existingDates = {};
   data.posts.forEach(function(p) {
@@ -9559,7 +9559,7 @@ function _initCalDataInner() {
   eventPosts.forEach(function(ev) {
     var parts = ev.date.split('-');
     var evDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-    var promoDate = new Date(evDate.getTime() - 5 * 24 * 60 * 60 * 1000);
+    var promoDate = new Date(evDate.getTime() - 4 * 24 * 60 * 60 * 1000);
     var promoStr = promoDate.getFullYear() + '-' + String(promoDate.getMonth() + 1).padStart(2, '0') + '-' + String(promoDate.getDate()).padStart(2, '0');
     var promoId = 'promo_' + ev.id;
     if (!existingIds[promoId]) {
@@ -9579,13 +9579,16 @@ function _initCalDataInner() {
 
   saveCalData(data);
 
-  // ensure tags list has all used tags
+  // Load persisted custom tags, then ensure all used tags are in the list
+  if (data.customTags && data.customTags.length) {
+    CAL_TAGS = data.customTags.slice();
+  }
   data.posts.forEach(function(p) {
     (p.tags || []).forEach(function(t) {
       if (CAL_TAGS.indexOf(t) === -1) CAL_TAGS.push(t);
     });
   });
-  data.ideas.forEach(function(idea) {
+  (data.ideas || []).forEach(function(idea) {
     (idea.tags || []).forEach(function(t) {
       if (CAL_TAGS.indexOf(t) === -1) CAL_TAGS.push(t);
     });
@@ -9884,25 +9887,37 @@ function renderCalIdeas(data) {
   (data.ideas || []).forEach(function(idea) {
     html += '<div class="cal-idea-card">';
     html += '<div class="cal-idea-top">';
-    html += '<div class="cal-idea-name">' + idea.title + '</div>';
+    html += '<input class="cal-idea-name-input" value="' + (idea.title || '').replace(/"/g, '&quot;') + '" placeholder="Idea title…" oninput="calSaveIdeaField(\'' + idea.id + '\',\'title\',this.value)">';
     html += '<div class="cal-idea-actions">';
     html += '<button class="cal-idea-sched" onclick="scheduleIdea(\'' + idea.id + '\')" title="Schedule this idea">\u2192 Schedule</button>';
     html += '<button class="cal-idea-del" onclick="deleteCalIdea(\'' + idea.id + '\')" title="Delete">\u00d7</button>';
     html += '</div>';
     html += '</div>';
-    if (idea.tags && idea.tags.length) {
-      html += '<div class="cal-idea-tags">';
-      idea.tags.forEach(function(t) {
-        html += '<span class="cal-tag-pill" style="background:' + calTagColor(t) + '">' + t + '</span>';
-      });
-      html += '</div>';
-    }
-    if (idea.notes) {
-      html += '<div class="cal-idea-notes">' + idea.notes + '</div>';
-    }
+    html += '<div class="cal-idea-tags">';
+    (idea.tags || []).forEach(function(t) {
+      html += '<span class="cal-tag-pill" style="background:' + calTagColor(t) + '">' + t + ' <span class="cal-tag-x" onclick="calRemoveIdeaTag(\'' + idea.id + '\',\'' + t.replace(/'/g, "\\'") + '\')">\u00d7</span></span>';
+    });
+    html += '<button class="cal-idea-tag-add" onclick="calAddIdeaTag(\'' + idea.id + '\')">+ tag</button>';
+    html += '</div>';
+    html += '<textarea class="cal-idea-notes-input" placeholder="Notes…" oninput="calSaveIdeaField(\'' + idea.id + '\',\'notes\',this.value)">' + (idea.notes || '') + '</textarea>';
     html += '</div>';
   });
   html += '</div></div>';
+
+  // Tag manager
+  html += '<div class="cal-tag-manager">';
+  html += '<div class="cal-tag-manager-title">Manage Tags</div>';
+  html += '<div class="cal-tag-manager-list">';
+  CAL_TAGS.forEach(function(tag) {
+    html += '<div class="cal-tag-manage-row">';
+    html += '<span class="cal-tag-dot-lg" style="background:' + calTagColor(tag) + '"></span>';
+    html += '<input class="cal-tag-manage-name" value="' + tag + '" data-orig="' + tag + '" onchange="calRenameTag(this.dataset.orig, this.value)">';
+    html += '<button class="cal-tag-manage-del" onclick="calDeleteTag(\'' + tag.replace(/'/g, "\\'") + '\')" title="Delete tag">\u00d7</button>';
+    html += '</div>';
+  });
+  html += '<button class="cal-todo-add" onclick="calAddNewTag()">+ Add tag</button>';
+  html += '</div></div>';
+
   return html;
 }
 
@@ -10088,16 +10103,114 @@ function calAddCustomTag(id) {
 function addCalIdea() {
   var data = getCalData();
   var newId = 'idea_' + Date.now();
-  data.ideas.push({ id: newId, title: 'New idea', notes: '', tags: [], images: [] });
+  data.ideas.push({ id: newId, title: '', notes: '', tags: [], images: [] });
   saveCalData(data);
   renderCalendar();
 }
 
 function deleteCalIdea(id) {
+  if (!confirm('Delete this idea?')) return;
   var data = getCalData();
   data.ideas = data.ideas.filter(function(idea) { return idea.id !== id; });
   saveCalData(data);
   renderCalendar();
+}
+
+function calSaveIdeaField(id, field, val) {
+  var data = getCalData();
+  (data.ideas || []).forEach(function(idea) {
+    if (idea.id === id) idea[field] = val;
+  });
+  saveCalData(data);
+}
+
+function calAddIdeaTag(id) {
+  var tag = prompt('Tag name:');
+  if (!tag || !tag.trim()) return;
+  tag = tag.trim().toLowerCase();
+  if (CAL_TAGS.indexOf(tag) === -1) CAL_TAGS.push(tag);
+  var data = getCalData();
+  (data.ideas || []).forEach(function(idea) {
+    if (idea.id === id) {
+      if (!idea.tags) idea.tags = [];
+      if (idea.tags.indexOf(tag) === -1) idea.tags.push(tag);
+    }
+  });
+  if (!data.customTags) data.customTags = [];
+  if (data.customTags.indexOf(tag) === -1 && CAL_TAGS.indexOf(tag) >= 0) {
+    data.customTags = CAL_TAGS.slice();
+  }
+  saveCalData(data);
+  renderCalendar();
+}
+
+function calRemoveIdeaTag(id, tag) {
+  var data = getCalData();
+  (data.ideas || []).forEach(function(idea) {
+    if (idea.id === id) {
+      idea.tags = (idea.tags || []).filter(function(t) { return t !== tag; });
+    }
+  });
+  saveCalData(data);
+  renderCalendar();
+}
+
+// ── Tag management ──
+
+function calAddNewTag() {
+  var tag = prompt('New tag name:');
+  if (!tag || !tag.trim()) return;
+  tag = tag.trim().toLowerCase();
+  if (CAL_TAGS.indexOf(tag) === -1) {
+    CAL_TAGS.push(tag);
+    calPersistTags();
+    renderCalendar();
+  }
+}
+
+function calRenameTag(oldName, newName) {
+  newName = newName.trim().toLowerCase();
+  if (!newName || newName === oldName) return;
+  var idx = CAL_TAGS.indexOf(oldName);
+  if (idx >= 0) CAL_TAGS[idx] = newName;
+  // Update all posts and ideas that use this tag
+  var data = getCalData();
+  data.posts.forEach(function(p) {
+    if (!p.tags) return;
+    var ti = p.tags.indexOf(oldName);
+    if (ti >= 0) p.tags[ti] = newName;
+  });
+  (data.ideas || []).forEach(function(idea) {
+    if (!idea.tags) return;
+    var ti = idea.tags.indexOf(oldName);
+    if (ti >= 0) idea.tags[ti] = newName;
+  });
+  saveCalData(data);
+  calPersistTags();
+  renderCalendar();
+}
+
+function calDeleteTag(tag) {
+  if (!confirm('Delete tag "' + tag + '"? It will be removed from all posts and ideas.')) return;
+  CAL_TAGS = CAL_TAGS.filter(function(t) { return t !== tag; });
+  var data = getCalData();
+  data.posts.forEach(function(p) {
+    if (p.tags) p.tags = p.tags.filter(function(t) { return t !== tag; });
+  });
+  (data.ideas || []).forEach(function(idea) {
+    if (idea.tags) idea.tags = idea.tags.filter(function(t) { return t !== tag; });
+  });
+  saveCalData(data);
+  calPersistTags();
+  renderCalendar();
+}
+
+function calPersistTags() {
+  var data = getCalData();
+  if (data) {
+    data.customTags = CAL_TAGS.slice();
+    saveCalData(data);
+  }
 }
 
 function scheduleIdea(id) {
