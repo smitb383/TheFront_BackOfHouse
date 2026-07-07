@@ -4814,10 +4814,15 @@ body::before {
 .cal-cell-today { border: 2px solid var(--front) !important; }
 .cal-cell-has { background: var(--surface2); }
 .cal-cell-num {
-  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
-  margin-bottom: 4px;
+  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted);
+  margin-bottom: 4px; font-weight: 600;
+}
+.cal-cell-day {
+  font-size: 9px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--faint); margin-right: 2px;
 }
 .cal-cell-today .cal-cell-num { color: var(--front); font-weight: 700; }
+.cal-cell-today .cal-cell-day { color: var(--front); }
 
 /* Post cards in calendar cells */
 .cal-card {

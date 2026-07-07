@@ -9450,7 +9450,25 @@ var CAL_SEED = [
   { id: 'post_9', date: '2026-07-21', platform: 'instagram', title: 'Foam roller wall painting video', mediaType: 'video', tags: ['space'], notes: 'Post video of foam roller on wall up close painting purple', done: false },
   { id: 'post_10', date: '2026-07-22', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
   { id: 'post_11', date: '2026-07-23', platform: 'instagram', title: 'Opening day \u2014 completed space', mediaType: 'video', tags: ['space', 'coming soon'], notes: 'Video of the completed space. Have someone else designated to post.', done: false },
-  { id: 'post_12', date: '2026-07-23', platform: 'event', title: 'OPENING EVENT', mediaType: '', tags: [], notes: 'Opening party', done: false }
+  { id: 'post_12', date: '2026-07-23', platform: 'event', title: 'OPENING EVENT', mediaType: '', tags: [], notes: 'Opening party', done: false },
+  // Weekend events (every Sat Jul 25 – Aug 23)
+  { id: 'post_ev_1', date: '2026-07-25', platform: 'event', title: 'Weekend Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_ev_2', date: '2026-08-01', platform: 'event', title: 'Weekend Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_ev_3', date: '2026-08-08', platform: 'event', title: 'Weekend Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_ev_4', date: '2026-08-09', platform: 'event', title: 'Chez Elise', mediaType: '', tags: ['cafe'], notes: 'Second Sunday in August', done: false },
+  { id: 'post_ev_5', date: '2026-08-15', platform: 'event', title: 'Weekend Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_ev_6', date: '2026-08-22', platform: 'event', title: 'Weekend Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  // Rasor & Tape DJ every Wednesday 5-9pm
+  { id: 'post_dj_1', date: '2026-07-29', platform: 'event', title: 'Rasor & Tape DJ Session', mediaType: '', tags: [], notes: '5-9 PM', done: false },
+  { id: 'post_dj_2', date: '2026-08-05', platform: 'event', title: 'Rasor & Tape DJ Session', mediaType: '', tags: [], notes: '5-9 PM', done: false },
+  { id: 'post_dj_3', date: '2026-08-12', platform: 'event', title: 'Rasor & Tape DJ Session', mediaType: '', tags: [], notes: '5-9 PM', done: false },
+  { id: 'post_dj_4', date: '2026-08-19', platform: 'event', title: 'Rasor & Tape DJ Session', mediaType: '', tags: [], notes: '5-9 PM', done: false },
+  // Sucre Nails press-on event every Friday TBD
+  { id: 'post_nails_1', date: '2026-07-24', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_nails_2', date: '2026-07-31', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_nails_3', date: '2026-08-07', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_nails_4', date: '2026-08-14', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_nails_5', date: '2026-08-21', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false }
 ];
 
 var CAL_SEED_IDEAS = [
@@ -9486,14 +9504,43 @@ function saveCalData(data) {
   localStorage.setItem('popup_calendar_v1', JSON.stringify(data));
 }
 
+var CAL_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var CAL_DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function calFormatDate(dateStr) {
+  var parts = dateStr.split('-');
+  var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var day = CAL_DAYS_SHORT[d.getDay()];
+  var month = d.getMonth() + 1;
+  return day + ' ' + month + '/' + d.getDate();
+}
+
 function initCalData() {
   var d = getCalData();
   if (!d) {
     d = { posts: CAL_SEED.slice(), ideas: CAL_SEED_IDEAS.slice() };
     saveCalData(d);
   }
-  // ensure tags list has all used tags
+  // Merge any new seed posts that don't exist yet (by id)
   var data = getCalData();
+  var existingIds = {};
+  data.posts.forEach(function(p) { existingIds[p.id] = true; });
+  CAL_SEED.forEach(function(seed) {
+    if (!existingIds[seed.id]) {
+      data.posts.push(JSON.parse(JSON.stringify(seed)));
+    }
+  });
+  var existingIdeaIds = {};
+  (data.ideas || []).forEach(function(i) { existingIdeaIds[i.id] = true; });
+  CAL_SEED_IDEAS.forEach(function(seed) {
+    if (!existingIdeaIds[seed.id]) {
+      if (!data.ideas) data.ideas = [];
+      data.ideas.push(JSON.parse(JSON.stringify(seed)));
+    }
+  });
+  saveCalData(data);
+
+  // ensure tags list has all used tags
   data.posts.forEach(function(p) {
     (p.tags || []).forEach(function(t) {
       if (CAL_TAGS.indexOf(t) === -1) CAL_TAGS.push(t);
@@ -9601,7 +9648,7 @@ function calRenderEditPanel(root, data) {
   h += '<div class="cal-edit-field"><label class="cal-label">Title</label>';
   h += '<input class="cal-input" value="' + (post.title || '').replace(/"/g, '&quot;') + '" oninput="calSaveField(\'' + post.id + '\',\'title\',this.value)">';
   h += '</div>';
-  h += '<div class="cal-edit-field"><label class="cal-label">Date</label>';
+  h += '<div class="cal-edit-field"><label class="cal-label">Date <span style="font-weight:normal;color:var(--muted)">' + calFormatDate(post.date) + '</span></label>';
   h += '<input class="cal-input" type="date" value="' + post.date + '" onchange="calSaveField(\'' + post.id + '\',\'date\',this.value); renderCalendar()">';
   h += '</div>';
   h += '<div class="cal-edit-field"><label class="cal-label">Platform</label>';
@@ -9680,8 +9727,11 @@ function renderCalMonthGrid(posts) {
     var isToday = dateStr === todayStr;
     var hasPosts = dayPosts.length > 0;
 
+    var cellDate = new Date(calYear, calMonth, day);
+    var dayName = CAL_DAYS_SHORT[cellDate.getDay()];
+
     html += '<div class="cal-cell' + (isToday ? ' cal-cell-today' : '') + (hasPosts ? ' cal-cell-has' : '') + '" onclick="addCalPost(\'' + dateStr + '\')">';
-    html += '<div class="cal-cell-num">' + day + '</div>';
+    html += '<div class="cal-cell-num"><span class="cal-cell-day">' + dayName + '</span> ' + day + '</div>';
     dayPosts.forEach(function(p) {
       html += '<div class="cal-card' + (p.done ? ' cal-card-done' : '') + '" onclick="event.stopPropagation(); editCalPost(\'' + p.id + '\')">';
       html += '<span class="cal-card-icon">' + calPlatformIcon(p.platform) + '</span>';
@@ -9719,7 +9769,7 @@ function renderCalTable(posts) {
   html += '</tr></thead><tbody>';
   sorted.forEach(function(p) {
     html += '<tr class="cal-table-row' + (p.done ? ' cal-row-done' : '') + '" onclick="editCalPost(\'' + p.id + '\')">';
-    html += '<td class="cal-td-date">' + p.date + '</td>';
+    html += '<td class="cal-td-date">' + calFormatDate(p.date) + '</td>';
     html += '<td class="cal-td-plat">' + calPlatformIcon(p.platform) + '</td>';
     html += '<td class="cal-td-title">' + (p.title || '<span class="cal-empty">(untitled)</span>') + '</td>';
     html += '<td class="cal-td-type">';
