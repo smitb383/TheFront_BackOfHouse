@@ -4842,6 +4842,11 @@ body::before {
 .cal-tag-dot {
   width: 6px; height: 6px; border-radius: 50%; display: inline-block;
 }
+.cal-card-meta {
+  display: flex; gap: 6px; margin-top: 2px;
+  font-family: 'DM Mono', monospace; font-size: 8px; color: var(--muted);
+}
+.cal-card-meta-item { white-space: nowrap; }
 
 /* Table view */
 .cal-table-wrap { overflow-x: auto; margin-bottom: 24px; }
@@ -4951,6 +4956,35 @@ body::before {
   border-radius: 2px; transition: all 0.15s;
 }
 .cal-delete-btn:hover { background: rgba(224,132,90,0.1); border-color: var(--action); }
+
+/* To-do / Supplies checklist */
+.cal-todos { display: flex; flex-direction: column; gap: 4px; }
+.cal-todo-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; border-bottom: 1px solid var(--border);
+}
+.cal-todo-row input[type="checkbox"] {
+  flex-shrink: 0; cursor: pointer; accent-color: var(--front);
+}
+.cal-todo-text {
+  flex: 1; background: none; border: none; color: var(--text);
+  font-family: 'Cormorant Garamond', serif; font-size: 14px;
+  padding: 2px 0; outline: none;
+}
+.cal-todo-text::placeholder { color: var(--faint); }
+.cal-todo-done { text-decoration: line-through; color: var(--muted); }
+.cal-todo-del {
+  background: none; border: none; color: var(--faint); cursor: pointer;
+  font-size: 14px; padding: 0 4px; flex-shrink: 0;
+}
+.cal-todo-del:hover { color: var(--action); }
+.cal-todo-add {
+  background: none; border: 1px dashed var(--border); color: var(--muted);
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 5px 12px; cursor: pointer;
+  border-radius: 2px; margin-top: 6px; align-self: flex-start;
+}
+.cal-todo-add:hover { border-color: var(--front); color: var(--front); }
 
 /* Ideas section */
 .cal-ideas-section {

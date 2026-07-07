@@ -9699,9 +9699,40 @@ function calRenderEditPanel(root, data) {
   });
   h += '<button class="cal-tag-pick cal-tag-add" onclick="calAddCustomTag(\'' + post.id + '\')">+ new</button>';
   h += '</div></div>';
-  h += '<div class="cal-edit-field cal-edit-full"><label class="cal-label">Notes</label>';
+  h += '<div class="cal-edit-field cal-edit-full"><label class="cal-label">Description</label>';
   h += '<textarea class="cal-textarea" oninput="calSaveField(\'' + post.id + '\',\'notes\',this.value)">' + (post.notes || '') + '</textarea>';
   h += '</div>';
+
+  // To-do checklist
+  h += '<div class="cal-edit-field cal-edit-full"><label class="cal-label">To-Do</label>';
+  h += '<div class="cal-todos">';
+  var todos = post.todos || [];
+  todos.forEach(function(todo, ti) {
+    h += '<div class="cal-todo-row">';
+    h += '<input type="checkbox"' + (todo.done ? ' checked' : '') + ' onchange="calToggleTodo(\'' + post.id + '\',' + ti + ')">';
+    h += '<input class="cal-todo-text' + (todo.done ? ' cal-todo-done' : '') + '" value="' + (todo.text || '').replace(/"/g, '&quot;') + '" placeholder="To-do item…" oninput="calSaveTodo(\'' + post.id + '\',' + ti + ',this.value)">';
+    h += '<button class="cal-todo-del" onclick="calDeleteTodo(\'' + post.id + '\',' + ti + ')">×</button>';
+    h += '</div>';
+  });
+  h += '<button class="cal-todo-add" onclick="calAddTodo(\'' + post.id + '\')">+ Add to-do</button>';
+  h += '</div></div>';
+
+  // Supplies checklist (events only)
+  if (post.platform === 'event') {
+    h += '<div class="cal-edit-field cal-edit-full"><label class="cal-label">Supplies Needed</label>';
+    h += '<div class="cal-todos">';
+    var supplies = post.supplies || [];
+    supplies.forEach(function(item, si) {
+      h += '<div class="cal-todo-row">';
+      h += '<input type="checkbox"' + (item.done ? ' checked' : '') + ' onchange="calToggleSupply(\'' + post.id + '\',' + si + ')">';
+      h += '<input class="cal-todo-text' + (item.done ? ' cal-todo-done' : '') + '" value="' + (item.text || '').replace(/"/g, '&quot;') + '" placeholder="Supply item…" oninput="calSaveSupply(\'' + post.id + '\',' + si + ',this.value)">';
+      h += '<button class="cal-todo-del" onclick="calDeleteSupply(\'' + post.id + '\',' + si + ')">×</button>';
+      h += '</div>';
+    });
+    h += '<button class="cal-todo-add" onclick="calAddSupply(\'' + post.id + '\')">+ Add supply</button>';
+    h += '</div></div>';
+  }
+
   h += '</div>';
   h += '<div class="cal-edit-footer">';
   h += '<button class="cal-delete-btn" onclick="deleteCalPost(\'' + post.id + '\')">Delete Post</button>';
@@ -9770,6 +9801,15 @@ function renderCalMonthGrid(posts) {
           html += '<span class="cal-tag-dot" style="background:' + calTagColor(t) + '" title="' + t + '"></span>';
         });
         html += '</span>';
+      }
+      var todoCount = (p.todos || []).length;
+      var todoDone = (p.todos || []).filter(function(t) { return t.done; }).length;
+      var supCount = (p.supplies || []).length;
+      if (todoCount > 0 || supCount > 0) {
+        html += '<div class="cal-card-meta">';
+        if (todoCount > 0) html += '<span class="cal-card-meta-item" title="To-dos">☐ ' + todoDone + '/' + todoCount + '</span>';
+        if (supCount > 0) html += '<span class="cal-card-meta-item" title="Supplies">🧾 ' + supCount + '</span>';
+        html += '</div>';
       }
       html += '</div>';
     });
@@ -9914,6 +9954,87 @@ function calSaveField(id, field, value) {
     if (p.id === id) p[field] = value;
   });
   saveCalData(data);
+}
+
+// ── To-do functions ──
+
+function calGetPost(id) {
+  var data = getCalData();
+  var post = null;
+  data.posts.forEach(function(p) { if (p.id === id) post = p; });
+  return { data: data, post: post };
+}
+
+function calAddTodo(id) {
+  var r = calGetPost(id);
+  if (!r.post) return;
+  if (!r.post.todos) r.post.todos = [];
+  r.post.todos.push({ text: '', done: false });
+  saveCalData(r.data);
+  renderCalendar();
+  if (calExpandedPost) {
+    setTimeout(function() { var el = document.getElementById('cal-edit-panel'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50);
+  }
+}
+
+function calSaveTodo(id, idx, val) {
+  var r = calGetPost(id);
+  if (!r.post || !r.post.todos || !r.post.todos[idx]) return;
+  r.post.todos[idx].text = val;
+  saveCalData(r.data);
+}
+
+function calToggleTodo(id, idx) {
+  var r = calGetPost(id);
+  if (!r.post || !r.post.todos || !r.post.todos[idx]) return;
+  r.post.todos[idx].done = !r.post.todos[idx].done;
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+function calDeleteTodo(id, idx) {
+  var r = calGetPost(id);
+  if (!r.post || !r.post.todos) return;
+  r.post.todos.splice(idx, 1);
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+// ── Supplies functions (events) ──
+
+function calAddSupply(id) {
+  var r = calGetPost(id);
+  if (!r.post) return;
+  if (!r.post.supplies) r.post.supplies = [];
+  r.post.supplies.push({ text: '', done: false });
+  saveCalData(r.data);
+  renderCalendar();
+  if (calExpandedPost) {
+    setTimeout(function() { var el = document.getElementById('cal-edit-panel'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 50);
+  }
+}
+
+function calSaveSupply(id, idx, val) {
+  var r = calGetPost(id);
+  if (!r.post || !r.post.supplies || !r.post.supplies[idx]) return;
+  r.post.supplies[idx].text = val;
+  saveCalData(r.data);
+}
+
+function calToggleSupply(id, idx) {
+  var r = calGetPost(id);
+  if (!r.post || !r.post.supplies || !r.post.supplies[idx]) return;
+  r.post.supplies[idx].done = !r.post.supplies[idx].done;
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+function calDeleteSupply(id, idx) {
+  var r = calGetPost(id);
+  if (!r.post || !r.post.supplies) return;
+  r.post.supplies.splice(idx, 1);
+  saveCalData(r.data);
+  renderCalendar();
 }
 
 function calToggleTag(id, tag) {
