@@ -9790,6 +9790,31 @@ function calRenderEditPanel(root, data) {
 }
 
 function calGetEventColor(post, data) {
+  // Also color promo posts that reference an event
+  if (post._promoFor || (post.title && post.title.indexOf('Promo:') === 0)) {
+    var promoTitle = (post.title || '').replace(/^Promo:\s*/i, '').toLowerCase();
+    var promoMatch = null;
+    if (data && data.eventSeries) {
+      data.eventSeries.forEach(function(s) {
+        var sName = (s.name || '').toLowerCase();
+        if (sName && promoTitle.indexOf(sName) >= 0) promoMatch = s.color;
+        if (!promoMatch && sName) {
+          var words = sName.split(/\s+/);
+          var matched = words.some(function(w) { return w.length > 3 && promoTitle.indexOf(w) >= 0; });
+          if (matched) promoMatch = s.color;
+        }
+      });
+    }
+    if (!promoMatch) {
+      if (promoTitle.indexOf('opening') >= 0) promoMatch = '#e2c97e';
+      else if (promoTitle.indexOf('closing') >= 0) promoMatch = '#e07070';
+      else if (promoTitle.indexOf('rasor') >= 0 || promoTitle.indexOf('dj') >= 0) promoMatch = '#b8a0e0';
+      else if (promoTitle.indexOf('sucre') >= 0 || promoTitle.indexOf('nails') >= 0) promoMatch = '#e0845a';
+      else if (promoTitle.indexOf('elise') >= 0) promoMatch = '#6aaad8';
+      else if (promoTitle.indexOf('weekend') >= 0) promoMatch = '#82bfbb';
+    }
+    return promoMatch;
+  }
   if (post.platform !== 'event') return null;
   if (!data || !data.eventSeries) return null;
   var title = (post.title || '').toLowerCase();
@@ -9860,7 +9885,7 @@ function renderCalMonthGrid(posts, data) {
     html += '<div class="cal-cell-num"><span class="cal-cell-day">' + dayName + '</span> ' + day + '</div>';
     dayPosts.forEach(function(p) {
       var cardColor = calGetEventColor(p, data);
-      var cardStyle = cardColor ? 'border-left:3px solid ' + cardColor + ';' : '';
+      var cardStyle = cardColor ? 'background:' + cardColor + '22;border-color:' + cardColor + '55;' : '';
       html += '<div class="cal-card' + (p.done ? ' cal-card-done' : '') + '" style="' + cardStyle + '" onclick="event.stopPropagation(); editCalPost(\'' + p.id + '\')">';
       html += '<span class="cal-card-icon">' + calPlatformIcon(p.platform) + '</span>';
       html += '<span class="cal-card-title">' + (p.title || '(untitled)') + '</span>';
