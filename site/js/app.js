@@ -9538,6 +9538,34 @@ function initCalData() {
       data.ideas.push(JSON.parse(JSON.stringify(seed)));
     }
   });
+  // Auto-generate promo posts 5 days before each event (if not already present)
+  var eventPosts = data.posts.filter(function(p) { return p.platform === 'event'; });
+  var existingDates = {};
+  data.posts.forEach(function(p) {
+    var key = p.date + '_promo_' + (p._promoFor || '');
+    if (p._promoFor) existingDates[key] = true;
+  });
+  eventPosts.forEach(function(ev) {
+    var parts = ev.date.split('-');
+    var evDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    var promoDate = new Date(evDate.getTime() - 5 * 24 * 60 * 60 * 1000);
+    var promoStr = promoDate.getFullYear() + '-' + String(promoDate.getMonth() + 1).padStart(2, '0') + '-' + String(promoDate.getDate()).padStart(2, '0');
+    var promoId = 'promo_' + ev.id;
+    if (!existingIds[promoId]) {
+      data.posts.push({
+        id: promoId,
+        date: promoStr,
+        platform: 'instagram',
+        title: 'Promo: ' + (ev.title || 'Event'),
+        mediaType: 'static',
+        tags: ['coming soon'],
+        notes: 'Promo post for ' + ev.title + ' on ' + calFormatDate(ev.date),
+        done: false,
+        _promoFor: ev.id
+      });
+    }
+  });
+
   saveCalData(data);
 
   // ensure tags list has all used tags
@@ -9765,7 +9793,7 @@ function renderCalTable(posts) {
   var sorted = posts.slice().sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
   var html = '<div class="cal-table-wrap">';
   html += '<table class="cal-table"><thead><tr>';
-  html += '<th>Date</th><th></th><th>Title</th><th>Type</th><th>Tags</th><th>Done</th><th>Notes</th>';
+  html += '<th>Date</th><th></th><th>Title</th><th>Type</th><th>Tags</th><th>Asset</th><th>Notes</th>';
   html += '</tr></thead><tbody>';
   sorted.forEach(function(p) {
     html += '<tr class="cal-table-row' + (p.done ? ' cal-row-done' : '') + '" onclick="editCalPost(\'' + p.id + '\')">';
