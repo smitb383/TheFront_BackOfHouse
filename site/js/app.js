@@ -3038,10 +3038,10 @@ function switchFrontSide(side, btn) {
     switchBrand('popup', document.getElementById('brand-sw-popup'));
     return;
   }
-  var firstTab = bar ? bar.querySelector('.tab') : null;
-  if (firstTab) {
-    var tabName = firstTab.dataset.tab;
-    showTab('front', tabName, firstTab);
+  var defaultTab = bar ? (bar.querySelector('.tab.active') || bar.querySelector('.tab')) : null;
+  if (defaultTab) {
+    var tabName = defaultTab.dataset.tab;
+    showTab('front', tabName, defaultTab);
   }
 }
 function switchBrand(brand, btn) {
@@ -9468,7 +9468,8 @@ var CAL_SEED = [
   { id: 'post_nails_2', date: '2026-07-31', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
   { id: 'post_nails_3', date: '2026-08-07', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
   { id: 'post_nails_4', date: '2026-08-14', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
-  { id: 'post_nails_5', date: '2026-08-21', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false }
+  { id: 'post_nails_5', date: '2026-08-21', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
+  { id: 'post_closing', date: '2026-08-23', platform: 'event', title: 'CLOSING PARTY', mediaType: '', tags: [], notes: 'Last day of the popup — closing celebration', done: false }
 ];
 
 var CAL_SEED_IDEAS = [
@@ -9904,6 +9905,9 @@ function renderCalIdeas(data) {
   });
   html += '</div></div>';
 
+  // Event Series
+  html += renderEventSeries(data);
+
   // Tag manager
   html += '<div class="cal-tag-manager">';
   html += '<div class="cal-tag-manager-title">Manage Tags</div>';
@@ -9919,6 +9923,193 @@ function renderCalIdeas(data) {
   html += '</div></div>';
 
   return html;
+}
+
+var ES_COLORS = ['#e2c97e','#82bfbb','#b8a0e0','#e0845a','#6aaad8','#c77dba','#a8c77d','#e07070'];
+
+var EVENT_SERIES_SEED = [
+  { id: 'es_opening', name: 'Opening Event', color: '#e2c97e', notes: 'Opening party — Jul 23. Wine + sparkling water + simple snacks for 40-60 people.', datesConfirmed: true, todos: [], supplies: [{ text: 'Wine', done: false }, { text: 'Sparkling water', done: false }, { text: 'Snacks', done: false }, { text: 'Cups / glasses', done: false }, { text: 'Napkins', done: false }, { text: 'Ice', done: false }] },
+  { id: 'es_weekend', name: 'Weekend Events', color: '#82bfbb', notes: 'Every weekend Sat or Sun, Jul 25 – Aug 22. Programming TBD.', datesConfirmed: false, todos: [], supplies: [] },
+  { id: 'es_dj', name: 'Rasor & Tape DJ Sessions', color: '#b8a0e0', notes: 'Every Wednesday 5-9 PM starting Jul 29.', datesConfirmed: true, todos: [], supplies: [{ text: 'Speaker / PA system', done: false }, { text: 'DJ table setup', done: false }] },
+  { id: 'es_nails', name: 'Sucre Nails Press-On Events', color: '#e0845a', notes: 'Every Friday TBD. Press-on nail application events.', datesConfirmed: false, todos: [], supplies: [] },
+  { id: 'es_elise', name: 'Chez Elise', color: '#6aaad8', notes: 'Second Sunday in August (Aug 9). Cafe pop-up event.', datesConfirmed: true, todos: [], supplies: [] },
+  { id: 'es_closing', name: 'Closing Party', color: '#e07070', notes: 'August 23 — last day of the popup. Closing celebration.', datesConfirmed: true, todos: [], supplies: [] }
+];
+
+function _initEventSeries(data) {
+  if (!data.eventSeries) data.eventSeries = [];
+  var existingIds = {};
+  data.eventSeries.forEach(function(s) { existingIds[s.id] = true; });
+  EVENT_SERIES_SEED.forEach(function(seed) {
+    if (!existingIds[seed.id]) {
+      data.eventSeries.push(JSON.parse(JSON.stringify(seed)));
+    }
+  });
+}
+
+function renderEventSeries(data) {
+  _initEventSeries(data);
+  var html = '<div class="cal-series-section">';
+  html += '<div class="cal-ideas-header">';
+  html += '<div class="cal-ideas-title">Event Series</div>';
+  html += '<button class="cal-add-btn" onclick="addEventSeries()">+ Add Series</button>';
+  html += '</div>';
+  html += '<div class="cal-series-list">';
+
+  data.eventSeries.forEach(function(series) {
+    var todosDone = (series.todos || []).filter(function(t) { return t.done; }).length;
+    var todosTotal = (series.todos || []).length;
+    var supDone = (series.supplies || []).filter(function(s) { return s.done; }).length;
+    var supTotal = (series.supplies || []).length;
+
+    var sColor = series.color || ES_COLORS[0];
+    html += '<div class="cal-series-card" style="border-left:4px solid ' + sColor + '">';
+    // Header
+    html += '<div class="cal-series-header">';
+    html += '<div class="cal-series-color-wrap">';
+    ES_COLORS.forEach(function(c) {
+      html += '<span class="cal-series-color-dot' + (sColor === c ? ' active' : '') + '" style="background:' + c + '" onclick="calSaveSeriesField(\'' + series.id + '\',\'color\',\'' + c + '\'); renderCalendar()"></span>';
+    });
+    html += '</div>';
+    html += '<input class="cal-series-name" value="' + (series.name || '').replace(/"/g, '&quot;') + '" placeholder="Event series name…" oninput="calSaveSeriesField(\'' + series.id + '\',\'name\',this.value)">';
+    html += '<div class="cal-series-header-right">';
+    html += '<label class="cal-series-confirmed"><input type="checkbox"' + (series.datesConfirmed ? ' checked' : '') + ' onchange="calSaveSeriesField(\'' + series.id + '\',\'datesConfirmed\',this.checked)"> <span class="cal-series-conf-label">' + (series.datesConfirmed ? 'Dates confirmed' : 'Dates TBD') + '</span></label>';
+    html += '<button class="cal-idea-del" onclick="deleteEventSeries(\'' + series.id + '\')" title="Delete series">\u00d7</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // Notes
+    html += '<div class="cal-series-block">';
+    html += '<div class="cal-series-block-label">Notes</div>';
+    html += '<textarea class="cal-series-textarea" placeholder="Details, logistics, contacts…" oninput="calSaveSeriesField(\'' + series.id + '\',\'notes\',this.value)">' + (series.notes || '') + '</textarea>';
+    html += '</div>';
+
+    // Two-column: To-dos and Supplies
+    html += '<div class="cal-series-columns">';
+
+    // To-dos
+    html += '<div class="cal-series-block">';
+    html += '<div class="cal-series-block-label">To-Do' + (todosTotal > 0 ? ' <span class="cal-series-count">' + todosDone + '/' + todosTotal + '</span>' : '') + '</div>';
+    html += '<div class="cal-todos">';
+    (series.todos || []).forEach(function(todo, ti) {
+      html += '<div class="cal-todo-row">';
+      html += '<input type="checkbox"' + (todo.done ? ' checked' : '') + ' onchange="calToggleSeriesTodo(\'' + series.id + '\',' + ti + ')">';
+      html += '<input class="cal-todo-text' + (todo.done ? ' cal-todo-done' : '') + '" value="' + (todo.text || '').replace(/"/g, '&quot;') + '" placeholder="To-do…" oninput="calSaveSeriesTodo(\'' + series.id + '\',' + ti + ',this.value)">';
+      html += '<button class="cal-todo-del" onclick="calDeleteSeriesTodo(\'' + series.id + '\',' + ti + ')">×</button>';
+      html += '</div>';
+    });
+    html += '<button class="cal-todo-add" onclick="calAddSeriesTodo(\'' + series.id + '\')">+ Add to-do</button>';
+    html += '</div></div>';
+
+    // Supplies
+    html += '<div class="cal-series-block">';
+    html += '<div class="cal-series-block-label">Supplies Needed' + (supTotal > 0 ? ' <span class="cal-series-count">' + supDone + '/' + supTotal + '</span>' : '') + '</div>';
+    html += '<div class="cal-todos">';
+    (series.supplies || []).forEach(function(item, si) {
+      html += '<div class="cal-todo-row">';
+      html += '<input type="checkbox"' + (item.done ? ' checked' : '') + ' onchange="calToggleSeriesSupply(\'' + series.id + '\',' + si + ')">';
+      html += '<input class="cal-todo-text' + (item.done ? ' cal-todo-done' : '') + '" value="' + (item.text || '').replace(/"/g, '&quot;') + '" placeholder="Supply…" oninput="calSaveSeriesSupply(\'' + series.id + '\',' + si + ',this.value)">';
+      html += '<button class="cal-todo-del" onclick="calDeleteSeriesSupply(\'' + series.id + '\',' + si + ')">×</button>';
+      html += '</div>';
+    });
+    html += '<button class="cal-todo-add" onclick="calAddSeriesSupply(\'' + series.id + '\')">+ Add supply</button>';
+    html += '</div></div>';
+
+    html += '</div>'; // columns
+    html += '</div>'; // card
+  });
+
+  html += '</div></div>';
+  return html;
+}
+
+// ── Event Series CRUD ──
+
+function _getSeriesFromData(id) {
+  var data = getCalData();
+  var series = null;
+  (data.eventSeries || []).forEach(function(s) { if (s.id === id) series = s; });
+  return { data: data, series: series };
+}
+
+function calSaveSeriesField(id, field, val) {
+  var r = _getSeriesFromData(id);
+  if (r.series) r.series[field] = val;
+  saveCalData(r.data);
+}
+
+function addEventSeries() {
+  var data = getCalData();
+  if (!data.eventSeries) data.eventSeries = [];
+  data.eventSeries.push({ id: 'es_' + Date.now(), name: '', notes: '', datesConfirmed: false, todos: [], supplies: [] });
+  saveCalData(data);
+  renderCalendar();
+}
+
+function deleteEventSeries(id) {
+  if (!confirm('Delete this event series?')) return;
+  var data = getCalData();
+  data.eventSeries = (data.eventSeries || []).filter(function(s) { return s.id !== id; });
+  saveCalData(data);
+  renderCalendar();
+}
+
+function calAddSeriesTodo(id) {
+  var r = _getSeriesFromData(id);
+  if (!r.series) return;
+  if (!r.series.todos) r.series.todos = [];
+  r.series.todos.push({ text: '', done: false });
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+function calSaveSeriesTodo(id, idx, val) {
+  var r = _getSeriesFromData(id);
+  if (r.series && r.series.todos && r.series.todos[idx]) r.series.todos[idx].text = val;
+  saveCalData(r.data);
+}
+
+function calToggleSeriesTodo(id, idx) {
+  var r = _getSeriesFromData(id);
+  if (r.series && r.series.todos && r.series.todos[idx]) r.series.todos[idx].done = !r.series.todos[idx].done;
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+function calDeleteSeriesTodo(id, idx) {
+  var r = _getSeriesFromData(id);
+  if (r.series && r.series.todos) r.series.todos.splice(idx, 1);
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+function calAddSeriesSupply(id) {
+  var r = _getSeriesFromData(id);
+  if (!r.series) return;
+  if (!r.series.supplies) r.series.supplies = [];
+  r.series.supplies.push({ text: '', done: false });
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+function calSaveSeriesSupply(id, idx, val) {
+  var r = _getSeriesFromData(id);
+  if (r.series && r.series.supplies && r.series.supplies[idx]) r.series.supplies[idx].text = val;
+  saveCalData(r.data);
+}
+
+function calToggleSeriesSupply(id, idx) {
+  var r = _getSeriesFromData(id);
+  if (r.series && r.series.supplies && r.series.supplies[idx]) r.series.supplies[idx].done = !r.series.supplies[idx].done;
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+function calDeleteSeriesSupply(id, idx) {
+  var r = _getSeriesFromData(id);
+  if (r.series && r.series.supplies) r.series.supplies.splice(idx, 1);
+  saveCalData(r.data);
+  renderCalendar();
 }
 
 function calNavMonth(dir) {

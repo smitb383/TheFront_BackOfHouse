@@ -5086,3 +5086,74 @@ body::before {
   font-size: 14px; padding: 0 4px;
 }
 .cal-tag-manage-del:hover { color: var(--action); }
+
+/* ── Event Series ── */
+.cal-series-section {
+  margin-top: 32px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.cal-series-list {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.cal-series-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 20px; transition: border-color 0.15s;
+  border-left-width: 4px;
+}
+.cal-series-card:hover { border-color: var(--muted); }
+.cal-series-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.cal-series-color-wrap {
+  display: flex; gap: 4px; flex-shrink: 0; align-items: center;
+}
+.cal-series-color-dot {
+  width: 14px; height: 14px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; transition: border-color 0.15s;
+  flex-shrink: 0;
+}
+.cal-series-color-dot:hover { opacity: 0.8; }
+.cal-series-color-dot.active { border-color: var(--text); }
+.cal-series-name {
+  flex: 1; min-width: 200px; background: none; border: none;
+  border-bottom: 1px solid transparent;
+  color: var(--text); font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 600; padding: 2px 0; outline: none;
+}
+.cal-series-name:focus { border-bottom-color: var(--front); }
+.cal-series-name::placeholder { color: var(--faint); }
+.cal-series-header-right {
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.cal-series-confirmed {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  accent-color: var(--front);
+}
+.cal-series-conf-label {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+}
+.cal-series-confirmed input:checked + .cal-series-conf-label { color: #88c98a; }
+.cal-series-block {
+  margin-bottom: 14px;
+}
+.cal-series-block-label {
+  font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+.cal-series-count {
+  font-weight: 400; letter-spacing: 0; color: var(--front);
+}
+.cal-series-textarea {
+  width: 100%; background: none; border: 1px solid var(--border);
+  color: var(--text); font-family: 'Cormorant Garamond', serif; font-size: 14px;
+  line-height: 1.5; padding: 8px 10px; border-radius: 3px; outline: none;
+  resize: vertical; min-height: 50px;
+}
+.cal-series-textarea:focus { border-color: var(--front); }
+.cal-series-textarea::placeholder { color: var(--faint); }
+.cal-series-columns {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+@media (max-width: 700px) { .cal-series-columns { grid-template-columns: 1fr; } }
