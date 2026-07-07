@@ -2196,6 +2196,7 @@ function showTab(project, tab, btn) {
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
   if (tab === 'chashama-proposal') setTimeout(function(){ loadBPData(); initChaShaMa(); }, 20);
   if (tab === 'popup-events') setTimeout(function(){ initEvents(); loadBPData(); }, 20);
+  if (tab === 'popup-calendar') setTimeout(function(){ initCalData(); renderCalendar(); }, 20);
   if (tab === 'popup-resources') setTimeout(function(){ initResources(); }, 20);
   if (tab === 'brand-identity') setTimeout(function(){ seedBrandDefaults(); loadBPData(); }, 20);
   if (tab === 'visual-identity') setTimeout(function(){ initBrandTabs(); }, 20);
@@ -9433,5 +9434,475 @@ function renderBuildout() {
   }
 
   el.innerHTML = html;
+}
+
+// ═══ CONTENT CALENDAR ══════════════════════════════════════════════════════
+
+var CAL_SEED = [
+  { id: 'post_1', date: '2026-07-09', platform: 'instagram', title: 'Coming Soon teaser', mediaType: 'static', tags: ['coming soon'], notes: 'Shopping bags?', done: false },
+  { id: 'post_2', date: '2026-07-11', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
+  { id: 'post_3', date: '2026-07-13', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
+  { id: 'post_4', date: '2026-07-16', platform: 'instagram', title: 'Popup opening party flyer', mediaType: 'static', tags: ['coming soon'], notes: 'Post flyer for the popup opening party', done: false },
+  { id: 'post_5', date: '2026-07-17', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
+  { id: 'post_6', date: '2026-07-18', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
+  { id: 'post_7', date: '2026-07-19', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
+  { id: 'post_8', date: '2026-07-20', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
+  { id: 'post_9', date: '2026-07-21', platform: 'instagram', title: 'Foam roller wall painting video', mediaType: 'video', tags: ['space'], notes: 'Post video of foam roller on wall up close painting purple', done: false },
+  { id: 'post_10', date: '2026-07-22', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
+  { id: 'post_11', date: '2026-07-23', platform: 'instagram', title: 'Opening day \u2014 completed space', mediaType: 'video', tags: ['space', 'coming soon'], notes: 'Video of the completed space. Have someone else designated to post.', done: false },
+  { id: 'post_12', date: '2026-07-23', platform: 'event', title: 'OPENING EVENT', mediaType: '', tags: [], notes: 'Opening party', done: false }
+];
+
+var CAL_SEED_IDEAS = [
+  { id: 'idea_1', title: 'Vibe images (2-3)', notes: '', tags: ['product'], images: [] },
+  { id: 'idea_2', title: 'Shopping bag video', notes: '', tags: ['front merch'], images: [] },
+  { id: 'idea_3', title: 'Moodboard images (2-ish)', notes: '', tags: ['coming soon'], images: [] },
+  { id: 'idea_4', title: 'Main poster post', notes: '', tags: ['coming soon'], images: [] },
+  { id: 'idea_5', title: 'Designer feature carousel \u2014 Errie', notes: '', tags: ['designer feature'], images: [] },
+  { id: 'idea_6', title: 'Designer feature carousel \u2014 Caroline', notes: '', tags: ['designer feature'], images: [] },
+  { id: 'idea_7', title: 'Designer feature carousel \u2014 Harlot', notes: '', tags: ['designer feature'], images: [] },
+  { id: 'idea_8', title: 'Shoot \u2014 Ossinger', notes: 'Maybe weekend of 16-18, ready by 10/20', tags: ['clothing/shoot'], images: [] },
+  { id: 'idea_9', title: 'Shoot \u2014 Gigi', notes: '', tags: ['clothing/shoot'], images: [] },
+  { id: 'idea_10', title: 'Shoot \u2014 Emily', notes: '', tags: ['clothing/shoot'], images: [] },
+  { id: 'idea_11', title: 'Shoot \u2014 OSCR', notes: '', tags: ['clothing/shoot'], images: [] },
+  { id: 'idea_12', title: 'Shoot \u2014 KONSENSUS', notes: '', tags: ['clothing/shoot'], images: [] },
+  { id: 'idea_13', title: 'Shoot \u2014 ELISE', notes: '', tags: ['clothing/shoot'], images: [] },
+  { id: 'idea_14', title: 'Shoot posts (maybe 3)', notes: 'Static shot as key image, reel/motion once clicked in. Maybe post on 19th. Isa & Kristen maybe Megan', tags: ['clothing/shoot'], images: [] }
+];
+
+var CAL_TAGS = ['designer feature', 'coming soon', 'front merch', 'clothing/shoot', 'product', 'space', 'cafe'];
+
+var calFilter = 'all';
+var calView = 'calendar';
+var calMonth = 6; // July (0-indexed)
+var calYear = 2026;
+var calExpandedPost = null;
+
+function getCalData() {
+  try { return JSON.parse(localStorage.getItem('popup_calendar_v1') || 'null'); } catch(e) { return null; }
+}
+
+function saveCalData(data) {
+  localStorage.setItem('popup_calendar_v1', JSON.stringify(data));
+}
+
+function initCalData() {
+  var d = getCalData();
+  if (!d) {
+    d = { posts: CAL_SEED.slice(), ideas: CAL_SEED_IDEAS.slice() };
+    saveCalData(d);
+  }
+  // ensure tags list has all used tags
+  var data = getCalData();
+  data.posts.forEach(function(p) {
+    (p.tags || []).forEach(function(t) {
+      if (CAL_TAGS.indexOf(t) === -1) CAL_TAGS.push(t);
+    });
+  });
+  data.ideas.forEach(function(idea) {
+    (idea.tags || []).forEach(function(t) {
+      if (CAL_TAGS.indexOf(t) === -1) CAL_TAGS.push(t);
+    });
+  });
+}
+
+function calPlatformIcon(p) {
+  if (p === 'instagram') return '\ud83d\udcf8';
+  if (p === 'tiktok') return '\ud83c\udfb5';
+  if (p === 'event') return '\ud83c\udfad';
+  return '\u2022';
+}
+
+function calTagColor(tag) {
+  var colors = {
+    'designer feature': '#b8a0e0',
+    'coming soon': '#e2c97e',
+    'front merch': '#e0845a',
+    'clothing/shoot': '#6aaad8',
+    'product': '#82bfbb',
+    'space': '#c77dba',
+    'cafe': '#a8c77d'
+  };
+  return colors[tag] || '#5c5870';
+}
+
+function calSetFilter(f) {
+  calFilter = f;
+  renderCalendar();
+}
+
+function calSetView(v) {
+  calView = v;
+  renderCalendar();
+}
+
+function calFilterPosts(posts) {
+  if (calFilter === 'all') return posts;
+  return posts.filter(function(p) { return p.platform === calFilter; });
+}
+
+function renderCalendar() {
+  var root = document.getElementById('cal-root');
+  if (!root) return;
+  var data = getCalData();
+  if (!data) return;
+  var filtered = calFilterPosts(data.posts);
+
+  var html = '';
+  // Toolbar
+  html += '<div class="cal-toolbar">';
+  html += '<div class="cal-toolbar-left">';
+  html += '<div class="cal-title">Content Calendar</div>';
+  html += '</div>';
+  html += '<div class="cal-toolbar-center">';
+  html += '<button class="cal-filter-btn' + (calFilter === 'all' ? ' active' : '') + '" onclick="calSetFilter(\'all\')">All</button>';
+  html += '<button class="cal-filter-btn' + (calFilter === 'instagram' ? ' active' : '') + '" onclick="calSetFilter(\'instagram\')">\ud83d\udcf8 Instagram</button>';
+  html += '<button class="cal-filter-btn' + (calFilter === 'tiktok' ? ' active' : '') + '" onclick="calSetFilter(\'tiktok\')">\ud83c\udfb5 TikTok</button>';
+  html += '<button class="cal-filter-btn' + (calFilter === 'event' ? ' active' : '') + '" onclick="calSetFilter(\'event\')">\ud83c\udfad Events</button>';
+  html += '</div>';
+  html += '<div class="cal-toolbar-right">';
+  html += '<button class="cal-view-btn' + (calView === 'table' ? ' active' : '') + '" onclick="calSetView(\'table\')">Table</button>';
+  html += '<button class="cal-view-btn' + (calView === 'calendar' ? ' active' : '') + '" onclick="calSetView(\'calendar\')">Calendar</button>';
+  html += '<button class="cal-add-btn" onclick="addCalPost()">+ Add Post</button>';
+  html += '</div>';
+  html += '</div>';
+
+  if (calView === 'calendar') {
+    html += renderCalMonthGrid(filtered);
+  } else {
+    html += renderCalTable(filtered);
+  }
+
+  html += renderCalIdeas(data);
+
+  root.innerHTML = html;
+
+  // inject edit panel if expanded
+  if (calExpandedPost) {
+    calRenderEditPanel(root, data);
+  }
+}
+
+function calRenderEditPanel(root, data) {
+  var post = null;
+  data.posts.forEach(function(p) { if (p.id === calExpandedPost) post = p; });
+  if (!post) { calExpandedPost = null; return; }
+
+  var panel = document.createElement('div');
+  panel.id = 'cal-edit-panel';
+  panel.className = 'cal-edit-panel';
+
+  var h = '';
+  h += '<div class="cal-edit-header">';
+  h += '<div class="cal-edit-label">Edit Post</div>';
+  h += '<button class="cal-edit-close" onclick="editCalPost(null)">\u00d7</button>';
+  h += '</div>';
+  h += '<div class="cal-edit-grid">';
+  h += '<div class="cal-edit-field"><label class="cal-label">Title</label>';
+  h += '<input class="cal-input" value="' + (post.title || '').replace(/"/g, '&quot;') + '" oninput="calSaveField(\'' + post.id + '\',\'title\',this.value)">';
+  h += '</div>';
+  h += '<div class="cal-edit-field"><label class="cal-label">Date</label>';
+  h += '<input class="cal-input" type="date" value="' + post.date + '" onchange="calSaveField(\'' + post.id + '\',\'date\',this.value); renderCalendar()">';
+  h += '</div>';
+  h += '<div class="cal-edit-field"><label class="cal-label">Platform</label>';
+  h += '<div class="cal-platform-sel">';
+  ['instagram', 'tiktok', 'event'].forEach(function(pl) {
+    h += '<button class="cal-plat-btn' + (post.platform === pl ? ' active' : '') + '" onclick="calSaveField(\'' + post.id + '\',\'platform\',\'' + pl + '\'); renderCalendar()">' + calPlatformIcon(pl) + ' ' + pl + '</button>';
+  });
+  h += '</div></div>';
+  h += '<div class="cal-edit-field"><label class="cal-label">Media Type</label>';
+  h += '<div class="cal-platform-sel">';
+  ['static', 'video'].forEach(function(mt) {
+    h += '<button class="cal-plat-btn' + (post.mediaType === mt ? ' active' : '') + '" onclick="calSaveField(\'' + post.id + '\',\'mediaType\',\'' + mt + '\'); renderCalendar()">' + mt + '</button>';
+  });
+  h += '</div></div>';
+  h += '<div class="cal-edit-field cal-edit-full"><label class="cal-label">Tags</label>';
+  h += '<div class="cal-tag-picker">';
+  CAL_TAGS.forEach(function(tag) {
+    var sel = (post.tags || []).indexOf(tag) >= 0;
+    h += '<button class="cal-tag-pick' + (sel ? ' active' : '') + '" style="' + (sel ? 'background:' + calTagColor(tag) + ';color:#0c0c0f' : 'border-color:' + calTagColor(tag) + ';color:' + calTagColor(tag)) + '" onclick="calToggleTag(\'' + post.id + '\',\'' + tag + '\')">' + tag + '</button>';
+  });
+  h += '<button class="cal-tag-pick cal-tag-add" onclick="calAddCustomTag(\'' + post.id + '\')">+ new</button>';
+  h += '</div></div>';
+  h += '<div class="cal-edit-field cal-edit-full"><label class="cal-label">Notes</label>';
+  h += '<textarea class="cal-textarea" oninput="calSaveField(\'' + post.id + '\',\'notes\',this.value)">' + (post.notes || '') + '</textarea>';
+  h += '</div>';
+  h += '</div>';
+  h += '<div class="cal-edit-footer">';
+  h += '<button class="cal-delete-btn" onclick="deleteCalPost(\'' + post.id + '\')">Delete Post</button>';
+  h += '</div>';
+
+  panel.innerHTML = h;
+
+  // Insert panel after toolbar
+  var toolbar = root.querySelector('.cal-toolbar');
+  if (toolbar && toolbar.nextSibling) {
+    root.insertBefore(panel, toolbar.nextSibling);
+  } else {
+    root.appendChild(panel);
+  }
+}
+
+function renderCalMonthGrid(posts) {
+  var html = '';
+  // Month header
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  html += '<div class="cal-month-header">';
+  html += '<button class="cal-nav-arrow" onclick="calNavMonth(-1)">\u2190</button>';
+  html += '<div class="cal-month-label">' + monthNames[calMonth] + ' ' + calYear + '</div>';
+  html += '<button class="cal-nav-arrow" onclick="calNavMonth(1)">\u2192</button>';
+  html += '</div>';
+
+  // Day headers
+  var dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  html += '<div class="cal-grid">';
+  dayLabels.forEach(function(d) {
+    html += '<div class="cal-day-header">' + d + '</div>';
+  });
+
+  // Build the grid
+  var firstDay = new Date(calYear, calMonth, 1);
+  var startDow = firstDay.getDay(); // 0=Sun
+  startDow = (startDow + 6) % 7; // Convert to Mon=0
+  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+  // leading empties
+  for (var i = 0; i < startDow; i++) {
+    html += '<div class="cal-cell cal-cell-empty"></div>';
+  }
+
+  for (var day = 1; day <= daysInMonth; day++) {
+    var dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+    var dayPosts = posts.filter(function(p) { return p.date === dateStr; });
+    var isToday = dateStr === todayStr;
+    var hasPosts = dayPosts.length > 0;
+
+    html += '<div class="cal-cell' + (isToday ? ' cal-cell-today' : '') + (hasPosts ? ' cal-cell-has' : '') + '" onclick="addCalPost(\'' + dateStr + '\')">';
+    html += '<div class="cal-cell-num">' + day + '</div>';
+    dayPosts.forEach(function(p) {
+      html += '<div class="cal-card' + (p.done ? ' cal-card-done' : '') + '" onclick="event.stopPropagation(); editCalPost(\'' + p.id + '\')">';
+      html += '<span class="cal-card-icon">' + calPlatformIcon(p.platform) + '</span>';
+      html += '<span class="cal-card-title">' + (p.title || '(untitled)') + '</span>';
+      if (p.tags && p.tags.length) {
+        html += '<span class="cal-card-dots">';
+        p.tags.forEach(function(t) {
+          html += '<span class="cal-tag-dot" style="background:' + calTagColor(t) + '" title="' + t + '"></span>';
+        });
+        html += '</span>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // trailing empties
+  var totalCells = startDow + daysInMonth;
+  var remainder = totalCells % 7;
+  if (remainder > 0) {
+    for (var j = 0; j < 7 - remainder; j++) {
+      html += '<div class="cal-cell cal-cell-empty"></div>';
+    }
+  }
+
+  html += '</div>'; // cal-grid
+  return html;
+}
+
+function renderCalTable(posts) {
+  var sorted = posts.slice().sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  var html = '<div class="cal-table-wrap">';
+  html += '<table class="cal-table"><thead><tr>';
+  html += '<th>Date</th><th></th><th>Title</th><th>Type</th><th>Tags</th><th>Done</th><th>Notes</th>';
+  html += '</tr></thead><tbody>';
+  sorted.forEach(function(p) {
+    html += '<tr class="cal-table-row' + (p.done ? ' cal-row-done' : '') + '" onclick="editCalPost(\'' + p.id + '\')">';
+    html += '<td class="cal-td-date">' + p.date + '</td>';
+    html += '<td class="cal-td-plat">' + calPlatformIcon(p.platform) + '</td>';
+    html += '<td class="cal-td-title">' + (p.title || '<span class="cal-empty">(untitled)</span>') + '</td>';
+    html += '<td class="cal-td-type">';
+    if (p.mediaType) html += '<span class="cal-media-badge cal-media-' + p.mediaType + '">' + p.mediaType + '</span>';
+    html += '</td>';
+    html += '<td class="cal-td-tags">';
+    (p.tags || []).forEach(function(t) {
+      html += '<span class="cal-tag-pill" style="background:' + calTagColor(t) + '">' + t + '</span>';
+    });
+    html += '</td>';
+    html += '<td class="cal-td-done"><input type="checkbox"' + (p.done ? ' checked' : '') + ' onclick="event.stopPropagation(); calToggleDone(\'' + p.id + '\')"></td>';
+    html += '<td class="cal-td-notes">' + (p.notes || '') + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderCalIdeas(data) {
+  var html = '<div class="cal-ideas-section">';
+  html += '<div class="cal-ideas-header">';
+  html += '<div class="cal-ideas-title">Post Ideas</div>';
+  html += '<button class="cal-add-btn" onclick="addCalIdea()">+ Add Idea</button>';
+  html += '</div>';
+  html += '<div class="cal-ideas-grid">';
+  (data.ideas || []).forEach(function(idea) {
+    html += '<div class="cal-idea-card">';
+    html += '<div class="cal-idea-top">';
+    html += '<div class="cal-idea-name">' + idea.title + '</div>';
+    html += '<div class="cal-idea-actions">';
+    html += '<button class="cal-idea-sched" onclick="scheduleIdea(\'' + idea.id + '\')" title="Schedule this idea">\u2192 Schedule</button>';
+    html += '<button class="cal-idea-del" onclick="deleteCalIdea(\'' + idea.id + '\')" title="Delete">\u00d7</button>';
+    html += '</div>';
+    html += '</div>';
+    if (idea.tags && idea.tags.length) {
+      html += '<div class="cal-idea-tags">';
+      idea.tags.forEach(function(t) {
+        html += '<span class="cal-tag-pill" style="background:' + calTagColor(t) + '">' + t + '</span>';
+      });
+      html += '</div>';
+    }
+    if (idea.notes) {
+      html += '<div class="cal-idea-notes">' + idea.notes + '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function calNavMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function calToggleDone(id) {
+  var data = getCalData();
+  var post = null;
+  data.posts.forEach(function(p) { if (p.id === id) post = p; });
+  if (post) {
+    post.done = !post.done;
+    saveCalData(data);
+    renderCalendar();
+  }
+}
+
+function addCalPost(date) {
+  var data = getCalData();
+  var newId = 'post_' + Date.now();
+  var post = {
+    id: newId,
+    date: date || calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0'),
+    platform: 'instagram',
+    title: '',
+    mediaType: 'static',
+    tags: [],
+    notes: '',
+    done: false
+  };
+  data.posts.push(post);
+  saveCalData(data);
+  calExpandedPost = newId;
+  renderCalendar();
+  setTimeout(function() {
+    var el = document.getElementById('cal-edit-panel');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 50);
+}
+
+function editCalPost(id) {
+  calExpandedPost = (calExpandedPost === id) ? null : id;
+  renderCalendar();
+  if (calExpandedPost) {
+    setTimeout(function() {
+      var el = document.getElementById('cal-edit-panel');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+}
+
+function deleteCalPost(id) {
+  var data = getCalData();
+  data.posts = data.posts.filter(function(p) { return p.id !== id; });
+  saveCalData(data);
+  calExpandedPost = null;
+  renderCalendar();
+}
+
+function calSaveField(id, field, value) {
+  var data = getCalData();
+  data.posts.forEach(function(p) {
+    if (p.id === id) p[field] = value;
+  });
+  saveCalData(data);
+}
+
+function calToggleTag(id, tag) {
+  var data = getCalData();
+  data.posts.forEach(function(p) {
+    if (p.id === id) {
+      if (!p.tags) p.tags = [];
+      var idx = p.tags.indexOf(tag);
+      if (idx >= 0) p.tags.splice(idx, 1);
+      else p.tags.push(tag);
+    }
+  });
+  saveCalData(data);
+  renderCalendar();
+}
+
+function calAddCustomTag(id) {
+  var tag = prompt('New tag name:');
+  if (!tag || !tag.trim()) return;
+  tag = tag.trim().toLowerCase();
+  if (CAL_TAGS.indexOf(tag) === -1) CAL_TAGS.push(tag);
+  var data = getCalData();
+  data.posts.forEach(function(p) {
+    if (p.id === id) {
+      if (!p.tags) p.tags = [];
+      if (p.tags.indexOf(tag) === -1) p.tags.push(tag);
+    }
+  });
+  saveCalData(data);
+  renderCalendar();
+}
+
+function addCalIdea() {
+  var data = getCalData();
+  var newId = 'idea_' + Date.now();
+  data.ideas.push({ id: newId, title: 'New idea', notes: '', tags: [], images: [] });
+  saveCalData(data);
+  renderCalendar();
+}
+
+function deleteCalIdea(id) {
+  var data = getCalData();
+  data.ideas = data.ideas.filter(function(idea) { return idea.id !== id; });
+  saveCalData(data);
+  renderCalendar();
+}
+
+function scheduleIdea(id) {
+  var data = getCalData();
+  var idea = null;
+  data.ideas.forEach(function(i) { if (i.id === id) idea = i; });
+  if (!idea) return;
+  var date = prompt('Schedule for date (YYYY-MM-DD):', calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-');
+  if (!date) return;
+  var newId = 'post_' + Date.now();
+  data.posts.push({
+    id: newId,
+    date: date,
+    platform: 'instagram',
+    title: idea.title,
+    mediaType: 'static',
+    tags: (idea.tags || []).slice(),
+    notes: idea.notes || '',
+    done: false
+  });
+  data.ideas = data.ideas.filter(function(i) { return i.id !== id; });
+  saveCalData(data);
+  renderCalendar();
 }
 
