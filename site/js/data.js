@@ -58,10 +58,20 @@ function _safeSetItem(key, value) {
     return true;
   } catch(e) {
     console.warn('[data] localStorage full writing ' + key + ', clearing and retrying');
-    // Clear this key and any snapshot keys to make room
+    // Clear this key first
     try { localStorage.removeItem(key); } catch(e2) {}
-    // Also clear any visual image caches which can be large
+    // Clear large caches and old snapshots to make room
     try { localStorage.removeItem('popup_visual_imgs_v1'); } catch(e2) {}
+    // Clear snapshot keys (they're just backups)
+    try {
+      var keysToRemove = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('__snap_') >= 0) keysToRemove.push(k);
+      }
+      keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
+      if (keysToRemove.length) console.log('[data] Cleared ' + keysToRemove.length + ' snapshot keys to free space');
+    } catch(e2) {}
     try {
       _origSetItem.call(localStorage, key, str);
       return true;

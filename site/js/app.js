@@ -9496,11 +9496,18 @@ var calMonth = 6; // July (0-indexed)
 var calYear = 2026;
 var calExpandedPost = null;
 
+var _calDataCache = null;
+
 function getCalData() {
-  try { return JSON.parse(localStorage.getItem('popup_calendar_v1') || 'null'); } catch(e) { return null; }
+  try {
+    var stored = JSON.parse(localStorage.getItem('popup_calendar_v1') || 'null');
+    if (stored) { _calDataCache = stored; return stored; }
+  } catch(e) {}
+  return _calDataCache;
 }
 
 function saveCalData(data) {
+  _calDataCache = data;
   localStorage.setItem('popup_calendar_v1', JSON.stringify(data));
 }
 
