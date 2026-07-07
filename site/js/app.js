@@ -9755,6 +9755,24 @@ function calRenderEditPanel(root, data) {
     h += '</div></div>';
   }
 
+  // Reference images gallery (instagram/tiktok only)
+  if (post.platform === 'instagram' || post.platform === 'tiktok') {
+    h += '<div class="cal-edit-field cal-edit-full"><label class="cal-label">Reference Images</label>';
+    h += '<div class="cal-ref-gallery">';
+    var imgs = post.refImages || [];
+    imgs.forEach(function(src, ii) {
+      h += '<div class="cal-ref-thumb" onclick="calExpandRefImg(\'' + post.id + '\',' + ii + ')">';
+      h += '<img src="' + src + '" alt="">';
+      h += '<button class="cal-ref-del" onclick="event.stopPropagation(); calDeleteRefImg(\'' + post.id + '\',' + ii + ')">\u00d7</button>';
+      h += '</div>';
+    });
+    h += '<label class="cal-ref-add">';
+    h += '<input type="file" accept="image/*" multiple style="display:none" onchange="calAddRefImgs(\'' + post.id + '\',this.files)">';
+    h += '+ Add';
+    h += '</label>';
+    h += '</div></div>';
+  }
+
   h += '</div>';
   h += '<div class="cal-edit-footer">';
   h += '<button class="cal-delete-btn" onclick="deleteCalPost(\'' + post.id + '\')">Delete Post</button>';
@@ -10173,6 +10191,70 @@ function calSaveField(id, field, value) {
     if (p.id === id) p[field] = value;
   });
   saveCalData(data);
+}
+
+// ── Reference image functions ──
+
+function calCompressImage(file, maxW, quality, cb) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      cb(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function calAddRefImgs(id, files) {
+  if (!files || !files.length) return;
+  var remaining = files.length;
+  var r = calGetPost(id);
+  if (!r.post) return;
+  if (!r.post.refImages) r.post.refImages = [];
+  for (var i = 0; i < files.length; i++) {
+    (function(file) {
+      calCompressImage(file, 600, 0.6, function(dataUrl) {
+        r.post.refImages.push(dataUrl);
+        remaining--;
+        if (remaining <= 0) {
+          saveCalData(r.data);
+          renderCalendar();
+          setTimeout(function() {
+            var el = document.getElementById('cal-edit-panel');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 50);
+        }
+      });
+    })(files[i]);
+  }
+}
+
+function calDeleteRefImg(id, idx) {
+  var r = calGetPost(id);
+  if (!r.post || !r.post.refImages) return;
+  r.post.refImages.splice(idx, 1);
+  saveCalData(r.data);
+  renderCalendar();
+}
+
+function calExpandRefImg(id, idx) {
+  var r = calGetPost(id);
+  if (!r.post || !r.post.refImages || !r.post.refImages[idx]) return;
+  var src = r.post.refImages[idx];
+  var overlay = document.createElement('div');
+  overlay.className = 'cal-lightbox';
+  overlay.onclick = function() { overlay.remove(); };
+  overlay.innerHTML = '<img src="' + src + '" class="cal-lightbox-img" onclick="event.stopPropagation()">' +
+    '<button class="cal-lightbox-close" onclick="this.parentElement.remove()">\u00d7</button>';
+  document.body.appendChild(overlay);
 }
 
 // ── To-do functions ──
