@@ -9516,9 +9516,13 @@ function calFormatDate(dateStr) {
 }
 
 function initCalData() {
+  try { _initCalDataInner(); } catch(e) { console.error('[calendar] initCalData error:', e); }
+}
+
+function _initCalDataInner() {
   var d = getCalData();
-  if (!d) {
-    d = { posts: CAL_SEED.slice(), ideas: CAL_SEED_IDEAS.slice() };
+  if (!d || !d.posts) {
+    d = { posts: JSON.parse(JSON.stringify(CAL_SEED)), ideas: JSON.parse(JSON.stringify(CAL_SEED_IDEAS)) };
     saveCalData(d);
   }
   // Merge any new seed posts that don't exist yet (by id)
@@ -9617,10 +9621,17 @@ function calFilterPosts(posts) {
 }
 
 function renderCalendar() {
+  try { _renderCalendarInner(); } catch(e) { console.error('[calendar] render error:', e); var r = document.getElementById('cal-root'); if (r) r.innerHTML = '<div style="padding:40px;color:var(--action)">Calendar error: ' + e.message + '. Try clearing popup_calendar_v1 from localStorage.</div>'; }
+}
+
+function _renderCalendarInner() {
   var root = document.getElementById('cal-root');
   if (!root) return;
   var data = getCalData();
+  if (!data) { initCalData(); data = getCalData(); }
   if (!data) return;
+  if (!data.posts) data.posts = [];
+  if (!data.ideas) data.ideas = [];
   var filtered = calFilterPosts(data.posts);
 
   var html = '';
