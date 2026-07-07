@@ -10157,6 +10157,10 @@ function addCalPost(date) {
     done: false
   };
   data.posts.push(post);
+  // If adding an event, auto-create promo post 4 days before
+  if (post.platform === 'event') {
+    calEnsurePromoPost(data, post);
+  }
   saveCalData(data);
   calExpandedPost = newId;
   renderCalendar();
@@ -10185,11 +10189,51 @@ function deleteCalPost(id) {
   renderCalendar();
 }
 
+function calEnsurePromoPost(data, eventPost) {
+  if (eventPost.platform !== 'event') return;
+  var promoId = 'promo_' + eventPost.id;
+  var exists = data.posts.some(function(p) { return p.id === promoId; });
+  if (exists) {
+    // Update the promo date/title if event changed
+    data.posts.forEach(function(p) {
+      if (p.id === promoId) {
+        var parts = eventPost.date.split('-');
+        var evDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        var promoDate = new Date(evDate.getTime() - 4 * 24 * 60 * 60 * 1000);
+        p.date = promoDate.getFullYear() + '-' + String(promoDate.getMonth() + 1).padStart(2, '0') + '-' + String(promoDate.getDate()).padStart(2, '0');
+        p.title = 'Promo: ' + (eventPost.title || 'Event');
+        p.notes = 'Promo post for ' + eventPost.title + ' on ' + calFormatDate(eventPost.date);
+      }
+    });
+    return;
+  }
+  var parts = eventPost.date.split('-');
+  var evDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var promoDate = new Date(evDate.getTime() - 4 * 24 * 60 * 60 * 1000);
+  var promoStr = promoDate.getFullYear() + '-' + String(promoDate.getMonth() + 1).padStart(2, '0') + '-' + String(promoDate.getDate()).padStart(2, '0');
+  data.posts.push({
+    id: promoId,
+    date: promoStr,
+    platform: 'instagram',
+    title: 'Promo: ' + (eventPost.title || 'Event'),
+    mediaType: 'static',
+    tags: ['coming soon'],
+    notes: 'Promo post for ' + (eventPost.title || 'Event') + ' on ' + calFormatDate(eventPost.date),
+    done: false,
+    _promoFor: eventPost.id
+  });
+}
+
 function calSaveField(id, field, value) {
   var data = getCalData();
+  var post = null;
   data.posts.forEach(function(p) {
-    if (p.id === id) p[field] = value;
+    if (p.id === id) { p[field] = value; post = p; }
   });
+  // Auto-create/update promo post when platform set to event, or event date/title changes
+  if (post && post.platform === 'event' && (field === 'platform' || field === 'date' || field === 'title')) {
+    calEnsurePromoPost(data, post);
+  }
   saveCalData(data);
 }
 
