@@ -9458,11 +9458,11 @@ var CAL_SEED = [
   { id: 'post_ev_4', date: '2026-08-09', platform: 'event', title: 'Chez Elise', mediaType: '', tags: ['cafe'], notes: 'Second Sunday in August', done: false },
   { id: 'post_ev_5', date: '2026-08-15', platform: 'event', title: 'Weekend Event', mediaType: '', tags: [], notes: 'TBD', done: false },
   { id: 'post_ev_6', date: '2026-08-22', platform: 'event', title: 'Weekend Event', mediaType: '', tags: [], notes: 'TBD', done: false },
-  // Rasor & Tape DJ every Wednesday 5-9pm
-  { id: 'post_dj_1', date: '2026-07-29', platform: 'event', title: 'Rasor & Tape DJ Session', mediaType: '', tags: [], notes: '5-9 PM', done: false },
-  { id: 'post_dj_2', date: '2026-08-05', platform: 'event', title: 'Rasor & Tape DJ Session', mediaType: '', tags: [], notes: '5-9 PM', done: false },
-  { id: 'post_dj_3', date: '2026-08-12', platform: 'event', title: 'Rasor & Tape DJ Session', mediaType: '', tags: [], notes: '5-9 PM', done: false },
-  { id: 'post_dj_4', date: '2026-08-19', platform: 'event', title: 'Rasor & Tape DJ Session', mediaType: '', tags: [], notes: '5-9 PM', done: false },
+  // DJ Event — Sebastian every Tuesday 5-9pm
+  { id: 'post_dj_1', date: '2026-07-28', platform: 'event', title: 'DJ Event \u2014 Sebastian', mediaType: '', tags: [], notes: '5-9 PM', done: false },
+  { id: 'post_dj_2', date: '2026-08-04', platform: 'event', title: 'DJ Event \u2014 Sebastian', mediaType: '', tags: [], notes: '5-9 PM', done: false },
+  { id: 'post_dj_3', date: '2026-08-11', platform: 'event', title: 'DJ Event \u2014 Sebastian', mediaType: '', tags: [], notes: '5-9 PM', done: false },
+  { id: 'post_dj_4', date: '2026-08-18', platform: 'event', title: 'DJ Event \u2014 Sebastian', mediaType: '', tags: [], notes: '5-9 PM', done: false },
   // Sucre Nails press-on event every Friday TBD
   { id: 'post_nails_1', date: '2026-07-24', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
   { id: 'post_nails_2', date: '2026-07-31', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
@@ -9808,7 +9808,7 @@ function calGetEventColor(post, data) {
     if (!promoMatch) {
       if (promoTitle.indexOf('opening') >= 0) promoMatch = '#e2c97e';
       else if (promoTitle.indexOf('closing') >= 0) promoMatch = '#e07070';
-      else if (promoTitle.indexOf('rasor') >= 0 || promoTitle.indexOf('dj') >= 0) promoMatch = '#b8a0e0';
+      else if (promoTitle.indexOf('rasor') >= 0 || promoTitle.indexOf('dj') >= 0 || promoTitle.indexOf('sebastian') >= 0) promoMatch = '#b8a0e0';
       else if (promoTitle.indexOf('sucre') >= 0 || promoTitle.indexOf('nails') >= 0) promoMatch = '#e0845a';
       else if (promoTitle.indexOf('elise') >= 0) promoMatch = '#6aaad8';
       else if (promoTitle.indexOf('weekend') >= 0) promoMatch = '#82bfbb';
@@ -9833,7 +9833,7 @@ function calGetEventColor(post, data) {
   if (!match) {
     if (title.indexOf('opening') >= 0) match = '#e2c97e';
     else if (title.indexOf('closing') >= 0) match = '#e07070';
-    else if (title.indexOf('rasor') >= 0 || title.indexOf('tape') >= 0 || title.indexOf('dj') >= 0) match = '#b8a0e0';
+    else if (title.indexOf('rasor') >= 0 || title.indexOf('tape') >= 0 || title.indexOf('dj') >= 0 || title.indexOf('sebastian') >= 0) match = '#b8a0e0';
     else if (title.indexOf('sucre') >= 0 || title.indexOf('nails') >= 0 || title.indexOf('press') >= 0) match = '#e0845a';
     else if (title.indexOf('elise') >= 0 || title.indexOf('chez') >= 0) match = '#6aaad8';
     else if (title.indexOf('weekend') >= 0) match = '#82bfbb';
@@ -10002,7 +10002,7 @@ var ES_COLORS = ['#e2c97e','#82bfbb','#b8a0e0','#e0845a','#6aaad8','#c77dba','#a
 var EVENT_SERIES_SEED = [
   { id: 'es_opening', name: 'Opening Event', color: '#e2c97e', notes: 'Opening party — Jul 23. Wine + sparkling water + simple snacks for 40-60 people.', datesConfirmed: true, todos: [], supplies: [{ text: 'Wine', done: false }, { text: 'Sparkling water', done: false }, { text: 'Snacks', done: false }, { text: 'Cups / glasses', done: false }, { text: 'Napkins', done: false }, { text: 'Ice', done: false }] },
   { id: 'es_weekend', name: 'Weekend Events', color: '#82bfbb', notes: 'Every weekend Sat or Sun, Jul 25 – Aug 22. Programming TBD.', datesConfirmed: false, todos: [], supplies: [] },
-  { id: 'es_dj', name: 'Rasor & Tape DJ Sessions', color: '#b8a0e0', notes: 'Every Wednesday 5-9 PM starting Jul 29.', datesConfirmed: true, todos: [], supplies: [{ text: 'Speaker / PA system', done: false }, { text: 'DJ table setup', done: false }] },
+  { id: 'es_dj', name: 'DJ Event \u2014 Sebastian', color: '#b8a0e0', notes: 'Every Tuesday 5-9 PM starting Jul 28. Sebastian also playing opening party (Jul 23) and closing party (Aug 23).', datesConfirmed: true, todos: [], supplies: [{ text: 'Speaker / PA system', done: false }, { text: 'DJ table setup', done: false }] },
   { id: 'es_nails', name: 'Sucre Nails Press-On Events', color: '#e0845a', notes: 'Every Friday TBD. Press-on nail application events.', datesConfirmed: false, todos: [], supplies: [] },
   { id: 'es_elise', name: 'Chez Elise', color: '#6aaad8', notes: 'Second Sunday in August (Aug 9). Cafe pop-up event.', datesConfirmed: true, todos: [], supplies: [] },
   { id: 'es_closing', name: 'Closing Party', color: '#e07070', notes: 'August 23 — last day of the popup. Closing celebration.', datesConfirmed: true, todos: [], supplies: [] }
