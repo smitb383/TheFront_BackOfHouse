@@ -316,8 +316,8 @@ function calcPL(scenario, inventory) {
     }
 
     var sale = scenario.itemSales && scenario.itemSales[item.id];
-    // "sell" qty: user override from P&L scenario, defaults to inventory qty
-    var sales = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+    // "sell" qty: user override from P&L scenario, then actual sold from inventory, then total qty
+    var sales = (sale && sale.qty != null) ? sale.qty : (item.totalSold > 0 ? item.totalSold : (item.qty || 1));
     var gross = sales * item.price;
     var commission;
     if (item.isInHouse && item.costPerUnit) {

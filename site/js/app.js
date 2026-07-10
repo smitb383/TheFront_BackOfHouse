@@ -8373,8 +8373,10 @@ function renderInvNew() {
         (item.category === 'clothing' && !hasSizes ? '<div style="padding:6px 0"><button onclick="event.stopPropagation();invNewInitSizes(' + vi + ',' + ii + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:4px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Enable size tracking</button></div>' : '');
       }
 
-      return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
-        '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 50px 80px 70px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+      var itemAllSold = totalSold >= totalQty && totalQty > 0;
+      var itemRowOpacity = itemAllSold ? 'opacity:0.45;' : '';
+      return '<div style="border-bottom:1px solid var(--faint);padding:8px 0;' + itemRowOpacity + '">' +
+        '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
             (item.photo
               ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' +
@@ -8405,9 +8407,20 @@ function renderInvNew() {
           '<div style="border-left:1px solid var(--border);height:100%"></div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:right">$' + Math.round(price * totalQty) + '</div>' +
           '<div style="border-left:1px solid var(--border);height:100%"></div>' +
-          (hasSizes
-            ? '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:center">' + totalSold + '</div>'
-            : '<input type="number" min="0" value="' + (item.sold || 0) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">') +
+          (function() {
+            var allItemSold = totalSold >= totalQty && totalQty > 0;
+            var soldBtnS = allItemSold
+              ? 'background:#88c98a22;border:1px solid #88c98a44;color:#88c98a'
+              : 'background:var(--surface2);border:1px solid var(--faint);color:var(--text)';
+            if (hasSizes) {
+              return '<div style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--muted)') + ';text-align:center">' + totalSold + '/' + totalQty + '</div>';
+            }
+            return '<div style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
+              '<button onclick="invNewMarkSold(' + vi + ',' + ii + ')" style="' + soldBtnS + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">' + (allItemSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+              '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--text)') + '">' + totalSold + '/' + totalQty + '</span>' +
+              (totalSold > 0 ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo">↩</button>' : '') +
+            '</div>';
+          })() +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(totalSales) + '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + totalUs + '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + totalThem + '</div>' +
@@ -8498,11 +8511,11 @@ function renderInvNew() {
           '<div></div><div style="text-align:center">Qty</div><div style="text-align:right">Total Cost</div><div style="text-align:center">Sold</div><div style="text-align:right">Revenue</div><div style="text-align:right">Profit</div><div></div>' +
         '</div>';
       } else {
-        colHeaders = '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 50px 80px 70px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+        colHeaders = '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
           '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div>' +
           '<div></div><div style="text-align:right">Us/ea</div><div style="text-align:right">Them/ea</div>' +
           '<div></div><div style="text-align:right">Value</div>' +
-          '<div></div><div style="text-align:center">Sold</div><div style="text-align:right">Total</div><div style="text-align:right">Us</div><div style="text-align:right">Them</div><div></div>' +
+          '<div></div><div>Sold</div><div style="text-align:right">Revenue</div><div style="text-align:right">Us</div><div style="text-align:right">Them</div><div></div>' +
         '</div>';
       }
       vendorBody = '<div style="padding:4px 0 12px">' +
@@ -8555,22 +8568,35 @@ function invNewEditVendor(vi, field, val) {
 function buildSizeRows(vi, ii, item, sPct, dPct) {
   var price = item.salePrice || 0;
   var rows = item.sizes.map(function(sz, si) {
+    var szQty = sz.qty || 0;
     var szSold = sz.sold || 0;
     var szRevenue = price * szSold;
-    var szSoldBg = szSold >= (sz.qty || 0) && (sz.qty || 0) > 0 ? 'color:#88c98a' : '';
-    return '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 50px 80px 70px 70px 28px;align-items:center;gap:6px;padding:2px 0" onclick="event.stopPropagation()">' +
+    var allSold = szSold >= szQty && szQty > 0;
+    var rowOpacity = allSold ? 'opacity:0.4;' : '';
+    var soldBtnStyle = allSold
+      ? 'background:#88c98a22;border:1px solid #88c98a44;color:#88c98a'
+      : 'background:var(--surface2);border:1px solid var(--faint);color:var(--text)';
+
+    return '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:6px;padding:3px 0;' + rowOpacity + '" onclick="event.stopPropagation()">' +
       '<div></div>' +
-      '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);padding-left:8px"><span style="background:var(--surface2);padding:2px 10px;border-radius:2px;font-weight:600">' + esc(sz.size || '') + '</span></div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);padding-left:8px;display:flex;align-items:center;gap:6px">' +
+        '<span style="background:var(--surface2);padding:2px 10px;border-radius:2px;font-weight:600">' + esc(sz.size || '') + '</span>' +
+        (allSold ? '<span style="font-size:8px;color:#88c98a;text-transform:uppercase;letter-spacing:0.06em">sold out</span>' : '') +
+      '</div>' +
       '<div></div>' +
       '<div></div>' +
-      '<input type="number" min="0" value="' + (sz.qty || 0) + '" oninput="invNewEditSize(' + vi + ',' + ii + ',' + si + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">' +
+      '<input type="number" min="0" value="' + szQty + '" oninput="invNewEditSize(' + vi + ',' + ii + ',' + si + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">' +
       '<div></div>' +
       '<div></div>' +
       '<div></div>' +
       '<div></div>' +
       '<div></div>' +
       '<div></div>' +
-      '<input type="number" min="0" value="' + szSold + '" oninput="invNewEditSize(' + vi + ',' + ii + ',' + si + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center;' + szSoldBg + '">' +
+      '<div style="display:flex;align-items:center;gap:4px">' +
+        '<button onclick="invNewMarkSold(' + vi + ',' + ii + ',' + si + ')" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="Click to mark one sold">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+        '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
+        (szSold > 0 ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
+      '</div>' +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;text-align:right">$' + Math.round(szRevenue * (sPct / 100)) + '</div>' +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue * (dPct / 100)) + '</div>' +
@@ -8615,6 +8641,45 @@ function invNewAddSize(vi, ii) {
   item.sizes.push({ size: next, qty: 0, sold: 0 });
   saveInvNew(data);
   renderInvNew();
+}
+
+function invNewMarkSold(vi, ii, si) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  if (si !== undefined && si !== null) {
+    // Size-specific sell
+    var sz = data.vendors[vi].items[ii].sizes[si];
+    if (!sz) return;
+    if ((sz.sold || 0) < (sz.qty || 0)) {
+      sz.sold = (sz.sold || 0) + 1;
+    }
+  } else {
+    // Non-sized item sell
+    var item = data.vendors[vi].items[ii];
+    if ((item.sold || 0) < (item.qty || 1)) {
+      item.sold = (item.sold || 0) + 1;
+    }
+  }
+  saveInvNew(data);
+  renderInvNew();
+  // Also re-render P&L if open
+  if (typeof renderPL === 'function') try { renderPL(); } catch(e) {}
+}
+
+function invNewUndoSold(vi, ii, si) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  if (si !== undefined && si !== null) {
+    var sz = data.vendors[vi].items[ii].sizes[si];
+    if (!sz) return;
+    if ((sz.sold || 0) > 0) sz.sold = (sz.sold || 0) - 1;
+  } else {
+    var item = data.vendors[vi].items[ii];
+    if ((item.sold || 0) > 0) item.sold = (item.sold || 0) - 1;
+  }
+  saveInvNew(data);
+  renderInvNew();
+  if (typeof renderPL === 'function') try { renderPL(); } catch(e) {}
 }
 
 function invNewRemoveSize(vi, ii, si) {
