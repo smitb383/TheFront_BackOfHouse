@@ -8604,7 +8604,7 @@ function invNewAddSize(vi, ii) {
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var item = data.vendors[vi].items[ii];
   if (!item.sizes) item.sizes = [];
-  var defaultSizes = ['XS','S','M','L','XL'];
+  var defaultSizes = ['XS','XS/S','S','S/M','M','M/L','L','XL'];
   var existing = item.sizes.map(function(s) { return s.size; });
   var next = '';
   for (var i = 0; i < defaultSizes.length; i++) {
