@@ -8090,7 +8090,84 @@ function saveInvNew(d) {
   }
 }
 
+// One-time Minena inventory import from July line sheet
+var _minenaImportDone = false;
+function _migrateMinenaInventory() {
+  if (_minenaImportDone) return;
+  var data = getInvNew();
+  if (!data || !data.vendors) return;
+  // Find Minena vendor (case-insensitive)
+  var vendor = null;
+  data.vendors.forEach(function(v) {
+    if (v.name && v.name.toLowerCase().indexOf('minena') >= 0) vendor = v;
+  });
+  if (!vendor) return;
+  // Check if already imported (look for our marker)
+  if (vendor._minenaJulyImport) { _minenaImportDone = true; return; }
+
+  // Clear existing items
+  vendor.items = [];
+  var ts = Date.now();
+  var n = 0;
+  function mkId() { return 'inv_minena_' + (ts++) + '_' + (n++); }
+
+  var items = [
+    { name: 'Bralette', color: 'Pink', cat: 'Clothing', price: 150, sizes: [{size:'M',qty:1}] },
+    { name: 'Bralette', color: 'Blue', cat: 'Clothing', price: 150, sizes: [{size:'S',qty:1},{size:'L',qty:1}] },
+    { name: 'Bralette', color: 'Light Pink', cat: 'Clothing', price: 150, sizes: [{size:'S',qty:1},{size:'M',qty:1},{size:'L',qty:1}] },
+    { name: 'Bralette', color: 'Brown', cat: 'Clothing', price: 150, sizes: [{size:'M',qty:1}] },
+    { name: 'Top TLL', color: 'Black', cat: 'Clothing', price: 260, sizes: [{size:'S',qty:1},{size:'M/L',qty:1}] },
+    { name: 'Top TLL', color: 'Pink', cat: 'Clothing', price: 260, sizes: [{size:'S',qty:1}] },
+    { name: 'Top TLL', color: 'Grey', cat: 'Clothing', price: 260, sizes: [{size:'S',qty:1},{size:'M',qty:1}] },
+    { name: 'Sueter Brutal', color: 'Black', cat: 'Clothing', price: 300, sizes: [{size:'M/L',qty:1},{size:'L',qty:1}] },
+    { name: 'Sueter Brutal', color: 'Beige', cat: 'Clothing', price: 300, sizes: [{size:'M/L',qty:1},{size:'L',qty:1}] },
+    { name: 'Sueter Brutal', color: 'Pink', cat: 'Clothing', price: 300, sizes: [{size:'M/L',qty:1},{size:'L',qty:1}] },
+    { name: 'Silencio Nylon Jacket', color: 'Wine', cat: 'Clothing', price: 380, sizes: [{size:'S',qty:1}] },
+    { name: 'Silencio Hoodie', color: 'Purple', cat: 'Clothing', price: 280, sizes: [{size:'S/M',qty:1}] },
+    { name: 'Gogo Tank', color: 'Pink', cat: 'Clothing', price: 230, sizes: [{size:'XS',qty:1}] },
+    { name: 'Gogo Tank', color: 'Grey', cat: 'Clothing', price: 170, sizes: [{size:'M',qty:1}] },
+    { name: 'Silencio Hoodie', color: 'Grey', cat: 'Clothing', price: 380, sizes: [{size:'S/M',qty:1}] },
+    { name: 'Capelino Hoodie', color: 'Black', cat: 'Clothing', price: 300, sizes: [{size:'M',qty:1}] },
+    { name: 'Cassette Hoodie', color: 'Blue', cat: 'Clothing', price: 300, sizes: [{size:'S',qty:1}] },
+    { name: 'Saco Jersey', color: 'Olive', cat: 'Clothing', price: 320, sizes: [{size:'M/L',qty:1}] },
+    { name: 'Camisa Pearl Spritz', color: 'Black/White', cat: 'Clothing', price: 280, sizes: [{size:'M/L',qty:1}] },
+    { name: 'Camisa Flat White', color: 'Aqua/White', cat: 'Clothing', price: 280, sizes: [{size:'M/L',qty:1}] },
+    { name: 'Piano Piano Pants', color: 'Blue', cat: 'Clothing', price: 290, sizes: [{size:'S',qty:1}] },
+    { name: 'Pareo Nublado', color: 'Black', cat: 'Clothing', price: 420, sizes: [{size:'S/M',qty:1}] },
+    { name: 'Falda Mini Chica Minha', color: 'Pink', cat: 'Clothing', price: 320, sizes: [{size:'XS',qty:1}] },
+    { name: 'Falda Mini Chica Minha', color: 'Brown', cat: 'Clothing', price: 320, sizes: [{size:'S',qty:1}] },
+    { name: 'Falda Mini Chica Minha', color: 'Green', cat: 'Clothing', price: 320, sizes: [{size:'S',qty:1}] },
+    { name: 'Falda Mini Chica Minha', color: 'Blue', cat: 'Clothing', price: 320, sizes: [{size:'S',qty:1}] },
+    { name: 'Minena Skirt', color: 'Grey Stripes', cat: 'Clothing', price: 370, sizes: [{size:'S',qty:1}] }
+  ];
+
+  items.forEach(function(item) {
+    var totalQty = 0;
+    item.sizes.forEach(function(s) { s.sold = 0; totalQty += s.qty; });
+    vendor.items.push({
+      id: mkId(),
+      name: item.name + ' — ' + item.color,
+      category: item.cat,
+      salePrice: item.price,
+      qty: totalQty,
+      sizes: item.sizes,
+      photo: '',
+      material: '',
+      dimensions: '',
+      description: '',
+      notes: '',
+      sold: 0
+    });
+  });
+
+  vendor._minenaJulyImport = true;
+  saveInvNew(data);
+  _minenaImportDone = true;
+  console.log('[inv] Imported ' + items.length + ' Minena items from July line sheet');
+}
+
 function invNewSyncConfirmed() {
+  _migrateMinenaInventory();
   var data = getInvNew() || { vendors: [] };
   var popupVendors = getPopupVendors();
   var qualifying = popupVendors.filter(function(v) { return v.inventoryStatus === 'received-linesheet' || v.inventoryStatus === 'confirmed-stock' || v.inventoryStatus === 'received-stock'; });
