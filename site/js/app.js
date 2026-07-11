@@ -8279,8 +8279,33 @@ function _removeReagenFlora() {
   }
 }
 
+function _ensureMatinaVendor() {
+  var vendors = getPopupVendors();
+  var exists = vendors.some(function(v) { return v.name && v.name.toLowerCase().indexOf('matina') >= 0; });
+  if (!exists) {
+    vendors.push({
+      id: 1720700100000,
+      name: 'Matina',
+      discipline: 'Clothing',
+      status: 'confirmed',
+      inventoryStatus: 'confirmed-stock',
+      email: '',
+      instagram: '',
+      website: '',
+      fee: '',
+      notes: '',
+      priceRange: '',
+      location: '',
+      photos: []
+    });
+    savePopupVendors(vendors);
+    console.log('[inv] Added Matina to vendor list');
+  }
+}
+
 function invNewSyncConfirmed() {
   _removeReagenFlora();
+  _ensureMatinaVendor();
   _migrateDevanshiJain();
   _migrateMinenaInventory();
   var data = getInvNew() || { vendors: [] };
