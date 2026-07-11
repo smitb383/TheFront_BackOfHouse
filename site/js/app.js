@@ -8259,7 +8259,28 @@ function _migrateMinenaInventory() {
   console.log('[inv] Imported ' + items.length + ' Minena items from July line sheet');
 }
 
+function _removeReagenFlora() {
+  // Remove from vendor list
+  var vendors = getPopupVendors();
+  var filtered = vendors.filter(function(v) { return !(v.name && v.name.toLowerCase().indexOf('reagen') >= 0); });
+  if (filtered.length < vendors.length) {
+    savePopupVendors(filtered);
+    console.log('[inv] Removed Reagen Flora from vendor list');
+  }
+  // Remove from inventory
+  var data = getInvNew();
+  if (data && data.vendors) {
+    var before = data.vendors.length;
+    data.vendors = data.vendors.filter(function(v) { return !(v.name && v.name.toLowerCase().indexOf('reagen') >= 0); });
+    if (data.vendors.length < before) {
+      saveInvNew(data);
+      console.log('[inv] Removed Reagen Flora from inventory');
+    }
+  }
+}
+
 function invNewSyncConfirmed() {
+  _removeReagenFlora();
   _migrateDevanshiJain();
   _migrateMinenaInventory();
   var data = getInvNew() || { vendors: [] };
