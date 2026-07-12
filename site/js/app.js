@@ -8363,13 +8363,13 @@ function renderInvNew() {
   // Build index map for sorting (preserve original indices for editing)
   var vendorIndices = data.vendors.map(function(v, i) { return i; });
   var agOrder = { 'not-sent': 0, 'sent': 1, 'signed': 2 };
-  var stOrder = { 'not-shipped': 0, 'shipped': 1, 'delivering': 2, 'received': 3 };
+  var dsOrder = { 'none': 0, 'scheduled': 1, 'shipped': 1, 'received': 2 };
   if (invNewSortBy === 'invComplete') {
     vendorIndices.sort(function(a, b) { return (data.vendors[a].invComplete ? 1 : 0) - (data.vendors[b].invComplete ? 1 : 0); });
   } else if (invNewSortBy === 'agreement') {
     vendorIndices.sort(function(a, b) { return (agOrder[data.vendors[a].agreementStatus || 'not-sent'] || 0) - (agOrder[data.vendors[b].agreementStatus || 'not-sent'] || 0); });
   } else if (invNewSortBy === 'stock') {
-    vendorIndices.sort(function(a, b) { return (stOrder[data.vendors[a].stockStatus || 'not-shipped'] || 0) - (stOrder[data.vendors[b].stockStatus || 'not-shipped'] || 0); });
+    vendorIndices.sort(function(a, b) { return (dsOrder[data.vendors[a].deliveryStatus || 'none'] || 0) - (dsOrder[data.vendors[b].deliveryStatus || 'none'] || 0); });
   } else {
     vendorIndices.sort(function(a, b) { return (data.vendors[a].name || '').toLowerCase() < (data.vendors[b].name || '').toLowerCase() ? -1 : 1; });
   }
@@ -8660,31 +8660,62 @@ function renderInvNew() {
     // Status badges
     var invComplete = vendor.invComplete || false;
     var agreementStatus = vendor.agreementStatus || 'not-sent';
-    var stockStatus = vendor.stockStatus || 'not-shipped';
+    var deliveryMethod = vendor.deliveryMethod || (isNonNYC ? 'shipping' : 'dropoff');
+    var deliveryStatus = vendor.deliveryStatus || 'none';
 
     var agColors = { 'signed': '#88c98a', 'sent': '#e2c97e', 'not-sent': '#e07070' };
-    var agLabels = { 'signed': 'Signed', 'sent': 'Sent', 'not-sent': 'Not Sent' };
-    var stColors = { 'received': '#88c98a', 'delivering': '#6aaad8', 'shipped': '#e2c97e', 'not-shipped': '#e07070' };
-    var stLabels = { 'received': 'Received', 'delivering': 'Delivering', 'shipped': 'Shipped', 'not-shipped': 'Not Shipped' };
+
+    // Delivery status colors depend on method
+    var dsColors;
+    if (deliveryMethod === 'dropoff') {
+      dsColors = { 'received': '#88c98a', 'scheduled': '#e2c97e', 'none': '#e07070' };
+    } else {
+      dsColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'none': '#e07070' };
+    }
+    var dsColor = dsColors[deliveryStatus] || '#e07070';
+
+    var lblStyle = 'font-family:DM Mono,monospace;font-size:7px;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint);margin-bottom:2px';
+    var selBase = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer';
 
     var statusBadges =
-      '<span style="display:flex;align-items:center;gap:10px;flex-shrink:0" onclick="event.stopPropagation()">' +
+      '<span style="display:flex;align-items:center;gap:12px;flex-shrink:0" onclick="event.stopPropagation()">' +
+        // Inventory complete
         '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;accent-color:#88c98a" title="Inventory complete">' +
           '<input type="checkbox"' + (invComplete ? ' checked' : '') + ' onchange="invNewEditVendor(' + vi + ',\'invComplete\',this.checked)">' +
           '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:' + (invComplete ? '#88c98a' : 'var(--muted)') + ';font-weight:' + (invComplete ? '700' : '400') + '">Complete</span>' +
         '</label>' +
-        '<select onchange="invNewEditVendor(' + vi + ',\'agreementStatus\',this.value)" style="background:' + agColors[agreementStatus] + '22;border:2px solid ' + agColors[agreementStatus] + ';color:' + agColors[agreementStatus] + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
-          '<option value="signed"' + (agreementStatus === 'signed' ? ' selected' : '') + '>Signed</option>' +
-          '<option value="sent"' + (agreementStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
-          '<option value="not-sent"' + (agreementStatus === 'not-sent' ? ' selected' : '') + '>Not Sent</option>' +
-        '</select>' +
-        '<select onchange="invNewEditVendor(' + vi + ',\'stockStatus\',this.value);invNewHandleDeliverDate(' + vi + ',this.value)" style="background:' + stColors[stockStatus] + '22;border:2px solid ' + stColors[stockStatus] + ';color:' + stColors[stockStatus] + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
-          '<option value="received"' + (stockStatus === 'received' ? ' selected' : '') + '>Received</option>' +
-          '<option value="delivering"' + (stockStatus === 'delivering' ? ' selected' : '') + '>Delivering</option>' +
-          '<option value="shipped"' + (stockStatus === 'shipped' ? ' selected' : '') + '>Shipped</option>' +
-          '<option value="not-shipped"' + (stockStatus === 'not-shipped' ? ' selected' : '') + '>Not Shipped</option>' +
-        '</select>' +
-        (stockStatus === 'delivering' && vendor.deliverDate ? '<span style="font-family:DM Mono,monospace;font-size:9px;color:#6aaad8">' + vendor.deliverDate + '</span>' : '') +
+        // Signed inventory agreement
+        '<div style="display:flex;flex-direction:column;align-items:center">' +
+          '<div style="' + lblStyle + '">Agreement</div>' +
+          '<select onchange="invNewEditVendor(' + vi + ',\'agreementStatus\',this.value)" style="background:' + agColors[agreementStatus] + '22;border:2px solid ' + agColors[agreementStatus] + ';color:' + agColors[agreementStatus] + ';' + selBase + '">' +
+            '<option value="signed"' + (agreementStatus === 'signed' ? ' selected' : '') + '>\u2713 Signed</option>' +
+            '<option value="sent"' + (agreementStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
+            '<option value="not-sent"' + (agreementStatus === 'not-sent' ? ' selected' : '') + '>Not Sent</option>' +
+          '</select>' +
+        '</div>' +
+        // Delivery method
+        '<div style="display:flex;flex-direction:column;align-items:center">' +
+          '<div style="' + lblStyle + '">Delivery</div>' +
+          '<select onchange="invNewEditVendor(' + vi + ',\'deliveryMethod\',this.value);invNewEditVendor(' + vi + ',\'deliveryStatus\',\'none\');renderInvNew()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);' + selBase + '">' +
+            '<option value="dropoff"' + (deliveryMethod === 'dropoff' ? ' selected' : '') + '>\ud83d\udccd Local Drop-off</option>' +
+            '<option value="shipping"' + (deliveryMethod === 'shipping' ? ' selected' : '') + '>\ud83d\udce6 Shipping</option>' +
+          '</select>' +
+        '</div>' +
+        // Delivery status (context-dependent)
+        '<div style="display:flex;flex-direction:column;align-items:center">' +
+          '<div style="' + lblStyle + '">Status</div>' +
+          (deliveryMethod === 'dropoff'
+            ? '<select onchange="invNewEditVendor(' + vi + ',\'deliveryStatus\',this.value)" style="background:' + dsColor + '22;border:2px solid ' + dsColor + ';color:' + dsColor + ';' + selBase + '">' +
+                '<option value="received"' + (deliveryStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
+                '<option value="scheduled"' + (deliveryStatus === 'scheduled' ? ' selected' : '') + '>Scheduled</option>' +
+                '<option value="none"' + (deliveryStatus === 'none' ? ' selected' : '') + '>Unconfirmed</option>' +
+              '</select>'
+            : '<select onchange="invNewEditVendor(' + vi + ',\'deliveryStatus\',this.value)" style="background:' + dsColor + '22;border:2px solid ' + dsColor + ';color:' + dsColor + ';' + selBase + '">' +
+                '<option value="received"' + (deliveryStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
+                '<option value="shipped"' + (deliveryStatus === 'shipped' ? ' selected' : '') + '>Shipped</option>' +
+                '<option value="none"' + (deliveryStatus === 'none' ? ' selected' : '') + '>Not Shipped</option>' +
+              '</select>') +
+        '</div>' +
       '</span>';
 
     var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
@@ -9406,20 +9437,6 @@ function invNewSort(sortBy) {
     if (btn) btn.classList.toggle('active', s === sortBy);
   });
   renderInvNew();
-}
-
-function invNewHandleDeliverDate(vi, status) {
-  if (status === 'delivering') {
-    var date = prompt('Delivery date (e.g. 7/20):');
-    if (date) {
-      var data = getInvNew();
-      if (data && data.vendors[vi]) {
-        data.vendors[vi].deliverDate = date;
-        saveInvNew(data);
-        renderInvNew();
-      }
-    }
-  }
 }
 
 function renderInvNewGallery() {
