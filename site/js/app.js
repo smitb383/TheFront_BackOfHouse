@@ -8686,7 +8686,7 @@ function renderInvNew() {
         '</label>' +
         // Signed inventory agreement
         '<div style="display:flex;flex-direction:column;align-items:center">' +
-          '<div style="' + lblStyle + '">Agreement</div>' +
+          '<div style="' + lblStyle + '">Inventory Signed</div>' +
           '<select onchange="invNewEditVendor(' + vi + ',\'agreementStatus\',this.value)" style="background:' + agColors[agreementStatus] + '22;border:2px solid ' + agColors[agreementStatus] + ';color:' + agColors[agreementStatus] + ';' + selBase + '">' +
             '<option value="signed"' + (agreementStatus === 'signed' ? ' selected' : '') + '>\u2713 Signed</option>' +
             '<option value="sent"' + (agreementStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
