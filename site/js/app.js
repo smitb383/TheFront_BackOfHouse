@@ -8259,22 +8259,31 @@ function _migrateMinenaInventory() {
   console.log('[inv] Imported ' + items.length + ' Minena items from July line sheet');
 }
 
-function _removeReagenFlora() {
-  // Remove from vendor list
+function _removeVendors() {
+  var toRemove = ['reagen', 'blob blob'];
   var vendors = getPopupVendors();
-  var filtered = vendors.filter(function(v) { return !(v.name && v.name.toLowerCase().indexOf('reagen') >= 0); });
-  if (filtered.length < vendors.length) {
+  var before = vendors.length;
+  var filtered = vendors.filter(function(v) {
+    if (!v.name) return true;
+    var lower = v.name.toLowerCase();
+    return !toRemove.some(function(r) { return lower.indexOf(r) >= 0; });
+  });
+  if (filtered.length < before) {
     savePopupVendors(filtered);
-    console.log('[inv] Removed Reagen Flora from vendor list');
+    console.log('[inv] Removed ' + (before - filtered.length) + ' vendors from list');
   }
-  // Remove from inventory
+  // Remove from inventory too
   var data = getInvNew();
   if (data && data.vendors) {
-    var before = data.vendors.length;
-    data.vendors = data.vendors.filter(function(v) { return !(v.name && v.name.toLowerCase().indexOf('reagen') >= 0); });
-    if (data.vendors.length < before) {
+    var invBefore = data.vendors.length;
+    data.vendors = data.vendors.filter(function(v) {
+      if (!v.name) return true;
+      var lower = v.name.toLowerCase();
+      return !toRemove.some(function(r) { return lower.indexOf(r) >= 0; });
+    });
+    if (data.vendors.length < invBefore) {
       saveInvNew(data);
-      console.log('[inv] Removed Reagen Flora from inventory');
+      console.log('[inv] Removed ' + (invBefore - data.vendors.length) + ' vendors from inventory');
     }
   }
 }
@@ -8304,7 +8313,7 @@ function _ensureMatinaVendor() {
 }
 
 function invNewSyncConfirmed() {
-  _removeReagenFlora();
+  _removeVendors();
   _ensureMatinaVendor();
   _migrateDevanshiJain();
   _migrateMinenaInventory();
