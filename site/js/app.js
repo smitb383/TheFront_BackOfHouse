@@ -8689,7 +8689,7 @@ function renderInvNew() {
 
     var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
       '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
-        '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] ? '0' : '90') + 'deg)">&#9654;</span>' +
+        '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] === false ? '90' : '0') + 'deg)">&#9654;</span>' +
         '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);min-width:120px">' + esc(vendor.name) + '</span>' +
         statusBadges +
         controlsHtml +
@@ -8699,7 +8699,7 @@ function renderInvNew() {
     '</div>';
 
     var vendorBody = '';
-    if (!invNewCollapsed[vi]) {
+    if (invNewCollapsed[vi] === false) {
       var colHeaders;
       if (isWholesale) {
         colHeaders = '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 60px 80px 70px 2px 50px 70px 50px 80px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
@@ -8741,7 +8741,7 @@ function renderInvNew() {
 }
 
 function invNewToggleVendor(vi) {
-  invNewCollapsed[vi] = !invNewCollapsed[vi];
+  invNewCollapsed[vi] = invNewCollapsed[vi] === false ? true : false;
   invNewOpenItem = null;
   renderInvNew();
 }
