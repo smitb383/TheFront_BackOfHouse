@@ -8674,7 +8674,7 @@ function renderInvNew() {
     }
     var dsColor = dsColors[deliveryStatus] || '#e07070';
 
-    var lblStyle = 'font-family:DM Mono,monospace;font-size:7px;text-transform:uppercase;letter-spacing:0.06em;color:var(--faint);margin-bottom:2px';
+    var lblStyle = 'font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px;font-weight:600';
     var selBase = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer';
 
     var statusBadges =
