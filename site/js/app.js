@@ -8576,7 +8576,7 @@ function renderInvNew() {
             var allItemSold = totalSold >= totalQty && totalQty > 0;
             var soldBtnS = allItemSold
               ? 'background:#88c98a22;border:1px solid #88c98a44;color:#88c98a'
-              : 'background:var(--surface2);border:1px solid var(--faint);color:var(--text)';
+              : 'background:#88c98a33;border:2px solid #88c98a;color:#88c98a;font-weight:700';
             if (hasSizes) {
               return '<div style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--muted)') + ';text-align:center">' + totalSold + '/' + totalQty + '</div>';
             }
@@ -8595,22 +8595,6 @@ function renderInvNew() {
         detailPanel +
       '</div>';
     }).join('');
-
-    var shippingHtml = '';
-    if (isNonNYC) {
-      var shipCost = vendor.shippingCost || '';
-      var shipBy = vendor.shippingCoveredBy || '';
-      shippingHtml =
-        '<span onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:4px">' +
-          '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">ship $</span>' +
-          '<input value="' + esc(shipCost) + '" placeholder="0" oninput="invNewEditVendor(' + vi + ',\'shippingCost\',this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:right">' +
-          '<select onchange="invNewEditVendor(' + vi + ',\'shippingCoveredBy\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:3px 4px;border-radius:3px">' +
-            '<option value=""' + (!shipBy ? ' selected' : '') + '>covered by?</option>' +
-            '<option value="us"' + (shipBy === 'us' ? ' selected' : '') + '>Us</option>' +
-            '<option value="vendor"' + (shipBy === 'vendor' ? ' selected' : '') + '>Vendor</option>' +
-          '</select>' +
-        '</span>';
-    }
 
     // Stat block helper: small label + large dollar
     var lblS = 'font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)';
@@ -8637,25 +8621,51 @@ function renderInvNew() {
         statBlock('Their Take', vendorDesigner);
     }
 
-    // Row 1: name + controls
+    // Row 1: name + controls (with vertical labels matching status badges)
+    var shipBy = vendor.shippingCoveredBy || '';
+    var shipCost = vendor.shippingCost || '';
+
     var controlsHtml =
       '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
-      '<span onclick="event.stopPropagation()"><select onchange="invNewEditVendor(' + vi + ',\'pricingModel\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:3px 6px;border-radius:3px">' +
-        '<option value="consignment"' + (!isWholesale ? ' selected' : '') + '>Consignment</option>' +
-        '<option value="wholesale"' + (isWholesale ? ' selected' : '') + '>Wholesale</option>' +
-      '</select></span>' +
+      '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+        '<div style="' + lblStyle + '">Model</div>' +
+        '<select onchange="invNewEditVendor(' + vi + ',\'pricingModel\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer">' +
+          '<option value="consignment"' + (!isWholesale ? ' selected' : '') + '>Consignment</option>' +
+          '<option value="wholesale"' + (isWholesale ? ' selected' : '') + '>Wholesale</option>' +
+        '</select>' +
+      '</div>' +
       (isWholesale
-        ? '<span style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
-            '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">EUR rate:</span>' +
-            '<input value="' + eurRate + '" oninput="invNewEditVendor(' + vi + ',\'eurRate\',parseFloat(this.value)||1)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
-          '</span>'
-        : '<span style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
-            '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">split:</span>' +
-            '<input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
-            '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
-            '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px;text-align:center">' +
-          '</span>') +
-      shippingHtml;
+        ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+            '<div style="' + lblStyle + '">EUR Rate</div>' +
+            '<input value="' + eurRate + '" oninput="invNewEditVendor(' + vi + ',\'eurRate\',parseFloat(this.value)||1)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;text-align:center">' +
+          '</div>'
+        : '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+            '<div style="' + lblStyle + '">Split</div>' +
+            '<div style="display:flex;align-items:center;gap:2px">' +
+              '<input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:4px 4px;border-radius:3px;text-align:center">' +
+              '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
+              '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 4px;border-radius:3px;text-align:center">' +
+            '</div>' +
+          '</div>') +
+      (isNonNYC
+        ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+            '<div style="' + lblStyle + '">Covered By</div>' +
+            '<select onchange="invNewEditVendor(' + vi + ',\'shippingCoveredBy\',this.value);renderInvNew()" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer">' +
+              '<option value=""' + (!shipBy ? ' selected' : '') + '>—</option>' +
+              '<option value="us"' + (shipBy === 'us' ? ' selected' : '') + '>Us</option>' +
+              '<option value="vendor"' + (shipBy === 'vendor' ? ' selected' : '') + '>Vendor</option>' +
+            '</select>' +
+          '</div>' +
+          (shipBy !== 'vendor'
+            ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+                '<div style="' + lblStyle + '">Ship Cost</div>' +
+                '<div style="display:flex;align-items:center;gap:2px">' +
+                  '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">$</span>' +
+                  '<input value="' + esc(shipCost) + '" placeholder="0" oninput="invNewEditVendor(' + vi + ',\'shippingCost\',this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;text-align:right">' +
+                '</div>' +
+              '</div>'
+            : '')
+        : '');
 
     // Status badges
     var invComplete = vendor.invComplete || false;
@@ -8697,8 +8707,8 @@ function renderInvNew() {
         '<div style="display:flex;flex-direction:column;align-items:center">' +
           '<div style="' + lblStyle + '">Delivery</div>' +
           '<select onchange="invNewEditVendor(' + vi + ',\'deliveryMethod\',this.value);invNewEditVendor(' + vi + ',\'deliveryStatus\',\'none\');renderInvNew()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);' + selBase + '">' +
-            '<option value="dropoff"' + (deliveryMethod === 'dropoff' ? ' selected' : '') + '>\ud83d\udccd Local Drop-off</option>' +
-            '<option value="shipping"' + (deliveryMethod === 'shipping' ? ' selected' : '') + '>\ud83d\udce6 Shipping</option>' +
+            '<option value="dropoff"' + (deliveryMethod === 'dropoff' ? ' selected' : '') + '>Drop-off</option>' +
+            '<option value="shipping"' + (deliveryMethod === 'shipping' ? ' selected' : '') + '>Shipping</option>' +
           '</select>' +
         '</div>' +
         // Delivery status (context-dependent)
@@ -8802,7 +8812,7 @@ function buildSizeRows(vi, ii, item, sPct, dPct) {
     var rowOpacity = allSold ? 'opacity:0.4;' : '';
     var soldBtnStyle = allSold
       ? 'background:#88c98a22;border:1px solid #88c98a44;color:#88c98a'
-      : 'background:var(--surface2);border:1px solid var(--faint);color:var(--text)';
+      : 'background:#88c98a33;border:2px solid #88c98a;color:#88c98a;font-weight:700';
 
     return '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:6px;padding:3px 0;' + rowOpacity + '" onclick="event.stopPropagation()">' +
       '<div></div>' +
