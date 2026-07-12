@@ -2359,7 +2359,13 @@
         </div>
         <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:16px;flex-wrap:wrap">
           <div id="inv-new-totals" style="display:flex;gap:24px;flex:1;font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)"></div>
-          <div style="display:flex;gap:4px">
+          <div style="display:flex;gap:4px;align-items:center">
+            <span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">Sort:</span>
+            <button id="inv-sort-name" class="filter-btn active" onclick="invNewSort('name')" style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;cursor:pointer">Name</button>
+            <button id="inv-sort-invComplete" class="filter-btn" onclick="invNewSort('invComplete')" style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;cursor:pointer">Complete</button>
+            <button id="inv-sort-agreement" class="filter-btn" onclick="invNewSort('agreement')" style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;cursor:pointer">Agreement</button>
+            <button id="inv-sort-stock" class="filter-btn" onclick="invNewSort('stock')" style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;cursor:pointer">Stock</button>
+            <span style="width:12px"></span>
             <button id="inv-new-view-list" class="filter-btn active" onclick="invNewSetView('list')" style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;cursor:pointer">List</button>
             <button id="inv-new-view-gallery" class="filter-btn" onclick="invNewSetView('gallery')" style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;padding:5px 12px;cursor:pointer">Gallery</button>
           </div>

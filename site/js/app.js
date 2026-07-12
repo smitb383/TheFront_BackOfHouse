@@ -8064,6 +8064,7 @@ var INV_NEW_KEY = 'popup_inv_new_v1';
 var invNewCollapsed = {};
 var invNewOpenItem = null;
 var invNewView = 'list'; // 'list' or 'gallery'
+var invNewSortBy = 'name'; // 'name', 'invComplete', 'agreement', 'stock'
 
 function getInvNew() {
   try { return JSON.parse(localStorage.getItem(INV_NEW_KEY) || 'null'); } catch(e) { return null; }
@@ -8359,7 +8360,22 @@ function renderInvNew() {
 
   var popupVendorsAll = getPopupVendors ? getPopupVendors() : [];
 
-  var html = data.vendors.map(function(vendor, vi) {
+  // Build index map for sorting (preserve original indices for editing)
+  var vendorIndices = data.vendors.map(function(v, i) { return i; });
+  var agOrder = { 'not-sent': 0, 'sent': 1, 'signed': 2 };
+  var stOrder = { 'not-shipped': 0, 'shipped': 1, 'delivering': 2, 'received': 3 };
+  if (invNewSortBy === 'invComplete') {
+    vendorIndices.sort(function(a, b) { return (data.vendors[a].invComplete ? 1 : 0) - (data.vendors[b].invComplete ? 1 : 0); });
+  } else if (invNewSortBy === 'agreement') {
+    vendorIndices.sort(function(a, b) { return (agOrder[data.vendors[a].agreementStatus || 'not-sent'] || 0) - (agOrder[data.vendors[b].agreementStatus || 'not-sent'] || 0); });
+  } else if (invNewSortBy === 'stock') {
+    vendorIndices.sort(function(a, b) { return (stOrder[data.vendors[a].stockStatus || 'not-shipped'] || 0) - (stOrder[data.vendors[b].stockStatus || 'not-shipped'] || 0); });
+  } else {
+    vendorIndices.sort(function(a, b) { return (data.vendors[a].name || '').toLowerCase() < (data.vendors[b].name || '').toLowerCase() ? -1 : 1; });
+  }
+
+  var html = vendorIndices.map(function(vi) {
+    var vendor = data.vendors[vi];
     var vendorInfo = popupVendorsAll.find(function(v) { return v.id === vendor.vendorId; }) || {};
     var isNonNYC = vendorInfo.locationTag !== 'nyc';
     var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
@@ -8641,10 +8657,41 @@ function renderInvNew() {
           '</span>') +
       shippingHtml;
 
+    // Status badges
+    var invComplete = vendor.invComplete || false;
+    var agreementStatus = vendor.agreementStatus || 'not-sent';
+    var stockStatus = vendor.stockStatus || 'not-shipped';
+
+    var agColors = { 'signed': '#88c98a', 'sent': '#e2c97e', 'not-sent': '#e07070' };
+    var agLabels = { 'signed': 'Signed', 'sent': 'Sent', 'not-sent': 'Not Sent' };
+    var stColors = { 'received': '#88c98a', 'delivering': '#6aaad8', 'shipped': '#e2c97e', 'not-shipped': '#e07070' };
+    var stLabels = { 'received': 'Received', 'delivering': 'Delivering', 'shipped': 'Shipped', 'not-shipped': 'Not Shipped' };
+
+    var statusBadges =
+      '<span style="display:flex;align-items:center;gap:10px;flex-shrink:0" onclick="event.stopPropagation()">' +
+        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;accent-color:#88c98a" title="Inventory complete">' +
+          '<input type="checkbox"' + (invComplete ? ' checked' : '') + ' onchange="invNewEditVendor(' + vi + ',\'invComplete\',this.checked)">' +
+          '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:' + (invComplete ? '#88c98a' : 'var(--muted)') + ';font-weight:' + (invComplete ? '700' : '400') + '">Complete</span>' +
+        '</label>' +
+        '<select onchange="invNewEditVendor(' + vi + ',\'agreementStatus\',this.value)" style="background:' + agColors[agreementStatus] + '22;border:2px solid ' + agColors[agreementStatus] + ';color:' + agColors[agreementStatus] + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
+          '<option value="signed"' + (agreementStatus === 'signed' ? ' selected' : '') + '>Signed</option>' +
+          '<option value="sent"' + (agreementStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
+          '<option value="not-sent"' + (agreementStatus === 'not-sent' ? ' selected' : '') + '>Not Sent</option>' +
+        '</select>' +
+        '<select onchange="invNewEditVendor(' + vi + ',\'stockStatus\',this.value);invNewHandleDeliverDate(' + vi + ',this.value)" style="background:' + stColors[stockStatus] + '22;border:2px solid ' + stColors[stockStatus] + ';color:' + stColors[stockStatus] + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
+          '<option value="received"' + (stockStatus === 'received' ? ' selected' : '') + '>Received</option>' +
+          '<option value="delivering"' + (stockStatus === 'delivering' ? ' selected' : '') + '>Delivering</option>' +
+          '<option value="shipped"' + (stockStatus === 'shipped' ? ' selected' : '') + '>Shipped</option>' +
+          '<option value="not-shipped"' + (stockStatus === 'not-shipped' ? ' selected' : '') + '>Not Shipped</option>' +
+        '</select>' +
+        (stockStatus === 'delivering' && vendor.deliverDate ? '<span style="font-family:DM Mono,monospace;font-size:9px;color:#6aaad8">' + vendor.deliverDate + '</span>' : '') +
+      '</span>';
+
     var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
       '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
         '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] ? '0' : '90') + 'deg)">&#9654;</span>' +
         '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);min-width:120px">' + esc(vendor.name) + '</span>' +
+        statusBadges +
         controlsHtml +
         '<div style="flex:1"></div>' +
         '<div style="display:flex;gap:20px;align-items:center">' + statsHtml + '</div>' +
@@ -9349,6 +9396,29 @@ function invNewSetView(view) {
     galleryEl.style.display = 'none';
     if (btnList) btnList.classList.add('active');
     if (btnGallery) btnGallery.classList.remove('active');
+  }
+}
+
+function invNewSort(sortBy) {
+  invNewSortBy = sortBy;
+  ['name','invComplete','agreement','stock'].forEach(function(s) {
+    var btn = document.getElementById('inv-sort-' + s);
+    if (btn) btn.classList.toggle('active', s === sortBy);
+  });
+  renderInvNew();
+}
+
+function invNewHandleDeliverDate(vi, status) {
+  if (status === 'delivering') {
+    var date = prompt('Delivery date (e.g. 7/20):');
+    if (date) {
+      var data = getInvNew();
+      if (data && data.vendors[vi]) {
+        data.vendors[vi].deliverDate = date;
+        saveInvNew(data);
+        renderInvNew();
+      }
+    }
   }
 }
 
