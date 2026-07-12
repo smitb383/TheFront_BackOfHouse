@@ -8260,7 +8260,7 @@ function _migrateMinenaInventory() {
 }
 
 function _removeVendors() {
-  var toRemove = ['reagen', 'blob blob'];
+  var toRemove = ['reagen', 'reagan', 'blob blob'];
   var vendors = getPopupVendors();
   var before = vendors.length;
   var filtered = vendors.filter(function(v) {
