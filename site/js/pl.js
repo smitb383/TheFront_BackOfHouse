@@ -3,7 +3,7 @@
 // ============================================
 
 var PL_KEY = 'pl_data_v1';
-var PL_SEED_VERSION = 8; // bump to merge new defaults while keeping user edits
+var PL_SEED_VERSION = 9; // bump to merge new defaults while keeping user edits
 
 function getPLData() {
   try { return JSON.parse(localStorage.getItem(PL_KEY)) || null; } catch(e) { return null; }
@@ -63,7 +63,11 @@ var PL_DEFAULT_FIXED_COSTS = [
   { id: 'fc_pos', name: 'Square POS reader', amount: 50, category: 'operations', note: 'Plus a stand if using iPad' },
   { id: 'fc_ipad', name: 'iPad / phone for checkout', amount: 0, category: 'operations', note: '' },
   { id: 'fc_strike', name: 'Strike / removal', amount: 0, category: 'operations', note: 'Labor, disposal, end of lease cleanup' },
-  { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' }
+  { id: 'fc_contingency', name: 'Contingency (10%)', amount: 0, category: 'misc', note: '' },
+  // Wholesale / In-House production costs
+  { id: 'fc_merch_tshirts', name: 'Front Merch — T-shirts production', amount: 0, category: 'wholesale', status: 'needed', note: 'Lavender + Blue tees' },
+  { id: 'fc_merch_stickers', name: 'Front Merch — Stickers production', amount: 0, category: 'wholesale', status: 'needed', note: 'Sticker packs + logo stickers' },
+  { id: 'fc_hadaikum_cost', name: 'Hadaikum — Wholesale purchase', amount: 0, category: 'wholesale', status: 'needed', note: 'Candelabras, wall sconces, candles' }
 ];
 
 var PL_DEFAULT_BUSINESS_COSTS = [
@@ -612,8 +616,7 @@ var PL_SECTIONS = [
   { id: 'retail', name: '\ud83d\udecd Retail / Consignment', color: '#e2c97e',
     fixedCats: ['retail supplies', 'fit out'],
     variableIds: ['vc_square', 'vc_packaging'],
-    revenueType: 'consignment',
-    includeShipping: true },
+    revenueType: 'consignment' },
   { id: 'events', name: '\ud83c\udfee Events', color: '#c77dba',
     fixedCats: ['events'],
     variableType: 'eventsVariable',
@@ -624,8 +627,10 @@ var PL_SECTIONS = [
   { id: 'marketing', name: '\ud83d\udce3 Marketing & Branding', color: '#6aaad8',
     fixedCats: ['marketing', 'branding'] },
   { id: 'wholesale', name: '\ud83d\udcca Wholesale / In-House', color: '#e0845a',
+    fixedCats: ['wholesale'],
     revenueType: 'wholesale',
-    variableType: 'wholesaleCOGS' }
+    variableType: 'wholesaleCOGS',
+    includeShipping: true }
 ];
 
 // Track which sections are open between renders
@@ -1953,7 +1958,7 @@ function goToInventoryItem(vendorName) {
   }, 50);
 }
 
-var FC_CATEGORIES = ['space','cafe','retail','fit out','retail supplies','events','marketing','branding','operations','misc'];
+var FC_CATEGORIES = ['space','cafe','retail','fit out','retail supplies','events','marketing','branding','operations','wholesale','misc'];
 var FC_STATUSES = ['needed','sourcing','ordered','done'];
 var FC_STATUS_COLORS = { needed:'#e07070', sourcing:'#e2c97e', ordered:'#a8c4d4', done:'#88c98a' };
 
