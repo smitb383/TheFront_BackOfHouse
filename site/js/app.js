@@ -8374,7 +8374,22 @@ function renderInvNew() {
     vendorIndices.sort(function(a, b) { return (data.vendors[a].name || '').toLowerCase() < (data.vendors[b].name || '').toLowerCase() ? -1 : 1; });
   }
 
-  var html = vendorIndices.map(function(vi) {
+  // Split into consignment first, wholesale at bottom
+  var consignIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].pricingModel !== 'wholesale'; });
+  var wholesaleIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].pricingModel === 'wholesale'; });
+
+  var html = '';
+  if (consignIndices.length) {
+    html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:12px 0 4px;border-bottom:1px solid var(--border)">Consignment</div>';
+  }
+  html += consignIndices.map(function(vi) { return renderInvVendor(vi, data, popupVendorsAll); }).join('');
+  if (wholesaleIndices.length) {
+    html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:24px 0 4px;border-bottom:1px solid var(--border);margin-top:12px">Wholesale / In-House</div>';
+    html += wholesaleIndices.map(function(vi) { return renderInvVendor(vi, data, popupVendorsAll); }).join('');
+  }
+
+  // Wrap the vendor render in a function
+  function renderInvVendor(vi, data, popupVendorsAll) {
     var vendor = data.vendors[vi];
     var vendorInfo = popupVendorsAll.find(function(v) { return v.id === vendor.vendorId; }) || {};
     var isNonNYC = vendorInfo.locationTag !== 'nyc';
@@ -8439,8 +8454,9 @@ function renderInvNew() {
 
       // ── Wholesale item row ──
       if (isWholesale) {
+        var isUsd = vendor.currency === 'usd';
         var costEur = item.costEur || 0;
-        var costUsd = Math.round(costEur * eurRate * 100) / 100;
+        var costUsd = isUsd ? (item.costUsd || item.costEur || 0) : Math.round(costEur * eurRate * 100) / 100;
         var upcharge = item.upchargePct || 0;
         var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
         var profitEa = retailPrice - Math.round(costUsd);
@@ -8485,9 +8501,13 @@ function renderInvNew() {
               '<option value="furniture"' + (item.category === 'furniture' ? ' selected' : '') + '>Furniture</option>' +
               '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
             '</select>' +
-            '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:var(--muted);font-size:10px">EUR</span><input value="' + (costEur || '') + '" placeholder="0" oninput="invNewEditItem(' + vi + ',' + ii + ',\'costEur\',parseFloat(this.value)||0)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
-            '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:right">$' + costUsd.toFixed(0) + '</div>' +
-            '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><input value="' + (upcharge || '') + '" placeholder="%" oninput="invNewEditItem(' + vi + ',' + ii + ',\'upchargePct\',parseFloat(this.value)||0)" style="width:36px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"><span style="color:var(--muted);font-size:10px">%</span></div>' +
+            (isUsd
+              ? '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:var(--muted);font-size:10px">$</span><input value="' + (costUsd || '') + '" placeholder="0" oninput="invNewEditItem(' + vi + ',' + ii + ',\'costUsd\',parseFloat(this.value)||0)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+                '<div></div>' +
+                '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><input value="' + (upcharge || '') + '" placeholder="%" oninput="invNewEditItem(' + vi + ',' + ii + ',\'upchargePct\',parseFloat(this.value)||0)" style="width:36px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"><span style="color:var(--muted);font-size:10px">%</span></div>'
+              : '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:var(--muted);font-size:10px">EUR</span><input value="' + (costEur || '') + '" placeholder="0" oninput="invNewEditItem(' + vi + ',' + ii + ',\'costEur\',parseFloat(this.value)||0)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+                '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:right">$' + costUsd.toFixed(0) + '</div>' +
+                '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><input value="' + (upcharge || '') + '" placeholder="%" oninput="invNewEditItem(' + vi + ',' + ii + ',\'upchargePct\',parseFloat(this.value)||0)" style="width:36px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"><span style="color:var(--muted);font-size:10px">%</span></div>') +
             '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);text-align:right;font-weight:600">$' + retailPrice + '</div>' +
             '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">+$' + profitEa + '</div>' +
             '<div style="border-left:1px solid var(--border);height:100%"></div>' +
@@ -8637,9 +8657,18 @@ function renderInvNew() {
       '</div>' +
       (isWholesale
         ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-            '<div style="' + lblStyle + '">EUR Rate</div>' +
-            '<input value="' + eurRate + '" oninput="invNewEditVendor(' + vi + ',\'eurRate\',parseFloat(this.value)||1)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;text-align:center">' +
-          '</div>'
+            '<div style="' + lblStyle + '">Currency</div>' +
+            '<select onchange="invNewEditVendor(' + vi + ',\'currency\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer">' +
+              '<option value="eur"' + (vendor.currency !== 'usd' ? ' selected' : '') + '>EUR</option>' +
+              '<option value="usd"' + (vendor.currency === 'usd' ? ' selected' : '') + '>USD</option>' +
+            '</select>' +
+          '</div>' +
+          (vendor.currency !== 'usd'
+            ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+                '<div style="' + lblStyle + '">EUR Rate</div>' +
+                '<input value="' + eurRate + '" oninput="invNewEditVendor(' + vi + ',\'eurRate\',parseFloat(this.value)||1)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;text-align:center">' +
+              '</div>'
+            : '')
         : '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
             '<div style="' + lblStyle + '">Split</div>' +
             '<div style="display:flex;align-items:center;gap:2px">' +
@@ -8765,7 +8794,7 @@ function renderInvNew() {
     }
 
     return '<div style="margin-bottom:4px">' + vendorHeader + vendorBody + '</div>';
-  }).join('');
+  }
 
   list.innerHTML = html;
 
@@ -8964,7 +8993,7 @@ function invNewEditItem(vi, ii, field, val) {
   saveInvNew(data);
   // Debounce re-render so typing doesn't jump the page
   if (field === 'category') { renderInvNew(); return; }
-  if (field === 'salePrice' || field === 'qty' || field === 'sold' || field === 'costEur' || field === 'upchargePct') {
+  if (field === 'salePrice' || field === 'qty' || field === 'sold' || field === 'costEur' || field === 'costUsd' || field === 'upchargePct') {
     clearTimeout(_invNewRenderTimer);
     _invNewRenderTimer = setTimeout(renderInvNew, 800);
   }

@@ -242,8 +242,9 @@ function inventoryToPLItems() {
 
     vendor.items.forEach(function(item) {
       if (isWholesale) {
+        var isUsdVendor = vendor.currency === 'usd';
         var costEur = item.costEur || 0;
-        var costUsd = Math.round(costEur * eurRate * 100) / 100;
+        var costUsd = isUsdVendor ? (item.costUsd || item.costEur || 0) : Math.round(costEur * eurRate * 100) / 100;
         var upcharge = item.upchargePct || 0;
         var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
         var qty = item.qty || 1;
