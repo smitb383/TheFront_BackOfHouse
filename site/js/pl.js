@@ -3,7 +3,7 @@
 // ============================================
 
 var PL_KEY = 'pl_data_v1';
-var PL_SEED_VERSION = 7; // bump to merge new defaults while keeping user edits
+var PL_SEED_VERSION = 8; // bump to merge new defaults while keeping user edits
 
 function getPLData() {
   try { return JSON.parse(localStorage.getItem(PL_KEY)) || null; } catch(e) { return null; }
@@ -32,10 +32,29 @@ var PL_DEFAULT_FIXED_COSTS = [
   { id: 'fc_tissue', name: 'Tissue / packaging', amount: 50, category: 'retail supplies', note: 'Branded tissue, bags' },
   { id: 'fc_opening', name: 'Opening night drinks / snacks', amount: 150, category: 'events', note: 'Wine + sparkling water + simple snacks for 40-60 people' },
   { id: 'fc_photographer', name: 'Photographer — opening night', amount: 0, category: 'events', note: 'Dedicated shooter for space and crowd' },
-  { id: 'fc_cafe_equipment', name: 'Cafe equipment', amount: 0, category: 'cafe', note: 'Espresso machine, grinder, drip setup, etc.' },
-  { id: 'fc_cafe_supplies', name: 'Cafe supplies (cups, lids, napkins)', amount: 0, category: 'cafe', note: 'Disposable cups, lids, stirrers, napkins, sleeves' },
-  { id: 'fc_cafe_beans', name: 'Coffee beans / tea', amount: 0, category: 'cafe', note: 'Initial stock of beans, tea, milk/oat milk, sweeteners' },
-  { id: 'fc_cafe_permit', name: 'Food service permit', amount: 0, category: 'cafe', note: 'NYC temporary food service permit if required' },
+  // Cafe — from home ($0)
+  { id: 'fc_cafe_shakers', name: 'Bar shakers (2x)', amount: 0, category: 'cafe', status: 'done', note: 'From home — Brooke & Del' },
+  { id: 'fc_cafe_matcha_bowl', name: 'Matcha whisking bowl & whisk', amount: 0, category: 'cafe', status: 'done', note: 'From home — Elise whisk, Brooke bowl & whisk' },
+  { id: 'fc_cafe_scale', name: 'Kitchen scale', amount: 0, category: 'cafe', status: 'done', note: 'From home — Elise' },
+  { id: 'fc_cafe_outlets', name: 'Outlets (freezer, fridge, kettle)', amount: 0, category: 'cafe', status: 'done', note: 'From home' },
+  { id: 'fc_cafe_sifter', name: 'Sifter / Strainer', amount: 0, category: 'cafe', status: 'done', note: 'From home — Brooke' },
+  { id: 'fc_cafe_ewhisk', name: 'Electric Whisk', amount: 0, category: 'cafe', status: 'done', note: 'From home — Brooke' },
+  // Cafe — purchased
+  { id: 'fc_cafe_shotcups', name: 'Shot measuring cups (4 pcs)', amount: 16.99, category: 'cafe', status: 'done', note: '' },
+  { id: 'fc_cafe_kettle', name: 'Kettle with temperature control', amount: 39.99, category: 'cafe', status: 'done', note: '' },
+  { id: 'fc_cafe_icekit', name: 'Ice Scoop, Ice Bin, draining tray, scoop holder', amount: 42.59, category: 'cafe', status: 'done', note: '' },
+  { id: 'fc_cafe_icechest', name: 'Ice Chest', amount: 185, category: 'cafe', status: 'done', note: 'Price with shipping' },
+  { id: 'fc_cafe_straws', name: 'Straws (600)', amount: 43.52, category: 'cafe', status: 'done', note: '' },
+  { id: 'fc_cafe_canister', name: 'Matcha canister', amount: 16.99, category: 'cafe', status: 'done', note: '' },
+  { id: 'fc_cafe_cups', name: 'Branded Iced Cups & Lids', amount: 440, category: 'cafe', status: 'done', note: '' },
+  { id: 'fc_cafe_table', name: 'Folding table', amount: 25, category: 'cafe', status: 'done', note: 'FB marketplace' },
+  { id: 'fc_cafe_fridge', name: 'Mini fridge', amount: 30, category: 'cafe', status: 'done', note: 'FB marketplace' },
+  { id: 'fc_cafe_scoops', name: 'Matcha scoop / Scoops for flavoring ingredients', amount: 6.59, category: 'cafe', status: 'done', note: '' },
+  { id: 'fc_cafe_cleaning', name: 'Hand Soap, Dish soap, Drying rack', amount: 25.99, category: 'cafe', status: 'done', note: '' },
+  { id: 'fc_cafe_napkins', name: 'Napkins (2 packs)', amount: 30, category: 'cafe', status: 'done', note: '' },
+  // Cafe — not yet purchased
+  { id: 'fc_cafe_menu', name: 'Printed Menu display', amount: 0, category: 'cafe', status: 'needed', note: '' },
+  { id: 'fc_cafe_bottles', name: 'Canister / squeeze bottles for flavoring ingredients', amount: 0, category: 'cafe', status: 'needed', note: '' },
   { id: 'fc_flyers', name: 'Opening flyers (print run)', amount: 80, category: 'marketing', note: '200-300 flyers, postcard size, for LES/SoHo/Nolita drops' },
   { id: 'fc_socialgraphics', name: 'Launch social graphics', amount: 0, category: 'marketing', note: 'Save-the-date, vendor spotlights, countdown assets' },
   { id: 'fc_pressrelease', name: 'Press release', amount: 0, category: 'marketing', note: '200-word pitch + image for Hint, Time Out, local blogs' },
@@ -438,33 +457,45 @@ function renderPL() {
   var plSummary = document.getElementById('pl-summary');
   var plColumns = plSummary ? plSummary.parentElement.querySelector('.pl-columns') : null;
 
+  var plCalcs = document.getElementById('pl-calculators');
+
   if (isFunding) {
     if (fundingView) fundingView.style.display = 'block';
     if (plSummary) plSummary.style.display = 'none';
     if (plColumns) plColumns.style.display = 'none';
+    if (plCalcs) plCalcs.style.display = 'none';
     return;
   } else {
     if (fundingView) fundingView.style.display = 'none';
     if (plSummary) plSummary.style.display = '';
     if (plColumns) plColumns.style.display = '';
+    if (plCalcs) plCalcs.style.display = '';
   }
   renderPLSummary(calc, scenario);
 
   var revEl = document.getElementById('pl-revenue');
   var varEl = document.getElementById('pl-variable');
 
+  var calcEl = document.getElementById('pl-calculators');
+
   if (isBusiness) {
-    // Business tab: no revenue, no variable costs
+    // Business tab: no revenue, no variable costs, no calculators
     if (revEl) revEl.innerHTML = '';
     if (varEl) varEl.innerHTML = '';
+    if (calcEl) calcEl.innerHTML = '';
   } else {
-    // Popup tabs: full revenue + variable costs + calculators
+    // Popup tabs: full revenue + variable costs
     renderRevenueSection(data, scenario, calc, liveInventory);
     renderVariableCosts(scenario, calc, data, liveInventory);
-    initBECalc();
   }
 
   renderFixedCosts(scenario, liveInventory);
+
+  // Calculators go at the very bottom (after all columns)
+  if (!isBusiness) {
+    renderPLCalculators(scenario);
+    initBECalc();
+  }
 }
 
 function renderScenarioBar(data) {
@@ -559,7 +590,14 @@ function renderPLSummary(calc, scenario) {
         '<div class="pl-summary-label">Net P/L</div>' +
         '<div class="pl-summary-val">' + (calc.netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(calc.netPL)) + '</div>' +
       '</div>' +
-    '</div>' +
+    '</div>';
+}
+
+function renderPLCalculators(scenario) {
+  var el = document.getElementById('pl-calculators');
+  if (!el) return;
+
+  el.innerHTML =
     '<div class="pl-calc-row">' +
       '<div class="pl-summary-card pl-breakeven pl-be-calc">' +
         '<div class="pl-summary-label">Break-even Calculator</div>' +
