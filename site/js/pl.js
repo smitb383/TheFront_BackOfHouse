@@ -668,12 +668,18 @@ function renderPLSections(scenario, calc, liveInventory) {
   ];
 
   // Ensure cafeVariable exists (ongoing supply costs — not per-drink)
-  if (!scenario.cafeVariable) scenario.cafeVariable = [
-    { id: 'cv_ice', name: 'Ice (ongoing)', amount: 0, note: '' },
-    { id: 'cv_milk', name: 'Milk / oat milk', amount: 0, note: '' },
-    { id: 'cv_matcha', name: 'Matcha powder', amount: 0, note: '' },
-    { id: 'cv_flavoring', name: 'Flavoring ingredients', amount: 0, note: '' }
-  ];
+  if (!scenario.cafeVariable || !scenario.cafeVariable.length) {
+    scenario.cafeVariable = [
+      { id: 'cv_ice', name: 'Ice (ongoing)', amount: 0, note: '' },
+      { id: 'cv_milk', name: 'Milk / oat milk', amount: 0, note: '' },
+      { id: 'cv_matcha', name: 'Matcha powder', amount: 0, note: '' },
+      { id: 'cv_flavoring', name: 'Flavoring ingredients', amount: 0, note: '' }
+    ];
+  }
+  // Remove old per-drink/square items that moved to auto-calc
+  scenario.cafeVariable = scenario.cafeVariable.filter(function(cv) {
+    return cv.id !== 'cv_cost_per_drink' && cv.id !== 'cv_square_cafe';
+  });
 
   // Ensure cafeRevenue exists — each drink has price, costPerDrink, and sold count
   if (!scenario.cafeRevenue) scenario.cafeRevenue = [
@@ -1463,8 +1469,7 @@ function updateCafeVar(input) {
   if (item) {
     item.amount = parseFloat(input.value) || 0;
     savePLData(data);
-    var calc = calcPL(scenario, inventoryToPLItems());
-    renderPLSummary(calc, scenario);
+    renderPL();
   }
 }
 
@@ -1476,10 +1481,6 @@ function updateCafeVarField(input) {
     var field = input.dataset.field;
     item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
     savePLData(data);
-    if (field === 'amount') {
-      var calc = calcPL(scenario, inventoryToPLItems());
-      renderPLSummary(calc, scenario);
-    }
   }
 }
 
