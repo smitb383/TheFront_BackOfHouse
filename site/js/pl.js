@@ -420,6 +420,23 @@ function calcPL(scenario, inventory) {
     totalVariable += unitsProduced * (item.costPerUnit || 0);
   });
 
+  // Cafe variable costs
+  (scenario.cafeVariable || []).forEach(function(cv) {
+    totalVariable += (cv.amount || 0);
+  });
+
+  // Cafe revenue
+  (scenario.cafeRevenue || []).forEach(function(cr) {
+    ourCut += (cr.amount || 0);
+    totalRevenue += (cr.amount || 0);
+  });
+
+  // Space revenue (insurance refund etc)
+  (scenario.spaceRevenue || []).forEach(function(sr) {
+    ourCut += (sr.amount || 0);
+    totalRevenue += (sr.amount || 0);
+  });
+
   var netPL = ourCut - totalFixed - totalVariable;
   var breakeven = totalFixed + totalVariable;
 
@@ -456,44 +473,35 @@ function renderPL() {
   // Funding view — show/hide
   var fundingView = document.getElementById('pl-funding-view');
   var plSummary = document.getElementById('pl-summary');
-  var plColumns = plSummary ? plSummary.parentElement.querySelector('.pl-columns') : null;
+  var plSections = document.getElementById('pl-sections');
 
   var plCalcs = document.getElementById('pl-calculators');
 
   if (isFunding) {
     if (fundingView) fundingView.style.display = 'block';
     if (plSummary) plSummary.style.display = 'none';
-    if (plColumns) plColumns.style.display = 'none';
+    if (plSections) plSections.style.display = 'none';
     if (plCalcs) plCalcs.style.display = 'none';
     return;
   } else {
     if (fundingView) fundingView.style.display = 'none';
     if (plSummary) plSummary.style.display = '';
-    if (plColumns) plColumns.style.display = '';
+    if (plSections) plSections.style.display = '';
     if (plCalcs) plCalcs.style.display = '';
   }
   renderPLSummary(calc, scenario);
 
-  var revEl = document.getElementById('pl-revenue');
-  var varEl = document.getElementById('pl-variable');
-
   var calcEl = document.getElementById('pl-calculators');
 
   if (isBusiness) {
-    // Business tab: no revenue, no variable costs, no calculators
-    if (revEl) revEl.innerHTML = '';
-    if (varEl) varEl.innerHTML = '';
+    // Business tab: just fixed costs in a flat list
     if (calcEl) calcEl.innerHTML = '';
+    renderPLSectionsBusiness(scenario);
   } else {
-    // Popup tabs: full revenue + variable costs
-    renderRevenueSection(data, scenario, calc, liveInventory);
-    renderVariableCosts(scenario, calc, data, liveInventory);
-  }
+    // Popup tabs: section-based layout
+    renderPLSections(scenario, calc, liveInventory);
 
-  renderFixedCosts(scenario, liveInventory);
-
-  // Calculators go at the very bottom (after all columns)
-  if (!isBusiness) {
+    // Calculators go at the very bottom (after all sections)
     renderPLCalculators(scenario);
     initBECalc();
   }
@@ -592,6 +600,794 @@ function renderPLSummary(calc, scenario) {
         '<div class="pl-summary-val">' + (calc.netPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(calc.netPL)) + '</div>' +
       '</div>' +
     '</div>';
+}
+
+// ── Section-based P&L layout ──
+
+var PL_SECTIONS = [
+  { id: 'cafe', name: '\u2615 Cafe', color: '#a8c77d',
+    fixedCats: ['cafe'],
+    variableType: 'cafeVariable',
+    revenueType: 'cafeRevenue' },
+  { id: 'retail', name: '\ud83d\udecd Retail / Consignment', color: '#e2c97e',
+    fixedCats: ['retail supplies', 'fit out'],
+    variableIds: ['vc_square', 'vc_packaging'],
+    revenueType: 'consignment',
+    includeShipping: true },
+  { id: 'events', name: '\ud83c\udfee Events', color: '#c77dba',
+    fixedCats: ['events'],
+    variableType: 'eventsVariable',
+    revenueType: 'otherRevenue' },
+  { id: 'space', name: '\ud83c\udfe0 Space & Operations', color: '#82bfbb',
+    fixedCats: ['space', 'operations'],
+    revenueType: 'spaceRevenue' },
+  { id: 'marketing', name: '\ud83d\udce3 Marketing & Branding', color: '#6aaad8',
+    fixedCats: ['marketing', 'branding'] },
+  { id: 'wholesale', name: '\ud83d\udcca Wholesale / In-House', color: '#e0845a',
+    revenueType: 'wholesale',
+    variableType: 'wholesaleCOGS' }
+];
+
+// Track which sections are open between renders
+var _plSectionOpen = {};
+
+function togglePLSection(sectionId) {
+  _plSectionOpen[sectionId] = !_plSectionOpen[sectionId];
+  var el = document.getElementById('pl-sec-' + sectionId);
+  if (el) el.classList.toggle('open');
+}
+
+function renderPLSections(scenario, calc, liveInventory) {
+  var el = document.getElementById('pl-sections');
+  if (!el) return;
+
+  // Ensure otherRevenue exists
+  if (!scenario.otherRevenue) scenario.otherRevenue = [
+    { id: 'or_events', name: 'Event revenue', amount: scenario.eventRevenue || 0, note: scenario.eventNote || 'TBA' },
+    { id: 'or_merch', name: 'Merch / branded goods', amount: scenario.merchRevenue || 0, note: '' }
+  ];
+
+  // Ensure spaceRevenue exists (e.g. insurance prorated refund)
+  if (!scenario.spaceRevenue) scenario.spaceRevenue = [
+    { id: 'sr_insurance_refund', name: 'Insurance prorated refund', amount: 0, note: 'Prorated return when GL policy cancelled after popup ends' }
+  ];
+
+  // Ensure cafeVariable exists
+  if (!scenario.cafeVariable) scenario.cafeVariable = [
+    { id: 'cv_ice', name: 'Ice', amount: 0, note: '' },
+    { id: 'cv_milk', name: 'Milk / oat milk', amount: 0, note: '' },
+    { id: 'cv_matcha', name: 'Matcha powder', amount: 0, note: '' },
+    { id: 'cv_flavoring', name: 'Flavoring ingredients', amount: 0, note: '' }
+  ];
+
+  // Ensure cafeRevenue exists
+  if (!scenario.cafeRevenue) scenario.cafeRevenue = [
+    { id: 'cr_1', name: 'TBD Drink 1', amount: 0, note: '' },
+    { id: 'cr_2', name: 'TBD Drink 2', amount: 0, note: '' }
+  ];
+
+  // Save new arrays if they were just created
+  var data = getPLData();
+  var sc = data.scenarios.find(function(s) { return s.id === scenario.id; });
+  if (sc && !sc.spaceRevenue) { sc.spaceRevenue = scenario.spaceRevenue; savePLData(data); }
+  if (sc && !sc.cafeVariable) { sc.cafeVariable = scenario.cafeVariable; savePLData(data); }
+  if (sc && !sc.cafeRevenue) { sc.cafeRevenue = scenario.cafeRevenue; savePLData(data); }
+
+  // Separate live inventory items
+  var liveItems = (liveInventory || []).filter(function(i) { return !i.isShippingDeduction; });
+  var shippingItems = (liveInventory || []).filter(function(i) { return i.isShippingDeduction; });
+  var consignmentItems = liveItems.filter(function(i) { return !i.isInHouse; });
+  var wholesaleItems = liveItems.filter(function(i) { return i.isInHouse; });
+
+  // Group fixed costs by category
+  var fcByCat = {};
+  (scenario.fixedCosts || []).forEach(function(c) {
+    var cat = c.category || 'misc';
+    if (!fcByCat[cat]) fcByCat[cat] = [];
+    fcByCat[cat].push(c);
+  });
+
+  var html = '';
+
+  PL_SECTIONS.forEach(function(sec) {
+    var isOpen = _plSectionOpen[sec.id] !== false; // default open
+    if (_plSectionOpen[sec.id] === undefined) _plSectionOpen[sec.id] = true;
+
+    // Gather fixed costs for this section
+    var sectionFixed = [];
+    (sec.fixedCats || []).forEach(function(cat) {
+      (fcByCat[cat] || []).forEach(function(c) { sectionFixed.push(c); });
+    });
+
+    // Calculate fixed total
+    var fixedTotal = 0;
+    sectionFixed.forEach(function(c) { fixedTotal += (c.amount || 0) - (c.refund || 0); });
+
+    // Shipping costs for retail section
+    var sectionShipping = [];
+    if (sec.includeShipping && shippingItems.length) {
+      shippingItems.forEach(function(s) {
+        if (s.shippingCoveredBy === 'us') fixedTotal += (s.shippingAmount || 0);
+        sectionShipping.push(s);
+      });
+    }
+
+    // Calculate variable total
+    var variableTotal = 0;
+    var sectionVarItems = [];
+
+    if (sec.variableIds) {
+      (scenario.variableCosts || []).forEach(function(vc) {
+        if (sec.variableIds.indexOf(vc.id) >= 0) {
+          var estCost = 0;
+          if (vc.type === 'pct_of_sales') {
+            estCost = calc.totalGrossRevenue * ((vc.rate || 0) / 100) + calc.totalTransactions * (vc.perTxn || 0);
+          } else if (vc.type === 'per_txn') {
+            estCost = calc.totalTransactions * (vc.perTxn || 0);
+          }
+          variableTotal += estCost;
+          sectionVarItems.push({ vc: vc, estCost: estCost });
+        }
+      });
+    }
+
+    if (sec.variableType === 'cafeVariable') {
+      (scenario.cafeVariable || []).forEach(function(cv) {
+        variableTotal += (cv.amount || 0);
+      });
+    }
+
+    if (sec.variableType === 'wholesaleCOGS') {
+      wholesaleItems.forEach(function(item) {
+        if (item.costPerUnit) {
+          var sale = scenario.itemSales && scenario.itemSales[item.id];
+          var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+          variableTotal += sellQty * item.costPerUnit;
+        }
+      });
+    }
+
+    // Calculate revenue total
+    var revenueTotal = 0;
+    if (sec.revenueType === 'consignment') {
+      consignmentItems.forEach(function(item) {
+        var sale = scenario.itemSales && scenario.itemSales[item.id];
+        var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+        revenueTotal += sellQty * item.price * (item.commissionPct / 100);
+      });
+    } else if (sec.revenueType === 'wholesale') {
+      wholesaleItems.forEach(function(item) {
+        var sale = scenario.itemSales && scenario.itemSales[item.id];
+        var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+        var gross = sellQty * item.price;
+        revenueTotal += item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
+      });
+    } else if (sec.revenueType === 'otherRevenue') {
+      (scenario.otherRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
+    } else if (sec.revenueType === 'cafeRevenue') {
+      (scenario.cafeRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
+    } else if (sec.revenueType === 'spaceRevenue') {
+      (scenario.spaceRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
+    }
+
+    // Build section HTML
+    html += '<div class="pl-section' + (isOpen ? ' open' : '') + '" id="pl-sec-' + sec.id + '" data-section="' + sec.id + '">';
+    html += '<div class="pl-section-head" onclick="togglePLSection(\'' + sec.id + '\')">';
+    html += '<span class="pl-section-head-name">' + sec.name + '</span>';
+    html += '<span class="pl-section-head-totals">';
+    html += '<span class="pl-section-head-fixed">Fixed $' + fmt(fixedTotal) + '</span>';
+    html += '<span class="pl-section-head-variable">Var $' + fmt(variableTotal) + '</span>';
+    html += '<span class="pl-section-head-revenue">Rev $' + fmt(revenueTotal) + '</span>';
+    html += '</span>';
+    html += '<span class="pl-section-head-chevron">\u203a</span>';
+    html += '</div>';
+
+    html += '<div class="pl-section-body"><div class="pl-section-grid">';
+
+    // ── FIXED COSTS column ──
+    html += '<div class="pl-section-col">';
+    html += '<div class="pl-section-col-head"><span>Fixed Costs</span><span class="pl-section-col-total">$' + fmt(fixedTotal) + '</span></div>';
+
+    if (sectionFixed.length || sectionShipping.length) {
+      // Group by sub-category within the section
+      var subCats = {};
+      sectionFixed.forEach(function(c) {
+        var cat = c.category || 'misc';
+        if (!subCats[cat]) subCats[cat] = [];
+        subCats[cat].push(c);
+      });
+
+      var subCatOrder = (sec.fixedCats || []).filter(function(c) { return subCats[c]; });
+      Object.keys(subCats).forEach(function(c) { if (subCatOrder.indexOf(c) < 0) subCatOrder.push(c); });
+
+      // Sort items within each sub-cat by amount desc
+      subCatOrder.forEach(function(cat) {
+        subCats[cat].sort(function(a, b) { return (b.amount || 0) - (a.amount || 0); });
+      });
+
+      subCatOrder.forEach(function(cat) {
+        var catTotal = 0;
+        subCats[cat].forEach(function(c) { catTotal += (c.amount || 0) - (c.refund || 0); });
+
+        if (subCatOrder.length > 1) {
+          html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(cat) + '</span><span class="pl-cost-cat-total">$' + fmt(catTotal) + '</span></div>';
+        }
+
+        subCats[cat].forEach(function(c) {
+          html += renderFixedCostCard(c);
+        });
+
+        html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'' + esc(cat) + '\')">+ Add to ' + esc(cat) + '</button>';
+      });
+
+      // Shipping items
+      if (sectionShipping.length) {
+        var shippingWeCover = 0;
+        var totalAllShipping = 0;
+        sectionShipping.forEach(function(s) {
+          totalAllShipping += (s.shippingAmount || 0);
+          if (s.shippingCoveredBy === 'us') shippingWeCover += (s.shippingAmount || 0);
+        });
+        html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">shipping</span><span class="pl-cost-cat-total">$' + fmt(shippingWeCover) + '</span></div>';
+        sectionShipping.forEach(function(shipItem) {
+          html += renderShippingCard(shipItem);
+        });
+      }
+    } else {
+      html += '<div class="pl-section-empty">\u2014</div>';
+    }
+    html += '</div>';
+
+    // ── VARIABLE COSTS column ──
+    html += '<div class="pl-section-col">';
+    html += '<div class="pl-section-col-head"><span>Variable Costs</span><span class="pl-section-col-total">$' + fmt(variableTotal) + '</span></div>';
+
+    var hasVariable = false;
+    if (sectionVarItems.length) {
+      hasVariable = true;
+      html += '<div class="pl-variable-note">Based on ' + calc.totalTransactions + ' txns, $' + fmt(calc.totalGrossRevenue) + ' gross</div>';
+      sectionVarItems.forEach(function(sv) {
+        html += '<div class="pl-cost-row">' +
+          '<span class="pl-cost-name">' + esc(sv.vc.name) + '</span>' +
+          '<span class="pl-cost-note">' + esc(sv.vc.note || '') + '</span>' +
+          '<span class="pl-cost-amt">$' + fmt(sv.estCost) + '</span>' +
+          '<button class="pl-row-del" onclick="deleteVariableCost(\'' + sv.vc.id + '\')">x</button>' +
+        '</div>';
+      });
+    }
+
+    if (sec.variableType === 'cafeVariable') {
+      hasVariable = true;
+      (scenario.cafeVariable || []).forEach(function(cv) {
+        var cvOpen = document.getElementById('pl-cafe-var-' + cv.id) && document.getElementById('pl-cafe-var-' + cv.id).classList.contains('open');
+        html += '<div class="pl-cost-item' + (cvOpen ? ' open' : '') + '" id="pl-cafe-var-' + cv.id + '">' +
+          '<div class="pl-cost-top" onclick="toggleCafeVarCard(\'' + cv.id + '\')">' +
+            '<span class="pl-cost-name-display">' + esc(cv.name || '(untitled)') + '</span>' +
+            '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" onchange="updateCafeVar(this)"></div>' +
+            '<span class="pl-cost-chevron">\u203a</span>' +
+          '</div>' +
+          '<div class="pl-cost-body">' +
+            '<div class="pl-cost-fields">' +
+              '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(cv.name || '') + '" data-cv-id="' + cv.id + '" data-field="name" onchange="updateCafeVarField(this)"></div>' +
+              '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" data-field="amount" onchange="updateCafeVarField(this)"></div>' +
+              '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-cv-id="' + cv.id + '" data-field="note" onchange="updateCafeVarField(this)">' + esc(cv.note || '') + '</textarea></div>' +
+            '</div>' +
+            '<button class="pl-cost-delete-btn" onclick="deleteCafeVar(\'' + cv.id + '\')">Delete item</button>' +
+          '</div>' +
+        '</div>';
+      });
+      html += '<button class="pl-add-row-btn" onclick="addCafeVar()">+ Add ingredient</button>';
+    }
+
+    if (sec.variableType === 'wholesaleCOGS') {
+      var merchCOGS = wholesaleItems.filter(function(i) { return i.costPerUnit; });
+      if (merchCOGS.length) {
+        hasVariable = true;
+        merchCOGS.forEach(function(item) {
+          var sale = scenario.itemSales && scenario.itemSales[item.id];
+          var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+          var totalCost = sellQty * item.costPerUnit;
+          html += '<div class="pl-cost-row">' +
+            '<span class="pl-cost-name">' + esc(item.name || '(untitled)') + '</span>' +
+            '<span class="pl-cost-note">$' + fmt(item.costPerUnit) + '/unit \u00d7 ' + sellQty + '</span>' +
+            '<span class="pl-cost-amt">$' + fmt(totalCost) + '</span>' +
+          '</div>';
+        });
+      }
+    }
+
+    if (!hasVariable) {
+      html += '<div class="pl-section-empty">\u2014</div>';
+    }
+    html += '</div>';
+
+    // ── REVENUE column ──
+    html += '<div class="pl-section-col">';
+    html += '<div class="pl-section-col-head"><span>Revenue</span><span class="pl-section-col-total">$' + fmt(revenueTotal) + '</span></div>';
+
+    var hasRevenue = false;
+
+    if (sec.revenueType === 'consignment') {
+      if (consignmentItems.length) {
+        hasRevenue = true;
+        html += renderConsignmentRevenue(consignmentItems, scenario);
+      }
+    } else if (sec.revenueType === 'wholesale') {
+      if (wholesaleItems.length) {
+        hasRevenue = true;
+        html += renderWholesaleRevenue(wholesaleItems, scenario);
+      }
+    } else if (sec.revenueType === 'otherRevenue') {
+      if (scenario.otherRevenue && scenario.otherRevenue.length) {
+        hasRevenue = true;
+        html += renderOtherRevenueCards(scenario);
+      }
+      html += '<button class="pl-add-row-btn" onclick="addOtherRevItem()">+ Add other revenue</button>';
+    } else if (sec.revenueType === 'cafeRevenue') {
+      if (scenario.cafeRevenue && scenario.cafeRevenue.length) {
+        hasRevenue = true;
+        html += renderCafeRevenueCards(scenario);
+      }
+      html += '<button class="pl-add-row-btn" onclick="addCafeRevItem()">+ Add drink</button>';
+    } else if (sec.revenueType === 'spaceRevenue') {
+      if (scenario.spaceRevenue && scenario.spaceRevenue.length) {
+        hasRevenue = true;
+        html += renderCafeRevenueCards(scenario, 'spaceRevenue');
+      }
+      html += '<button class="pl-add-row-btn" onclick="addSpaceRevItem()">+ Add item</button>';
+    }
+
+    if (!hasRevenue && sec.revenueType !== 'otherRevenue' && sec.revenueType !== 'cafeRevenue' && sec.revenueType !== 'spaceRevenue') {
+      html += '<div class="pl-section-empty">\u2014</div>';
+    }
+    html += '</div>';
+
+    html += '</div></div>'; // close grid + body
+    html += '</div>'; // close section
+  });
+
+  // Misc / uncategorized fixed costs
+  var miscCats = [];
+  Object.keys(fcByCat).forEach(function(cat) {
+    var assigned = false;
+    PL_SECTIONS.forEach(function(sec) {
+      if (sec.fixedCats && sec.fixedCats.indexOf(cat) >= 0) assigned = true;
+    });
+    if (!assigned) miscCats.push(cat);
+  });
+  if (miscCats.length) {
+    var miscTotal = 0;
+    miscCats.forEach(function(cat) {
+      fcByCat[cat].forEach(function(c) { miscTotal += (c.amount || 0) - (c.refund || 0); });
+    });
+    var miscOpen = _plSectionOpen['misc'] !== false;
+    if (_plSectionOpen['misc'] === undefined) _plSectionOpen['misc'] = true;
+
+    html += '<div class="pl-section' + (miscOpen ? ' open' : '') + '" id="pl-sec-misc" data-section="misc">';
+    html += '<div class="pl-section-head" onclick="togglePLSection(\'misc\')">';
+    html += '<span class="pl-section-head-name">Other / Misc</span>';
+    html += '<span class="pl-section-head-totals"><span class="pl-section-head-fixed">Fixed $' + fmt(miscTotal) + '</span></span>';
+    html += '<span class="pl-section-head-chevron">\u203a</span>';
+    html += '</div>';
+    html += '<div class="pl-section-body"><div class="pl-section-grid">';
+    html += '<div class="pl-section-col">';
+    html += '<div class="pl-section-col-head"><span>Fixed Costs</span><span class="pl-section-col-total">$' + fmt(miscTotal) + '</span></div>';
+    miscCats.forEach(function(cat) {
+      var catTotal = 0;
+      fcByCat[cat].forEach(function(c) { catTotal += (c.amount || 0) - (c.refund || 0); });
+      html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(cat) + '</span><span class="pl-cost-cat-total">$' + fmt(catTotal) + '</span></div>';
+      fcByCat[cat].forEach(function(c) {
+        html += renderFixedCostCard(c);
+      });
+      html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'' + esc(cat) + '\')">+ Add to ' + esc(cat) + '</button>';
+    });
+    html += '</div>';
+    html += '<div class="pl-section-col"><div class="pl-section-col-head"><span>Variable Costs</span></div><div class="pl-section-empty">\u2014</div></div>';
+    html += '<div class="pl-section-col"><div class="pl-section-col-head"><span>Revenue</span></div><div class="pl-section-empty">\u2014</div></div>';
+    html += '</div></div></div>';
+  }
+
+  html += '<button class="pl-add-row-btn" style="margin-top:12px" onclick="addFixedCost()">+ Add to new category</button>';
+
+  el.innerHTML = html;
+}
+
+// Business tab: flat list of fixed costs only
+function renderPLSectionsBusiness(scenario) {
+  var el = document.getElementById('pl-sections');
+  if (!el) return;
+  var html = '';
+  var total = 0;
+  (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0) - (c.refund || 0); });
+  html += '<div class="pl-section-header"><span class="pl-section-title">Fixed Costs</span><span class="pl-section-total">$' + fmt(total) + '</span></div>';
+  (scenario.fixedCosts || []).forEach(function(c) {
+    html += renderFixedCostCard(c);
+  });
+  html += '<button class="pl-add-row-btn" onclick="addFixedCost()">+ Add item</button>';
+  el.innerHTML = html;
+}
+
+// ── Shared card renderers ──
+
+function renderFixedCostCard(c) {
+  var isOpen = document.getElementById('pl-cost-' + c.id) && document.getElementById('pl-cost-' + c.id).classList.contains('open');
+  var status = c.status || 'needed';
+  var statColor = FC_STATUS_COLORS[status] || 'var(--muted)';
+  var catOpts = FC_CATEGORIES.map(function(fc) {
+    return '<option value="' + fc + '"' + (c.category === fc ? ' selected' : '') + '>' + fc + '</option>';
+  }).join('');
+  var statOpts = FC_STATUSES.map(function(s) {
+    return '<option value="' + s + '"' + (status === s ? ' selected' : '') + '>' + s + '</option>';
+  }).join('');
+
+  var hasRefund = c.refund && c.refund > 0;
+  var netCost = (c.amount || 0) - (c.refund || 0);
+  var refundBadge = hasRefund ? '<span class="pl-refund-badge" onclick="toggleCostCard(\'' + c.id + '\')">' + 'net $' + fmt(netCost) + '</span>' : '';
+
+  return '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-cost-' + c.id + '" data-drag-id="' + c.id + '" data-drag-type="fixed" ondragover="plDragOver(event)" ondrop="plDrop(event)">' +
+    '<div class="pl-cost-top">' +
+      '<div class="pl-drag-handle" draggable="true" title="Drag to reorder" ondragstart="plDragStart(event)" ondragend="plDragEnd(event)">\u2807</div>' +
+      '<div class="pl-cost-status-dot" style="background:' + statColor + '" onclick="toggleCostCard(\'' + c.id + '\')"></div>' +
+      '<input class="pl-cost-name-inline" value="' + esc(c.name || '') + '" placeholder="Item name" data-cost-id="' + c.id + '" data-field="name" onchange="updateFixedCost(this)" onclick="event.stopPropagation()">' +
+      refundBadge +
+      '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (c.amount || 0) + '" data-cost-id="' + c.id + '" data-field="amount" onchange="updateFixedCost(this)"></div>' +
+      '<span class="pl-cost-chevron" onclick="toggleCostCard(\'' + c.id + '\')">\u203a</span>' +
+    '</div>' +
+    '<div class="pl-cost-body">' +
+      '<div class="pl-cost-fields">' +
+        '<div class="pl-cost-field"><div class="pl-cost-field-label">Category</div><select class="pl-cost-field-select" data-cost-id="' + c.id + '" data-field="category" onchange="updateFixedCost(this);renderPL()">' + catOpts + '</select></div>' +
+        '<div class="pl-cost-field"><div class="pl-cost-field-label">Status</div><select class="pl-cost-status-sel" data-cost-id="' + c.id + '" data-field="status" onchange="updateFixedCost(this);renderPL()" style="border-color:' + statColor + '44;color:' + statColor + '">' + statOpts + '</select></div>' +
+        '<div class="pl-cost-field"><div class="pl-cost-field-label">Where to get it</div><input class="pl-cost-field-input" value="' + esc(c.source || '') + '" placeholder="Vendor, store, link\u2026" data-cost-id="' + c.id + '" data-field="source" onchange="updateFixedCost(this)"></div>' +
+        '<div class="pl-cost-field"><div class="pl-cost-field-label">Who\'s responsible</div><select class="pl-cost-field-select" data-cost-id="' + c.id + '" data-field="who" onchange="updateFixedCost(this)"><option value=""' + (!c.who ? ' selected' : '') + '>\u2014</option><option value="Brooke"' + (c.who === 'Brooke' ? ' selected' : '') + '>Brooke</option><option value="Del"' + (c.who === 'Del' ? ' selected' : '') + '>Del</option><option value="334 Broome"' + (c.who === '334 Broome' ? ' selected' : '') + '>334 Broome</option></select></div>' +
+        '<div class="pl-cost-field"><div class="pl-cost-field-label">Refund (prorated return)</div><div class="pl-cost-refund-wrap"><span class="pl-dollar-sign">$</span><input class="pl-cost-field-input pl-cost-refund-input" type="number" min="0" value="' + (c.refund || 0) + '" placeholder="0" data-cost-id="' + c.id + '" data-field="refund" onchange="updateFixedCost(this)">' + (hasRefund ? '<span class="pl-refund-net">net $' + fmt(netCost) + '</span>' : '') + '</div></div>' +
+        '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details, alternatives\u2026" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea></div>' +
+      '</div>' +
+      '<button class="pl-cost-delete-btn" onclick="deleteFixedCost(\'' + c.id + '\')">Delete item</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderShippingCard(shipItem) {
+  var coveredByUs = shipItem.shippingCoveredBy === 'us';
+  var coveredLabel = coveredByUs ? 'We cover' : 'Vendor covers';
+  var coveredColor = coveredByUs ? '#e07070' : '#88c98a';
+  var isOpen = document.getElementById('pl-ship-' + shipItem.vendorId) &&
+    document.getElementById('pl-ship-' + shipItem.vendorId).classList.contains('open');
+
+  return '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-ship-' + shipItem.vendorId + '">' +
+    '<div class="pl-cost-top" onclick="var el=document.getElementById(\'pl-ship-' + shipItem.vendorId + '\');if(el)el.classList.toggle(\'open\')">' +
+      '<div class="pl-cost-status-dot" style="background:' + coveredColor + '"></div>' +
+      '<span class="pl-cost-name" style="flex:1">' + esc(shipItem.name) + '</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:9px;color:' + coveredColor + ';margin-right:8px">' + coveredLabel + '</span>' +
+      '<span class="pl-cost-amt">$' + fmt(shipItem.shippingAmount) + '</span>' +
+      '<span class="pl-cost-chevron">\u203a</span>' +
+    '</div>' +
+    '<div class="pl-cost-body">' +
+      '<div style="padding:8px 12px;font-family:DM Mono,monospace;font-size:10px;color:var(--muted);display:flex;flex-direction:column;gap:4px">' +
+        (shipItem.vendorLocation ? '<div>Location: <span style="color:var(--text)">' + esc(shipItem.vendorLocation) + '</span></div>' : '') +
+        '<div>Items shipping: <span style="color:var(--text)">' + shipItem.itemCount + '</span></div>' +
+        '<div>Cost: <span style="color:var(--text)">$' + fmt(shipItem.shippingAmount) + '</span></div>' +
+        '<div>Covered by: <span style="color:' + coveredColor + '">' + coveredLabel + '</span></div>' +
+        (coveredByUs ? '<div style="margin-top:4px;color:#e07070">Added to our fixed costs</div>' : '<div style="margin-top:4px;color:#88c98a">No impact on our P&L</div>') +
+      '</div>' +
+      '<div style="padding:4px 12px 8px"><a href="#" onclick="showTab(\'front\',\'popup-inventory-new\',document.querySelector(\'[data-tab=popup-inventory-new]\'));return false" style="font-family:DM Mono,monospace;font-size:9px;color:var(--front)">Edit in Inventory \u2192</a></div>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderConsignmentRevenue(items, scenario) {
+  // Group by vendor
+  var vendorMap = {};
+  var vendorOrder = [];
+  items.forEach(function(item) {
+    var key = item.vendor || 'Other';
+    if (!vendorMap[key]) { vendorMap[key] = { items: [], commissionPct: item.commissionPct }; vendorOrder.push(key); }
+    vendorMap[key].items.push(item);
+  });
+
+  var h = '';
+  vendorOrder.forEach(function(vendorName) {
+    var group = vendorMap[vendorName];
+    var vendorRate = group.commissionPct || 30;
+    var vendorGross = 0, vendorCut = 0, vendorItemCount = 0;
+    group.items.forEach(function(item) {
+      var sale = scenario.itemSales && scenario.itemSales[item.id];
+      var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+      vendorGross += sellQty * item.price;
+      vendorCut += sellQty * item.price * (item.commissionPct / 100);
+      vendorItemCount++;
+    });
+
+    var isVendorOpen = document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')) &&
+      document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')).classList.contains('open');
+
+    h += '<div class="pl-vendor-collapse' + (isVendorOpen ? ' open' : '') + '" id="pl-vgroup-' + esc(vendorName.replace(/\s/g,'_')) + '">' +
+      '<div class="pl-vendor-collapse-top" onclick="toggleVendorGroup(\'' + esc(vendorName.replace(/\s/g,'_')) + '\')">' +
+        '<span class="pl-vendor-collapse-name">' + esc(vendorName) + ' <span style="font-size:9px;color:var(--muted);font-weight:normal">' + vendorRate + '% \u00b7 ' + vendorItemCount + ' items</span></span>' +
+        '<span class="pl-vendor-collapse-gross">$' + fmt(vendorGross) + '</span>' +
+        '<span class="pl-vendor-collapse-cut">$' + fmt(vendorCut) + '</span>' +
+        '<span class="pl-cost-chevron">\u203a</span>' +
+      '</div>' +
+      '<div class="pl-vendor-collapse-body">';
+
+    group.items.forEach(function(item) {
+      var invQty = item.qty || 1;
+      var sale = scenario.itemSales && scenario.itemSales[item.id];
+      var sellQty = (sale && sale.qty != null) ? sale.qty : invQty;
+      var gross = sellQty * item.price;
+      var cut = gross * (item.commissionPct / 100);
+      var dimmed = sellQty === 0;
+
+      h += '<div class="pl-rev-spreadrow' + (dimmed ? ' pl-not-sold' : '') + '">' +
+        '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
+        '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
+        '<span class="pl-rev-sr-num" style="color:var(--muted)">inv ' + invQty + '</span>' +
+        '<span class="pl-rev-sr-num" onclick="event.stopPropagation()">sell <input type="number" min="0" max="' + invQty + '" value="' + sellQty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" data-inv-qty="' + invQty + '" onchange="updateItemSellQty(this)"></span>' +
+        '<span class="pl-rev-sr-num">' + item.commissionPct + '%</span>' +
+        '<span class="pl-rev-sr-num pl-rev-sr-cut' + (dimmed ? ' pl-cut-muted' : '') + '">$' + fmt(cut) + '</span>' +
+      '</div>';
+    });
+
+    h += '</div></div>';
+  });
+  return h;
+}
+
+function renderWholesaleRevenue(items, scenario) {
+  var vendorMap = {};
+  var vendorOrder = [];
+  items.forEach(function(item) {
+    var key = item.vendor || 'Other';
+    if (!vendorMap[key]) { vendorMap[key] = { items: [] }; vendorOrder.push(key); }
+    vendorMap[key].items.push(item);
+  });
+
+  var h = '';
+  vendorOrder.forEach(function(vendorName) {
+    var group = vendorMap[vendorName];
+    var vendorGross = 0, vendorProfit = 0, vendorItemCount = 0;
+    group.items.forEach(function(item) {
+      var sale = scenario.itemSales && scenario.itemSales[item.id];
+      var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
+      var gross = sellQty * item.price;
+      var profit = item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
+      vendorGross += gross;
+      vendorProfit += profit;
+      vendorItemCount++;
+    });
+
+    var isVendorOpen = document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')) &&
+      document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')).classList.contains('open');
+
+    h += '<div class="pl-vendor-collapse' + (isVendorOpen ? ' open' : '') + '" id="pl-vgroup-' + esc(vendorName.replace(/\s/g,'_')) + '">' +
+      '<div class="pl-vendor-collapse-top" onclick="toggleVendorGroup(\'' + esc(vendorName.replace(/\s/g,'_')) + '\')">' +
+        '<span class="pl-vendor-collapse-name">' + esc(vendorName) + ' <span style="font-size:9px;color:var(--muted);font-weight:normal">' + vendorItemCount + ' items</span></span>' +
+        '<span class="pl-vendor-collapse-gross">$' + fmt(vendorGross) + '</span>' +
+        '<span class="pl-vendor-collapse-cut">$' + fmt(vendorProfit) + '</span>' +
+        '<span class="pl-cost-chevron">\u203a</span>' +
+      '</div>' +
+      '<div class="pl-vendor-collapse-body">';
+
+    group.items.forEach(function(item) {
+      var invQty = item.qty || 1;
+      var sale = scenario.itemSales && scenario.itemSales[item.id];
+      var sellQty = (sale && sale.qty != null) ? sale.qty : invQty;
+      var gross = sellQty * item.price;
+      var profit = item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
+      var dimmed = sellQty === 0;
+
+      h += '<div class="pl-rev-spreadrow' + (dimmed ? ' pl-not-sold' : '') + '">' +
+        '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
+        '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
+        '<span class="pl-rev-sr-num" style="color:var(--muted)">inv ' + invQty + '</span>' +
+        '<span class="pl-rev-sr-num" onclick="event.stopPropagation()">sell <input type="number" min="0" max="' + invQty + '" value="' + sellQty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" data-inv-qty="' + invQty + '" onchange="updateItemSellQty(this)"></span>' +
+        '<span class="pl-rev-sr-num">cost $' + fmt(item.costPerUnit || 0) + '</span>' +
+        '<span class="pl-rev-sr-num pl-rev-sr-cut' + (dimmed ? ' pl-cut-muted' : '') + '">$' + fmt(profit) + '</span>' +
+      '</div>';
+    });
+
+    h += '</div></div>';
+  });
+  return h;
+}
+
+function renderOtherRevenueCards(scenario) {
+  var h = '';
+  (scenario.otherRevenue || []).forEach(function(r) {
+    var isOpen = document.getElementById('pl-other-' + r.id) && document.getElementById('pl-other-' + r.id).classList.contains('open');
+    h += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="pl-other-' + r.id + '">' +
+      '<div class="pl-cost-top" onclick="toggleOtherRevCard(\'' + r.id + '\')">' +
+        '<span class="pl-other-rev-name">' + esc(r.name || '(untitled)') + '</span>' +
+        '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (r.amount || 0) + '" data-or-id="' + r.id + '" onchange="updateOtherRevItem(this)"></div>' +
+        '<span class="pl-cost-chevron">\u203a</span>' +
+      '</div>' +
+      '<div class="pl-cost-body">' +
+        '<div class="pl-cost-fields">' +
+          '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(r.name || '') + '" data-or-id="' + r.id + '" data-field="name" onchange="updateOtherRevField(this)"></div>' +
+          '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (r.amount || 0) + '" data-or-id="' + r.id + '" data-field="amount" onchange="updateOtherRevField(this)"></div>' +
+          '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-or-id="' + r.id + '" data-field="note" onchange="updateOtherRevField(this)">' + esc(r.note || '') + '</textarea></div>' +
+        '</div>' +
+        '<button class="pl-cost-delete-btn" onclick="deleteOtherRevItem(\'' + r.id + '\')">Delete item</button>' +
+      '</div>' +
+    '</div>';
+  });
+  return h;
+}
+
+function renderCafeRevenueCards(scenario, arrayName) {
+  var arrKey = arrayName || 'cafeRevenue';
+  var prefix = arrKey === 'spaceRevenue' ? 'sr' : 'cr';
+  var h = '';
+  (scenario[arrKey] || []).forEach(function(r) {
+    var elId = 'pl-' + prefix + '-' + r.id;
+    var isOpen = document.getElementById(elId) && document.getElementById(elId).classList.contains('open');
+    h += '<div class="pl-cost-item' + (isOpen ? ' open' : '') + '" id="' + elId + '">' +
+      '<div class="pl-cost-top" onclick="var e=document.getElementById(\'' + elId + '\');if(e)e.classList.toggle(\'open\')">' +
+        '<span class="pl-other-rev-name">' + esc(r.name || '(untitled)') + '</span>' +
+        '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (r.amount || 0) + '" data-arr="' + arrKey + '" data-rid="' + r.id + '" onchange="updateGenRevItem(this)"></div>' +
+        '<span class="pl-cost-chevron">\u203a</span>' +
+      '</div>' +
+      '<div class="pl-cost-body">' +
+        '<div class="pl-cost-fields">' +
+          '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(r.name || '') + '" data-arr="' + arrKey + '" data-rid="' + r.id + '" data-field="name" onchange="updateGenRevField(this)"></div>' +
+          '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (r.amount || 0) + '" data-arr="' + arrKey + '" data-rid="' + r.id + '" data-field="amount" onchange="updateGenRevField(this)"></div>' +
+          '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-arr="' + arrKey + '" data-rid="' + r.id + '" data-field="note" onchange="updateGenRevField(this)">' + esc(r.note || '') + '</textarea></div>' +
+        '</div>' +
+        '<button class="pl-cost-delete-btn" onclick="deleteGenRevItem(\'' + arrKey + '\',\'' + r.id + '\')">Delete item</button>' +
+      '</div>' +
+    '</div>';
+  });
+  return h;
+}
+
+// Generic revenue item actions (works for cafeRevenue, spaceRevenue, etc)
+function updateGenRevItem(input) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var arr = scenario[input.dataset.arr] || [];
+  var item = arr.find(function(r) { return r.id === input.dataset.rid; });
+  if (item) { item.amount = parseFloat(input.value) || 0; savePLData(data); }
+}
+function updateGenRevField(input) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var arr = scenario[input.dataset.arr] || [];
+  var item = arr.find(function(r) { return r.id === input.dataset.rid; });
+  if (item) {
+    var field = input.dataset.field;
+    item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
+    savePLData(data);
+  }
+}
+function deleteGenRevItem(arrKey, id) {
+  if (!confirm('Delete this item?')) return;
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario[arrKey] = (scenario[arrKey] || []).filter(function(r) { return r.id !== id; });
+  savePLData(data);
+  renderPL();
+}
+function addSpaceRevItem() {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  if (!scenario.spaceRevenue) scenario.spaceRevenue = [];
+  scenario.spaceRevenue.push({ id: 'sr_' + Date.now(), name: '', amount: 0, note: '' });
+  savePLData(data);
+  renderPL();
+}
+
+// ── Cafe Variable Cost actions ──
+
+function toggleCafeVarCard(id) {
+  var card = document.getElementById('pl-cafe-var-' + id);
+  if (card) card.classList.toggle('open');
+}
+
+function updateCafeVar(input) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var item = (scenario.cafeVariable || []).find(function(r) { return r.id === input.dataset.cvId; });
+  if (item) {
+    item.amount = parseFloat(input.value) || 0;
+    savePLData(data);
+    var calc = calcPL(scenario, inventoryToPLItems());
+    renderPLSummary(calc, scenario);
+  }
+}
+
+function updateCafeVarField(input) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var item = (scenario.cafeVariable || []).find(function(r) { return r.id === input.dataset.cvId; });
+  if (item) {
+    var field = input.dataset.field;
+    item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
+    savePLData(data);
+    if (field === 'amount') {
+      var calc = calcPL(scenario, inventoryToPLItems());
+      renderPLSummary(calc, scenario);
+    }
+  }
+}
+
+function addCafeVar() {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  if (!scenario.cafeVariable) scenario.cafeVariable = [];
+  var newId = 'cv_' + Date.now();
+  scenario.cafeVariable.push({ id: newId, name: '', amount: 0, note: '' });
+  savePLData(data);
+  renderPL();
+  setTimeout(function() {
+    var card = document.getElementById('pl-cafe-var-' + newId);
+    if (card) card.classList.add('open');
+  }, 50);
+}
+
+function deleteCafeVar(id) {
+  if (!confirm('Delete this ingredient?')) return;
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario.cafeVariable = (scenario.cafeVariable || []).filter(function(r) { return r.id !== id; });
+  savePLData(data);
+  renderPL();
+}
+
+// ── Cafe Revenue actions ──
+
+function toggleCafeRevCard(id) {
+  var card = document.getElementById('pl-cafe-rev-' + id);
+  if (card) card.classList.toggle('open');
+}
+
+function updateCafeRevItem(input) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var item = (scenario.cafeRevenue || []).find(function(r) { return r.id === input.dataset.crId; });
+  if (item) {
+    item.amount = parseFloat(input.value) || 0;
+    savePLData(data);
+    var calc = calcPL(scenario, inventoryToPLItems());
+    renderPLSummary(calc, scenario);
+  }
+}
+
+function updateCafeRevField(input) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var item = (scenario.cafeRevenue || []).find(function(r) { return r.id === input.dataset.crId; });
+  if (item) {
+    var field = input.dataset.field;
+    item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
+    savePLData(data);
+    if (field === 'amount') {
+      var calc = calcPL(scenario, inventoryToPLItems());
+      renderPLSummary(calc, scenario);
+    }
+  }
+}
+
+function addCafeRevItem() {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  if (!scenario.cafeRevenue) scenario.cafeRevenue = [];
+  var newId = 'cr_' + Date.now();
+  scenario.cafeRevenue.push({ id: newId, name: '', amount: 0, note: '' });
+  savePLData(data);
+  renderPL();
+  setTimeout(function() {
+    var card = document.getElementById('pl-cafe-rev-' + newId);
+    if (card) card.classList.add('open');
+  }, 50);
+}
+
+function deleteCafeRevItem(id) {
+  if (!confirm('Delete this drink?')) return;
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario.cafeRevenue = (scenario.cafeRevenue || []).filter(function(r) { return r.id !== id; });
+  savePLData(data);
+  renderPL();
 }
 
 function renderPLCalculators(scenario) {
@@ -1223,7 +2019,7 @@ function renderFixedCosts(scenario, liveInventory) {
         '<div class="pl-cost-body">' +
           '<div class="pl-cost-fields">' +
             '<div class="pl-cost-field"><div class="pl-cost-field-label">Category</div><select class="pl-cost-field-select" data-cost-id="' + c.id + '" data-field="category" onchange="updateFixedCost(this);renderPL()">' + catOpts + '</select></div>' +
-            '<div class="pl-cost-field"><div class="pl-cost-field-label">Status</div><select class="pl-cost-status-sel" data-cost-id="' + c.id + '" data-field="status" onchange="updateFixedCost(this);renderFixedCosts(getActiveScenario())" style="border-color:' + statColor + '44;color:' + statColor + '">' + statOpts + '</select></div>' +
+            '<div class="pl-cost-field"><div class="pl-cost-field-label">Status</div><select class="pl-cost-status-sel" data-cost-id="' + c.id + '" data-field="status" onchange="updateFixedCost(this);renderPL()" style="border-color:' + statColor + '44;color:' + statColor + '">' + statOpts + '</select></div>' +
             '<div class="pl-cost-field"><div class="pl-cost-field-label">Where to get it</div><input class="pl-cost-field-input" value="' + esc(c.source || '') + '" placeholder="Vendor, store, link…" data-cost-id="' + c.id + '" data-field="source" onchange="updateFixedCost(this)"></div>' +
             '<div class="pl-cost-field"><div class="pl-cost-field-label">Who\'s responsible</div><select class="pl-cost-field-select" data-cost-id="' + c.id + '" data-field="who" onchange="updateFixedCost(this)"><option value=""' + (!c.who ? ' selected' : '') + '>—</option><option value="Brooke"' + (c.who === 'Brooke' ? ' selected' : '') + '>Brooke</option><option value="Del"' + (c.who === 'Del' ? ' selected' : '') + '>Del</option><option value="334 Broome"' + (c.who === '334 Broome' ? ' selected' : '') + '>334 Broome</option></select></div>' +
             '<div class="pl-cost-field"><div class="pl-cost-field-label">Refund (prorated return)</div><div class="pl-cost-refund-wrap"><span class="pl-dollar-sign">$</span><input class="pl-cost-field-input pl-cost-refund-input" type="number" min="0" value="' + (c.refund || 0) + '" placeholder="0" data-cost-id="' + c.id + '" data-field="refund" onchange="updateFixedCost(this)">' + (hasRefund ? '<span class="pl-refund-net">net $' + fmt(netCost) + '</span>' : '') + '</div></div>' +
@@ -1386,20 +2182,15 @@ function updateFixedCost(input) {
   var liveInv = inventoryToPLItems();
   var calc = calcPL(scenario, liveInv);
   renderPLSummary(calc, scenario);
-  renderVariableCosts(scenario, calc, data, liveInv);
-  // For refund changes, re-render fixed costs fully so badges update
-  if (field === 'refund') {
-    renderFixedCosts(scenario, liveInv);
+  // For refund or category changes, re-render fully
+  if (field === 'refund' || field === 'category') {
+    renderPLSections(scenario, calc, liveInv);
     var card = document.getElementById('pl-cost-' + input.dataset.costId);
     if (card) card.classList.add('open');
     return;
   }
-  // Update section totals (net of refunds + shipping)
-  var total = 0;
-  (scenario.fixedCosts || []).forEach(function(c) { total += (c.amount || 0) - (c.refund || 0); });
-  total += calc.shippingCosts || 0;
-  var header = document.querySelector('#pl-fixed .pl-section-total');
-  if (header) header.textContent = '$' + fmt(total);
+  // Update section head totals inline (lightweight)
+  renderPLSections(scenario, calc, liveInv);
 }
 
 function toggleCostCard(id) {
@@ -1419,10 +2210,12 @@ function addFixedCostToCat(cat) {
     note: ''
   });
   savePLData(data);
-  renderFixedCosts(scenario);
+  renderPL();
   // Auto-open the new item
-  var card = document.getElementById('pl-cost-' + newId);
-  if (card) card.classList.add('open');
+  setTimeout(function() {
+    var card = document.getElementById('pl-cost-' + newId);
+    if (card) card.classList.add('open');
+  }, 50);
 }
 
 function addFixedCost() {

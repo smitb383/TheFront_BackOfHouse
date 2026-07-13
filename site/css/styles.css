@@ -4077,6 +4077,72 @@ body::before {
 .pl-columns { gap:32px; }
 .pl-col { overflow:visible; }
 
+/* ── P&L Section-based layout ── */
+.pl-section {
+  margin-bottom:24px; border-left:3px solid var(--border); border-radius:4px;
+  background:var(--surface); overflow:hidden;
+}
+.pl-section-head {
+  display:flex; align-items:center; gap:12px; padding:12px 16px;
+  cursor:pointer; user-select:none; transition:background 0.15s;
+  border-bottom:1px solid var(--faint);
+}
+.pl-section-head:hover { background:var(--faint); }
+.pl-section-head-name {
+  font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:400; flex:1;
+}
+.pl-section-head-totals {
+  display:flex; gap:16px; font-family:'DM Mono',monospace; font-size:10px;
+  letter-spacing:0.05em;
+}
+.pl-section-head-totals span { white-space:nowrap; }
+.pl-section-head-chevron {
+  font-size:14px; color:var(--muted); transition:transform 0.2s; margin-left:4px;
+}
+.pl-section.open .pl-section-head-chevron { transform:rotate(90deg); }
+.pl-section-body {
+  display:none; padding:12px 16px;
+}
+.pl-section.open .pl-section-body { display:block; }
+.pl-section-grid {
+  display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;
+}
+@media(max-width:1000px) { .pl-section-grid { grid-template-columns:1fr; } }
+.pl-section-col { min-width:0; }
+.pl-section-col-head {
+  font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.15em;
+  text-transform:uppercase; color:var(--muted); padding-bottom:6px;
+  margin-bottom:8px; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.pl-section-col-total {
+  font-family:'DM Mono',monospace; font-size:10px; color:var(--front);
+}
+.pl-section-empty {
+  font-family:'Cormorant Garamond',serif; font-size:13px; color:var(--muted);
+  font-style:italic; padding:8px 0;
+}
+.pl-section-col .pl-cost-item { margin-bottom:2px; }
+.pl-section-col .pl-cost-row {
+  display:flex; align-items:center; gap:8px;
+  background:var(--surface); border:1px solid var(--border); border-radius:4px;
+  margin-bottom:2px; padding:8px 12px;
+}
+.pl-section-col .pl-cost-row:hover { background:var(--faint); }
+.pl-section-col .pl-vendor-collapse { margin-bottom:2px; }
+
+/* Section border colors */
+.pl-section[data-section="cafe"] { border-left-color:#a8c77d; }
+.pl-section[data-section="retail"] { border-left-color:#e2c97e; }
+.pl-section[data-section="events"] { border-left-color:#c77dba; }
+.pl-section[data-section="space"] { border-left-color:#82bfbb; }
+.pl-section[data-section="marketing"] { border-left-color:#6aaad8; }
+.pl-section[data-section="wholesale"] { border-left-color:#e0845a; }
+
+.pl-section-head-fixed { color:var(--muted); }
+.pl-section-head-variable { color:var(--muted); }
+.pl-section-head-revenue { color:var(--front); }
+
 /* ── Revenue + Variable costs match Fixed cost card styling ── */
 .pl-rev-spreadrow {
   background:var(--surface); border:1px solid var(--border); border-radius:4px;
