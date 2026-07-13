@@ -429,11 +429,21 @@ function calcPL(scenario, inventory) {
     totalVariable += (cv.amount || 0);
   });
 
-  // Cafe revenue
+  // Cafe revenue (price × sold) and variable costs (cost per drink + Square)
+  var cafeDrinkRevenue = 0;
+  var cafeDrinkCosts = 0;
+  var cafeDrinkTxns = 0;
   (scenario.cafeRevenue || []).forEach(function(cr) {
-    ourCut += (cr.amount || 0);
-    totalRevenue += (cr.amount || 0);
+    var rev = (cr.price || 0) * (cr.sold || 0);
+    var cost = (cr.costPerDrink || 0) * (cr.sold || 0);
+    cafeDrinkRevenue += rev;
+    cafeDrinkCosts += cost;
+    cafeDrinkTxns += (cr.sold || 0);
   });
+  var cafeSquareFee = cafeDrinkRevenue * 0.026 + cafeDrinkTxns * 0.15;
+  ourCut += cafeDrinkRevenue;
+  totalRevenue += cafeDrinkRevenue;
+  totalVariable += cafeDrinkCosts + cafeSquareFee;
 
   // Space revenue (insurance refund etc)
   (scenario.spaceRevenue || []).forEach(function(sr) {
@@ -657,21 +667,28 @@ function renderPLSections(scenario, calc, liveInventory) {
     { id: 'sr_insurance_refund', name: 'Insurance prorated refund', amount: 0, note: 'Prorated return when GL policy cancelled after popup ends' }
   ];
 
-  // Ensure cafeVariable exists
+  // Ensure cafeVariable exists (ongoing supply costs — not per-drink)
   if (!scenario.cafeVariable) scenario.cafeVariable = [
-    { id: 'cv_ice', name: 'Ice', amount: 0, note: 'Ongoing' },
+    { id: 'cv_ice', name: 'Ice (ongoing)', amount: 0, note: '' },
     { id: 'cv_milk', name: 'Milk / oat milk', amount: 0, note: '' },
     { id: 'cv_matcha', name: 'Matcha powder', amount: 0, note: '' },
-    { id: 'cv_flavoring', name: 'Flavoring ingredients', amount: 0, note: '' },
-    { id: 'cv_cost_per_drink', name: 'Cost per drink (ingredients)', amount: 0, note: 'Avg cost of ingredients per drink sold' },
-    { id: 'cv_square_cafe', name: 'Square fee (2.6% + $0.15)', amount: 0, note: 'Estimated Square processing on cafe sales' }
+    { id: 'cv_flavoring', name: 'Flavoring ingredients', amount: 0, note: '' }
   ];
 
-  // Ensure cafeRevenue exists
+  // Ensure cafeRevenue exists — each drink has price, costPerDrink, and sold count
   if (!scenario.cafeRevenue) scenario.cafeRevenue = [
-    { id: 'cr_1', name: 'TBD Drink 1', amount: 0, note: '' },
-    { id: 'cr_2', name: 'TBD Drink 2', amount: 0, note: '' }
+    { id: 'cr_1', name: 'TBD Drink 1', price: 0, costPerDrink: 0, sold: 0, note: '' },
+    { id: 'cr_2', name: 'TBD Drink 2', price: 0, costPerDrink: 0, sold: 0, note: '' }
   ];
+  // Migrate old format (amount) to new format (price/sold)
+  scenario.cafeRevenue.forEach(function(cr) {
+    if (cr.amount !== undefined && cr.price === undefined) {
+      cr.price = cr.amount;
+      cr.sold = 0;
+      cr.costPerDrink = 0;
+      delete cr.amount;
+    }
+  });
 
   // Save new arrays if they were just created
   var data = getPLData();
@@ -772,7 +789,7 @@ function renderPLSections(scenario, calc, liveInventory) {
     } else if (sec.revenueType === 'otherRevenue') {
       (scenario.otherRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
     } else if (sec.revenueType === 'cafeRevenue') {
-      (scenario.cafeRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
+      (scenario.cafeRevenue || []).forEach(function(r) { revenueTotal += (r.price || 0) * (r.sold || 0); });
     } else if (sec.revenueType === 'spaceRevenue') {
       (scenario.spaceRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
     }
@@ -794,6 +811,133 @@ function renderPLSections(scenario, calc, liveInventory) {
     html += '</div>';
 
     html += '<div class="pl-section-body"><div class="pl-section-grid">';
+
+    // ── CAFE SECTION: custom 4-column layout (Fixed | Revenue | Variable | Profit) ──
+    if (sec.id === 'cafe') {
+      // Fixed costs column
+      html += '<div class="pl-section-col">';
+      html += '<div class="pl-section-col-head"><span>Fixed Costs</span><span class="pl-section-col-total">$' + fmt(fixedTotal) + '</span></div>';
+      if (sectionFixed.length) {
+        sectionFixed.forEach(function(c) { html += renderFixedCostCard(c); });
+        html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'cafe\')">+ Add to cafe</button>';
+      } else {
+        html += '<div class="pl-section-empty">\u2014</div>';
+      }
+      html += '</div>';
+
+      // Revenue column (with sell buttons)
+      var cafeTotalDrinksSold = 0;
+      var cafeTotalDrinkRevenue = 0;
+      (scenario.cafeRevenue || []).forEach(function(cr) {
+        cafeTotalDrinksSold += (cr.sold || 0);
+        cafeTotalDrinkRevenue += (cr.price || 0) * (cr.sold || 0);
+      });
+      html += '<div class="pl-section-col">';
+      html += '<div class="pl-section-col-head"><span>Revenue</span><span class="pl-section-col-total">$' + fmt(cafeTotalDrinkRevenue) + '</span></div>';
+      (scenario.cafeRevenue || []).forEach(function(cr) {
+        var drinkRev = (cr.price || 0) * (cr.sold || 0);
+        var crOpen = document.getElementById('pl-cafe-drink-' + cr.id) && document.getElementById('pl-cafe-drink-' + cr.id).classList.contains('open');
+        html += '<div class="pl-cost-item' + (crOpen ? ' open' : '') + '" id="pl-cafe-drink-' + cr.id + '">';
+        html += '<div class="pl-cost-top" onclick="var e=document.getElementById(\'pl-cafe-drink-' + cr.id + '\');if(e)e.classList.toggle(\'open\')">';
+        html += '<span class="pl-cost-name-display">' + esc(cr.name || '(untitled)') + '</span>';
+        html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-right:4px">$' + fmt(cr.price || 0) + '</span>';
+        // Sell button
+        html += '<span onclick="event.stopPropagation();cafeSellDrink(\'' + cr.id + '\')" style="background:#88c98a33;border:2px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;font-weight:700;letter-spacing:0.04em">+ SELL</span>';
+        html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;margin:0 4px">' + (cr.sold || 0) + ' sold</span>';
+        if (cr.sold > 0) {
+          html += '<span onclick="event.stopPropagation();cafeUndoDrink(\'' + cr.id + '\')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo">\u21a9</span>';
+        }
+        html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);font-weight:600;margin-left:auto">$' + fmt(drinkRev) + '</span>';
+        html += '<span class="pl-cost-chevron">\u203a</span>';
+        html += '</div>';
+        html += '<div class="pl-cost-body">';
+        html += '<div class="pl-cost-fields">';
+        html += '<div class="pl-cost-field"><div class="pl-cost-field-label">Drink Name</div><input class="pl-cost-field-input" value="' + esc(cr.name || '') + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="name" onchange="updateGenRevField(this)"></div>';
+        html += '<div class="pl-cost-field"><div class="pl-cost-field-label">Price ($)</div><input class="pl-cost-field-input" type="number" min="0" step="0.5" value="' + (cr.price || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="price" onchange="updateGenRevField(this)"></div>';
+        html += '<div class="pl-cost-field"><div class="pl-cost-field-label">Cost per drink ($)</div><input class="pl-cost-field-input" type="number" min="0" step="0.1" value="' + (cr.costPerDrink || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="costPerDrink" onchange="updateGenRevField(this)"></div>';
+        html += '<div class="pl-cost-field"><div class="pl-cost-field-label">Sold</div><input class="pl-cost-field-input" type="number" min="0" value="' + (cr.sold || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="sold" onchange="updateGenRevField(this)"></div>';
+        html += '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="note" onchange="updateGenRevField(this)">' + esc(cr.note || '') + '</textarea></div>';
+        html += '</div>';
+        html += '<button class="pl-cost-delete-btn" onclick="deleteGenRevItem(\'cafeRevenue\',\'' + cr.id + '\')">Delete drink</button>';
+        html += '</div></div>';
+      });
+      html += '<button class="pl-add-row-btn" onclick="addCafeDrink()">+ Add drink</button>';
+      html += '</div>';
+
+      // Variable costs column (auto-calculated from sales)
+      var cafeIngredientCost = 0;
+      (scenario.cafeRevenue || []).forEach(function(cr) { cafeIngredientCost += (cr.costPerDrink || 0) * (cr.sold || 0); });
+      var cafeSquare = cafeTotalDrinkRevenue * 0.026 + cafeTotalDrinksSold * 0.15;
+      var cafeSupplyCosts = 0;
+      (scenario.cafeVariable || []).forEach(function(cv) { cafeSupplyCosts += (cv.amount || 0); });
+      var cafeTotalVar = cafeIngredientCost + cafeSquare + cafeSupplyCosts;
+      variableTotal = cafeTotalVar; // override for profit calc
+
+      html += '<div class="pl-section-col">';
+      html += '<div class="pl-section-col-head"><span>Variable Costs</span><span class="pl-section-col-total">$' + fmt(cafeTotalVar) + '</span></div>';
+
+      // Auto-calc items
+      html += '<div style="padding:4px 0;display:flex;flex-direction:column;gap:4px">';
+      html += '<div class="pl-cost-row"><span class="pl-cost-name">Ingredient cost</span><span class="pl-cost-note">' + cafeTotalDrinksSold + ' drinks</span><span class="pl-cost-amt">$' + fmt(cafeIngredientCost) + '</span></div>';
+      html += '<div class="pl-cost-row"><span class="pl-cost-name">Square fee</span><span class="pl-cost-note">2.6% + $0.15/txn</span><span class="pl-cost-amt">$' + fmt(cafeSquare) + '</span></div>';
+      html += '</div>';
+
+      // Ongoing supply costs (editable)
+      if (scenario.cafeVariable && scenario.cafeVariable.length) {
+        html += '<div class="pl-cost-cat" style="margin-top:8px"><span class="pl-cost-cat-name">Ongoing supplies</span><span class="pl-cost-cat-total">$' + fmt(cafeSupplyCosts) + '</span></div>';
+        (scenario.cafeVariable || []).forEach(function(cv) {
+          var cvOpen = document.getElementById('pl-cafe-var-' + cv.id) && document.getElementById('pl-cafe-var-' + cv.id).classList.contains('open');
+          html += '<div class="pl-cost-item' + (cvOpen ? ' open' : '') + '" id="pl-cafe-var-' + cv.id + '">' +
+            '<div class="pl-cost-top" onclick="toggleCafeVarCard(\'' + cv.id + '\')">' +
+              '<span class="pl-cost-name-display">' + esc(cv.name || '(untitled)') + '</span>' +
+              '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" onchange="updateCafeVar(this)"></div>' +
+              '<span class="pl-cost-chevron">\u203a</span>' +
+            '</div>' +
+            '<div class="pl-cost-body">' +
+              '<div class="pl-cost-fields">' +
+                '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(cv.name || '') + '" data-cv-id="' + cv.id + '" data-field="name" onchange="updateCafeVarField(this)"></div>' +
+                '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" data-field="amount" onchange="updateCafeVarField(this)"></div>' +
+                '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-cv-id="' + cv.id + '" data-field="note" onchange="updateCafeVarField(this)">' + esc(cv.note || '') + '</textarea></div>' +
+              '</div>' +
+              '<button class="pl-cost-delete-btn" onclick="deleteCafeVar(\'' + cv.id + '\')">Delete</button>' +
+            '</div>' +
+          '</div>';
+        });
+        html += '<button class="pl-add-row-btn" onclick="addCafeVar()">+ Add supply</button>';
+      }
+      html += '</div>';
+
+      // Profit split column
+      var cafeTotalCosts = fixedTotal + cafeTotalVar;
+      var cafeGrossProfit = cafeTotalDrinkRevenue - cafeTotalCosts;
+      var cafeNetProfit = Math.max(0, cafeGrossProfit);
+      var eliseShare = Math.round(cafeNetProfit * 0.30);
+      var frontShare = Math.round(cafeNetProfit * 0.70);
+      var profitClass = cafeGrossProfit >= 0 ? '#88c98a' : '#e07070';
+
+      html += '<div class="pl-section-col">';
+      html += '<div class="pl-section-col-head"><span>Profit Split</span><span class="pl-section-col-total" style="color:' + profitClass + '">$' + fmt(cafeNetProfit) + '</span></div>';
+      html += '<div style="padding:8px 0;font-family:DM Mono,monospace;font-size:11px;display:flex;flex-direction:column;gap:10px">';
+      html += '<div style="display:flex;flex-direction:column;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>Revenue</span><span>$' + fmt(cafeTotalDrinkRevenue) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>- Fixed</span><span>-$' + fmt(fixedTotal) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>- Variable</span><span>-$' + fmt(cafeTotalVar) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;font-weight:700;color:' + profitClass + '"><span>Gross Profit</span><span>' + (cafeGrossProfit >= 0 ? '' : '-') + '$' + fmt(Math.abs(cafeGrossProfit)) + '</span></div>';
+      html += '</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:6px">';
+      html += '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600">After break-even</div>';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text)">Brooke & Del <span style="color:var(--muted);font-size:9px">70%</span></span><span style="color:#88c98a;font-weight:700">$' + fmt(frontShare) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text)">Chez Elise <span style="color:var(--muted);font-size:9px">30%</span></span><span style="color:#6aaad8;font-weight:700">$' + fmt(eliseShare) + '</span></div>';
+      html += '</div>';
+      if (cafeGrossProfit < 0) {
+        html += '<div style="font-size:9px;color:#e07070;margin-top:4px">Costs not yet covered \u2014 no profit split until break-even</div>';
+      }
+      html += '</div></div>';
+
+      html += '</div></div>'; // close grid + body
+      html += '</div>'; // close section
+      return; // skip generic column rendering for cafe
+    }
 
     // ── FIXED COSTS column ──
     html += '<div class="pl-section-col">';
@@ -974,42 +1118,6 @@ function renderPLSections(scenario, calc, liveInventory) {
       html += '<div class="pl-section-empty">\u2014</div>';
     }
     html += '</div>';
-
-    // ── PROFIT SPLIT column (cafe only) ──
-    if (sec.id === 'cafe') {
-      var cafeTotalCosts = fixedTotal + variableTotal;
-      var cafeGrossProfit = revenueTotal - cafeTotalCosts;
-      var cafeNetProfit = Math.max(0, cafeGrossProfit);
-      var eliseShare = Math.round(cafeNetProfit * 0.30);
-      var frontShare = Math.round(cafeNetProfit * 0.70);
-      var profitClass = cafeGrossProfit >= 0 ? '#88c98a' : '#e07070';
-
-      html += '<div class="pl-section-col">';
-      html += '<div class="pl-section-col-head"><span>Profit Split</span><span class="pl-section-col-total" style="color:' + profitClass + '">$' + fmt(cafeNetProfit) + '</span></div>';
-
-      html += '<div style="padding:8px 0;font-family:DM Mono,monospace;font-size:11px;display:flex;flex-direction:column;gap:10px">';
-
-      // Breakdown
-      html += '<div style="display:flex;flex-direction:column;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--border)">';
-      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>Revenue</span><span>$' + fmt(revenueTotal) + '</span></div>';
-      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>- Costs</span><span>-$' + fmt(cafeTotalCosts) + '</span></div>';
-      html += '<div style="display:flex;justify-content:space-between;font-weight:700;color:' + profitClass + '"><span>Gross Profit</span><span>' + (cafeGrossProfit >= 0 ? '' : '-') + '$' + fmt(Math.abs(cafeGrossProfit)) + '</span></div>';
-      html += '</div>';
-
-      // Split (only on profit after costs covered)
-      html += '<div style="display:flex;flex-direction:column;gap:6px">';
-      html += '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600">After break-even</div>';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text)">Brooke & Del <span style="color:var(--muted);font-size:9px">70%</span></span><span style="color:#88c98a;font-weight:700">$' + fmt(frontShare) + '</span></div>';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text)">Chez Elise <span style="color:var(--muted);font-size:9px">30%</span></span><span style="color:#6aaad8;font-weight:700">$' + fmt(eliseShare) + '</span></div>';
-      html += '</div>';
-
-      if (cafeGrossProfit < 0) {
-        html += '<div style="font-size:9px;color:#e07070;margin-top:4px">Costs not yet covered \u2014 no profit split until break-even</div>';
-      }
-
-      html += '</div>';
-      html += '</div>';
-    }
 
     html += '</div></div>'; // close grid + body
     html += '</div>'; // close section
@@ -1318,8 +1426,10 @@ function updateGenRevField(input) {
   var item = arr.find(function(r) { return r.id === input.dataset.rid; });
   if (item) {
     var field = input.dataset.field;
-    item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
+    var numFields = ['amount', 'price', 'costPerDrink', 'sold'];
+    item[field] = numFields.indexOf(field) >= 0 ? (parseFloat(input.value) || 0) : input.value;
     savePLData(data);
+    if (numFields.indexOf(field) >= 0) renderPL();
   }
 }
 function deleteGenRevItem(arrKey, id) {
@@ -1449,6 +1559,40 @@ function deleteCafeRevItem(id) {
   var data = getPLData();
   var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
   scenario.cafeRevenue = (scenario.cafeRevenue || []).filter(function(r) { return r.id !== id; });
+  savePLData(data);
+  renderPL();
+}
+
+function addCafeDrink() {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  if (!scenario.cafeRevenue) scenario.cafeRevenue = [];
+  var newId = 'cr_' + Date.now();
+  scenario.cafeRevenue.push({ id: newId, name: '', price: 0, costPerDrink: 0, sold: 0, note: '' });
+  savePLData(data);
+  renderPL();
+  setTimeout(function() {
+    var card = document.getElementById('pl-cafe-drink-' + newId);
+    if (card) card.classList.add('open');
+  }, 50);
+}
+
+function cafeSellDrink(id) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  (scenario.cafeRevenue || []).forEach(function(cr) {
+    if (cr.id === id) cr.sold = (cr.sold || 0) + 1;
+  });
+  savePLData(data);
+  renderPL();
+}
+
+function cafeUndoDrink(id) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  (scenario.cafeRevenue || []).forEach(function(cr) {
+    if (cr.id === id && (cr.sold || 0) > 0) cr.sold = cr.sold - 1;
+  });
   savePLData(data);
   renderPL();
 }
