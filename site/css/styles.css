@@ -3792,7 +3792,7 @@ body::before {
   color:var(--muted); flex-shrink:0;
 }
 .pl-cost-amt-num {
-  width:60px; background:transparent; border:none; border-bottom:1px solid transparent;
+  width:80px; background:transparent; border:none; border-bottom:1px solid transparent;
   color:var(--text); font-family:'DM Mono',monospace; font-size:12px;
   padding:0 2px; outline:none; text-align:right;
 }
