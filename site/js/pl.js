@@ -659,10 +659,12 @@ function renderPLSections(scenario, calc, liveInventory) {
 
   // Ensure cafeVariable exists
   if (!scenario.cafeVariable) scenario.cafeVariable = [
-    { id: 'cv_ice', name: 'Ice', amount: 0, note: '' },
+    { id: 'cv_ice', name: 'Ice', amount: 0, note: 'Ongoing' },
     { id: 'cv_milk', name: 'Milk / oat milk', amount: 0, note: '' },
     { id: 'cv_matcha', name: 'Matcha powder', amount: 0, note: '' },
-    { id: 'cv_flavoring', name: 'Flavoring ingredients', amount: 0, note: '' }
+    { id: 'cv_flavoring', name: 'Flavoring ingredients', amount: 0, note: '' },
+    { id: 'cv_cost_per_drink', name: 'Cost per drink (ingredients)', amount: 0, note: 'Avg cost of ingredients per drink sold' },
+    { id: 'cv_square_cafe', name: 'Square fee (2.6% + $0.15)', amount: 0, note: 'Estimated Square processing on cafe sales' }
   ];
 
   // Ensure cafeRevenue exists
@@ -783,6 +785,10 @@ function renderPLSections(scenario, calc, liveInventory) {
     html += '<span class="pl-section-head-fixed">Fixed $' + fmt(fixedTotal) + '</span>';
     html += '<span class="pl-section-head-variable">Var $' + fmt(variableTotal) + '</span>';
     html += '<span class="pl-section-head-revenue">Rev $' + fmt(revenueTotal) + '</span>';
+    if (sec.id === 'cafe') {
+      var cafeProfit = Math.max(0, revenueTotal - fixedTotal - variableTotal);
+      html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">Profit $' + fmt(cafeProfit) + '</span>';
+    }
     html += '</span>';
     html += '<span class="pl-section-head-chevron">\u203a</span>';
     html += '</div>';
@@ -946,6 +952,42 @@ function renderPLSections(scenario, calc, liveInventory) {
       html += '<div class="pl-section-empty">\u2014</div>';
     }
     html += '</div>';
+
+    // ── PROFIT SPLIT column (cafe only) ──
+    if (sec.id === 'cafe') {
+      var cafeTotalCosts = fixedTotal + variableTotal;
+      var cafeGrossProfit = revenueTotal - cafeTotalCosts;
+      var cafeNetProfit = Math.max(0, cafeGrossProfit);
+      var eliseShare = Math.round(cafeNetProfit * 0.30);
+      var frontShare = Math.round(cafeNetProfit * 0.70);
+      var profitClass = cafeGrossProfit >= 0 ? '#88c98a' : '#e07070';
+
+      html += '<div class="pl-section-col">';
+      html += '<div class="pl-section-col-head"><span>Profit Split</span><span class="pl-section-col-total" style="color:' + profitClass + '">$' + fmt(cafeNetProfit) + '</span></div>';
+
+      html += '<div style="padding:8px 0;font-family:DM Mono,monospace;font-size:11px;display:flex;flex-direction:column;gap:10px">';
+
+      // Breakdown
+      html += '<div style="display:flex;flex-direction:column;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--border)">';
+      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>Revenue</span><span>$' + fmt(revenueTotal) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>- Costs</span><span>-$' + fmt(cafeTotalCosts) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;font-weight:700;color:' + profitClass + '"><span>Gross Profit</span><span>' + (cafeGrossProfit >= 0 ? '' : '-') + '$' + fmt(Math.abs(cafeGrossProfit)) + '</span></div>';
+      html += '</div>';
+
+      // Split (only on profit after costs covered)
+      html += '<div style="display:flex;flex-direction:column;gap:6px">';
+      html += '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600">After break-even</div>';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text)">Brooke & Del <span style="color:var(--muted);font-size:9px">70%</span></span><span style="color:#88c98a;font-weight:700">$' + fmt(frontShare) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text)">Chez Elise <span style="color:var(--muted);font-size:9px">30%</span></span><span style="color:#6aaad8;font-weight:700">$' + fmt(eliseShare) + '</span></div>';
+      html += '</div>';
+
+      if (cafeGrossProfit < 0) {
+        html += '<div style="font-size:9px;color:#e07070;margin-top:4px">Costs not yet covered \u2014 no profit split until break-even</div>';
+      }
+
+      html += '</div>';
+      html += '</div>';
+    }
 
     html += '</div></div>'; // close grid + body
     html += '</div>'; // close section
