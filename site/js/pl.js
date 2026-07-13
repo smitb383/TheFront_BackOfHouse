@@ -826,6 +826,39 @@ function renderPLSections(scenario, calc, liveInventory) {
 
         subCats[cat].forEach(function(c) {
           html += renderFixedCostCard(c);
+          // For wholesale purchase items, show itemized costs from inventory
+          if (c.id === 'fc_hadaikum_cost' || c.id === 'fc_merch_tshirts' || c.id === 'fc_merch_stickers') {
+            var matchVendor = null;
+            if (c.id === 'fc_hadaikum_cost') matchVendor = 'hadaikum';
+            else if (c.id === 'fc_merch_tshirts' || c.id === 'fc_merch_stickers') matchVendor = 'the front merch';
+            if (matchVendor) {
+              var invItems = wholesaleItems.filter(function(i) { return i.vendor && i.vendor.toLowerCase().indexOf(matchVendor) >= 0; });
+              if (invItems.length && c.id !== 'fc_merch_stickers') { // avoid double-listing for merch
+                var isSubOpen = document.getElementById('pl-ws-sub-' + c.id) && document.getElementById('pl-ws-sub-' + c.id).classList.contains('open');
+                html += '<div class="pl-cost-item' + (isSubOpen ? ' open' : '') + '" id="pl-ws-sub-' + c.id + '" style="margin-left:12px;border-left:2px solid var(--border)">';
+                html += '<div class="pl-cost-top" onclick="var e=document.getElementById(\'pl-ws-sub-' + c.id + '\');if(e)e.classList.toggle(\'open\')">';
+                html += '<span class="pl-cost-name-display" style="font-size:10px;color:var(--muted)">' + invItems.length + ' items breakdown</span>';
+                html += '<span class="pl-cost-chevron">\u203a</span>';
+                html += '</div>';
+                html += '<div class="pl-cost-body" style="padding:4px 8px">';
+                var invTotal = 0;
+                invItems.forEach(function(inv) {
+                  var cost = inv.costPerUnit || 0;
+                  var qty = inv.qty || 1;
+                  var lineTotal = cost * qty;
+                  invTotal += lineTotal;
+                  html += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-family:DM Mono,monospace;font-size:10px;border-bottom:1px solid var(--border)">';
+                  html += '<span style="color:var(--text)">' + esc(inv.name || '(untitled)') + '</span>';
+                  html += '<span style="color:var(--muted)">$' + fmt(cost) + ' \u00d7 ' + qty + ' = <span style="color:var(--text)">$' + fmt(lineTotal) + '</span></span>';
+                  html += '</div>';
+                });
+                html += '<div style="display:flex;justify-content:space-between;padding:6px 0;font-family:DM Mono,monospace;font-size:11px;font-weight:700">';
+                html += '<span>Total</span><span>$' + fmt(invTotal) + '</span>';
+                html += '</div>';
+                html += '</div></div>';
+              }
+            }
+          }
         });
 
         html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'' + esc(cat) + '\')">+ Add to ' + esc(cat) + '</button>';
@@ -891,20 +924,9 @@ function renderPLSections(scenario, calc, liveInventory) {
     }
 
     if (sec.variableType === 'wholesaleCOGS') {
-      var merchCOGS = wholesaleItems.filter(function(i) { return i.costPerUnit; });
-      if (merchCOGS.length) {
-        hasVariable = true;
-        merchCOGS.forEach(function(item) {
-          var sale = scenario.itemSales && scenario.itemSales[item.id];
-          var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
-          var totalCost = sellQty * item.costPerUnit;
-          html += '<div class="pl-cost-row">' +
-            '<span class="pl-cost-name">' + esc(item.name || '(untitled)') + '</span>' +
-            '<span class="pl-cost-note">$' + fmt(item.costPerUnit) + '/unit \u00d7 ' + sellQty + '</span>' +
-            '<span class="pl-cost-amt">$' + fmt(totalCost) + '</span>' +
-          '</div>';
-        });
-      }
+      // No variable costs for wholesale — costs are in fixed costs
+      // Square fee shown as a note only
+      html += '<div style="padding:8px 0;font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">Square fee (2.6% + $0.15) applies per sale</div>';
     }
 
     if (!hasVariable) {
@@ -1192,14 +1214,11 @@ function renderWholesaleRevenue(items, scenario) {
   var h = '';
   vendorOrder.forEach(function(vendorName) {
     var group = vendorMap[vendorName];
-    var vendorGross = 0, vendorProfit = 0, vendorItemCount = 0;
+    var vendorGross = 0, vendorItemCount = 0;
     group.items.forEach(function(item) {
       var sale = scenario.itemSales && scenario.itemSales[item.id];
-      var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
-      var gross = sellQty * item.price;
-      var profit = item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
-      vendorGross += gross;
-      vendorProfit += profit;
+      var sellQty = (sale && sale.qty != null) ? sale.qty : (item.totalSold > 0 ? item.totalSold : (item.qty || 1));
+      vendorGross += sellQty * item.price;
       vendorItemCount++;
     });
 
@@ -1210,7 +1229,6 @@ function renderWholesaleRevenue(items, scenario) {
       '<div class="pl-vendor-collapse-top" onclick="toggleVendorGroup(\'' + esc(vendorName.replace(/\s/g,'_')) + '\')">' +
         '<span class="pl-vendor-collapse-name">' + esc(vendorName) + ' <span style="font-size:9px;color:var(--muted);font-weight:normal">' + vendorItemCount + ' items</span></span>' +
         '<span class="pl-vendor-collapse-gross">$' + fmt(vendorGross) + '</span>' +
-        '<span class="pl-vendor-collapse-cut">$' + fmt(vendorProfit) + '</span>' +
         '<span class="pl-cost-chevron">\u203a</span>' +
       '</div>' +
       '<div class="pl-vendor-collapse-body">';
@@ -1218,9 +1236,8 @@ function renderWholesaleRevenue(items, scenario) {
     group.items.forEach(function(item) {
       var invQty = item.qty || 1;
       var sale = scenario.itemSales && scenario.itemSales[item.id];
-      var sellQty = (sale && sale.qty != null) ? sale.qty : invQty;
+      var sellQty = (sale && sale.qty != null) ? sale.qty : (item.totalSold > 0 ? item.totalSold : invQty);
       var gross = sellQty * item.price;
-      var profit = item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
       var dimmed = sellQty === 0;
 
       h += '<div class="pl-rev-spreadrow' + (dimmed ? ' pl-not-sold' : '') + '">' +
@@ -1228,8 +1245,7 @@ function renderWholesaleRevenue(items, scenario) {
         '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
         '<span class="pl-rev-sr-num" style="color:var(--muted)">inv ' + invQty + '</span>' +
         '<span class="pl-rev-sr-num" onclick="event.stopPropagation()">sell <input type="number" min="0" max="' + invQty + '" value="' + sellQty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" data-inv-qty="' + invQty + '" onchange="updateItemSellQty(this)"></span>' +
-        '<span class="pl-rev-sr-num">cost $' + fmt(item.costPerUnit || 0) + '</span>' +
-        '<span class="pl-rev-sr-num pl-rev-sr-cut' + (dimmed ? ' pl-cut-muted' : '') + '">$' + fmt(profit) + '</span>' +
+        '<span class="pl-rev-sr-num pl-rev-sr-cut' + (dimmed ? ' pl-cut-muted' : '') + '">$' + fmt(gross) + '</span>' +
       '</div>';
     });
 
