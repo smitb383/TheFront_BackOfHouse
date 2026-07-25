@@ -8375,9 +8375,9 @@ function renderInvNew() {
               return '<div style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--muted)') + ';text-align:center">' + totalSold + '/' + totalQty + '</div>';
             }
             return '<div style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
-              '<button onclick="invNewMarkSold(' + vi + ',' + ii + ')" style="' + soldBtnS + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">' + (allItemSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+              '<button onclick="' + (allItemSold ? 'invNewUndoSold(' + vi + ',' + ii + ')' : 'invNewMarkSold(' + vi + ',' + ii + ')') + '" style="' + soldBtnS + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">' + (allItemSold ? '✓ SOLD' : '+ SELL') + '</button>' +
               '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--text)') + '">' + totalSold + '/' + totalQty + '</span>' +
-              (totalSold > 0 ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo">↩</button>' : '') +
+              (totalSold > 0 && !allItemSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo">↩</button>' : '') +
             '</div>';
           })() +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(totalSales) + '</div>' +
@@ -8633,9 +8633,9 @@ function buildSizeRows(vi, ii, item, sPct, dPct) {
       '<div></div>' +
       '<div></div>' +
       '<div style="display:flex;align-items:center;gap:4px">' +
-        '<button onclick="invNewMarkSold(' + vi + ',' + ii + ',' + si + ')" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="Click to mark one sold">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+        '<button onclick="' + (allSold ? 'invNewUndoSold(' + vi + ',' + ii + ',' + si + ')' : 'invNewMarkSold(' + vi + ',' + ii + ',' + si + ')') + '" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="' + (allSold ? 'Click to undo sale' : 'Click to mark one sold') + '">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
         '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
-        (szSold > 0 ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
+        (szSold > 0 && !allSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
       '</div>' +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;text-align:right">$' + Math.round(szRevenue * (sPct / 100)) + '</div>' +
