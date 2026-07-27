@@ -10032,6 +10032,7 @@ function calGetEventColor(post, data) {
     else if (title.indexOf('sucre') >= 0 || title.indexOf('nails') >= 0 || title.indexOf('press') >= 0) match = '#e0845a';
     else if (title.indexOf('elise') >= 0 || title.indexOf('chez') >= 0) match = '#6aaad8';
     else if (title.indexOf('weekend') >= 0) match = '#82bfbb';
+    else if (title.indexOf('konsensuss') >= 0 || title.indexOf('grillz') >= 0 || title.indexOf('toothgem') >= 0) match = '#c77dba';
   }
   return match;
 }
@@ -10084,10 +10085,15 @@ function renderCalMonthGrid(posts, data) {
     html += '<div class="cal-cell-num">' + monthLabel + '<span class="cal-cell-day">' + dayName + '</span> ' + day + '</div>';
     dayPosts.forEach(function(p) {
       var cardColor = calGetEventColor(p, data);
-      var cardStyle = cardColor ? 'background:' + cardColor + '22;border-color:' + cardColor + '55;' : '';
+      var isEvent = p.platform === 'event';
+      var cardStyle = cardColor
+        ? (isEvent
+          ? 'background:' + cardColor + ';border-color:' + cardColor + ';color:#fff;'
+          : 'background:' + cardColor + '22;border-color:' + cardColor + '55;')
+        : '';
       html += '<div class="cal-card' + (p.done ? ' cal-card-done' : '') + '" style="' + cardStyle + '" onclick="event.stopPropagation(); editCalPost(\'' + p.id + '\')">';
       html += '<span class="cal-card-icon">' + calPlatformIcon(p.platform) + '</span>';
-      html += '<span class="cal-card-title">' + (p.title || '(untitled)') + '</span>';
+      html += '<span class="cal-card-title" style="' + (isEvent && cardColor ? 'color:#fff' : '') + '">' + (p.title || '(untitled)') + '</span>';
       if (p.tags && p.tags.length) {
         html += '<span class="cal-card-dots">';
         p.tags.forEach(function(t) {
