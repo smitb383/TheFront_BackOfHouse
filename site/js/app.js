@@ -9737,7 +9737,7 @@ function _initCalDataInner() {
       data.ideas.push(JSON.parse(JSON.stringify(seed)));
     }
   });
-  // Auto-generate promo posts 4 days before each event (if not already present)
+  // Auto-generate promo posts 2 days before each event (if not already present)
   var eventPosts = data.posts.filter(function(p) { return p.platform === 'event'; });
   var existingDates = {};
   data.posts.forEach(function(p) {
@@ -9747,7 +9747,7 @@ function _initCalDataInner() {
   eventPosts.forEach(function(ev) {
     var parts = ev.date.split('-');
     var evDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-    var promoDate = new Date(evDate.getTime() - 4 * 24 * 60 * 60 * 1000);
+    var promoDate = new Date(evDate.getTime() - 2 * 24 * 60 * 60 * 1000);
     var promoStr = promoDate.getFullYear() + '-' + String(promoDate.getMonth() + 1).padStart(2, '0') + '-' + String(promoDate.getDate()).padStart(2, '0');
     var promoId = 'promo_' + ev.id;
     if (!existingIds[promoId]) {
@@ -9984,65 +9984,51 @@ function calRenderEditPanel(root, data) {
   }
 }
 
-function calGetEventColor(post, data) {
-  // Also color promo posts that reference an event
-  if (post._promoFor || (post.title && post.title.indexOf('Promo:') === 0)) {
-    var promoTitle = (post.title || '').replace(/^Promo:\s*/i, '').toLowerCase();
-    var promoMatch = null;
-    if (data && data.eventSeries) {
-      data.eventSeries.forEach(function(s) {
-        var sName = (s.name || '').toLowerCase();
-        if (sName && promoTitle.indexOf(sName) >= 0) promoMatch = s.color;
-        if (!promoMatch && sName) {
-          var words = sName.split(/\s+/);
-          var matched = words.some(function(w) { return w.length > 3 && promoTitle.indexOf(w) >= 0; });
-          if (matched) promoMatch = s.color;
-        }
-      });
-    }
-    if (!promoMatch) {
-      if (promoTitle.indexOf('opening') >= 0) promoMatch = '#e2c97e';
-      else if (promoTitle.indexOf('closing') >= 0) promoMatch = '#e07070';
-      else if (promoTitle.indexOf('rasor') >= 0 || promoTitle.indexOf('dj') >= 0 || promoTitle.indexOf('sebastian') >= 0) promoMatch = '#b8a0e0';
-      else if (promoTitle.indexOf('sucre') >= 0 || promoTitle.indexOf('nails') >= 0) promoMatch = '#e0845a';
-      else if (promoTitle.indexOf('elise') >= 0) promoMatch = '#6aaad8';
-      else if (promoTitle.indexOf('weekend') >= 0) promoMatch = '#82bfbb';
-    }
-    return promoMatch;
+function _matchEventColor(title, data) {
+  var t = (title || '').toLowerCase();
+  // Try matching against event series names
+  var match = null;
+  if (data && data.eventSeries) {
+    data.eventSeries.forEach(function(s) {
+      var sName = (s.name || '').toLowerCase();
+      if (sName && t.indexOf(sName) >= 0) match = s.color;
+      if (!match && sName) {
+        var words = sName.split(/\s+/);
+        var matched = words.some(function(w) { return w.length > 3 && t.indexOf(w) >= 0; });
+        if (matched) match = s.color;
+      }
+    });
   }
-  // Color IG flyer/promo posts consistently
+  // Fallback patterns
+  if (!match) {
+    if (t.indexOf('opening') >= 0) match = '#e2c97e';
+    else if (t.indexOf('closing') >= 0) match = '#e07070';
+    else if (t.indexOf('dj') >= 0 || t.indexOf('sebastian') >= 0) match = '#b8a0e0';
+    else if (t.indexOf('sucre') >= 0 || t.indexOf('nails') >= 0 || t.indexOf('press-on') >= 0) match = '#e0845a';
+    else if (t.indexOf('elise') >= 0 || t.indexOf('chez') >= 0) match = '#6aaad8';
+    else if (t.indexOf('konsensuss') >= 0 || t.indexOf('grillz') >= 0 || t.indexOf('toothgem') >= 0) match = '#c77dba';
+    else if (t.indexOf('coconut') >= 0) match = '#82bfbb';
+    else if (t.indexOf('romie') >= 0 || t.indexOf('doll') >= 0) match = '#a8c77d';
+    else if (t.indexOf('orchid') >= 0 || t.indexOf('dev ') >= 0) match = '#6aaad8';
+    else if (t.indexOf('plump') >= 0 || t.indexOf('eventyr') >= 0 || t.indexOf('botox') >= 0) match = '#82bfbb';
+  }
+  return match;
+}
+
+function calGetEventColor(post, data) {
+  // All IG/TikTok promo posts get one consistent gold color
   if (post.platform === 'instagram' || post.platform === 'tiktok') {
     var t = (post.title || '').toLowerCase();
     var tags = (post.tags || []).map(function(x) { return x.toLowerCase(); });
-    var isPromo = t.indexOf('promo') >= 0 || t.indexOf('flyer') >= 0 || t.indexOf('coming soon') >= 0 || t.indexOf('teaser') >= 0 || tags.indexOf('coming soon') >= 0 || tags.indexOf('promo') >= 0;
+    var isPromo = t.indexOf('promo') >= 0 || t.indexOf('flyer') >= 0 || t.indexOf('coming soon') >= 0 || t.indexOf('teaser') >= 0 || tags.indexOf('coming soon') >= 0 || tags.indexOf('promo') >= 0 || post._promoFor;
     if (isPromo) return '#e2c97e';
     return null;
   }
-  if (post.platform !== 'event') return null;
-  if (!data || !data.eventSeries) return null;
-  var title = (post.title || '').toLowerCase();
-  var match = null;
-  data.eventSeries.forEach(function(s) {
-    var sName = (s.name || '').toLowerCase();
-    if (sName && title.indexOf(sName) >= 0) match = s.color;
-    // Also match partial: "opening" in "OPENING EVENT", "dj" in "Rasor & Tape DJ Session", etc.
-    if (!match && sName) {
-      var words = sName.split(/\s+/);
-      var matched = words.some(function(w) { return w.length > 3 && title.indexOf(w) >= 0; });
-      if (matched) match = s.color;
-    }
-  });
-  // Fallback: match known patterns
-  if (!match) {
-    if (title.indexOf('opening') >= 0) match = '#e2c97e';
-    else if (title.indexOf('closing') >= 0) match = '#e07070';
-    else if (title.indexOf('rasor') >= 0 || title.indexOf('tape') >= 0 || title.indexOf('dj') >= 0 || title.indexOf('sebastian') >= 0) match = '#b8a0e0';
-    else if (title.indexOf('sucre') >= 0 || title.indexOf('nails') >= 0 || title.indexOf('press') >= 0) match = '#e0845a';
-    else if (title.indexOf('elise') >= 0 || title.indexOf('chez') >= 0) match = '#6aaad8';
-    else if (title.indexOf('weekend') >= 0) match = '#82bfbb';
-    else if (title.indexOf('konsensuss') >= 0 || title.indexOf('grillz') >= 0 || title.indexOf('toothgem') >= 0) match = '#c77dba';
+  // Event posts get their series color
+  if (post.platform === 'event') {
+    return _matchEventColor(post.title, data);
   }
-  return match;
+  return null;
 }
 
 function renderCalMonthGrid(posts, data) {
@@ -10463,7 +10449,7 @@ function addCalPost(date) {
     done: false
   };
   data.posts.push(post);
-  // If adding an event, auto-create promo post 4 days before
+  // If adding an event, auto-create promo post 2 days before
   if (post.platform === 'event') {
     calEnsurePromoPost(data, post);
   }
@@ -10508,7 +10494,7 @@ function calEnsurePromoPost(data, eventPost) {
       if (p.id === promoId) {
         var parts = eventPost.date.split('-');
         var evDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-        var promoDate = new Date(evDate.getTime() - 4 * 24 * 60 * 60 * 1000);
+        var promoDate = new Date(evDate.getTime() - 2 * 24 * 60 * 60 * 1000);
         p.date = promoDate.getFullYear() + '-' + String(promoDate.getMonth() + 1).padStart(2, '0') + '-' + String(promoDate.getDate()).padStart(2, '0');
         p.title = 'Promo: ' + (eventPost.title || 'Event');
         p.notes = 'Promo post for ' + eventPost.title + ' on ' + calFormatDate(eventPost.date);
@@ -10518,7 +10504,7 @@ function calEnsurePromoPost(data, eventPost) {
   }
   var parts = eventPost.date.split('-');
   var evDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-  var promoDate = new Date(evDate.getTime() - 4 * 24 * 60 * 60 * 1000);
+  var promoDate = new Date(evDate.getTime() - 2 * 24 * 60 * 60 * 1000);
   var promoStr = promoDate.getFullYear() + '-' + String(promoDate.getMonth() + 1).padStart(2, '0') + '-' + String(promoDate.getDate()).padStart(2, '0');
   data.posts.push({
     id: promoId,
