@@ -10010,6 +10010,14 @@ function calGetEventColor(post, data) {
     }
     return promoMatch;
   }
+  // Color IG flyer/promo posts consistently
+  if (post.platform === 'instagram' || post.platform === 'tiktok') {
+    var t = (post.title || '').toLowerCase();
+    var tags = (post.tags || []).map(function(x) { return x.toLowerCase(); });
+    var isPromo = t.indexOf('promo') >= 0 || t.indexOf('flyer') >= 0 || t.indexOf('coming soon') >= 0 || t.indexOf('teaser') >= 0 || tags.indexOf('coming soon') >= 0 || tags.indexOf('promo') >= 0;
+    if (isPromo) return '#e2c97e';
+    return null;
+  }
   if (post.platform !== 'event') return null;
   if (!data || !data.eventSeries) return null;
   var title = (post.title || '').toLowerCase();
