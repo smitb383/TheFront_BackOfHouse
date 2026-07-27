@@ -9771,6 +9771,14 @@ function _initCalDataInner() {
     }
   });
 
+  // Auto-mark past events as done
+  var todayStr = new Date().toISOString().slice(0, 10);
+  data.posts.forEach(function(p) {
+    if (p.platform === 'event' && p.date < todayStr && !p.done) {
+      p.done = true;
+    }
+  });
+
   saveCalData(data);
 
   // Load persisted custom tags, then ensure all used tags are in the list
@@ -10036,12 +10044,13 @@ function calGetEventColor(post, data) {
 
 function renderCalMonthGrid(posts, data) {
   var html = '';
-  // Month header
+  // Popup run: Jul 20 (load-in) – Aug 24 (deinstall)
+  var rangeStart = new Date(2026, 6, 20); // Jul 20
+  var rangeEnd = new Date(2026, 7, 24);   // Aug 24
   var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
   html += '<div class="cal-month-header">';
-  html += '<button class="cal-nav-arrow" onclick="calNavMonth(-1)">\u2190</button>';
-  html += '<div class="cal-month-label">' + monthNames[calMonth] + ' ' + calYear + '</div>';
-  html += '<button class="cal-nav-arrow" onclick="calNavMonth(1)">\u2192</button>';
+  html += '<div class="cal-month-label">Jul 20 \u2013 Aug 24, 2026</div>';
   html += '</div>';
 
   // Day headers
@@ -10051,11 +10060,9 @@ function renderCalMonthGrid(posts, data) {
     html += '<div class="cal-day-header">' + d + '</div>';
   });
 
-  // Build the grid
-  var firstDay = new Date(calYear, calMonth, 1);
-  var startDow = firstDay.getDay(); // 0=Sun
-  startDow = (startDow + 6) % 7; // Convert to Mon=0
-  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  // Pad to start on Monday
+  var startDow = rangeStart.getDay();
+  startDow = (startDow + 6) % 7; // Mon=0
 
   var today = new Date();
   var todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
@@ -10065,17 +10072,22 @@ function renderCalMonthGrid(posts, data) {
     html += '<div class="cal-cell cal-cell-empty"></div>';
   }
 
-  for (var day = 1; day <= daysInMonth; day++) {
-    var dateStr = calYear + '-' + String(calMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  // Iterate each day in range
+  var cursor = new Date(rangeStart);
+  while (cursor <= rangeEnd) {
+    var day = cursor.getDate();
+    var dateStr = cursor.getFullYear() + '-' + String(cursor.getMonth() + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
     var dayPosts = posts.filter(function(p) { return p.date === dateStr; });
     var isToday = dateStr === todayStr;
     var hasPosts = dayPosts.length > 0;
+    // Show month name on the 1st
+    var monthLabel = (day === 1) ? '<span style="font-size:8px;color:var(--front);text-transform:uppercase;letter-spacing:0.05em">' + monthNames[cursor.getMonth()].slice(0,3) + '</span> ' : '';
 
-    var cellDate = new Date(calYear, calMonth, day);
-    var dayName = CAL_DAYS_SHORT[cellDate.getDay()];
+    var dayName = CAL_DAYS_SHORT[cursor.getDay()];
+    var isPast = dateStr < todayStr;
 
-    html += '<div class="cal-cell' + (isToday ? ' cal-cell-today' : '') + (hasPosts ? ' cal-cell-has' : '') + '" onclick="addCalPost(\'' + dateStr + '\')">';
-    html += '<div class="cal-cell-num"><span class="cal-cell-day">' + dayName + '</span> ' + day + '</div>';
+    html += '<div class="cal-cell' + (isToday ? ' cal-cell-today' : '') + (hasPosts ? ' cal-cell-has' : '') + (isPast ? ' cal-cell-past' : '') + '" onclick="addCalPost(\'' + dateStr + '\')">';
+    html += '<div class="cal-cell-num">' + monthLabel + '<span class="cal-cell-day">' + dayName + '</span> ' + day + '</div>';
     dayPosts.forEach(function(p) {
       var cardColor = calGetEventColor(p, data);
       var cardStyle = cardColor ? 'background:' + cardColor + '22;border-color:' + cardColor + '55;' : '';
@@ -10101,10 +10113,12 @@ function renderCalMonthGrid(posts, data) {
       html += '</div>';
     });
     html += '</div>';
+    cursor.setDate(cursor.getDate() + 1);
   }
 
-  // trailing empties
-  var totalCells = startDow + daysInMonth;
+  // trailing empties to fill last week row
+  var totalDays = Math.round((rangeEnd - rangeStart) / (24*60*60*1000)) + 1;
+  var totalCells = startDow + totalDays;
   var remainder = totalCells % 7;
   if (remainder > 0) {
     for (var j = 0; j < 7 - remainder; j++) {
@@ -10213,8 +10227,30 @@ function _initEventSeries(data) {
   });
 }
 
+function _isSeriesCompleted(series, data) {
+  // A series is completed if all its associated calendar events are in the past
+  var todayStr = new Date().toISOString().slice(0, 10);
+  var seriesName = (series.name || '').toLowerCase();
+  var events = (data.posts || []).filter(function(p) {
+    return p.platform === 'event' && (p.title || '').toLowerCase().indexOf(seriesName) >= 0;
+  });
+  if (events.length === 0) return false;
+  return events.every(function(e) { return e.date < todayStr; });
+}
+
 function renderEventSeries(data) {
   _initEventSeries(data);
+
+  var active = [];
+  var completed = [];
+  data.eventSeries.forEach(function(series) {
+    if (_isSeriesCompleted(series, data)) {
+      completed.push(series);
+    } else {
+      active.push(series);
+    }
+  });
+
   var html = '<div class="cal-series-section">';
   html += '<div class="cal-ideas-header">';
   html += '<div class="cal-ideas-title">Event Series</div>';
@@ -10222,17 +10258,27 @@ function renderEventSeries(data) {
   html += '</div>';
   html += '<div class="cal-series-list">';
 
-  data.eventSeries.forEach(function(series) {
+  var allGroups = [{ label: null, items: active }];
+  if (completed.length) {
+    allGroups.push({ label: 'Completed', items: completed });
+  }
+
+  allGroups.forEach(function(group) {
+    if (group.label) {
+      html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:16px 0 6px;border-top:1px solid var(--border);margin-top:12px">' + group.label + '</div>';
+    }
+    group.items.forEach(function(series) {
     var todosDone = (series.todos || []).filter(function(t) { return t.done; }).length;
     var todosTotal = (series.todos || []).length;
     var supDone = (series.supplies || []).filter(function(s) { return s.done; }).length;
     var supTotal = (series.supplies || []).length;
 
     var sColor = series.color || ES_COLORS[0];
-    html += '<div class="cal-series-card" style="border-left:4px solid ' + sColor + '">';
+    var isCompleted = completed.indexOf(series) >= 0;
+    html += '<div class="cal-series-card" style="border-left:4px solid ' + sColor + (isCompleted ? ';opacity:0.5' : '') + '">';
     // Header
     html += '<div class="cal-series-header">';
-    html += '<input class="cal-series-name" value="' + (series.name || '').replace(/"/g, '&quot;') + '" placeholder="Event series name…" oninput="calSaveSeriesField(\'' + series.id + '\',\'name\',this.value)">';
+    html += '<input class="cal-series-name" style="' + (isCompleted ? 'text-decoration:line-through;color:var(--muted)' : '') + '" value="' + (series.name || '').replace(/"/g, '&quot;') + '" placeholder="Event series name…" oninput="calSaveSeriesField(\'' + series.id + '\',\'name\',this.value)">';
     html += '<div class="cal-series-header-right">';
     html += '<label class="cal-series-confirmed"><input type="checkbox"' + (series.datesConfirmed ? ' checked' : '') + ' onchange="calSaveSeriesField(\'' + series.id + '\',\'datesConfirmed\',this.checked)"> <span class="cal-series-conf-label">' + (series.datesConfirmed ? 'Dates confirmed' : 'Dates TBD') + '</span></label>';
     html += '<button class="cal-idea-del" onclick="deleteEventSeries(\'' + series.id + '\')" title="Delete series">\u00d7</button>';
@@ -10278,6 +10324,7 @@ function renderEventSeries(data) {
 
     html += '</div>'; // columns
     html += '</div>'; // card
+    });
   });
 
   html += '</div></div>';
