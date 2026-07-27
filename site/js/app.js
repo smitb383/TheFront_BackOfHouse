@@ -9725,18 +9725,20 @@ function _initCalDataInner() {
     saveCalData(d);
   }
   // Merge any new seed posts that don't exist yet (by id)
+  // BUT respect deletedIds — seeds the user intentionally removed
   var data = getCalData();
+  if (!data.deletedIds) data.deletedIds = [];
   var existingIds = {};
   data.posts.forEach(function(p) { existingIds[p.id] = true; });
   CAL_SEED.forEach(function(seed) {
-    if (!existingIds[seed.id]) {
+    if (!existingIds[seed.id] && data.deletedIds.indexOf(seed.id) < 0) {
       data.posts.push(JSON.parse(JSON.stringify(seed)));
     }
   });
   var existingIdeaIds = {};
   (data.ideas || []).forEach(function(i) { existingIdeaIds[i.id] = true; });
   CAL_SEED_IDEAS.forEach(function(seed) {
-    if (!existingIdeaIds[seed.id]) {
+    if (!existingIdeaIds[seed.id] && data.deletedIds.indexOf(seed.id) < 0) {
       if (!data.ideas) data.ideas = [];
       data.ideas.push(JSON.parse(JSON.stringify(seed)));
     }
@@ -10201,10 +10203,11 @@ var EVENT_SERIES_SEED = [
 
 function _initEventSeries(data) {
   if (!data.eventSeries) data.eventSeries = [];
+  if (!data.deletedIds) data.deletedIds = [];
   var existingIds = {};
   data.eventSeries.forEach(function(s) { existingIds[s.id] = true; });
   EVENT_SERIES_SEED.forEach(function(seed) {
-    if (!existingIds[seed.id]) {
+    if (!existingIds[seed.id] && data.deletedIds.indexOf(seed.id) < 0) {
       data.eventSeries.push(JSON.parse(JSON.stringify(seed)));
     }
   });
@@ -10308,6 +10311,9 @@ function deleteEventSeries(id) {
   if (!confirm('Delete this event series?')) return;
   var data = getCalData();
   data.eventSeries = (data.eventSeries || []).filter(function(s) { return s.id !== id; });
+  // Track deleted seed IDs so they don't get re-added
+  if (!data.deletedIds) data.deletedIds = [];
+  if (data.deletedIds.indexOf(id) < 0) data.deletedIds.push(id);
   saveCalData(data);
   renderCalendar();
 }
@@ -10429,6 +10435,9 @@ function editCalPost(id) {
 function deleteCalPost(id) {
   var data = getCalData();
   data.posts = data.posts.filter(function(p) { return p.id !== id; });
+  // Track deleted seed IDs so they don't get re-added
+  if (!data.deletedIds) data.deletedIds = [];
+  if (data.deletedIds.indexOf(id) < 0) data.deletedIds.push(id);
   saveCalData(data);
   calExpandedPost = null;
   renderCalendar();
@@ -10669,6 +10678,8 @@ function deleteCalIdea(id) {
   if (!confirm('Delete this idea?')) return;
   var data = getCalData();
   data.ideas = data.ideas.filter(function(idea) { return idea.id !== id; });
+  if (!data.deletedIds) data.deletedIds = [];
+  if (data.deletedIds.indexOf(id) < 0) data.deletedIds.push(id);
   saveCalData(data);
   renderCalendar();
 }
