@@ -9999,18 +9999,12 @@ function _matchEventColor(title, data) {
       }
     });
   }
-  // Fallback patterns
+  // Fallback: recurring series get their own color, all one-offs get teal
   if (!match) {
-    if (t.indexOf('opening') >= 0) match = '#e2c97e';
-    else if (t.indexOf('closing') >= 0) match = '#e07070';
-    else if (t.indexOf('dj') >= 0 || t.indexOf('sebastian') >= 0) match = '#b8a0e0';
+    if (t.indexOf('dj') >= 0 || t.indexOf('sebastian') >= 0) match = '#b8a0e0';
     else if (t.indexOf('sucre') >= 0 || t.indexOf('nails') >= 0 || t.indexOf('press-on') >= 0) match = '#e0845a';
-    else if (t.indexOf('elise') >= 0 || t.indexOf('chez') >= 0) match = '#6aaad8';
     else if (t.indexOf('konsensuss') >= 0 || t.indexOf('grillz') >= 0 || t.indexOf('toothgem') >= 0) match = '#c77dba';
-    else if (t.indexOf('coconut') >= 0) match = '#82bfbb';
-    else if (t.indexOf('romie') >= 0 || t.indexOf('doll') >= 0) match = '#a8c77d';
-    else if (t.indexOf('orchid') >= 0 || t.indexOf('dev ') >= 0) match = '#6aaad8';
-    else if (t.indexOf('plump') >= 0 || t.indexOf('eventyr') >= 0 || t.indexOf('botox') >= 0) match = '#82bfbb';
+    else match = '#82bfbb'; // all one-off events: opening, closing, chez elise, coconut, launches, etc.
   }
   return match;
 }
