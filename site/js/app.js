@@ -9630,24 +9630,8 @@ function renderBuildout() {
 // ═══ CONTENT CALENDAR ══════════════════════════════════════════════════════
 
 var CAL_SEED = [
-  { id: 'post_1', date: '2026-07-09', platform: 'instagram', title: 'Coming Soon teaser', mediaType: 'static', tags: ['coming soon'], notes: 'Shopping bags?', done: false },
-  { id: 'post_2', date: '2026-07-11', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
-  { id: 'post_3', date: '2026-07-13', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
-  { id: 'post_4', date: '2026-07-16', platform: 'instagram', title: 'Popup opening party flyer', mediaType: 'static', tags: ['coming soon'], notes: 'Post flyer for the popup opening party', done: false },
-  { id: 'post_5', date: '2026-07-17', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
-  { id: 'post_6', date: '2026-07-18', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
-  { id: 'post_7', date: '2026-07-19', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
-  { id: 'post_8', date: '2026-07-20', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
-  { id: 'post_9', date: '2026-07-21', platform: 'instagram', title: 'Foam roller wall painting video', mediaType: 'video', tags: ['space'], notes: 'Post video of foam roller on wall up close painting purple', done: false },
-  { id: 'post_10', date: '2026-07-22', platform: 'instagram', title: '', mediaType: 'static', tags: [], notes: '', done: false },
-  { id: 'post_11', date: '2026-07-23', platform: 'instagram', title: 'Opening day \u2014 completed space', mediaType: 'video', tags: ['space', 'coming soon'], notes: 'Video of the completed space. Have someone else designated to post.', done: false },
   { id: 'post_12', date: '2026-07-23', platform: 'event', title: 'OPENING EVENT', mediaType: '', tags: [], notes: 'Opening party', done: false },
   { id: 'post_ev_4', date: '2026-08-09', platform: 'event', title: 'Chez Elise', mediaType: '', tags: ['cafe'], notes: 'Second Sunday in August', done: false },
-  // DJ Event — Sebastian every Tuesday 5-9pm
-  { id: 'post_dj_1', date: '2026-07-28', platform: 'event', title: 'DJ Event - Sebastian', mediaType: '', tags: [], notes: '5-9 PM', done: false },
-  { id: 'post_dj_2', date: '2026-08-04', platform: 'event', title: 'DJ Event - Sebastian', mediaType: '', tags: [], notes: '5-9 PM', done: false },
-  { id: 'post_dj_3', date: '2026-08-11', platform: 'event', title: 'DJ Event - Sebastian', mediaType: '', tags: [], notes: '5-9 PM', done: false },
-  { id: 'post_dj_4', date: '2026-08-18', platform: 'event', title: 'DJ Event - Sebastian', mediaType: '', tags: [], notes: '5-9 PM', done: false },
   // Sucre Nails press-on event every Friday TBD
   { id: 'post_nails_1', date: '2026-07-24', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
   { id: 'post_nails_2', date: '2026-07-31', platform: 'event', title: 'Sucre Nails Press-On Event', mediaType: '', tags: [], notes: 'TBD', done: false },
@@ -10196,7 +10180,6 @@ var ES_COLORS = ['#e2c97e','#82bfbb','#b8a0e0','#e0845a','#6aaad8','#c77dba','#a
 
 var EVENT_SERIES_SEED = [
   { id: 'es_opening', name: 'Opening Event', color: '#e2c97e', notes: 'Opening party — Jul 23. Wine + sparkling water + simple snacks for 40-60 people.', datesConfirmed: true, todos: [], supplies: [{ text: 'Wine', done: false }, { text: 'Sparkling water', done: false }, { text: 'Snacks', done: false }, { text: 'Cups / glasses', done: false }, { text: 'Napkins', done: false }, { text: 'Ice', done: false }] },
-  { id: 'es_dj', name: 'DJ Event - Sebastian', color: '#b8a0e0', notes: 'Every Tuesday 5-9 PM starting Jul 28. Sebastian also playing opening party (Jul 23) and closing party (Aug 23).', datesConfirmed: true, todos: [], supplies: [{ text: 'Speaker / PA system', done: false }, { text: 'DJ table setup', done: false }] },
   { id: 'es_nails', name: 'Sucre Nails Press-On Events', color: '#e0845a', notes: 'Every Friday TBD. Press-on nail application events.', datesConfirmed: false, todos: [], supplies: [] },
   { id: 'es_elise', name: 'Chez Elise', color: '#6aaad8', notes: 'Second Sunday in August (Aug 9). Cafe pop-up event.', datesConfirmed: true, todos: [], supplies: [] },
   { id: 'es_closing', name: 'Closing Party', color: '#e07070', notes: 'August 23 — last day of the popup. Closing celebration.', datesConfirmed: true, todos: [], supplies: [] },
