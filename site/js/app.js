@@ -8066,6 +8066,7 @@ var invNewOpenItem = null;
 var invNewView = 'list'; // 'list' or 'gallery'
 var invNewSortBy = 'name'; // 'name', 'invComplete', 'agreement', 'stock'
 var invNewFilterFloor = false; // filter to show only on-floor items
+var invNewFilterNew = false; // filter to show only new (not yet added to Square)
 
 function getInvNew() {
   try { return JSON.parse(localStorage.getItem(INV_NEW_KEY) || 'null'); } catch(e) { return null; }
@@ -8234,6 +8235,8 @@ function renderInvNew() {
         var allSoldOut = tSold >= tQty && tQty > 0;
         if (!item.onFloor || allSoldOut) return '';
       }
+      // New inventory filter: show only items not yet added to Square
+      if (invNewFilterNew && item.addedToSquare) return '';
       var isItemOpen = invNewOpenItem === vi + '-' + ii;
 
       // ── Wholesale item row ──
@@ -8344,9 +8347,10 @@ function renderInvNew() {
 
       var itemAllSold = totalSold >= totalQty && totalQty > 0;
       var onFloor = item.onFloor && !itemAllSold;
+      var isNew = !item.addedToSquare;
       var itemRowOpacity = itemAllSold ? 'opacity:0.45;' : '';
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0;' + itemRowOpacity + '">' +
-        '<div style="display:grid;grid-template-columns:76px 200px 70px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+        '<div style="display:grid;grid-template-columns:76px 200px 70px 50px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
             (item.photo
               ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' +
@@ -8356,6 +8360,7 @@ function renderInvNew() {
           '</div>' +
           '<input class="field-input" value="' + esc(item.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:15px">' +
           '<button onclick="event.stopPropagation();invNewToggleFloorItem(' + vi + ',' + ii + ')" style="' + (onFloor ? 'background:#88c98a;border:2px solid #88c98a;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (onFloor ? '✓ FLOOR' : 'FLOOR') + '</button>' +
+          '<button onclick="event.stopPropagation();invNewToggleSquare(' + vi + ',' + ii + ')" style="' + (isNew ? 'background:#e2c97e;border:2px solid #e2c97e;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (isNew ? 'NEW' : '✓ SQ') + '</button>' +
           '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
             '<option value=""' + (!item.category ? ' selected' : '') + '>-- cat --</option>' +
             '<option value="clothing"' + (item.category === 'clothing' ? ' selected' : '') + '>Clothing</option>' +
@@ -9257,8 +9262,21 @@ function invNewSetView(view) {
 
 function invNewToggleFloor() {
   invNewFilterFloor = !invNewFilterFloor;
+  if (invNewFilterFloor) invNewFilterNew = false;
   var btn = document.getElementById('inv-filter-floor');
+  var btnNew = document.getElementById('inv-filter-new');
   if (btn) btn.classList.toggle('active', invNewFilterFloor);
+  if (btnNew) btnNew.classList.toggle('active', invNewFilterNew);
+  renderInvNew();
+}
+
+function invNewToggleFilterNew() {
+  invNewFilterNew = !invNewFilterNew;
+  if (invNewFilterNew) invNewFilterFloor = false;
+  var btn = document.getElementById('inv-filter-new');
+  var btnFloor = document.getElementById('inv-filter-floor');
+  if (btn) btn.classList.toggle('active', invNewFilterNew);
+  if (btnFloor) btnFloor.classList.toggle('active', invNewFilterFloor);
   renderInvNew();
 }
 
@@ -9266,6 +9284,14 @@ function invNewToggleFloorItem(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   data.vendors[vi].items[ii].onFloor = !data.vendors[vi].items[ii].onFloor;
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewToggleSquare(vi, ii) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  data.vendors[vi].items[ii].addedToSquare = !data.vendors[vi].items[ii].addedToSquare;
   saveInvNew(data);
   renderInvNew();
 }
