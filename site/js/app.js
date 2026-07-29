@@ -8347,6 +8347,8 @@ function renderInvNew() {
 
       var itemAllSold = totalSold >= totalQty && totalQty > 0;
       var onFloor = item.onFloor && !itemAllSold;
+      // Default all existing items to added-to-Square (only truly new items added after this deploy will be NEW)
+      if (item.addedToSquare === undefined) item.addedToSquare = true;
       var isNew = !item.addedToSquare;
       var itemRowOpacity = itemAllSold ? 'opacity:0.45;' : '';
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0;' + itemRowOpacity + '">' +
@@ -8764,7 +8766,7 @@ function invNewAddItem(vi) {
     id: 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
     name: '', category: '', unitCost: 0, salePrice: 0, qty: 1,
     photo: '', material: '', care: '', packaging: '', dimensions: '',
-    description: '', notes: '', sold: 0
+    description: '', notes: '', sold: 0, addedToSquare: false
   });
   saveInvNew(data);
   // Verify save worked
