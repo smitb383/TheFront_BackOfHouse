@@ -8370,7 +8370,7 @@ function renderInvNew() {
             var h = '<div style="display:flex;align-items:center;gap:3px" onclick="event.stopPropagation()">';
             h += '<button onclick="invNewToggleFloorItem(' + vi + ',' + ii + ')" style="' + btnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (onFloor ? '✓' : '') + 'FLOOR</button>';
             if (onFloor && totalQty > 1) {
-              h += '<input type="number" min="1" max="' + totalQty + '" value="' + (floorQty || totalQty) + '" oninput="invNewEditItem(' + vi + ',' + ii + ',\'floorQty\',+this.value)" style="width:30px;background:var(--surface2);border:1px solid #88c98a;color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">';
+              h += '<input type="number" min="1" max="' + totalQty + '" value="' + (floorQty || 1) + '" oninput="invNewEditItem(' + vi + ',' + ii + ',\'floorQty\',+this.value)" style="width:30px;background:var(--surface2);border:1px solid #88c98a;color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">';
             }
             h += '</div>';
             return h;
@@ -9312,11 +9312,7 @@ function invNewToggleFloorItem(vi, ii) {
   var item = data.vendors[vi].items[ii];
   item.onFloor = !item.onFloor;
   if (item.onFloor && !item.floorQty) {
-    // Default floor qty to total qty
-    var tq = 0;
-    if (item.sizes && item.sizes.length) { item.sizes.forEach(function(sz) { tq += (sz.qty || 0); }); }
-    else { tq = item.qty || 1; }
-    item.floorQty = tq;
+    item.floorQty = 1;
   }
   saveInvNew(data);
   renderInvNew();
