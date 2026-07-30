@@ -8350,6 +8350,7 @@ function renderInvNew() {
 
       var itemAllSold = totalSold >= totalQty && totalQty > 0;
       var onFloor = item.onFloor && !itemAllSold;
+      var floorQty = item.floorQty || 0;
       // Default all existing items to added-to-Square (only truly new items added after this deploy will be NEW)
       if (item.addedToSquare === undefined) item.addedToSquare = true;
       var isNew = !item.addedToSquare;
@@ -8364,7 +8365,16 @@ function renderInvNew() {
               : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
           '</div>' +
           '<input class="field-input" value="' + esc(item.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:15px">' +
-          '<button onclick="event.stopPropagation();invNewToggleFloorItem(' + vi + ',' + ii + ')" style="' + (onFloor ? 'background:#88c98a;border:2px solid #88c98a;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (onFloor ? '✓ FLOOR' : 'FLOOR') + '</button>' +
+          (function() {
+            var btnStyle = onFloor ? 'background:#88c98a;border:2px solid #88c98a;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)';
+            var h = '<div style="display:flex;align-items:center;gap:3px" onclick="event.stopPropagation()">';
+            h += '<button onclick="invNewToggleFloorItem(' + vi + ',' + ii + ')" style="' + btnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (onFloor ? '✓' : '') + 'FLOOR</button>';
+            if (onFloor && totalQty > 1) {
+              h += '<input type="number" min="1" max="' + totalQty + '" value="' + (floorQty || totalQty) + '" oninput="invNewEditItem(' + vi + ',' + ii + ',\'floorQty\',+this.value)" style="width:30px;background:var(--surface2);border:1px solid #88c98a;color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">';
+            }
+            h += '</div>';
+            return h;
+          })() +
           '<button onclick="event.stopPropagation();invNewToggleSquare(' + vi + ',' + ii + ')" style="' + (isNew ? 'background:#e2c97e;border:2px solid #e2c97e;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (isNew ? 'NEW' : '✓ SQ') + '</button>' +
           '<button onclick="event.stopPropagation();invNewToggleMissing(' + vi + ',' + ii + ')" style="' + (item.missing ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.missing ? '⚠ MISSING' : 'MISSING') + '</button>' +
           '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
@@ -9299,7 +9309,15 @@ function invNewToggleFilterMissing() {
 function invNewToggleFloorItem(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
-  data.vendors[vi].items[ii].onFloor = !data.vendors[vi].items[ii].onFloor;
+  var item = data.vendors[vi].items[ii];
+  item.onFloor = !item.onFloor;
+  if (item.onFloor && !item.floorQty) {
+    // Default floor qty to total qty
+    var tq = 0;
+    if (item.sizes && item.sizes.length) { item.sizes.forEach(function(sz) { tq += (sz.qty || 0); }); }
+    else { tq = item.qty || 1; }
+    item.floorQty = tq;
+  }
   saveInvNew(data);
   renderInvNew();
 }
