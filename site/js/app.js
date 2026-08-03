@@ -9793,6 +9793,19 @@ function _initCalDataInner() {
     d = { posts: JSON.parse(JSON.stringify(CAL_SEED)), ideas: JSON.parse(JSON.stringify(CAL_SEED_IDEAS)) };
     saveCalData(d);
   }
+  // Purge retired events by title pattern (DJ/Sebastian, Weekend)
+  var _purgePatterns = ['dj event', 'dj session', 'weekend event', 'sebastian'];
+  var _purged = 0;
+  d = getCalData();
+  if (d && d.posts) {
+    var before = d.posts.length;
+    d.posts = d.posts.filter(function(p) {
+      var t = (p.title || '').toLowerCase();
+      return !_purgePatterns.some(function(pat) { return t.indexOf(pat) >= 0; });
+    });
+    _purged = before - d.posts.length;
+    if (_purged > 0) { saveCalData(d); console.log('[cal] Purged ' + _purged + ' retired event posts'); }
+  }
   // Merge any new seed posts that don't exist yet (by id)
   // BUT respect deletedIds — seeds the user intentionally removed
   var data = getCalData();
