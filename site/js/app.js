@@ -2230,8 +2230,11 @@ window.addEventListener('kv-updated', function(e) {
   if (key.indexOf('cshpl_') === 0 && typeof cshplRender === 'function') cshplRender();
   // Re-render revenue projection
   if (key === 'popup_rev_proj_v1') { revData = null; if (typeof renderRevProj === 'function') renderRevProj(); }
-  // Re-render P&L when inventory changes (P&L revenue pulls from inventory)
-  if (key === 'popup_inv_new_v1' && typeof renderPL === 'function') renderPL();
+  // Re-render P&L and inventory when inventory changes (P&L revenue pulls from inventory)
+  if (key === 'popup_inv_new_v1') {
+    if (typeof renderPL === 'function') renderPL();
+    if (document.getElementById('inv-new-list') && typeof renderInvNew === 'function') renderInvNew();
+  }
 });
 
 
@@ -8116,9 +8119,9 @@ function invNewSyncConfirmed() {
       if (exists.designerPct === undefined) { exists.designerPct = 70; exists.storePct = 30; changed = true; }
     }
   });
-  // Only write back if we actually added/changed something — prevents
-  // stale local data from overwriting good Supabase data on first render
-  if (changed) saveInvNew(data);
+  // Guard: don't write back until Supabase pull is done — otherwise stale
+  // localStorage can overwrite items added on another device
+  if (changed && window._sbPullDone) saveInvNew(data);
   return data;
 }
 

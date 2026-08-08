@@ -248,6 +248,26 @@ function _mergeArrayById(localArr, remoteArr, key) {
   return merged;
 }
 
+function _mergeInvItem(localItem, remoteItem) {
+  // For each item, take the version with the higher sold count to prevent
+  // sold marks from being lost during sync. Sold counts only go up.
+  var lSold = 0, rSold = 0;
+  if (localItem.sizes && localItem.sizes.length) {
+    localItem.sizes.forEach(function(sz) { lSold += (sz.sold || 0); });
+  } else { lSold = localItem.sold || 0; }
+  if (remoteItem.sizes && remoteItem.sizes.length) {
+    remoteItem.sizes.forEach(function(sz) { rSold += (sz.sold || 0); });
+  } else { rSold = remoteItem.sold || 0; }
+  // Start with whichever has more sold, then merge in any fields the other has
+  var winner = lSold >= rSold ? JSON.parse(JSON.stringify(localItem)) : JSON.parse(JSON.stringify(remoteItem));
+  var loser = lSold >= rSold ? remoteItem : localItem;
+  // Preserve photo URLs from either side (don't lose uploaded photos)
+  if (!winner.photo && loser.photo) winner.photo = loser.photo;
+  // Preserve onFloor from either side
+  if (loser.onFloor && !winner.onFloor) winner.onFloor = loser.onFloor;
+  return winner;
+}
+
 function _mergeInvNew(local, remote) {
   if (!local || !remote) return remote || local;
   if (!local.vendors || !remote.vendors) return remote || local;
@@ -255,11 +275,37 @@ function _mergeInvNew(local, remote) {
   remote.vendors.forEach(function(v) { vendorMap[v.vendorId] = JSON.parse(JSON.stringify(v)); });
   local.vendors.forEach(function(v) {
     if (vendorMap[v.vendorId]) {
-      // Merge items by id
-      vendorMap[v.vendorId].items = _mergeArrayById(v.items || [], vendorMap[v.vendorId].items || []);
+      // Merge items by id, preserving sold counts
+      var remoteItems = vendorMap[v.vendorId].items || [];
+      var localItems = v.items || [];
+      var remoteItemMap = {};
+      remoteItems.forEach(function(item) { if (item && item.id) remoteItemMap[item.id] = item; });
+      var localItemMap = {};
+      localItems.forEach(function(item) { if (item && item.id) localItemMap[item.id] = item; });
+      // Build merged: start with remote items, merge sold counts from local
+      var merged = remoteItems.map(function(item) {
+        if (item && item.id && localItemMap[item.id]) {
+          return _mergeInvItem(localItemMap[item.id], item);
+        }
+        return item;
+      });
+      // Add local-only items (new items not yet in remote)
+      localItems.forEach(function(item) {
+        if (item && item.id && !remoteItemMap[item.id]) merged.push(item);
+      });
+      vendorMap[v.vendorId].items = merged;
       vendorMap[v.vendorId].name = v.name || vendorMap[v.vendorId].name;
+      // Preserve vendor-level fields from local if remote doesn't have them
+      ['invComplete','agreementStatus','deliveryMethod','deliveryStatus','shippingCost','shippingCoveredBy','pricingModel','eurRate'].forEach(function(f) {
+        if (v[f] !== undefined && vendorMap[v.vendorId][f] === undefined) vendorMap[v.vendorId][f] = v[f];
+      });
     } else {
-      vendorMap[v.vendorId] = v;
+      // Only re-add local-only vendors if they were recently edited (not stale leftovers
+      // from before a deletion on the other device)
+      var localEdits = _localEditedIds['popup_inv_new_v1'] || {};
+      if (localEdits[v.vendorId]) {
+        vendorMap[v.vendorId] = v;
+      }
     }
   });
   return { vendors: Object.values(vendorMap) };
