@@ -8072,15 +8072,20 @@ var invNewFilterFloor = false; // filter to show only on-floor items
 var invNewFilterNew = false; // filter to show only new (not yet added to Square)
 var invNewFilterMissing = false; // filter to show only missing items
 
-// High-water mark for sold counts — sold counts should NEVER decrease.
-// This prevents any sync/merge/overwrite from wiping sold marks.
+// High-water mark: items and sold counts should NEVER disappear once seen.
+// This prevents any sync/merge/overwrite from wiping data.
 var _soldHighWater = {}; // key: "vendorId:itemId" -> { sold: N, sizes: { sizeName: N } }
+var _itemHighWater = {}; // key: vendorId -> { itemId: itemObj }
 
 function _updateSoldHighWater(data) {
   if (!data || !data.vendors) return;
   data.vendors.forEach(function(v) {
+    // Track all items ever seen for this vendor
+    if (!_itemHighWater[v.vendorId]) _itemHighWater[v.vendorId] = {};
     (v.items || []).forEach(function(item) {
       if (!item.id) return;
+      // Store a copy of the item (latest version seen)
+      _itemHighWater[v.vendorId][item.id] = JSON.parse(JSON.stringify(item));
       var key = v.vendorId + ':' + item.id;
       if (!_soldHighWater[key]) _soldHighWater[key] = { sold: 0, sizes: {} };
       var hw = _soldHighWater[key];
@@ -8099,6 +8104,18 @@ function _updateSoldHighWater(data) {
 function _enforceSoldHighWater(data) {
   if (!data || !data.vendors) return;
   data.vendors.forEach(function(v) {
+    // Restore any items that were seen before but are now missing
+    var hwVendor = _itemHighWater[v.vendorId];
+    if (hwVendor) {
+      var currentIds = {};
+      v.items.forEach(function(item) { if (item.id) currentIds[item.id] = true; });
+      Object.keys(hwVendor).forEach(function(itemId) {
+        if (!currentIds[itemId]) {
+          v.items.push(JSON.parse(JSON.stringify(hwVendor[itemId])));
+        }
+      });
+    }
+    // Enforce sold counts never decrease
     (v.items || []).forEach(function(item) {
       if (!item.id) return;
       var key = v.vendorId + ':' + item.id;
@@ -8873,6 +8890,13 @@ function invNewEditItem(vi, ii, field, val) {
 function invNewDeleteItem(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi]) return;
+  var item = data.vendors[vi].items[ii];
+  // Clear from high-water mark so deleted items stay deleted
+  if (item && item.id) {
+    var vendorId = data.vendors[vi].vendorId;
+    if (_itemHighWater[vendorId]) delete _itemHighWater[vendorId][item.id];
+    delete _soldHighWater[vendorId + ':' + item.id];
+  }
   data.vendors[vi].items.splice(ii, 1);
   saveInvNew(data);
   renderInvNew();
