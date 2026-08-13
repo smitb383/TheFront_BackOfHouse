@@ -300,9 +300,13 @@ function _mergeInvNew(local, remote) {
         }
         return item;
       });
-      // Add local-only items (new items not yet in remote)
+      // Add local-only items ONLY if they were recently created/edited locally
+      // (prevents deleted items from being resurrected by stale localStorage)
+      var localEdits = _localEditedIds['popup_inv_new_v1'] || {};
       localItems.forEach(function(item) {
-        if (item && item.id && !remoteItemMap[item.id]) merged.push(item);
+        if (item && item.id && !remoteItemMap[item.id] && localEdits[v.vendorId]) {
+          merged.push(item);
+        }
       });
       vendorMap[v.vendorId].items = merged;
       vendorMap[v.vendorId].name = v.name || vendorMap[v.vendorId].name;
