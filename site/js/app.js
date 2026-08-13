@@ -8072,20 +8072,15 @@ var invNewFilterFloor = false; // filter to show only on-floor items
 var invNewFilterNew = false; // filter to show only new (not yet added to Square)
 var invNewFilterMissing = false; // filter to show only missing items
 
-// High-water mark: items and sold counts should NEVER disappear once seen.
-// This prevents any sync/merge/overwrite from wiping data.
+// High-water mark: sold counts should NEVER decrease (except explicit undo).
+// This prevents sync/merge/overwrite from wiping sold marks.
 var _soldHighWater = {}; // key: "vendorId:itemId" -> { sold: N, sizes: { sizeName: N } }
-var _itemHighWater = {}; // key: vendorId -> { itemId: itemObj }
 
 function _updateSoldHighWater(data) {
   if (!data || !data.vendors) return;
   data.vendors.forEach(function(v) {
-    // Track all items ever seen for this vendor
-    if (!_itemHighWater[v.vendorId]) _itemHighWater[v.vendorId] = {};
     (v.items || []).forEach(function(item) {
       if (!item.id) return;
-      // Store a copy of the item (latest version seen)
-      _itemHighWater[v.vendorId][item.id] = JSON.parse(JSON.stringify(item));
       var key = v.vendorId + ':' + item.id;
       if (!_soldHighWater[key]) _soldHighWater[key] = { sold: 0, sizes: {} };
       var hw = _soldHighWater[key];
@@ -8104,17 +8099,6 @@ function _updateSoldHighWater(data) {
 function _enforceSoldHighWater(data) {
   if (!data || !data.vendors) return;
   data.vendors.forEach(function(v) {
-    // Restore any items that were seen before but are now missing
-    var hwVendor = _itemHighWater[v.vendorId];
-    if (hwVendor) {
-      var currentIds = {};
-      v.items.forEach(function(item) { if (item.id) currentIds[item.id] = true; });
-      Object.keys(hwVendor).forEach(function(itemId) {
-        if (!currentIds[itemId]) {
-          v.items.push(JSON.parse(JSON.stringify(hwVendor[itemId])));
-        }
-      });
-    }
     // Enforce sold counts never decrease
     (v.items || []).forEach(function(item) {
       if (!item.id) return;
@@ -8296,7 +8280,18 @@ function renderInvNew() {
     grandShipping += shipCostForMax;
     grandMaxTakeHome += vendorMaxTakeHome;
 
-    var itemRows = vendor.items.map(function(item, ii) {
+    // Sort items so sold-out items go to bottom (preserving original indices for editing)
+    var itemIndices = vendor.items.map(function(item, ii) {
+      var hasSz = item.sizes && item.sizes.length > 0;
+      var tQty = 0, tSold = 0;
+      if (hasSz) { item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0); }); }
+      else { tQty = item.qty || 1; tSold = item.sold || 0; }
+      var allSold = tSold >= tQty && tQty > 0;
+      return { ii: ii, soldOut: allSold };
+    });
+    itemIndices.sort(function(a, b) { return (a.soldOut ? 1 : 0) - (b.soldOut ? 1 : 0); });
+
+    var itemRows = itemIndices.map(function(entry) { var ii = entry.ii; var item = vendor.items[ii];
       // Floor filter: skip items not on floor (unless sold out, which auto-removes from floor)
       if (invNewFilterFloor) {
         var hasSz = item.sizes && item.sizes.length > 0;
@@ -8891,11 +8886,8 @@ function invNewDeleteItem(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi]) return;
   var item = data.vendors[vi].items[ii];
-  // Clear from high-water mark so deleted items stay deleted
   if (item && item.id) {
-    var vendorId = data.vendors[vi].vendorId;
-    if (_itemHighWater[vendorId]) delete _itemHighWater[vendorId][item.id];
-    delete _soldHighWater[vendorId + ':' + item.id];
+    delete _soldHighWater[data.vendors[vi].vendorId + ':' + item.id];
   }
   data.vendors[vi].items.splice(ii, 1);
   saveInvNew(data);
