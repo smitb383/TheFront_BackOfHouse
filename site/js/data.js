@@ -101,8 +101,19 @@ function _pullAllData() {
         val = _stripBase64Photos(row.key, val);
       }
 
-      // On initial pull, Supabase is the source of truth — no merge needed.
-      // Merging on load was causing stale localStorage to override fresh server data.
+      // Supabase is the source of truth. For inventory, merge sold counts
+      // to preserve any marks made locally before this pull completes.
+      if (row.key === 'popup_inv_new_v1') {
+        var localStr = _origGetItem.call(localStorage, row.key);
+        if (localStr) {
+          try {
+            var localData = JSON.parse(localStr);
+            var remoteData = typeof val === 'string' ? JSON.parse(val) : val;
+            var merged = _mergeInvNew(localData, remoteData);
+            val = merged;
+          } catch(e) { /* use remote as-is */ }
+        }
+      }
       var str = typeof val === 'string' ? val : JSON.stringify(val);
       if (_safeSetItem(row.key, str)) {
         pulledKeys.push(row.key);

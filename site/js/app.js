@@ -8072,10 +8072,60 @@ var invNewFilterFloor = false; // filter to show only on-floor items
 var invNewFilterNew = false; // filter to show only new (not yet added to Square)
 var invNewFilterMissing = false; // filter to show only missing items
 
+// High-water mark for sold counts — sold counts should NEVER decrease.
+// This prevents any sync/merge/overwrite from wiping sold marks.
+var _soldHighWater = {}; // key: "vendorId:itemId" -> { sold: N, sizes: { sizeName: N } }
+
+function _updateSoldHighWater(data) {
+  if (!data || !data.vendors) return;
+  data.vendors.forEach(function(v) {
+    (v.items || []).forEach(function(item) {
+      if (!item.id) return;
+      var key = v.vendorId + ':' + item.id;
+      if (!_soldHighWater[key]) _soldHighWater[key] = { sold: 0, sizes: {} };
+      var hw = _soldHighWater[key];
+      if ((item.sold || 0) > hw.sold) hw.sold = item.sold;
+      if (item.sizes) {
+        item.sizes.forEach(function(sz) {
+          var sk = sz.size || 'unknown';
+          if (!hw.sizes[sk]) hw.sizes[sk] = 0;
+          if ((sz.sold || 0) > hw.sizes[sk]) hw.sizes[sk] = sz.sold;
+        });
+      }
+    });
+  });
+}
+
+function _enforceSoldHighWater(data) {
+  if (!data || !data.vendors) return;
+  data.vendors.forEach(function(v) {
+    (v.items || []).forEach(function(item) {
+      if (!item.id) return;
+      var key = v.vendorId + ':' + item.id;
+      var hw = _soldHighWater[key];
+      if (!hw) return;
+      if (hw.sold > (item.sold || 0)) item.sold = hw.sold;
+      if (item.sizes) {
+        item.sizes.forEach(function(sz) {
+          var sk = sz.size || 'unknown';
+          if (hw.sizes[sk] && hw.sizes[sk] > (sz.sold || 0)) sz.sold = hw.sizes[sk];
+        });
+      }
+    });
+  });
+}
+
 function getInvNew() {
-  try { return JSON.parse(localStorage.getItem(INV_NEW_KEY) || 'null'); } catch(e) { return null; }
+  try {
+    var data = JSON.parse(localStorage.getItem(INV_NEW_KEY) || 'null');
+    if (data) _updateSoldHighWater(data);
+    return data;
+  } catch(e) { return null; }
 }
 function saveInvNew(d) {
+  // Enforce: sold counts can never decrease (protects against sync overwrites)
+  _enforceSoldHighWater(d);
+  _updateSoldHighWater(d);
   try {
     localStorage.setItem(INV_NEW_KEY, JSON.stringify(d));
   } catch(e) {
@@ -8745,13 +8795,24 @@ function invNewMarkSold(vi, ii, si) {
 function invNewUndoSold(vi, ii, si) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  var item = data.vendors[vi].items[ii];
+  var hwKey = data.vendors[vi].vendorId + ':' + item.id;
   if (si !== undefined && si !== null) {
-    var sz = data.vendors[vi].items[ii].sizes[si];
+    var sz = item.sizes[si];
     if (!sz) return;
-    if ((sz.sold || 0) > 0) sz.sold = (sz.sold || 0) - 1;
+    if ((sz.sold || 0) > 0) {
+      sz.sold = (sz.sold || 0) - 1;
+      // Also lower high-water mark so the undo sticks
+      var sk = sz.size || 'unknown';
+      if (_soldHighWater[hwKey] && _soldHighWater[hwKey].sizes[sk]) {
+        _soldHighWater[hwKey].sizes[sk] = sz.sold;
+      }
+    }
   } else {
-    var item = data.vendors[vi].items[ii];
-    if ((item.sold || 0) > 0) item.sold = (item.sold || 0) - 1;
+    if ((item.sold || 0) > 0) {
+      item.sold = (item.sold || 0) - 1;
+      if (_soldHighWater[hwKey]) _soldHighWater[hwKey].sold = item.sold;
+    }
   }
   saveInvNew(data);
   renderInvNew();
