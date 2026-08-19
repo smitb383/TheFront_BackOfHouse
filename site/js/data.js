@@ -224,6 +224,14 @@ localStorage.setItem = function(key, value) {
   if (LOCAL_ONLY_KEYS.indexOf(key) >= 0) return;
   if (key.charAt(0) === '_') return; // internal keys
 
+  // Block inventory writes to Supabase until initial pull is done.
+  // This prevents stale localStorage from overwriting fresh server data
+  // when the app renders before the Supabase pull completes.
+  if (key === 'popup_inv_new_v1' && !window._sbPullDone) {
+    console.log('[data] Blocked early inventory write to Supabase (pull not done yet)');
+    return;
+  }
+
   // Queue write to Supabase (send cleaned value)
   _writeQueue[key] = cleanValue;
   if (_writeTimer) clearTimeout(_writeTimer);
