@@ -8246,20 +8246,36 @@ function renderInvNew() {
         vendorTotal += retailPrice * sold;
       } else {
         var price = item.salePrice || 0;
+        var noComm = item.noCommission || 0; // units purchased by us (no store commission)
         if (item.sizes && item.sizes.length) {
           item.sizes.forEach(function(sz) {
             vendorMerchValue += price * (sz.qty || 0);
-            var soldRevenue = price * (sz.sold || 0);
-            vendorTotal += soldRevenue;
-            vendorStore += soldRevenue * (sPct / 100);
-            vendorDesigner += soldRevenue * (dPct / 100);
+            var szNoComm = sz.noCommission || 0;
+            var szSold = sz.sold || 0;
+            var commSold = Math.max(0, szSold - szNoComm);
+            // Commission sales: normal split
+            var commRevenue = price * commSold;
+            vendorTotal += commRevenue;
+            vendorStore += commRevenue * (sPct / 100);
+            vendorDesigner += commRevenue * (dPct / 100);
+            // No-commission sales: designer gets their cut, store gets nothing
+            var noCommRevenue = price * szNoComm;
+            vendorTotal += noCommRevenue;
+            vendorDesigner += noCommRevenue * (dPct / 100);
           });
         } else {
           vendorMerchValue += price * (item.qty || 1);
-          var soldRevenue = price * (item.sold || 0);
-          vendorTotal += soldRevenue;
-          vendorStore += soldRevenue * (sPct / 100);
-          vendorDesigner += soldRevenue * (dPct / 100);
+          var totalSold = item.sold || 0;
+          var commSold = Math.max(0, totalSold - noComm);
+          // Commission sales: normal split
+          var commRevenue = price * commSold;
+          vendorTotal += commRevenue;
+          vendorStore += commRevenue * (sPct / 100);
+          vendorDesigner += commRevenue * (dPct / 100);
+          // No-commission sales: designer gets their cut, store gets nothing
+          var noCommRevenue = price * noComm;
+          vendorTotal += noCommRevenue;
+          vendorDesigner += noCommRevenue * (dPct / 100);
         }
       }
     });
@@ -8383,16 +8399,18 @@ function renderInvNew() {
       var unitUs = Math.round(price * (sPct / 100));
       var unitThem = Math.round(price * (dPct / 100));
       var hasSizes = item.sizes && item.sizes.length > 0;
-      var totalQty = 0, totalSold = 0;
+      var totalQty = 0, totalSold = 0, totalNoComm = 0;
       if (hasSizes) {
-        item.sizes.forEach(function(sz) { totalQty += (sz.qty || 0); totalSold += (sz.sold || 0); });
+        item.sizes.forEach(function(sz) { totalQty += (sz.qty || 0); totalSold += (sz.sold || 0); totalNoComm += (sz.noCommission || 0); });
       } else {
         totalQty = item.qty || 1;
         totalSold = item.sold || 0;
+        totalNoComm = item.noCommission || 0;
       }
       var totalSales = price * totalSold;
-      var totalUs = Math.round(totalSales * (sPct / 100));
-      var totalThem = Math.round(totalSales * (dPct / 100));
+      var commSoldDisplay = Math.max(0, totalSold - totalNoComm);
+      var totalUs = Math.round(price * commSoldDisplay * (sPct / 100));
+      var totalThem = Math.round(price * commSoldDisplay * (dPct / 100)) + Math.round(price * totalNoComm * (dPct / 100));
       var isItemOpen = invNewOpenItem === vi + '-' + ii;
 
       var detailPanel = '';
@@ -8476,10 +8494,14 @@ function renderInvNew() {
             if (hasSizes) {
               return '<div style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--muted)') + ';text-align:center">' + totalSold + '/' + totalQty + '</div>';
             }
+            var noCommBtn = totalSold > 0
+              ? '<button onclick="invNewToggleNoComm(' + vi + ',' + ii + ')" style="' + (totalNoComm > 0 ? 'background:#c9a2e222;border:1px solid #c9a2e2;color:#c9a2e2' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="Mark as personal purchase (no store commission)">' + (totalNoComm > 0 ? totalNoComm + ' NO COMM' : 'NO COMM') + '</button>'
+              : '';
             return '<div style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
               '<button onclick="' + (allItemSold ? 'invNewUndoSold(' + vi + ',' + ii + ')' : 'invNewMarkSold(' + vi + ',' + ii + ')') + '" style="' + soldBtnS + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">' + (allItemSold ? '✓ SOLD' : '+ SELL') + '</button>' +
               '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--text)') + '">' + totalSold + '/' + totalQty + '</span>' +
               (totalSold > 0 && !allItemSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo">↩</button>' : '') +
+              noCommBtn +
             '</div>';
           })() +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round(totalSales) + '</div>' +
@@ -8722,14 +8744,24 @@ function buildSizeRows(vi, ii, item, sPct, dPct) {
       '<div></div>' +
       '<div></div>' +
       '<div></div>' +
-      '<div style="display:flex;align-items:center;gap:4px">' +
-        '<button onclick="' + (allSold ? 'invNewUndoSold(' + vi + ',' + ii + ',' + si + ')' : 'invNewMarkSold(' + vi + ',' + ii + ',' + si + ')') + '" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="' + (allSold ? 'Click to undo sale' : 'Click to mark one sold') + '">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
-        '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
-        (szSold > 0 && !allSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
-      '</div>' +
-      '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
-      '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;text-align:right">$' + Math.round(szRevenue * (sPct / 100)) + '</div>' +
-      '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue * (dPct / 100)) + '</div>' +
+      (function() {
+        var szNoComm = sz.noCommission || 0;
+        var szNoCommBtn = szSold > 0
+          ? '<button onclick="invNewToggleNoComm(' + vi + ',' + ii + ',' + si + ')" style="' + (szNoComm > 0 ? 'background:#c9a2e222;border:1px solid #c9a2e2;color:#c9a2e2' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="Personal purchase (no commission)">' + (szNoComm > 0 ? szNoComm + ' NC' : 'NC') + '</button>'
+          : '';
+        var szCommSold = Math.max(0, szSold - szNoComm);
+        var szUsRev = Math.round(price * szCommSold * (sPct / 100));
+        var szThemRev = Math.round(price * szCommSold * (dPct / 100)) + Math.round(price * szNoComm * (dPct / 100));
+        return '<div style="display:flex;align-items:center;gap:4px">' +
+          '<button onclick="' + (allSold ? 'invNewUndoSold(' + vi + ',' + ii + ',' + si + ')' : 'invNewMarkSold(' + vi + ',' + ii + ',' + si + ')') + '" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="' + (allSold ? 'Click to undo sale' : 'Click to mark one sold') + '">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+          '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
+          (szSold > 0 && !allSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
+          szNoCommBtn +
+        '</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;text-align:right">$' + szUsRev + '</div>' +
+        '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + szThemRev + '</div>';
+      })() +
       '<button onclick="invNewRemoveSize(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>' +
     '</div>';
   }).join('');
@@ -9410,6 +9442,25 @@ function invNewToggleKeeping(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   data.vendors[vi].items[ii].keepingForSale = !data.vendors[vi].items[ii].keepingForSale;
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewToggleNoComm(vi, ii, si) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  var item = data.vendors[vi].items[ii];
+  if (si !== undefined && si !== null) {
+    // Size-specific
+    var sz = item.sizes[si];
+    if (!sz) return;
+    var maxSold = sz.sold || 0;
+    sz.noCommission = (sz.noCommission || 0) < maxSold ? (sz.noCommission || 0) + 1 : 0;
+  } else {
+    // Non-sized item
+    var maxSold = item.sold || 0;
+    item.noCommission = (item.noCommission || 0) < maxSold ? (item.noCommission || 0) + 1 : 0;
+  }
   saveInvNew(data);
   renderInvNew();
 }
