@@ -8575,9 +8575,9 @@ function renderInvNew() {
     var shippingStatus = vendor.shippingStatus || 'not-shipped';
     var paymentStatus = vendor.paymentStatus || 'not-paid';
 
-    var rpColors = { 'keeping': '#88c98a', 'tbd': '#e2c97e', 'shipping-back': '#82bfbb', 'designer-pickup': '#82bfbb' };
-    var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070' };
-    var psColors = { 'received': '#88c98a', 'sent': '#e2c97e', 'not-paid': '#e07070' };
+    var rpColors = { 'keeping': '#88c98a', 'tbd': '#e2c97e', 'shipping-back': '#82bfbb', 'designer-pickup': '#82bfbb', 'sold-out': '#5c5870' };
+    var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070', 'na': '#5c5870' };
+    var psColors = { 'received': '#88c98a', 'sent': '#e2c97e', 'not-paid': '#e07070', 'na': '#5c5870' };
 
     var selBase = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer';
 
@@ -8594,6 +8594,7 @@ function renderInvNew() {
             '<option value="tbd"' + (returnPlan === 'tbd' ? ' selected' : '') + '>TBD</option>' +
             '<option value="shipping-back"' + (returnPlan === 'shipping-back' ? ' selected' : '') + '>Shipping Back</option>' +
             '<option value="designer-pickup"' + (returnPlan === 'designer-pickup' ? ' selected' : '') + '>Designer Picking Up</option>' +
+            '<option value="sold-out"' + (returnPlan === 'sold-out' ? ' selected' : '') + '>N/A — Sold Out</option>' +
           '</select>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column">' +
@@ -8602,6 +8603,7 @@ function renderInvNew() {
             '<option value="not-shipped"' + (shippingStatus === 'not-shipped' ? ' selected' : '') + '>Haven\'t Shipped</option>' +
             '<option value="shipped"' + (shippingStatus === 'shipped' ? ' selected' : '') + '>Shipped</option>' +
             '<option value="received"' + (shippingStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
+            '<option value="na"' + (shippingStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
           '</select>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column">' +
@@ -8610,6 +8612,7 @@ function renderInvNew() {
             '<option value="not-paid"' + (paymentStatus === 'not-paid' ? ' selected' : '') + '>Haven\'t Paid</option>' +
             '<option value="sent"' + (paymentStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
             '<option value="received"' + (paymentStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
+            '<option value="na"' + (paymentStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
           '</select>' +
         '</div>' +
       '</div>';
