@@ -8443,6 +8443,9 @@ function renderInvNew() {
           })() +
           '<button onclick="event.stopPropagation();invNewToggleSquare(' + vi + ',' + ii + ')" style="' + (isNew ? 'background:#e2c97e;border:2px solid #e2c97e;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (isNew ? 'NEW' : '✓ SQ') + '</button>' +
           '<button onclick="event.stopPropagation();invNewToggleMissing(' + vi + ',' + ii + ')" style="' + (item.missing ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.missing ? '⚠ MISSING' : 'MISSING') + '</button>' +
+          (returnPlan === 'hybrid'
+            ? '<button onclick="event.stopPropagation();invNewToggleKeeping(' + vi + ',' + ii + ')" style="' + (item.keepingForSale ? 'background:#c9a2e2;border:2px solid #c9a2e2;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.keepingForSale ? '✓ KEEPING' : 'KEEPING') + '</button>'
+            : '') +
           '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
             '<option value=""' + (!item.category ? ' selected' : '') + '>-- cat --</option>' +
             '<option value="clothing"' + (item.category === 'clothing' ? ' selected' : '') + '>Clothing</option>' +
@@ -8575,7 +8578,7 @@ function renderInvNew() {
     var shippingStatus = vendor.shippingStatus || 'not-shipped';
     var paymentStatus = vendor.paymentStatus || 'not-paid';
 
-    var rpColors = { 'keeping': '#88c98a', 'tbd': '#e2c97e', 'shipping-back': '#82bfbb', 'designer-pickup': '#82bfbb', 'sold-out': '#5c5870' };
+    var rpColors = { 'keeping': '#88c98a', 'tbd': '#e2c97e', 'shipping-back': '#82bfbb', 'designer-pickup': '#82bfbb', 'hybrid': '#c9a2e2', 'sold-out': '#5c5870' };
     var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070', 'na': '#5c5870' };
     var psColors = { 'received': '#88c98a', 'sent': '#e2c97e', 'not-paid': '#e07070', 'na': '#5c5870' };
 
@@ -8594,6 +8597,7 @@ function renderInvNew() {
             '<option value="tbd"' + (returnPlan === 'tbd' ? ' selected' : '') + '>TBD</option>' +
             '<option value="shipping-back"' + (returnPlan === 'shipping-back' ? ' selected' : '') + '>Shipping Back</option>' +
             '<option value="designer-pickup"' + (returnPlan === 'designer-pickup' ? ' selected' : '') + '>Designer Picking Up</option>' +
+            '<option value="hybrid"' + (returnPlan === 'hybrid' ? ' selected' : '') + '>Hybrid — Partial Return</option>' +
             '<option value="sold-out"' + (returnPlan === 'sold-out' ? ' selected' : '') + '>N/A — Sold Out</option>' +
           '</select>' +
         '</div>' +
@@ -9398,6 +9402,14 @@ function invNewToggleMissing(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   data.vendors[vi].items[ii].missing = !data.vendors[vi].items[ii].missing;
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewToggleKeeping(vi, ii) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  data.vendors[vi].items[ii].keepingForSale = !data.vendors[vi].items[ii].keepingForSale;
   saveInvNew(data);
   renderInvNew();
 }
