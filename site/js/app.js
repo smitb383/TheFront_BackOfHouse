@@ -8193,14 +8193,15 @@ function renderInvNew() {
 
   // Build index map for sorting (preserve original indices for editing)
   var vendorIndices = data.vendors.map(function(v, i) { return i; });
-  var agOrder = { 'not-sent': 0, 'sent': 1, 'signed': 2 };
-  var dsOrder = { 'none': 0, 'scheduled': 1, 'shipped': 1, 'received': 2 };
-  if (invNewSortBy === 'invComplete') {
-    vendorIndices.sort(function(a, b) { return (data.vendors[a].invComplete ? 1 : 0) - (data.vendors[b].invComplete ? 1 : 0); });
-  } else if (invNewSortBy === 'agreement') {
-    vendorIndices.sort(function(a, b) { return (agOrder[data.vendors[a].agreementStatus || 'not-sent'] || 0) - (agOrder[data.vendors[b].agreementStatus || 'not-sent'] || 0); });
-  } else if (invNewSortBy === 'stock') {
-    vendorIndices.sort(function(a, b) { return (dsOrder[data.vendors[a].deliveryStatus || 'none'] || 0) - (dsOrder[data.vendors[b].deliveryStatus || 'none'] || 0); });
+  var rpOrder = { 'tbd': 0, 'keeping': 1, 'shipping-back': 2, 'designer-pickup': 3 };
+  var ssOrder = { 'not-shipped': 0, 'shipped': 1, 'received': 2 };
+  var psOrder = { 'not-paid': 0, 'sent': 1, 'received': 2 };
+  if (invNewSortBy === 'returnPlan') {
+    vendorIndices.sort(function(a, b) { return (rpOrder[data.vendors[a].returnPlan || 'tbd'] || 0) - (rpOrder[data.vendors[b].returnPlan || 'tbd'] || 0); });
+  } else if (invNewSortBy === 'shippingStatus') {
+    vendorIndices.sort(function(a, b) { return (ssOrder[data.vendors[a].shippingStatus || 'not-shipped'] || 0) - (ssOrder[data.vendors[b].shippingStatus || 'not-shipped'] || 0); });
+  } else if (invNewSortBy === 'paymentStatus') {
+    vendorIndices.sort(function(a, b) { return (psOrder[data.vendors[a].paymentStatus || 'not-paid'] || 0) - (psOrder[data.vendors[b].paymentStatus || 'not-paid'] || 0); });
   } else {
     vendorIndices.sort(function(a, b) { return (data.vendors[a].name || '').toLowerCase() < (data.vendors[b].name || '').toLowerCase() ? -1 : 1; });
   }
@@ -8569,71 +8570,54 @@ function renderInvNew() {
             : '')
         : '');
 
-    // Status badges
-    var invComplete = vendor.invComplete || false;
-    var agreementStatus = vendor.agreementStatus || 'not-sent';
-    var deliveryMethod = vendor.deliveryMethod || (isNonNYC ? 'shipping' : 'dropoff');
-    var deliveryStatus = vendor.deliveryStatus || 'none';
+    // Status fields (rendered inside vendor body, not header)
+    var returnPlan = vendor.returnPlan || 'tbd';
+    var shippingStatus = vendor.shippingStatus || 'not-shipped';
+    var paymentStatus = vendor.paymentStatus || 'not-paid';
 
-    var agColors = { 'signed': '#88c98a', 'sent': '#e2c97e', 'not-sent': '#e07070' };
-
-    // Delivery status colors depend on method
-    var dsColors;
-    if (deliveryMethod === 'dropoff') {
-      dsColors = { 'received': '#88c98a', 'scheduled': '#e2c97e', 'none': '#e07070' };
-    } else {
-      dsColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'none': '#e07070' };
-    }
-    var dsColor = dsColors[deliveryStatus] || '#e07070';
+    var rpColors = { 'keeping': '#88c98a', 'tbd': '#e2c97e', 'shipping-back': '#82bfbb', 'designer-pickup': '#82bfbb' };
+    var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070' };
+    var psColors = { 'received': '#88c98a', 'sent': '#e2c97e', 'not-paid': '#e07070' };
 
     var selBase = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer';
 
-    var statusBadges =
-      '<span style="display:flex;align-items:center;gap:12px;flex-shrink:0" onclick="event.stopPropagation()">' +
-        // Inventory complete
-        '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;accent-color:#88c98a" title="Inventory complete">' +
-          '<input type="checkbox"' + (invComplete ? ' checked' : '') + ' onchange="invNewEditVendor(' + vi + ',\'invComplete\',this.checked)">' +
-          '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:' + (invComplete ? '#88c98a' : 'var(--muted)') + ';font-weight:' + (invComplete ? '700' : '400') + '">Complete</span>' +
-        '</label>' +
-        // Signed inventory agreement
-        '<div style="display:flex;flex-direction:column;align-items:center">' +
-          '<div style="' + lblStyle + '">Inventory Signed</div>' +
-          '<select onchange="invNewEditVendor(' + vi + ',\'agreementStatus\',this.value)" style="background:' + agColors[agreementStatus] + '22;border:2px solid ' + agColors[agreementStatus] + ';color:' + agColors[agreementStatus] + ';' + selBase + '">' +
-            '<option value="signed"' + (agreementStatus === 'signed' ? ' selected' : '') + '>\u2713 Signed</option>' +
-            '<option value="sent"' + (agreementStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
-            '<option value="not-sent"' + (agreementStatus === 'not-sent' ? ' selected' : '') + '>Not Sent</option>' +
+    var rpColor = rpColors[returnPlan] || '#e2c97e';
+    var ssColor = ssColors[shippingStatus] || '#e07070';
+    var psColor = psColors[paymentStatus] || '#e07070';
+
+    var vendorStatusFields =
+      '<div style="display:flex;gap:16px;align-items:flex-end;padding:10px 0;border-bottom:1px solid var(--faint);margin-bottom:8px" onclick="event.stopPropagation()">' +
+        '<div style="display:flex;flex-direction:column">' +
+          '<div style="' + lblStyle + '">Return Plan</div>' +
+          '<select onchange="invNewEditVendor(' + vi + ',\'returnPlan\',this.value);renderInvNew()" style="background:' + rpColor + '22;border:2px solid ' + rpColor + ';color:' + rpColor + ';' + selBase + '">' +
+            '<option value="keeping"' + (returnPlan === 'keeping' ? ' selected' : '') + '>Keeping & Listing Online</option>' +
+            '<option value="tbd"' + (returnPlan === 'tbd' ? ' selected' : '') + '>TBD</option>' +
+            '<option value="shipping-back"' + (returnPlan === 'shipping-back' ? ' selected' : '') + '>Shipping Back</option>' +
+            '<option value="designer-pickup"' + (returnPlan === 'designer-pickup' ? ' selected' : '') + '>Designer Picking Up</option>' +
           '</select>' +
         '</div>' +
-        // Delivery method
-        '<div style="display:flex;flex-direction:column;align-items:center">' +
-          '<div style="' + lblStyle + '">Delivery</div>' +
-          '<select onchange="invNewEditVendor(' + vi + ',\'deliveryMethod\',this.value);invNewEditVendor(' + vi + ',\'deliveryStatus\',\'none\');renderInvNew()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);' + selBase + '">' +
-            '<option value="dropoff"' + (deliveryMethod === 'dropoff' ? ' selected' : '') + '>Drop-off</option>' +
-            '<option value="shipping"' + (deliveryMethod === 'shipping' ? ' selected' : '') + '>Shipping</option>' +
+        '<div style="display:flex;flex-direction:column">' +
+          '<div style="' + lblStyle + '">Shipping Status</div>' +
+          '<select onchange="invNewEditVendor(' + vi + ',\'shippingStatus\',this.value);renderInvNew()" style="background:' + ssColor + '22;border:2px solid ' + ssColor + ';color:' + ssColor + ';' + selBase + '">' +
+            '<option value="not-shipped"' + (shippingStatus === 'not-shipped' ? ' selected' : '') + '>Haven\'t Shipped</option>' +
+            '<option value="shipped"' + (shippingStatus === 'shipped' ? ' selected' : '') + '>Shipped</option>' +
+            '<option value="received"' + (shippingStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
           '</select>' +
         '</div>' +
-        // Delivery status (context-dependent)
-        '<div style="display:flex;flex-direction:column;align-items:center">' +
-          '<div style="' + lblStyle + '">Status</div>' +
-          (deliveryMethod === 'dropoff'
-            ? '<select onchange="invNewEditVendor(' + vi + ',\'deliveryStatus\',this.value)" style="background:' + dsColor + '22;border:2px solid ' + dsColor + ';color:' + dsColor + ';' + selBase + '">' +
-                '<option value="received"' + (deliveryStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
-                '<option value="scheduled"' + (deliveryStatus === 'scheduled' ? ' selected' : '') + '>Scheduled</option>' +
-                '<option value="none"' + (deliveryStatus === 'none' ? ' selected' : '') + '>Unconfirmed</option>' +
-              '</select>'
-            : '<select onchange="invNewEditVendor(' + vi + ',\'deliveryStatus\',this.value)" style="background:' + dsColor + '22;border:2px solid ' + dsColor + ';color:' + dsColor + ';' + selBase + '">' +
-                '<option value="received"' + (deliveryStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
-                '<option value="shipped"' + (deliveryStatus === 'shipped' ? ' selected' : '') + '>Shipped</option>' +
-                '<option value="none"' + (deliveryStatus === 'none' ? ' selected' : '') + '>Not Shipped</option>' +
-              '</select>') +
+        '<div style="display:flex;flex-direction:column">' +
+          '<div style="' + lblStyle + '">Payment</div>' +
+          '<select onchange="invNewEditVendor(' + vi + ',\'paymentStatus\',this.value);renderInvNew()" style="background:' + psColor + '22;border:2px solid ' + psColor + ';color:' + psColor + ';' + selBase + '">' +
+            '<option value="not-paid"' + (paymentStatus === 'not-paid' ? ' selected' : '') + '>Haven\'t Paid</option>' +
+            '<option value="sent"' + (paymentStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
+            '<option value="received"' + (paymentStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
+          '</select>' +
         '</div>' +
-      '</span>';
+      '</div>';
 
     var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
       '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
         '<span style="font-size:10px;color:var(--muted);transition:transform 0.2s;transform:rotate(' + (invNewCollapsed[vi] === false ? '90' : '0') + 'deg)">&#9654;</span>' +
         '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600;color:var(--text);min-width:120px">' + esc(vendor.name) + '</span>' +
-        statusBadges +
         controlsHtml +
         '<div style="flex:1"></div>' +
         '<div style="display:flex;gap:20px;align-items:center">' + statsHtml + '</div>' +
@@ -8657,6 +8641,7 @@ function renderInvNew() {
         '</div>';
       }
       vendorBody = '<div style="padding:4px 0 12px">' +
+        vendorStatusFields +
         colHeaders + itemRows +
         '<div style="display:flex;gap:8px;margin-top:10px">' +
           '<button onclick="invNewAddItem(' + vi + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Add item</button>' +
@@ -9416,7 +9401,7 @@ function invNewToggleMissing(vi, ii) {
 
 function invNewSort(sortBy) {
   invNewSortBy = sortBy;
-  ['name','invComplete','agreement','stock'].forEach(function(s) {
+  ['name','returnPlan','shippingStatus','paymentStatus'].forEach(function(s) {
     var btn = document.getElementById('inv-sort-' + s);
     if (btn) btn.classList.toggle('active', s === sortBy);
   });
