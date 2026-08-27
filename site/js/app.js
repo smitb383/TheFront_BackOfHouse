@@ -8246,12 +8246,13 @@ function renderInvNew() {
         vendorTotal += retailPrice * sold;
       } else {
         var price = item.salePrice || 0;
-        var noComm = item.noCommission || 0; // units purchased by us (no store commission)
+        var noComm = Math.min(item.noCommission || 0, item.qty || 1); // units purchased by us (no store commission)
         if (item.sizes && item.sizes.length) {
           item.sizes.forEach(function(sz) {
-            vendorMerchValue += price * (sz.qty || 0);
-            var szNoComm = sz.noCommission || 0;
-            var szSold = sz.sold || 0;
+            var szQty = sz.qty || 0;
+            vendorMerchValue += price * szQty;
+            var szNoComm = Math.min(sz.noCommission || 0, szQty);
+            var szSold = Math.min(sz.sold || 0, szQty);
             var commSold = Math.max(0, szSold - szNoComm);
             // Commission sales: normal split
             var commRevenue = price * commSold;
@@ -8264,8 +8265,9 @@ function renderInvNew() {
             vendorDesigner += noCommRevenue * (dPct / 100);
           });
         } else {
-          vendorMerchValue += price * (item.qty || 1);
-          var totalSold = item.sold || 0;
+          var itemQty = item.qty || 1;
+          vendorMerchValue += price * itemQty;
+          var totalSold = Math.min(item.sold || 0, itemQty);
           var commSold = Math.max(0, totalSold - noComm);
           // Commission sales: normal split
           var commRevenue = price * commSold;
@@ -8401,11 +8403,16 @@ function renderInvNew() {
       var hasSizes = item.sizes && item.sizes.length > 0;
       var totalQty = 0, totalSold = 0, totalNoComm = 0;
       if (hasSizes) {
-        item.sizes.forEach(function(sz) { totalQty += (sz.qty || 0); totalSold += (sz.sold || 0); totalNoComm += (sz.noCommission || 0); });
+        item.sizes.forEach(function(sz) {
+          var szQty = sz.qty || 0;
+          totalQty += szQty;
+          totalSold += Math.min(sz.sold || 0, szQty);
+          totalNoComm += Math.min(sz.noCommission || 0, szQty);
+        });
       } else {
         totalQty = item.qty || 1;
-        totalSold = item.sold || 0;
-        totalNoComm = item.noCommission || 0;
+        totalSold = Math.min(item.sold || 0, totalQty);
+        totalNoComm = Math.min(item.noCommission || 0, totalQty);
       }
       var totalSales = price * totalSold;
       var commSoldDisplay = Math.max(0, totalSold - totalNoComm);
