@@ -8465,8 +8465,9 @@ function renderInvNew() {
       if (item.addedToSquare === undefined) item.addedToSquare = true;
       var isNew = !item.addedToSquare;
       var itemRowOpacity = itemAllSold ? 'opacity:0.45;' : '';
+      var unpaidAmt = Math.round((item.salePrice || 0) * (dPct / 100));
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0;' + itemRowOpacity + '">' +
-        '<div style="display:grid;grid-template-columns:76px 190px 70px 50px 60px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:5px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+        '<div style="display:grid;grid-template-columns:76px 1fr 160px 80px 50px 50px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:5px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
             (item.photo
               ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' +
@@ -8475,31 +8476,35 @@ function renderInvNew() {
               : '<span style="color:var(--muted);font-size:16px;cursor:pointer" onclick="event.stopPropagation();invNewPickPhoto(' + vi + ',' + ii + ')">+</span>') +
           '</div>' +
           '<input class="field-input" value="' + esc(item.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:15px">' +
-          (function() {
-            var btnStyle = onFloor ? 'background:#88c98a;border:2px solid #88c98a;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)';
-            var h = '<div style="display:flex;align-items:center;gap:3px" onclick="event.stopPropagation()">';
-            h += '<button onclick="invNewToggleFloorItem(' + vi + ',' + ii + ')" style="' + btnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (onFloor ? '✓' : '') + 'FLOOR</button>';
-            if (onFloor && totalQty > 1) {
-              h += '<input type="number" min="1" max="' + totalQty + '" value="' + (floorQty || 1) + '" oninput="invNewEditItem(' + vi + ',' + ii + ',\'floorQty\',+this.value)" style="width:30px;background:var(--surface2);border:1px solid #88c98a;color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">';
-            }
-            h += '</div>';
-            return h;
-          })() +
+          // Status buttons group
+          '<div style="display:flex;gap:3px;align-items:center;flex-wrap:wrap" onclick="event.stopPropagation()">' +
+            (function() {
+              var btnStyle = onFloor ? 'background:#88c98a;border:2px solid #88c98a;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)';
+              return '<button onclick="invNewToggleFloorItem(' + vi + ',' + ii + ')" style="' + btnStyle + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (onFloor ? '✓' : '') + 'FLOOR</button>';
+            })() +
+            '<button onclick="invNewToggleMissing(' + vi + ',' + ii + ')" style="' + (item.missing ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.missing ? '⚠ MISS' : 'MISS') + '</button>' +
+            '<button onclick="invNewToggleBroken(' + vi + ',' + ii + ')" style="' + (item.broken ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.broken ? '⚠ BRKN' : 'BRKN') + '</button>' +
+            (returnPlan === 'hybrid'
+              ? '<button onclick="invNewToggleKeeping(' + vi + ',' + ii + ')" style="' + (item.keepingForSale ? 'background:#c9a2e2;border:2px solid #c9a2e2;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.keepingForSale ? '✓ KEEP' : 'KEEP') + '</button>'
+              : '') +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input value="' + (item.salePrice || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',parseFloat(this.value)||0)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+          (hasSizes
+            ? '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:center">' + totalQty + '</div>'
+            : '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">') +
+          // Need to Pay dropdown
           (function() {
             var unpaid = item.unpaidBy || '';
             if (unpaid) {
-              return '<button onclick="event.stopPropagation();invNewSetUnpaid(' + vi + ',' + ii + ',\'\')" style="background:#e0784522;border:2px solid #e07845;color:#e07845;font-family:DM Mono,monospace;font-size:8px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap" title="Click to clear">' + esc(unpaid).toUpperCase() + ' OWES</button>';
+              return '<button onclick="event.stopPropagation();invNewSetUnpaid(' + vi + ',' + ii + ',\'\')" style="background:#e0784522;border:2px solid #e07845;color:#e07845;font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap" title="$' + unpaidAmt + ' at ' + dPct + '% — click to clear">' + esc(unpaid).toUpperCase() + ' $' + unpaidAmt + '</button>';
             }
             return '<div style="display:flex;gap:2px" onclick="event.stopPropagation()">' +
-              '<button onclick="invNewSetUnpaid(' + vi + ',' + ii + ',\'del\')" style="background:var(--surface2);border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap" title="Del owes for this item">DEL</button>' +
-              '<button onclick="invNewSetUnpaid(' + vi + ',' + ii + ',\'brooke\')" style="background:var(--surface2);border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap" title="Brooke owes for this item">BROOKE</button>' +
+              '<button onclick="invNewSetUnpaid(' + vi + ',' + ii + ',\'del\')" style="background:var(--surface2);border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">DEL</button>' +
+              '<button onclick="invNewSetUnpaid(' + vi + ',' + ii + ',\'brooke\')" style="background:var(--surface2);border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">BRK</button>' +
             '</div>';
           })() +
-          '<button onclick="event.stopPropagation();invNewToggleMissing(' + vi + ',' + ii + ')" style="' + (item.missing ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.missing ? '⚠ MISSING' : 'MISSING') + '</button>' +
-          '<button onclick="event.stopPropagation();invNewToggleBroken(' + vi + ',' + ii + ')" style="' + (item.broken ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.broken ? '⚠ BROKEN' : 'BROKEN') + '</button>' +
-          (returnPlan === 'hybrid'
-            ? '<button onclick="event.stopPropagation();invNewToggleKeeping(' + vi + ',' + ii + ')" style="' + (item.keepingForSale ? 'background:#c9a2e2;border:2px solid #c9a2e2;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.keepingForSale ? '✓ KEEPING' : 'KEEPING') + '</button>'
-            : '') +
+          '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round((item.salePrice || 0) * totalQty) + '</div>' +
+          '<div style="border-left:1px solid var(--border);height:100%"></div>' +
           '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
             '<option value=""' + (!item.category ? ' selected' : '') + '>-- cat --</option>' +
             '<option value="clothing"' + (item.category === 'clothing' ? ' selected' : '') + '>Clothing</option>' +
@@ -8512,15 +8517,6 @@ function renderInvNew() {
             '<option value="furniture"' + (item.category === 'furniture' ? ' selected' : '') + '>Furniture</option>' +
             '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
           '</select>' +
-          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input value="' + (item.salePrice || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',parseFloat(this.value)||0)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
-          (hasSizes
-            ? '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:center">' + totalQty + '</div>'
-            : '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">') +
-          '<div style="border-left:1px solid var(--border);height:100%"></div>' +
-          '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">$' + unitUs + '</div>' +
-          '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + unitThem + '</div>' +
-          '<div style="border-left:1px solid var(--border);height:100%"></div>' +
-          '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:right">$' + Math.round(price * totalQty) + '</div>' +
           '<div style="border-left:1px solid var(--border);height:100%"></div>' +
           (function() {
             var allItemSold = totalSold >= totalQty && totalQty > 0;
@@ -8701,10 +8697,9 @@ function renderInvNew() {
           '<div></div><div style="text-align:center">Qty</div><div style="text-align:right">Total Cost</div><div style="text-align:center">Sold</div><div style="text-align:right">Revenue</div><div style="text-align:right">Profit</div><div></div>' +
         '</div>';
       } else {
-        colHeaders = '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
-          '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div>' +
-          '<div></div><div style="text-align:right">Us/ea</div><div style="text-align:right">Them/ea</div>' +
-          '<div></div><div style="text-align:right">Value</div>' +
+        colHeaders = '<div style="display:grid;grid-template-columns:76px 1fr 160px 80px 50px 50px 70px 2px 80px 2px 120px 80px 70px 70px 28px;gap:5px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+          '<div></div><div>Item</div><div>Status</div><div>Price</div><div>Qty</div><div>Need to Pay</div><div style="text-align:right">Value</div>' +
+          '<div></div><div style="text-align:right">Category</div>' +
           '<div></div><div>Sold</div><div style="text-align:right">Revenue</div><div style="text-align:right">Us</div><div style="text-align:right">Them</div><div></div>' +
         '</div>';
       }
