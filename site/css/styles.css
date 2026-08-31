@@ -2157,11 +2157,15 @@ body::before {
   font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic;
   color: #bbb;
 }
+@page {
+  margin: 0.5in;
+  size: auto;
+}
 @media print {
   body > *:not(.doc-modal-overlay) { display: none !important; }
   .doc-modal-overlay { position: static; background: none; display: block !important; }
   .doc-modal-close, .doc-modal-print { display: none !important; }
-  .doc-modal { padding: 40px; min-height: auto; box-shadow: none; }
+  .doc-modal { padding: 20px; min-height: auto; box-shadow: none; }
 }
 
 .ws-data-btns {
