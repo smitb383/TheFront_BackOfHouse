@@ -8071,6 +8071,8 @@ var invNewSortBy = 'name'; // 'name', 'invComplete', 'agreement', 'stock'
 var invNewFilterFloor = false; // filter to show only on-floor items
 var invNewFilterNew = false; // filter to show only new (not yet added to Square)
 var invNewFilterMissing = false; // filter to show only missing items
+var invNewFilterKeeping = false; // filter to show only vendors with keeping return plan
+var invNewFilterUnpaid = false; // filter to show only vendors not yet paid
 
 // High-water mark: sold counts should NEVER decrease (except explicit undo).
 // This prevents sync/merge/overwrite from wiping sold marks.
@@ -8204,6 +8206,14 @@ function renderInvNew() {
     vendorIndices.sort(function(a, b) { return (psOrder[data.vendors[a].paymentStatus || 'not-paid'] || 0) - (psOrder[data.vendors[b].paymentStatus || 'not-paid'] || 0); });
   } else {
     vendorIndices.sort(function(a, b) { return (data.vendors[a].name || '').toLowerCase() < (data.vendors[b].name || '').toLowerCase() ? -1 : 1; });
+  }
+
+  // Vendor-level filters
+  if (invNewFilterKeeping) {
+    vendorIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].returnPlan === 'keeping' || data.vendors[vi].returnPlan === 'hybrid'; });
+  }
+  if (invNewFilterUnpaid) {
+    vendorIndices = vendorIndices.filter(function(vi) { var ps = data.vendors[vi].paymentStatus || 'not-paid'; return ps === 'not-paid' || ps === 'sent-report'; });
   }
 
   // Split into consignment, 100% commission, and wholesale
@@ -9865,6 +9875,26 @@ function invNewToggleFilterNew() {
 function invNewToggleFilterMissing() {
   invNewFilterMissing = !invNewFilterMissing;
   _clearInvFiltersExcept(invNewFilterMissing ? 'missing' : '');
+  renderInvNew();
+}
+
+function invNewToggleFilterKeeping() {
+  invNewFilterKeeping = !invNewFilterKeeping;
+  if (invNewFilterKeeping) invNewFilterUnpaid = false;
+  var btn = document.getElementById('inv-filter-keeping');
+  if (btn) btn.classList.toggle('active', invNewFilterKeeping);
+  var btn2 = document.getElementById('inv-filter-unpaid');
+  if (btn2) btn2.classList.toggle('active', false);
+  renderInvNew();
+}
+
+function invNewToggleFilterUnpaid() {
+  invNewFilterUnpaid = !invNewFilterUnpaid;
+  if (invNewFilterUnpaid) invNewFilterKeeping = false;
+  var btn = document.getElementById('inv-filter-unpaid');
+  if (btn) btn.classList.toggle('active', invNewFilterUnpaid);
+  var btn2 = document.getElementById('inv-filter-keeping');
+  if (btn2) btn2.classList.toggle('active', false);
   renderInvNew();
 }
 
