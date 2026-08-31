@@ -8574,7 +8574,7 @@ function renderInvNew() {
     var salesLogDone = vendor.salesLogDone || false;
 
     var rpColors = { 'keeping': '#88c98a', 'tbd': '#e2c97e', 'shipping-back': '#82bfbb', 'designer-pickup': '#82bfbb', 'hybrid': '#c9a2e2', 'sold-out': '#5c5870' };
-    var psColors = { 'received': '#88c98a', 'sent': '#e2c97e', 'not-paid': '#e07070', 'na': '#5c5870' };
+    var psColors = { 'received': '#88c98a', 'sent': '#e2c97e', 'not-paid': '#e07070', 'na': '#5c5870', 'no-sale': '#5c5870' };
     var selBase = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer';
     var rpColor = rpColors[returnPlan] || '#e2c97e';
     var psColor = psColors[paymentStatus] || '#e07070';
@@ -8598,6 +8598,7 @@ function renderInvNew() {
           '<option value="sent"' + (paymentStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
           '<option value="received"' + (paymentStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
           '<option value="na"' + (paymentStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
+          '<option value="no-sale"' + (paymentStatus === 'no-sale' ? ' selected' : '') + '>N/A — Didn\'t Sell</option>' +
         '</select>' +
       '</div>' +
       '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;accent-color:#88c98a" onclick="event.stopPropagation()">' +
