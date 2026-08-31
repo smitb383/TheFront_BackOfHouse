@@ -9860,12 +9860,12 @@ function invNewSetUnpaid(vi, ii, who) {
   if (basePerson) {
     // Always mark as sold when someone is set to pay
     item.sold = Math.max(item.sold || 0, 1);
-    // Brooke/Del: auto-set noCommission so designer gets 70%, store gets 0%
+    // Brooke/Del: add 1 to noCommission (their purchase, not all sales)
     if (basePerson === 'brooke' || basePerson === 'del') {
-      item.noCommission = item.sold;
+      item.noCommission = Math.max(item.noCommission || 0, 1);
     }
   } else {
-    item.noCommission = 0;
+    item.noCommission = Math.max(0, (item.noCommission || 0) - 1);
   }
   saveInvNew(data);
   renderInvNew();
