@@ -8465,7 +8465,8 @@ function renderInvNew() {
       if (item.addedToSquare === undefined) item.addedToSquare = true;
       var isNew = !item.addedToSquare;
       var itemRowOpacity = itemAllSold ? 'opacity:0.45;' : '';
-      var unpaidAmt = Math.round((item.salePrice || 0) * (dPct / 100));
+      var unpaidPerson = item.unpaidBy || '';
+      var unpaidAmt = unpaidPerson === 'morgan' ? (item.salePrice || 0) : Math.round((item.salePrice || 0) * (dPct / 100));
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0;' + itemRowOpacity + '">' +
         '<div style="display:grid;grid-template-columns:76px 1fr 160px 80px 50px 50px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:5px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
@@ -8493,16 +8494,15 @@ function renderInvNew() {
             ? '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:center">' + totalQty + '</div>'
             : '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">') +
           // Need to Pay dropdown
-          (function() {
-            var unpaid = item.unpaidBy || '';
-            if (unpaid) {
-              return '<button onclick="event.stopPropagation();invNewSetUnpaid(' + vi + ',' + ii + ',\'\')" style="background:#e0784522;border:2px solid #e07845;color:#e07845;font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap" title="$' + unpaidAmt + ' at ' + dPct + '% — click to clear">' + esc(unpaid).toUpperCase() + ' $' + unpaidAmt + '</button>';
-            }
-            return '<div style="display:flex;gap:2px" onclick="event.stopPropagation()">' +
-              '<button onclick="invNewSetUnpaid(' + vi + ',' + ii + ',\'del\')" style="background:var(--surface2);border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">DEL</button>' +
-              '<button onclick="invNewSetUnpaid(' + vi + ',' + ii + ',\'brooke\')" style="background:var(--surface2);border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">BRK</button>' +
-            '</div>';
-          })() +
+          '<div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:center">' +
+            '<select onchange="invNewSetUnpaid(' + vi + ',' + ii + ',this.value);renderInvNew()" style="' + (unpaidPerson ? 'background:#e0784522;border:2px solid #e07845;color:#e07845;font-weight:700' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;width:100%">' +
+              '<option value=""' + (!unpaidPerson ? ' selected' : '') + '>—</option>' +
+              '<option value="brooke"' + (unpaidPerson === 'brooke' ? ' selected' : '') + '>Brooke</option>' +
+              '<option value="del"' + (unpaidPerson === 'del' ? ' selected' : '') + '>Del</option>' +
+              '<option value="morgan"' + (unpaidPerson === 'morgan' ? ' selected' : '') + '>Morgan</option>' +
+            '</select>' +
+            (unpaidPerson ? '<div style="font-family:DM Mono,monospace;font-size:9px;color:#e07845;margin-top:2px">$' + unpaidAmt + '</div>' : '') +
+          '</div>' +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round((item.salePrice || 0) * totalQty) + '</div>' +
           '<div style="border-left:1px solid var(--border);height:100%"></div>' +
           '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
@@ -9634,7 +9634,15 @@ function invNewToggleFloorItem(vi, ii) {
 function invNewSetUnpaid(vi, ii, who) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
-  data.vendors[vi].items[ii].unpaidBy = who;
+  var item = data.vendors[vi].items[ii];
+  item.unpaidBy = who;
+  // Brooke/Del: auto-set noCommission so designer gets 70%, store gets 0%
+  // Morgan: full price, handled separately in display
+  if (who === 'brooke' || who === 'del') {
+    item.noCommission = item.sold || 1;
+  } else if (!who) {
+    item.noCommission = 0;
+  }
   saveInvNew(data);
   renderInvNew();
 }
