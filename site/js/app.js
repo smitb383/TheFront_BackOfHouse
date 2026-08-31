@@ -9827,11 +9827,14 @@ function invNewSetUnpaid(vi, ii, who) {
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var item = data.vendors[vi].items[ii];
   item.unpaidBy = who;
-  // Brooke/Del: auto-set noCommission so designer gets 70%, store gets 0%
-  // Morgan: full price, handled separately in display
-  if (who === 'brooke' || who === 'del') {
-    item.noCommission = item.sold || 1;
-  } else if (!who) {
+  if (who) {
+    // Mark as sold when someone is set to pay
+    if (!item.sold || item.sold < 1) item.sold = 1;
+    // Brooke/Del: auto-set noCommission so designer gets 70%, store gets 0%
+    if (who === 'brooke' || who === 'del') {
+      item.noCommission = item.sold;
+    }
+  } else {
     item.noCommission = 0;
   }
   saveInvNew(data);
