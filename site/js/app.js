@@ -8721,13 +8721,33 @@ function renderInvNew() {
           '</div>'
         : '';
 
+      // Render extra payments
+      var extraPayments = vendor.extraPayments || [];
+      var totalExtras = 0;
+      var extraPaymentRows = extraPayments.length > 0
+        ? '<div style="margin-top:12px;padding-top:8px;border-top:1px dashed var(--faint)">' +
+            '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#82bfbb;margin-bottom:6px">Extra Payments to Designer (from our earnings)</div>' +
+            extraPayments.map(function(ep, ei) {
+              totalExtras += (ep.amount || 0);
+              return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0">' +
+                '<input class="field-input" value="' + esc(ep.description || '') + '" placeholder="e.g. Rush fee" onclick="event.stopPropagation()" oninput="invNewEditExtra(' + vi + ',' + ei + ',\'description\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:11px">' +
+                '<div style="display:flex;align-items:center;gap:2px"><span style="color:#82bfbb;font-size:11px">+$</span><input type="number" value="' + (ep.amount || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditExtra(' + vi + ',' + ei + ',\'amount\',parseFloat(this.value)||0)" onblur="renderInvNew()" style="width:60px;background:var(--surface2);border:1px solid #82bfbb;color:#82bfbb;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+                '<button onclick="invNewDeleteExtra(' + vi + ',' + ei + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
+              '</div>';
+            }).join('') +
+            (totalExtras > 0 ? '<div style="font-family:DM Mono,monospace;font-size:10px;color:#82bfbb;text-align:right;padding:4px 28px 0 0">Total extra payments: +$' + totalExtras + '</div>' : '') +
+          '</div>'
+        : '';
+
       vendorBody = '<div style="padding:4px 0 12px">' +
         vendorStatusFields +
         colHeaders + itemRows +
         deductionRows +
+        extraPaymentRows +
         '<div style="display:flex;gap:8px;margin-top:10px">' +
           '<button onclick="invNewAddItem(' + vi + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Add Item</button>' +
           '<button onclick="invNewAddDeduction(' + vi + ')" style="background:none;border:1px dashed #e07845;color:#e07845;font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Deduction</button>' +
+          '<button onclick="invNewAddExtra(' + vi + ')" style="background:none;border:1px dashed #82bfbb;color:#82bfbb;font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Extra Payment</button>' +
           '<button onclick="openSalesReport(' + vi + ')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">Sales Report</button>' +
         '</div>' +
       '</div>';
@@ -8770,6 +8790,30 @@ function invNewDeleteDeduction(vi, di) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].deductions) return;
   data.vendors[vi].deductions.splice(di, 1);
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewAddExtra(vi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  if (!data.vendors[vi].extraPayments) data.vendors[vi].extraPayments = [];
+  data.vendors[vi].extraPayments.push({ id: 'ext_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4), description: '', amount: 0 });
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewEditExtra(vi, ei, field, val) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].extraPayments[ei]) return;
+  data.vendors[vi].extraPayments[ei][field] = val;
+  saveInvNew(data);
+}
+
+function invNewDeleteExtra(vi, ei) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].extraPayments) return;
+  data.vendors[vi].extraPayments.splice(ei, 1);
   saveInvNew(data);
   renderInvNew();
 }
@@ -9323,9 +9367,13 @@ function openSalesReport(vi) {
       : '') +
     (function() {
       var deductions = vendor.deductions || [];
-      var totalDed = 0;
+      var extras = vendor.extraPayments || [];
+      var totalDed = 0, totalExtras = 0;
       deductions.forEach(function(d) { totalDed += (d.amount || 0); });
-      var netDesigner = totalDesigner - totalDed;
+      extras.forEach(function(e) { totalExtras += (e.amount || 0); });
+      var netDesigner = totalDesigner - totalDed + totalExtras;
+      var netStore = totalStore - totalExtras;
+      var hasAdjustments = totalDed > 0 || totalExtras > 0;
 
       var dedSection = '';
       if (deductions.length > 0) {
@@ -9351,15 +9399,40 @@ function openSalesReport(vi) {
           '</table>';
       }
 
-      return '<div style="display:flex;gap:32px;margin-bottom:24px;padding:16px;background:#f4f0e8;border-radius:6px">' +
+      var extraSection = '';
+      if (extras.length > 0) {
+        var extraRows = extras.map(function(e) {
+          return '<tr>' +
+            '<td style="' + tdStyle + '">' + esc(e.description || '') + '</td>' +
+            '<td style="text-align:right;' + tdStyle + ';color:#2a7d2e">+$' + (e.amount || 0) + '</td>' +
+          '</tr>';
+        }).join('');
+        extraSection =
+          '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Additional Payments</div>' +
+          '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
+            '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
+              '<th style="' + tdStyle + ';text-align:left">Description</th>' +
+              '<th style="' + tdStyle + ';text-align:right;width:80px">Amount</th>' +
+            '</tr></thead>' +
+            '<tbody>' + extraRows +
+              '<tr style="background:#f4f0e8;font-weight:700">' +
+                '<td style="' + tdStyle + '">TOTAL ADDITIONAL</td>' +
+                '<td style="text-align:right;' + tdStyle + ';color:#2a7d2e">+$' + totalExtras + '</td>' +
+              '</tr>' +
+            '</tbody>' +
+          '</table>';
+      }
+
+      return '<div style="display:flex;gap:32px;margin-bottom:24px;padding:16px;background:#f4f0e8;border-radius:6px;flex-wrap:wrap">' +
         '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Total Revenue</div><div style="font-size:22px;font-weight:700">$' + totalRevenue.toLocaleString() + '</div></div>' +
-        '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Designer Payout</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + (totalDed > 0 ? netDesigner.toLocaleString() : totalDesigner.toLocaleString()) + '</div></div>' +
-        (totalDed > 0 ? '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Before Deductions</div><div style="font-size:16px;color:#888;text-decoration:line-through">$' + totalDesigner.toLocaleString() + '</div></div>' : '') +
-        '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Store Earnings</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + totalStore.toLocaleString() + '</div></div>' +
+        '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Designer Payout</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + (hasAdjustments ? netDesigner.toLocaleString() : totalDesigner.toLocaleString()) + '</div></div>' +
+        (hasAdjustments ? '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Before Adjustments</div><div style="font-size:16px;color:#888;text-decoration:line-through">$' + totalDesigner.toLocaleString() + '</div></div>' : '') +
+        '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Store Earnings</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + (totalExtras > 0 ? netStore.toLocaleString() : totalStore.toLocaleString()) + '</div></div>' +
         '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Items Sold</div><div style="font-size:22px;font-weight:700">' + totalSoldQty + '</div></div>' +
       '</div>' +
       soldTable +
       dedSection +
+      extraSection +
       remTable;
     })();
 

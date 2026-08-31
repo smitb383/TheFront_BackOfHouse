@@ -325,9 +325,12 @@ function _mergeInvNew(local, remote) {
         // Keep whichever is non-empty; prefer remote if both have values
         if (local && !remote) vendorMap[v.vendorId][f] = local;
       });
-      // Preserve deductions: take whichever array is longer
+      // Preserve deductions and extra payments: take whichever array is longer
       if (v.deductions && v.deductions.length > (vendorMap[v.vendorId].deductions || []).length) {
         vendorMap[v.vendorId].deductions = v.deductions;
+      }
+      if (v.extraPayments && v.extraPayments.length > (vendorMap[v.vendorId].extraPayments || []).length) {
+        vendorMap[v.vendorId].extraPayments = v.extraPayments;
       }
     } else {
       // Only re-add local-only vendors if they were recently edited (not stale leftovers
