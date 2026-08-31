@@ -8629,7 +8629,7 @@ function renderInvNew() {
       shippingStatus = 'keeping';
       vendor.shippingStatus = 'keeping';
     }
-    var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070', 'na': '#5c5870', 'keeping': '#88c98a' };
+    var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070', 'na': '#5c5870', 'keeping': '#88c98a', 'picked-up': '#88c98a' };
     var ssColor = ssColors[shippingStatus] || '#e07070';
 
     var payPlatform = vendor.payPlatform || '';
@@ -8646,6 +8646,7 @@ function renderInvNew() {
             '<option value="received"' + (shippingStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
             '<option value="na"' + (shippingStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
             '<option value="keeping"' + (shippingStatus === 'keeping' ? ' selected' : '') + '>Keeping</option>' +
+            '<option value="picked-up"' + (shippingStatus === 'picked-up' ? ' selected' : '') + '>Picked Up</option>' +
           '</select>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column">' +
