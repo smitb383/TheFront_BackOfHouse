@@ -9359,7 +9359,7 @@ function openSalesReport(vi) {
         '<th style="' + tdStyle + ';width:40px">Sold</th>' +
         '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
         '<th style="' + tdStyle + ';text-align:right;width:70px">Revenue</th>' +
-        '<th style="' + tdStyle + ';text-align:right;width:80px">Your Cut (' + dPct + '%)</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:80px">Designer Cut (' + dPct + '%)</th>' +
       '</tr></thead>' +
       '<tbody>' + soldRows +
         '<tr style="background:#f4f0e8;font-weight:700">' +
@@ -9509,7 +9509,7 @@ function openSalesReport(vi) {
         '</div>' +
         // Designer Payout
         '<div style="text-align:center">' +
-          '<div style="' + lbl + '">Your Payout</div>' +
+          '<div style="' + lbl + '">Designer Payout</div>' +
           '<div style="' + bigNum + ';color:#2a7d2e">$' + (hasAdjustments ? netDesigner : totalDesigner).toLocaleString() + '</div>' +
           '<div style="margin-top:6px;text-align:left;padding:0 8px">' + designerBreakdown + '</div>' +
         '</div>' +
