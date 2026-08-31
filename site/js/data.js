@@ -319,7 +319,7 @@ function _mergeInvNew(local, remote) {
       vendorMap[v.vendorId].items = merged;
       vendorMap[v.vendorId].name = v.name || vendorMap[v.vendorId].name;
       // Preserve vendor-level fields: take the non-empty value from either side
-      ['invComplete','agreementStatus','deliveryMethod','deliveryStatus','shippingCost','shippingCoveredBy','pricingModel','eurRate','returnPlan','shippingStatus','paymentStatus','salesLogDone','payPlatform','payDetails'].forEach(function(f) {
+      ['invComplete','agreementStatus','deliveryMethod','deliveryStatus','shippingCost','shippingCoveredBy','pricingModel','eurRate','returnPlan','shippingStatus','paymentStatus','salesLogDone','payPlatform','payDetails','previouslyPaid'].forEach(function(f) {
         var local = v[f];
         var remote = vendorMap[v.vendorId][f];
         // Keep whichever is non-empty; prefer remote if both have values

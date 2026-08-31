@@ -8713,6 +8713,10 @@ function renderInvNew() {
           '<div style="' + lblStyle + '">Payment Details</div>' +
           '<input value="' + esc(payDetails) + '" placeholder="e.g. @handle, email, account #" oninput="invNewEditVendor(' + vi + ',\'payDetails\',this.value)" style="' + inputFieldStyle + ';width:100%">' +
         '</div>' +
+        '<div style="display:flex;flex-direction:column">' +
+          '<div style="' + lblStyle + '">Previously Paid</div>' +
+          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" value="' + (vendor.previouslyPaid || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditVendor(' + vi + ',\'previouslyPaid\',parseFloat(this.value)||0)" style="width:80px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;text-align:right"></div>' +
+        '</div>' +
       '</div>';
 
     var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
@@ -9507,11 +9511,23 @@ function openSalesReport(vi) {
           '<div style="' + lineItem + ';color:#888;margin-top:4px">' + totalSoldQty + ' items sold</div>' +
         '</div>' +
         // Designer Payout
-        '<div style="text-align:center">' +
-          '<div style="' + lbl + '">Designer Payout</div>' +
-          '<div style="' + bigNum + ';color:#2a7d2e">$' + (hasAdjustments ? netDesigner : totalDesigner).toLocaleString() + '</div>' +
-          '<div style="margin-top:6px;text-align:left;padding:0 8px">' + designerBreakdown + '</div>' +
-        '</div>' +
+        (function() {
+          var prevPaid = vendor.previouslyPaid || 0;
+          var totalOwed = hasAdjustments ? netDesigner : totalDesigner;
+          var remaining = totalOwed - prevPaid;
+          var payoutHtml = '<div style="text-align:center">' +
+            '<div style="' + lbl + '">Designer Payout</div>' +
+            '<div style="' + bigNum + ';color:#2a7d2e">$' + totalOwed.toLocaleString() + '</div>' +
+            '<div style="margin-top:6px;text-align:left;padding:0 8px">' + designerBreakdown + '</div>';
+          if (prevPaid > 0) {
+            payoutHtml += '<div style="margin-top:10px;padding:10px;background:#fff;border:2px solid #2a7d2e;border-radius:6px;text-align:center">' +
+              '<div style="' + lineItem + '">Previously paid: <strong>$' + prevPaid.toLocaleString() + '</strong></div>' +
+              '<div style="font-size:20px;font-weight:700;color:' + (remaining > 0 ? '#e07845' : '#2a7d2e') + ';margin-top:4px">Remaining Balance: $' + remaining.toLocaleString() + '</div>' +
+            '</div>';
+          }
+          payoutHtml += '</div>';
+          return payoutHtml;
+        })() +
       '</div>' +
       soldTable +
       // dedSection hidden from designer report (internal only)
