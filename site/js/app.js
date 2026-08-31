@@ -8304,16 +8304,19 @@ function renderInvNew() {
     grandShipping += shipCostForMax;
     grandMaxTakeHome += vendorMaxTakeHome;
 
-    // Sort items so sold-out items go to bottom (preserving original indices for editing)
+    // Sort items: sold-out at bottom, then by price highest to lowest
     var itemIndices = vendor.items.map(function(item, ii) {
       var hasSz = item.sizes && item.sizes.length > 0;
       var tQty = 0, tSold = 0;
       if (hasSz) { item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0); }); }
       else { tQty = item.qty || 1; tSold = item.sold || 0; }
       var allSold = tSold >= tQty && tQty > 0;
-      return { ii: ii, soldOut: allSold };
+      return { ii: ii, soldOut: allSold, price: item.salePrice || 0 };
     });
-    itemIndices.sort(function(a, b) { return (a.soldOut ? 1 : 0) - (b.soldOut ? 1 : 0); });
+    itemIndices.sort(function(a, b) {
+      if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
+      return b.price - a.price;
+    });
 
     var itemRows = itemIndices.map(function(entry) { var ii = entry.ii; var item = vendor.items[ii];
       // Floor filter: skip items not on floor (unless sold out, which auto-removes from floor)
@@ -8667,7 +8670,7 @@ function renderInvNew() {
         colHeaders + itemRows +
         '<div style="display:flex;gap:8px;margin-top:10px">' +
           '<button onclick="invNewAddItem(' + vi + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Add item</button>' +
-          '<button onclick="openExhibitA(' + vi + ')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">Exhibit A</button>' +
+          '<button onclick="openSalesReport(' + vi + ')" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">Sales Report</button>' +
         '</div>' +
       '</div>';
     }
@@ -9082,6 +9085,164 @@ function openExhibitA(vi) {
   var existing = document.getElementById('doc-modal-overlay');
   if (existing) existing.remove();
 
+  document.body.insertAdjacentHTML('beforeend', modal);
+  document.body.style.overflow = 'hidden';
+}
+
+function openSalesReport(vi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  var vendor = data.vendors[vi];
+  var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
+  var sPct = vendor.storePct != null ? vendor.storePct : 30;
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  var tdStyle = 'padding:8px 6px;border:1px solid #ccc';
+
+  // Build sold items table (sorted by price high to low)
+  var soldItems = [];
+  var remainingItems = [];
+  vendor.items.forEach(function(item) {
+    var price = item.salePrice || 0;
+    var hasSz = item.sizes && item.sizes.length > 0;
+    var tQty = 0, tSold = 0, tNoComm = 0;
+    if (hasSz) {
+      item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0); tNoComm += (sz.noCommission || 0); });
+    } else {
+      tQty = item.qty || 1;
+      tSold = Math.min(item.sold || 0, tQty);
+      tNoComm = item.noCommission || 0;
+    }
+    if (tSold > 0) {
+      var commSold = Math.max(0, tSold - tNoComm);
+      var revenue = price * tSold;
+      var designerCut = Math.round(price * commSold * (dPct / 100)) + Math.round(price * tNoComm * (dPct / 100));
+      var storeCut = Math.round(price * commSold * (sPct / 100));
+      soldItems.push({ name: item.name || '', price: price, qtySold: tSold, noComm: tNoComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: item.photo || '' });
+    }
+    var remaining = tQty - tSold;
+    if (remaining > 0) {
+      remainingItems.push({ name: item.name || '', price: price, qty: remaining, photo: item.photo || '' });
+    }
+  });
+  soldItems.sort(function(a, b) { return b.price - a.price; });
+  remainingItems.sort(function(a, b) { return b.price - a.price; });
+
+  // Totals
+  var totalRevenue = 0, totalDesigner = 0, totalStore = 0, totalSoldQty = 0;
+  soldItems.forEach(function(s) { totalRevenue += s.revenue; totalDesigner += s.designerCut; totalStore += s.storeCut; totalSoldQty += s.qtySold; });
+
+  var soldNum = 0;
+  var soldRows = soldItems.map(function(s) {
+    soldNum++;
+    return '<tr>' +
+      '<td style="text-align:center;' + tdStyle + '">' + soldNum + '</td>' +
+      '<td style="text-align:center;' + tdStyle + ';width:48px">' +
+        (s.photo ? '<img src="' + esc(s.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') +
+      '</td>' +
+      '<td style="' + tdStyle + '">' + esc(s.name) + '</td>' +
+      '<td style="text-align:center;' + tdStyle + '">' + s.qtySold + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + s.price + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + s.revenue.toLocaleString() + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + s.designerCut.toLocaleString() + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + s.storeCut.toLocaleString() + '</td>' +
+      (s.noComm > 0 ? '<td style="text-align:center;' + tdStyle + ';font-size:10px;color:#c9a2e2">' + s.noComm + ' NC</td>' : '<td style="' + tdStyle + '"></td>') +
+    '</tr>';
+  }).join('');
+
+  var soldTable =
+    '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-bottom:8px">Sales Summary</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
+      '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
+        '<th style="' + tdStyle + ';width:30px">#</th>' +
+        '<th style="' + tdStyle + ';width:48px"></th>' +
+        '<th style="' + tdStyle + ';text-align:left">Item</th>' +
+        '<th style="' + tdStyle + ';width:40px">Sold</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:70px">Revenue</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:80px">Designer (' + dPct + '%)</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:70px">Store (' + sPct + '%)</th>' +
+        '<th style="' + tdStyle + ';width:40px">Note</th>' +
+      '</tr></thead>' +
+      '<tbody>' + soldRows +
+        '<tr style="background:#f4f0e8;font-weight:700">' +
+          '<td style="' + tdStyle + '" colspan="3">TOTAL</td>' +
+          '<td style="text-align:center;' + tdStyle + '">' + totalSoldQty + '</td>' +
+          '<td style="' + tdStyle + '"></td>' +
+          '<td style="text-align:right;' + tdStyle + '">$' + totalRevenue.toLocaleString() + '</td>' +
+          '<td style="text-align:right;' + tdStyle + '">$' + totalDesigner.toLocaleString() + '</td>' +
+          '<td style="text-align:right;' + tdStyle + '">$' + totalStore.toLocaleString() + '</td>' +
+          '<td style="' + tdStyle + '"></td>' +
+        '</tr>' +
+      '</tbody>' +
+    '</table>';
+
+  // Remaining inventory table
+  var remNum = 0;
+  var totalRemValue = 0;
+  var remRows = remainingItems.map(function(r) {
+    remNum++;
+    var val = r.price * r.qty;
+    totalRemValue += val;
+    return '<tr>' +
+      '<td style="text-align:center;' + tdStyle + '">' + remNum + '</td>' +
+      '<td style="text-align:center;' + tdStyle + ';width:48px">' +
+        (r.photo ? '<img src="' + esc(r.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') +
+      '</td>' +
+      '<td style="' + tdStyle + '">' + esc(r.name) + '</td>' +
+      '<td style="text-align:center;' + tdStyle + '">' + r.qty + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + r.price + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + val.toLocaleString() + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var remTable = remainingItems.length > 0
+    ? '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Remaining Inventory</div>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
+        '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
+          '<th style="' + tdStyle + ';width:30px">#</th>' +
+          '<th style="' + tdStyle + ';width:48px"></th>' +
+          '<th style="' + tdStyle + ';text-align:left">Item</th>' +
+          '<th style="' + tdStyle + ';width:40px">Qty</th>' +
+          '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
+          '<th style="' + tdStyle + ';text-align:right;width:70px">Value</th>' +
+        '</tr></thead>' +
+        '<tbody>' + remRows +
+          '<tr style="background:#f4f0e8;font-weight:700">' +
+            '<td style="' + tdStyle + '" colspan="5">TOTAL REMAINING VALUE</td>' +
+            '<td style="text-align:right;' + tdStyle + '">$' + totalRemValue.toLocaleString() + '</td>' +
+          '</tr>' +
+        '</tbody>' +
+      '</table>'
+    : '<div style="font-family:Cormorant Garamond,serif;font-size:16px;font-style:italic;margin-top:32px;color:#888">All inventory sold — no remaining items.</div>';
+
+  var body =
+    '<div style="margin-bottom:24px;font-size:14px;line-height:1.8;display:flex;flex-wrap:wrap;gap:8px 32px">' +
+      '<div><strong>Designer/Brand:</strong> ' + esc(vendor.name) + '</div>' +
+      '<div><strong>Report Date:</strong> ' + dateStr + '</div>' +
+      '<div><strong>Commission Split:</strong> ' + dPct + '% Designer / ' + sPct + '% Store</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:32px;margin-bottom:24px;padding:16px;background:#f4f0e8;border-radius:6px">' +
+      '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Total Revenue</div><div style="font-size:22px;font-weight:700">$' + totalRevenue.toLocaleString() + '</div></div>' +
+      '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Designer Payout</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + totalDesigner.toLocaleString() + '</div></div>' +
+      '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Store Earnings</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + totalStore.toLocaleString() + '</div></div>' +
+      '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Items Sold</div><div style="font-size:22px;font-weight:700">' + totalSoldQty + '</div></div>' +
+    '</div>' +
+    soldTable +
+    remTable;
+
+  var modal = '<div class="doc-modal-overlay" id="doc-modal-overlay">' +
+    '<div class="doc-modal" style="max-width:900px">' +
+      '<button class="doc-modal-close" onclick="closeDocExport()">&#x2715; Close</button>' +
+      '<button class="doc-modal-print" onclick="window.print()">Print</button>' +
+      '<div style="text-align:center;margin-bottom:8px;font-family:Cormorant Garamond,serif;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#666">The Front NYC</div>' +
+      '<div style="text-align:center;font-family:Cormorant Garamond,serif;font-size:28px;font-weight:700;margin-bottom:32px">SALES REPORT</div>' +
+      body +
+    '</div>' +
+  '</div>';
+
+  var existing = document.getElementById('doc-modal-overlay');
+  if (existing) existing.remove();
   document.body.insertAdjacentHTML('beforeend', modal);
   document.body.style.overflow = 'hidden';
 }
