@@ -9835,8 +9835,8 @@ function invNewSetUnpaid(vi, ii, who) {
   var item = data.vendors[vi].items[ii];
   item.unpaidBy = who;
   if (who) {
-    // Mark as sold when someone is set to pay
-    if (!item.sold || item.sold < 1) item.sold = 1;
+    // Always mark as sold when someone is set to pay
+    item.sold = Math.max(item.sold || 0, 1);
     // Brooke/Del: auto-set noCommission so designer gets 70%, store gets 0%
     if (who === 'brooke' || who === 'del') {
       item.noCommission = item.sold;
