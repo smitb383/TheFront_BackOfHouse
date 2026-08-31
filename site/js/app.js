@@ -8206,8 +8206,9 @@ function renderInvNew() {
     vendorIndices.sort(function(a, b) { return (data.vendors[a].name || '').toLowerCase() < (data.vendors[b].name || '').toLowerCase() ? -1 : 1; });
   }
 
-  // Split into consignment first, wholesale at bottom
-  var consignIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].pricingModel !== 'wholesale'; });
+  // Split into consignment, 100% commission, and wholesale
+  var consignIndices = vendorIndices.filter(function(vi) { var m = data.vendors[vi].pricingModel; return m !== 'wholesale' && m !== 'consignment-100'; });
+  var fullCommIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].pricingModel === 'consignment-100'; });
   var wholesaleIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].pricingModel === 'wholesale'; });
 
   var html = '';
@@ -8215,6 +8216,10 @@ function renderInvNew() {
     html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:12px 0 4px;border-bottom:1px solid var(--border)">Consignment</div>';
   }
   html += consignIndices.map(function(vi) { return renderInvVendor(vi, data, popupVendorsAll); }).join('');
+  if (fullCommIndices.length) {
+    html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:24px 0 4px;border-bottom:1px solid var(--border);margin-top:12px">100% Commission</div>';
+    html += fullCommIndices.map(function(vi) { return renderInvVendor(vi, data, popupVendorsAll); }).join('');
+  }
   if (wholesaleIndices.length) {
     html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:24px 0 4px;border-bottom:1px solid var(--border);margin-top:12px">Wholesale / In-House</div>';
     html += wholesaleIndices.map(function(vi) { return renderInvVendor(vi, data, popupVendorsAll); }).join('');
