@@ -8712,8 +8712,8 @@ function renderInvNew() {
             deductions.map(function(ded, di) {
               totalDeductions += (ded.amount || 0);
               return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0">' +
-                '<input class="field-input" value="' + esc(ded.description || '') + '" placeholder="e.g. Shipping cost fronted" oninput="invNewEditDeduction(' + vi + ',' + di + ',\'description\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:11px">' +
-                '<div style="display:flex;align-items:center;gap:2px"><span style="color:#e07845;font-size:11px">-$</span><input type="number" value="' + (ded.amount || '') + '" placeholder="0" oninput="invNewEditDeduction(' + vi + ',' + di + ',\'amount\',parseFloat(this.value)||0);renderInvNew()" style="width:60px;background:var(--surface2);border:1px solid #e07845;color:#e07845;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
+                '<input class="field-input" value="' + esc(ded.description || '') + '" placeholder="e.g. Shipping cost fronted" onclick="event.stopPropagation()" oninput="invNewEditDeduction(' + vi + ',' + di + ',\'description\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:11px">' +
+                '<div style="display:flex;align-items:center;gap:2px"><span style="color:#e07845;font-size:11px">-$</span><input type="number" value="' + (ded.amount || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditDeduction(' + vi + ',' + di + ',\'amount\',parseFloat(this.value)||0)" onblur="renderInvNew()" style="width:60px;background:var(--surface2);border:1px solid #e07845;color:#e07845;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
                 '<button onclick="invNewDeleteDeduction(' + vi + ',' + di + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
               '</div>';
             }).join('') +
