@@ -8236,7 +8236,18 @@ function renderInvNew() {
     var eurRate = vendor.eurRate || 1.08;
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0, vendorMerchValue = 0;
     var vendorTotalCost = 0, vendorTotalProfit = 0;
+    var vendorLossCost = 0; // cost to store for missing/broken items (designer's cut we owe)
     vendor.items.forEach(function(item) {
+      // Missing/broken: we owe designer their cut, it's a cost to the store
+      if (!isWholesale && (item.missing || item.broken)) {
+        var lossPrice = item.salePrice || 0;
+        var lossQty = item.qty || 1;
+        var lossCost = Math.round(lossPrice * lossQty * (dPct / 100));
+        vendorLossCost += lossCost;
+        vendorDesigner += lossCost;
+        vendorMerchValue += lossPrice * lossQty;
+        return; // don't double-count in normal sales
+      }
       if (isWholesale) {
         var costEur = item.costEur || 0;
         var costUsd = Math.round(costEur * eurRate * 100) / 100;
@@ -8485,6 +8496,7 @@ function renderInvNew() {
             '</div>';
           })() +
           '<button onclick="event.stopPropagation();invNewToggleMissing(' + vi + ',' + ii + ')" style="' + (item.missing ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.missing ? '⚠ MISSING' : 'MISSING') + '</button>' +
+          '<button onclick="event.stopPropagation();invNewToggleBroken(' + vi + ',' + ii + ')" style="' + (item.broken ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.broken ? '⚠ BROKEN' : 'BROKEN') + '</button>' +
           (returnPlan === 'hybrid'
             ? '<button onclick="event.stopPropagation();invNewToggleKeeping(' + vi + ',' + ii + ')" style="' + (item.keepingForSale ? 'background:#c9a2e2;border:2px solid #c9a2e2;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.keepingForSale ? '✓ KEEPING' : 'KEEPING') + '</button>'
             : '') +
@@ -8556,9 +8568,11 @@ function renderInvNew() {
     } else {
       var wePayShipping = vendor.shippingCoveredBy === 'us' && shipCostNum > 0;
       var afterShipping = vendorStore - (wePayShipping ? shipCostNum : 0);
+      var netStore = vendorStore - vendorLossCost - (wePayShipping ? shipCostNum : 0);
       statsHtml = statBlock('Total Value', vendorMerchValue) +
         statBlock('Sold', vendorTotal) +
         statBlock('Our Take', vendorStore, '#88c98a') +
+        (vendorLossCost > 0 ? statBlock('Loss (Missing/Broken)', vendorLossCost, '#e07070') : '') +
         (wePayShipping ? statBlock('After Shipping', afterShipping, '#88c98a') : '') +
         statBlock('Their Take', vendorDesigner);
     }
@@ -9135,6 +9149,16 @@ function openSalesReport(vi) {
     var price = item.salePrice || 0;
     var hasSz = item.sizes && item.sizes.length > 0;
     var tQty = 0, tSold = 0, tNoComm = 0;
+
+    // Missing/broken items: show as sold on the report (designer gets paid)
+    if (item.missing || item.broken) {
+      var lossQty = item.qty || 1;
+      var lossRevenue = price * lossQty;
+      var lossDesignerCut = Math.round(lossRevenue * (dPct / 100));
+      soldItems.push({ name: item.name || '', price: price, qtySold: lossQty, noComm: 0, revenue: lossRevenue, designerCut: lossDesignerCut, storeCut: 0, photo: item.photo || '' });
+      return;
+    }
+
     if (hasSz) {
       item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0); tNoComm += (sz.noCommission || 0); });
     } else {
@@ -9624,6 +9648,14 @@ function invNewToggleMissing(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   data.vendors[vi].items[ii].missing = !data.vendors[vi].items[ii].missing;
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewToggleBroken(vi, ii) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  data.vendors[vi].items[ii].broken = !data.vendors[vi].items[ii].broken;
   saveInvNew(data);
   renderInvNew();
 }
