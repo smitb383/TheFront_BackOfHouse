@@ -8887,7 +8887,19 @@ function buildSizeRows(vi, ii, item, sPct, dPct) {
       ? 'background:#88c98a22;border:1px solid #88c98a44;color:#88c98a'
       : 'background:#88c98a33;border:2px solid #88c98a;color:#88c98a;font-weight:700';
 
-    return '<div style="display:grid;grid-template-columns:76px 200px 90px 80px 50px 2px 70px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:6px;padding:3px 0;' + rowOpacity + '" onclick="event.stopPropagation()">' +
+    var szUnpaid = sz.unpaidBy || '';
+    var szUnpaidBase = szUnpaid.replace('-paid', '');
+    var szIsPaid = szUnpaid.indexOf('-paid') > 0;
+    var szUnpaidAmt = szUnpaidBase === 'morgan' ? price : Math.round(price * (dPct / 100));
+    var szNoComm = sz.noCommission || 0;
+    var szCommSold = Math.max(0, szSold - szNoComm);
+    var szUsRev = Math.round(price * szCommSold * (sPct / 100));
+    var szThemRev = Math.round(price * szCommSold * (dPct / 100)) + Math.round(price * szNoComm * (dPct / 100));
+    var szSelectStyle = szIsPaid
+      ? 'background:#88c98a22;border:2px solid #88c98a;color:#88c98a;font-weight:700'
+      : (szUnpaid ? 'background:#e0784522;border:2px solid #e07845;color:#e07845;font-weight:700' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)');
+
+    return '<div style="display:grid;grid-template-columns:76px 1fr 160px 80px 50px 50px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:5px;padding:3px 0;' + rowOpacity + '" onclick="event.stopPropagation()">' +
       '<div></div>' +
       '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);padding-left:8px;display:flex;align-items:center;gap:6px">' +
         '<span style="background:var(--surface2);padding:2px 10px;border-radius:2px;font-weight:600">' + esc(sz.size || '') + '</span>' +
@@ -8896,30 +8908,31 @@ function buildSizeRows(vi, ii, item, sPct, dPct) {
       '<div></div>' +
       '<div></div>' +
       '<input type="number" min="0" value="' + szQty + '" oninput="invNewEditSize(' + vi + ',' + ii + ',' + si + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:center">' +
+      // Need to Pay dropdown per size
+      '<div style="display:flex;flex-direction:column;align-items:center">' +
+        '<select onchange="invNewSetSizeUnpaid(' + vi + ',' + ii + ',' + si + ',this.value);renderInvNew()" style="' + szSelectStyle + ';font-family:DM Mono,monospace;font-size:7px;padding:2px 3px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;width:100%">' +
+          '<option value=""' + (!szUnpaid ? ' selected' : '') + '>—</option>' +
+          '<option value="brooke"' + (szUnpaid === 'brooke' ? ' selected' : '') + '>Brooke</option>' +
+          '<option value="del"' + (szUnpaid === 'del' ? ' selected' : '') + '>Del</option>' +
+          '<option value="morgan"' + (szUnpaid === 'morgan' ? ' selected' : '') + '>Morgan</option>' +
+          '<option value="brooke-paid"' + (szUnpaid === 'brooke-paid' ? ' selected' : '') + '>Brooke ✓</option>' +
+          '<option value="del-paid"' + (szUnpaid === 'del-paid' ? ' selected' : '') + '>Del ✓</option>' +
+          '<option value="morgan-paid"' + (szUnpaid === 'morgan-paid' ? ' selected' : '') + '>Morgan ✓</option>' +
+        '</select>' +
+        (szUnpaid ? '<div style="font-family:DM Mono,monospace;font-size:8px;color:' + (szIsPaid ? '#88c98a' : '#e07845') + ';margin-top:1px">' + (szIsPaid ? '✓' : '') + '$' + szUnpaidAmt + '</div>' : '') +
+      '</div>' +
       '<div></div>' +
+      '<div style="border-left:1px solid var(--border);height:100%"></div>' +
       '<div></div>' +
-      '<div></div>' +
-      '<div></div>' +
-      '<div></div>' +
-      '<div></div>' +
-      (function() {
-        var szNoComm = sz.noCommission || 0;
-        var szNoCommBtn = szSold > 0
-          ? '<button onclick="invNewToggleNoComm(' + vi + ',' + ii + ',' + si + ')" style="' + (szNoComm > 0 ? 'background:#c9a2e222;border:1px solid #c9a2e2;color:#c9a2e2' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="Personal purchase (no commission)">' + (szNoComm > 0 ? szNoComm + ' NC' : 'NC') + '</button>'
-          : '';
-        var szCommSold = Math.max(0, szSold - szNoComm);
-        var szUsRev = Math.round(price * szCommSold * (sPct / 100));
-        var szThemRev = Math.round(price * szCommSold * (dPct / 100)) + Math.round(price * szNoComm * (dPct / 100));
-        return '<div style="display:flex;align-items:center;gap:4px">' +
-          '<button onclick="' + (allSold ? 'invNewUndoSold(' + vi + ',' + ii + ',' + si + ')' : 'invNewMarkSold(' + vi + ',' + ii + ',' + si + ')') + '" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="' + (allSold ? 'Click to undo sale' : 'Click to mark one sold') + '">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
-          '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
-          (szSold > 0 && !allSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
-          szNoCommBtn +
-        '</div>' +
-        '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
-        '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;text-align:right">$' + szUsRev + '</div>' +
-        '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + szThemRev + '</div>';
-      })() +
+      '<div style="border-left:1px solid var(--border);height:100%"></div>' +
+      '<div style="display:flex;align-items:center;gap:4px">' +
+        '<button onclick="' + (allSold ? 'invNewUndoSold(' + vi + ',' + ii + ',' + si + ')' : 'invNewMarkSold(' + vi + ',' + ii + ',' + si + ')') + '" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="' + (allSold ? 'Click to undo sale' : 'Click to mark one sold') + '">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+        '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
+        (szSold > 0 && !allSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
+      '</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;text-align:right">$' + szUsRev + '</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + szThemRev + '</div>' +
       '<button onclick="invNewRemoveSize(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>' +
     '</div>';
   }).join('');
@@ -9846,6 +9859,25 @@ function invNewToggleFloorItem(vi, ii) {
   item.onFloor = !item.onFloor;
   if (item.onFloor && !item.floorQty) {
     item.floorQty = 1;
+  }
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewSetSizeUnpaid(vi, ii, si, who) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  var sz = data.vendors[vi].items[ii].sizes[si];
+  if (!sz) return;
+  sz.unpaidBy = who;
+  var basePerson = who ? who.replace('-paid', '') : '';
+  if (basePerson) {
+    sz.sold = Math.max(sz.sold || 0, 1);
+    if (basePerson === 'brooke' || basePerson === 'del') {
+      sz.noCommission = Math.max(sz.noCommission || 0, 1);
+    }
+  } else {
+    sz.noCommission = Math.max(0, (sz.noCommission || 0) - 1);
   }
   saveInvNew(data);
   renderInvNew();
