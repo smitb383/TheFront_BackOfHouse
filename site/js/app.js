@@ -9298,15 +9298,29 @@ function openSalesReport(vi) {
       remainingItems.push({ name: item.name || '', price: price, qty: remaining, photo: item.photo || '' });
     }
   });
-  soldItems.sort(function(a, b) { return b.price - a.price; });
+  // Merge sold items with the same name (combine qty/revenue/designer cut)
+  var mergedSold = {};
+  soldItems.forEach(function(s) {
+    if (mergedSold[s.name]) {
+      mergedSold[s.name].qtySold += s.qtySold;
+      mergedSold[s.name].revenue += s.revenue;
+      mergedSold[s.name].designerCut += s.designerCut;
+      if (!mergedSold[s.name].photo && s.photo) mergedSold[s.name].photo = s.photo;
+    } else {
+      mergedSold[s.name] = { name: s.name, price: s.price, qtySold: s.qtySold, revenue: s.revenue, designerCut: s.designerCut, photo: s.photo };
+    }
+  });
+  var mergedSoldList = Object.values(mergedSold);
+  mergedSoldList.sort(function(a, b) { return b.price - a.price; });
   remainingItems.sort(function(a, b) { return b.price - a.price; });
 
   // Totals
   var totalRevenue = 0, totalDesigner = 0, totalStore = 0, totalSoldQty = 0;
-  soldItems.forEach(function(s) { totalRevenue += s.revenue; totalDesigner += s.designerCut; totalStore += s.storeCut; totalSoldQty += s.qtySold; });
+  mergedSoldList.forEach(function(s) { totalRevenue += s.revenue; totalDesigner += s.designerCut; totalSoldQty += s.qtySold; });
+  soldItems.forEach(function(s) { totalStore += (s.storeCut || 0); });
 
   var soldNum = 0;
-  var soldRows = soldItems.map(function(s) {
+  var soldRows = mergedSoldList.map(function(s) {
     soldNum++;
     return '<tr>' +
       '<td style="text-align:center;' + tdStyle + '">' + soldNum + '</td>' +
@@ -9318,8 +9332,6 @@ function openSalesReport(vi) {
       '<td style="text-align:right;' + tdStyle + '">$' + s.price + '</td>' +
       '<td style="text-align:right;' + tdStyle + '">$' + s.revenue.toLocaleString() + '</td>' +
       '<td style="text-align:right;' + tdStyle + '">$' + s.designerCut.toLocaleString() + '</td>' +
-      '<td style="text-align:right;' + tdStyle + '">$' + s.storeCut.toLocaleString() + '</td>' +
-      (s.noComm > 0 ? '<td style="text-align:center;' + tdStyle + ';font-size:10px;color:#c9a2e2">' + s.noComm + ' NC</td>' : '<td style="' + tdStyle + '"></td>') +
     '</tr>';
   }).join('');
 
@@ -9333,9 +9345,7 @@ function openSalesReport(vi) {
         '<th style="' + tdStyle + ';width:40px">Sold</th>' +
         '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
         '<th style="' + tdStyle + ';text-align:right;width:70px">Revenue</th>' +
-        '<th style="' + tdStyle + ';text-align:right;width:80px">Designer (' + dPct + '%)</th>' +
-        '<th style="' + tdStyle + ';text-align:right;width:70px">Store (' + sPct + '%)</th>' +
-        '<th style="' + tdStyle + ';width:40px">Note</th>' +
+        '<th style="' + tdStyle + ';text-align:right;width:80px">Your Cut (' + dPct + '%)</th>' +
       '</tr></thead>' +
       '<tbody>' + soldRows +
         '<tr style="background:#f4f0e8;font-weight:700">' +
@@ -9344,8 +9354,6 @@ function openSalesReport(vi) {
           '<td style="' + tdStyle + '"></td>' +
           '<td style="text-align:right;' + tdStyle + '">$' + totalRevenue.toLocaleString() + '</td>' +
           '<td style="text-align:right;' + tdStyle + '">$' + totalDesigner.toLocaleString() + '</td>' +
-          '<td style="text-align:right;' + tdStyle + '">$' + totalStore.toLocaleString() + '</td>' +
-          '<td style="' + tdStyle + '"></td>' +
         '</tr>' +
       '</tbody>' +
     '</table>';
@@ -9478,7 +9486,7 @@ function openSalesReport(vi) {
       if (totalExtras > 0) storeBreakdown += '<div style="' + lineItem + ';color:#c0392b">Extra payments to designer: <strong>-$' + totalExtras.toLocaleString() + '</strong></div>';
       if (storeHasAdj) storeBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net store: $' + netStoreReport.toLocaleString() + '</div>';
 
-      return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;padding:20px;background:#f4f0e8;border-radius:6px">' +
+      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;padding:20px;background:#f4f0e8;border-radius:6px">' +
         // Total Revenue
         '<div style="text-align:center;border-right:1px solid #d4d0c8;padding-right:16px">' +
           '<div style="' + lbl + '">Total Revenue</div>' +
@@ -9486,16 +9494,10 @@ function openSalesReport(vi) {
           '<div style="' + lineItem + ';color:#888;margin-top:4px">' + totalSoldQty + ' items sold</div>' +
         '</div>' +
         // Designer Payout
-        '<div style="text-align:center;border-right:1px solid #d4d0c8;padding-right:16px">' +
-          '<div style="' + lbl + '">Designer Payout</div>' +
+        '<div style="text-align:center">' +
+          '<div style="' + lbl + '">Your Payout</div>' +
           '<div style="' + bigNum + ';color:#2a7d2e">$' + (hasAdjustments ? netDesigner : totalDesigner).toLocaleString() + '</div>' +
           '<div style="margin-top:6px;text-align:left;padding:0 8px">' + designerBreakdown + '</div>' +
-        '</div>' +
-        // Store Earnings
-        '<div style="text-align:center">' +
-          '<div style="' + lbl + '">Store Earnings</div>' +
-          '<div style="' + bigNum + ';color:#2a7d2e">$' + (storeHasAdj ? netStoreReport : totalStore).toLocaleString() + '</div>' +
-          '<div style="margin-top:6px;text-align:left;padding:0 8px">' + storeBreakdown + '</div>' +
         '</div>' +
       '</div>' +
       soldTable +
