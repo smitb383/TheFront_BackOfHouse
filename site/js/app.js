@@ -8556,9 +8556,42 @@ function renderInvNew() {
     var shipBy = vendor.shippingCoveredBy || '';
     var shipCost = vendor.shippingCost || '';
 
-    // For consignment 70/30, just show item count in header — no model/split controls needed
-    // For wholesale or other models, show the relevant controls
-    var controlsHtml = '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>';
+    // Status fields for header
+    var returnPlan = vendor.returnPlan || 'tbd';
+    var paymentStatus = vendor.paymentStatus || 'not-paid';
+    var salesLogDone = vendor.salesLogDone || false;
+
+    var rpColors = { 'keeping': '#88c98a', 'tbd': '#e2c97e', 'shipping-back': '#82bfbb', 'designer-pickup': '#82bfbb', 'hybrid': '#c9a2e2', 'sold-out': '#5c5870' };
+    var psColors = { 'received': '#88c98a', 'sent': '#e2c97e', 'not-paid': '#e07070', 'na': '#5c5870' };
+    var selBase = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer';
+    var rpColor = rpColors[returnPlan] || '#e2c97e';
+    var psColor = psColors[paymentStatus] || '#e07070';
+
+    var controlsHtml = '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
+      '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+        '<div style="' + lblStyle + '">Return Plan</div>' +
+        '<select onchange="invNewEditVendor(' + vi + ',\'returnPlan\',this.value);renderInvNew()" style="background:' + rpColor + '22;border:2px solid ' + rpColor + ';color:' + rpColor + ';' + selBase + '">' +
+          '<option value="keeping"' + (returnPlan === 'keeping' ? ' selected' : '') + '>Keeping & Listing Online</option>' +
+          '<option value="tbd"' + (returnPlan === 'tbd' ? ' selected' : '') + '>TBD</option>' +
+          '<option value="shipping-back"' + (returnPlan === 'shipping-back' ? ' selected' : '') + '>Shipping Back</option>' +
+          '<option value="designer-pickup"' + (returnPlan === 'designer-pickup' ? ' selected' : '') + '>Designer Picking Up</option>' +
+          '<option value="hybrid"' + (returnPlan === 'hybrid' ? ' selected' : '') + '>Hybrid — Partial Return</option>' +
+          '<option value="sold-out"' + (returnPlan === 'sold-out' ? ' selected' : '') + '>N/A — Sold Out</option>' +
+        '</select>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+        '<div style="' + lblStyle + '">Payment</div>' +
+        '<select onchange="invNewEditVendor(' + vi + ',\'paymentStatus\',this.value);renderInvNew()" style="background:' + psColor + '22;border:2px solid ' + psColor + ';color:' + psColor + ';' + selBase + '">' +
+          '<option value="not-paid"' + (paymentStatus === 'not-paid' ? ' selected' : '') + '>Haven\'t Paid</option>' +
+          '<option value="sent"' + (paymentStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
+          '<option value="received"' + (paymentStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
+          '<option value="na"' + (paymentStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
+        '</select>' +
+      '</div>' +
+      '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;accent-color:#88c98a" onclick="event.stopPropagation()">' +
+        '<input type="checkbox"' + (salesLogDone ? ' checked' : '') + ' onchange="invNewEditVendor(' + vi + ',\'salesLogDone\',this.checked);renderInvNew()">' +
+        '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:' + (salesLogDone ? '#88c98a' : 'var(--muted)') + ';font-weight:' + (salesLogDone ? '700' : '400') + '">Sales Log</span>' +
+      '</label>';
     if (isWholesale) {
       controlsHtml +=
         '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
@@ -8576,34 +8609,13 @@ function renderInvNew() {
           : '');
     }
 
-    // Status fields (rendered inside vendor body, not header)
-    var returnPlan = vendor.returnPlan || 'tbd';
+    // Shipping status field (rendered inside vendor body)
     var shippingStatus = vendor.shippingStatus || 'not-shipped';
-    var paymentStatus = vendor.paymentStatus || 'not-paid';
-
-    var rpColors = { 'keeping': '#88c98a', 'tbd': '#e2c97e', 'shipping-back': '#82bfbb', 'designer-pickup': '#82bfbb', 'hybrid': '#c9a2e2', 'sold-out': '#5c5870' };
     var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070', 'na': '#5c5870' };
-    var psColors = { 'received': '#88c98a', 'sent': '#e2c97e', 'not-paid': '#e07070', 'na': '#5c5870' };
-
-    var selBase = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer';
-
-    var rpColor = rpColors[returnPlan] || '#e2c97e';
     var ssColor = ssColors[shippingStatus] || '#e07070';
-    var psColor = psColors[paymentStatus] || '#e07070';
 
     var vendorStatusFields =
       '<div style="display:flex;gap:16px;align-items:flex-end;padding:10px 0;border-bottom:1px solid var(--faint);margin-bottom:8px" onclick="event.stopPropagation()">' +
-        '<div style="display:flex;flex-direction:column">' +
-          '<div style="' + lblStyle + '">Return Plan</div>' +
-          '<select onchange="invNewEditVendor(' + vi + ',\'returnPlan\',this.value);renderInvNew()" style="background:' + rpColor + '22;border:2px solid ' + rpColor + ';color:' + rpColor + ';' + selBase + '">' +
-            '<option value="keeping"' + (returnPlan === 'keeping' ? ' selected' : '') + '>Keeping & Listing Online</option>' +
-            '<option value="tbd"' + (returnPlan === 'tbd' ? ' selected' : '') + '>TBD</option>' +
-            '<option value="shipping-back"' + (returnPlan === 'shipping-back' ? ' selected' : '') + '>Shipping Back</option>' +
-            '<option value="designer-pickup"' + (returnPlan === 'designer-pickup' ? ' selected' : '') + '>Designer Picking Up</option>' +
-            '<option value="hybrid"' + (returnPlan === 'hybrid' ? ' selected' : '') + '>Hybrid — Partial Return</option>' +
-            '<option value="sold-out"' + (returnPlan === 'sold-out' ? ' selected' : '') + '>N/A — Sold Out</option>' +
-          '</select>' +
-        '</div>' +
         '<div style="display:flex;flex-direction:column">' +
           '<div style="' + lblStyle + '">Shipping Status</div>' +
           '<select onchange="invNewEditVendor(' + vi + ',\'shippingStatus\',this.value);renderInvNew()" style="background:' + ssColor + '22;border:2px solid ' + ssColor + ';color:' + ssColor + ';' + selBase + '">' +
@@ -8611,15 +8623,6 @@ function renderInvNew() {
             '<option value="shipped"' + (shippingStatus === 'shipped' ? ' selected' : '') + '>Shipped</option>' +
             '<option value="received"' + (shippingStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
             '<option value="na"' + (shippingStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
-          '</select>' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column">' +
-          '<div style="' + lblStyle + '">Payment</div>' +
-          '<select onchange="invNewEditVendor(' + vi + ',\'paymentStatus\',this.value);renderInvNew()" style="background:' + psColor + '22;border:2px solid ' + psColor + ';color:' + psColor + ';' + selBase + '">' +
-            '<option value="not-paid"' + (paymentStatus === 'not-paid' ? ' selected' : '') + '>Haven\'t Paid</option>' +
-            '<option value="sent"' + (paymentStatus === 'sent' ? ' selected' : '') + '>Sent</option>' +
-            '<option value="received"' + (paymentStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
-            '<option value="na"' + (paymentStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
           '</select>' +
         '</div>' +
       '</div>';
