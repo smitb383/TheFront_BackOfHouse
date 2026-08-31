@@ -8468,7 +8468,8 @@ function renderInvNew() {
       var isNew = !item.addedToSquare;
       var itemRowOpacity = itemAllSold ? 'opacity:0.45;' : '';
       var unpaidPerson = item.unpaidBy || '';
-      var unpaidAmt = unpaidPerson === 'morgan' ? (item.salePrice || 0) : Math.round((item.salePrice || 0) * (dPct / 100));
+      var unpaidBase = unpaidPerson.replace('-paid', '');
+      var unpaidAmt = unpaidBase === 'morgan' ? (item.salePrice || 0) : Math.round((item.salePrice || 0) * (dPct / 100));
       return '<div style="border-bottom:1px solid var(--faint);padding:8px 0;' + itemRowOpacity + '">' +
         '<div style="display:grid;grid-template-columns:76px 1fr 160px 80px 50px 50px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:5px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
@@ -8499,15 +8500,26 @@ function renderInvNew() {
             ? '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:center">' + totalQty + '</div>'
             : '<input type="number" min="1" value="' + (item.qty || 1) + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">') +
           // Need to Pay dropdown
-          '<div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:center">' +
-            '<select onchange="invNewSetUnpaid(' + vi + ',' + ii + ',this.value);renderInvNew()" style="' + (unpaidPerson ? 'background:#e0784522;border:2px solid #e07845;color:#e07845;font-weight:700' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;width:100%">' +
-              '<option value=""' + (!unpaidPerson ? ' selected' : '') + '>—</option>' +
-              '<option value="brooke"' + (unpaidPerson === 'brooke' ? ' selected' : '') + '>Brooke</option>' +
-              '<option value="del"' + (unpaidPerson === 'del' ? ' selected' : '') + '>Del</option>' +
-              '<option value="morgan"' + (unpaidPerson === 'morgan' ? ' selected' : '') + '>Morgan</option>' +
-            '</select>' +
-            (unpaidPerson ? '<div style="font-family:DM Mono,monospace;font-size:9px;color:#e07845;margin-top:2px">$' + unpaidAmt + '</div>' : '') +
-          '</div>' +
+          (function() {
+            var isPaid = unpaidPerson && unpaidPerson.indexOf('-paid') > 0;
+            var basePerson = isPaid ? unpaidPerson.replace('-paid', '') : unpaidPerson;
+            var selectStyle = isPaid
+              ? 'background:#88c98a22;border:2px solid #88c98a;color:#88c98a;font-weight:700'
+              : (unpaidPerson ? 'background:#e0784522;border:2px solid #e07845;color:#e07845;font-weight:700' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)');
+            return '<div onclick="event.stopPropagation()" style="display:flex;flex-direction:column;align-items:center">' +
+              '<select onchange="invNewSetUnpaid(' + vi + ',' + ii + ',this.value);renderInvNew()" style="' + selectStyle + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;width:100%">' +
+                '<option value=""' + (!unpaidPerson ? ' selected' : '') + '>—</option>' +
+                '<option value="brooke"' + (unpaidPerson === 'brooke' ? ' selected' : '') + '>Brooke</option>' +
+                '<option value="del"' + (unpaidPerson === 'del' ? ' selected' : '') + '>Del</option>' +
+                '<option value="morgan"' + (unpaidPerson === 'morgan' ? ' selected' : '') + '>Morgan</option>' +
+                '<option value="brooke-paid"' + (unpaidPerson === 'brooke-paid' ? ' selected' : '') + '>Brooke ✓ Paid</option>' +
+                '<option value="del-paid"' + (unpaidPerson === 'del-paid' ? ' selected' : '') + '>Del ✓ Paid</option>' +
+                '<option value="morgan-paid"' + (unpaidPerson === 'morgan-paid' ? ' selected' : '') + '>Morgan ✓ Paid</option>' +
+              '</select>' +
+              (unpaidPerson && !isPaid ? '<div style="font-family:DM Mono,monospace;font-size:9px;color:#e07845;margin-top:2px">$' + unpaidAmt + '</div>' : '') +
+              (isPaid ? '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;margin-top:2px">✓ $' + unpaidAmt + '</div>' : '') +
+            '</div>';
+          })() +
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + Math.round((item.salePrice || 0) * totalQty) + '</div>' +
           '<div style="border-left:1px solid var(--border);height:100%"></div>' +
           '<select onclick="event.stopPropagation()" onchange="invNewEditItem(' + vi + ',' + ii + ',\'category\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px;border-radius:3px;text-transform:uppercase">' +
@@ -9834,11 +9846,12 @@ function invNewSetUnpaid(vi, ii, who) {
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var item = data.vendors[vi].items[ii];
   item.unpaidBy = who;
-  if (who) {
+  var basePerson = who ? who.replace('-paid', '') : '';
+  if (basePerson) {
     // Always mark as sold when someone is set to pay
     item.sold = Math.max(item.sold || 0, 1);
     // Brooke/Del: auto-set noCommission so designer gets 70%, store gets 0%
-    if (who === 'brooke' || who === 'del') {
+    if (basePerson === 'brooke' || basePerson === 'del') {
       item.noCommission = item.sold;
     }
   } else {
