@@ -8562,15 +8562,25 @@ function renderInvNew() {
         statBlock('Sold', vendorTotal) +
         statBlock('Profit', vendorTotalProfit, '#88c98a');
     } else {
+      var vendorDeductions = vendor.deductions || [];
+      var vendorExtras = vendor.extraPayments || [];
+      var totalVendorDed = 0, totalVendorExtras = 0;
+      vendorDeductions.forEach(function(d) { totalVendorDed += (d.amount || 0); });
+      vendorExtras.forEach(function(e) { totalVendorExtras += (e.amount || 0); });
       var wePayShipping = vendor.shippingCoveredBy === 'us' && shipCostNum > 0;
-      var afterShipping = vendorStore - (wePayShipping ? shipCostNum : 0);
-      var netStore = vendorStore - vendorLossCost - (wePayShipping ? shipCostNum : 0);
+      // Deductions come back to us, extra payments go out from us
+      var netStoreCalc = vendorStore + totalVendorDed - totalVendorExtras - vendorLossCost - (wePayShipping ? shipCostNum : 0);
+      var netDesignerCalc = vendorDesigner - totalVendorDed + totalVendorExtras;
+      var hasAdj = totalVendorDed > 0 || totalVendorExtras > 0 || vendorLossCost > 0 || wePayShipping;
       statsHtml = statBlock('Total Value', vendorMerchValue) +
         statBlock('Sold', vendorTotal) +
         statBlock('Our Take', vendorStore, '#88c98a') +
-        (vendorLossCost > 0 ? statBlock('Loss (Missing/Broken)', vendorLossCost, '#e07070') : '') +
-        (wePayShipping ? statBlock('After Shipping', afterShipping, '#88c98a') : '') +
-        statBlock('Their Take', vendorDesigner);
+        (totalVendorDed > 0 ? statBlock('+ Ded. Back', totalVendorDed, '#88c98a') : '') +
+        (totalVendorExtras > 0 ? statBlock('- Extra Pay', totalVendorExtras, '#e07070') : '') +
+        (vendorLossCost > 0 ? statBlock('- Loss', vendorLossCost, '#e07070') : '') +
+        (wePayShipping ? statBlock('- Shipping', shipCostNum, '#e07070') : '') +
+        (hasAdj ? statBlock('Net Ours', netStoreCalc, '#88c98a') : '') +
+        statBlock('Their Net', netDesignerCalc, 'var(--text)');
     }
 
     // Row 1: name + controls (with vertical labels matching status badges)
@@ -9433,10 +9443,13 @@ function openSalesReport(vi) {
       if (totalExtras > 0) designerBreakdown += '<div style="' + lineItem + ';color:#2a7d2e">Additional payments: <strong>+$' + totalExtras.toLocaleString() + '</strong></div>';
       if (hasAdjustments) designerBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net payout: $' + netDesigner.toLocaleString() + '</div>';
 
-      // Store breakdown
+      // Store breakdown — deductions come back to us as recovered cost
+      var netStoreReport = totalStore + totalDed - totalExtras;
+      var storeHasAdj = totalDed > 0 || totalExtras > 0;
       var storeBreakdown = '<div style="' + lineItem + '">Sales commission (' + sPct + '%): <strong>$' + totalStore.toLocaleString() + '</strong></div>';
+      if (totalDed > 0) storeBreakdown += '<div style="' + lineItem + ';color:#2a7d2e">Deductions recovered: <strong>+$' + totalDed.toLocaleString() + '</strong></div>';
       if (totalExtras > 0) storeBreakdown += '<div style="' + lineItem + ';color:#c0392b">Extra payments to designer: <strong>-$' + totalExtras.toLocaleString() + '</strong></div>';
-      if (totalExtras > 0) storeBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net store: $' + netStore.toLocaleString() + '</div>';
+      if (storeHasAdj) storeBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net store: $' + netStoreReport.toLocaleString() + '</div>';
 
       return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;padding:20px;background:#f4f0e8;border-radius:6px">' +
         // Total Revenue
@@ -9454,7 +9467,7 @@ function openSalesReport(vi) {
         // Store Earnings
         '<div style="text-align:center">' +
           '<div style="' + lbl + '">Store Earnings</div>' +
-          '<div style="' + bigNum + ';color:#2a7d2e">$' + (totalExtras > 0 ? netStore : totalStore).toLocaleString() + '</div>' +
+          '<div style="' + bigNum + ';color:#2a7d2e">$' + (storeHasAdj ? netStoreReport : totalStore).toLocaleString() + '</div>' +
           '<div style="margin-top:6px;text-align:left;padding:0 8px">' + storeBreakdown + '</div>' +
         '</div>' +
       '</div>' +
