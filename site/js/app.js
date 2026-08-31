@@ -8626,6 +8626,10 @@ function renderInvNew() {
     var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070', 'na': '#5c5870' };
     var ssColor = ssColors[shippingStatus] || '#e07070';
 
+    var payPlatform = vendor.payPlatform || '';
+    var payDetails = vendor.payDetails || '';
+    var inputFieldStyle = 'background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:160px';
+
     var vendorStatusFields =
       '<div style="display:flex;gap:16px;align-items:flex-end;padding:10px 0;border-bottom:1px solid var(--faint);margin-bottom:8px" onclick="event.stopPropagation()">' +
         '<div style="display:flex;flex-direction:column">' +
@@ -8636,6 +8640,23 @@ function renderInvNew() {
             '<option value="received"' + (shippingStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
             '<option value="na"' + (shippingStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
           '</select>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column">' +
+          '<div style="' + lblStyle + '">Payment Platform</div>' +
+          '<select onchange="invNewEditVendor(' + vi + ',\'payPlatform\',this.value)" style="' + inputFieldStyle + ';cursor:pointer">' +
+            '<option value=""' + (!payPlatform ? ' selected' : '') + '>—</option>' +
+            '<option value="venmo"' + (payPlatform === 'venmo' ? ' selected' : '') + '>Venmo</option>' +
+            '<option value="zelle"' + (payPlatform === 'zelle' ? ' selected' : '') + '>Zelle</option>' +
+            '<option value="paypal"' + (payPlatform === 'paypal' ? ' selected' : '') + '>PayPal</option>' +
+            '<option value="wire"' + (payPlatform === 'wire' ? ' selected' : '') + '>Wire Transfer</option>' +
+            '<option value="check"' + (payPlatform === 'check' ? ' selected' : '') + '>Check</option>' +
+            '<option value="cash"' + (payPlatform === 'cash' ? ' selected' : '') + '>Cash</option>' +
+            '<option value="other"' + (payPlatform === 'other' ? ' selected' : '') + '>Other</option>' +
+          '</select>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;flex:1">' +
+          '<div style="' + lblStyle + '">Payment Details</div>' +
+          '<input value="' + esc(payDetails) + '" placeholder="e.g. @handle, email, account #" oninput="invNewEditVendor(' + vi + ',\'payDetails\',this.value)" style="' + inputFieldStyle + ';width:100%">' +
         '</div>' +
       '</div>';
 
@@ -9222,6 +9243,13 @@ function openSalesReport(vi) {
       '<div><strong>Report Date:</strong> ' + dateStr + '</div>' +
       '<div><strong>Commission Split:</strong> ' + dPct + '% Designer / ' + sPct + '% Store</div>' +
     '</div>' +
+    ((vendor.payPlatform || vendor.payDetails)
+      ? '<div style="margin-bottom:24px;padding:12px 16px;background:#f9f7f3;border:1px solid #e0dcd4;border-radius:6px;font-size:14px;line-height:1.6">' +
+          '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:6px;font-weight:600">Payment Information</div>' +
+          (vendor.payPlatform ? '<div><strong>Platform:</strong> ' + esc(vendor.payPlatform.charAt(0).toUpperCase() + vendor.payPlatform.slice(1)) + '</div>' : '') +
+          (vendor.payDetails ? '<div><strong>Details:</strong> ' + esc(vendor.payDetails) + '</div>' : '') +
+        '</div>'
+      : '') +
     '<div style="display:flex;gap:32px;margin-bottom:24px;padding:16px;background:#f4f0e8;border-radius:6px">' +
       '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Total Revenue</div><div style="font-size:22px;font-weight:700">$' + totalRevenue.toLocaleString() + '</div></div>' +
       '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Designer Payout</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + totalDesigner.toLocaleString() + '</div></div>' +
