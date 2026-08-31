@@ -8239,16 +8239,18 @@ function renderInvNew() {
     var vendorLossCost = 0; // cost to store for missing/broken items (designer's cut we owe)
     var vendorRecovered = 0; // money recovered from others for broken/missing items
     vendor.items.forEach(function(item) {
-      // Missing/broken: we owe designer their cut, it's a cost to the store
-      if (!isWholesale && (item.missing || item.broken)) {
-        var lossPrice = item.salePrice || 0;
-        var lossQty = item.qty || 1;
-        var lossCost = Math.round(lossPrice * lossQty * (dPct / 100));
-        vendorLossCost += lossCost;
-        vendorDesigner += lossCost;
-        vendorRecovered += (item.recovered || 0);
-        vendorMerchValue += lossPrice * lossQty;
-        return; // don't double-count in normal sales
+      // Missing/broken: count how many are lost, process rest normally
+      if (!isWholesale) {
+        var missingCount = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+        var brokenCount = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+        var lossCount = missingCount + brokenCount;
+        if (lossCount > 0) {
+          var lossPrice = item.salePrice || 0;
+          var lossCost = Math.round(lossPrice * lossCount * (dPct / 100));
+          vendorLossCost += lossCost;
+          vendorDesigner += lossCost;
+          vendorRecovered += (item.recovered || 0);
+        }
       }
       if (isWholesale) {
         var costEur = item.costEur || 0;
@@ -8486,8 +8488,13 @@ function renderInvNew() {
               var btnStyle = onFloor ? 'background:#88c98a;border:2px solid #88c98a;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)';
               return '<button onclick="invNewToggleFloorItem(' + vi + ',' + ii + ')" style="' + btnStyle + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (onFloor ? '✓' : '') + 'FLOOR</button>';
             })() +
-            '<button onclick="invNewToggleMissing(' + vi + ',' + ii + ')" style="' + (item.missing ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.missing ? '⚠ MISS' : 'MISS') + '</button>' +
-            '<button onclick="invNewToggleBroken(' + vi + ',' + ii + ')" style="' + (item.broken ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.broken ? '⚠ BRKN' : 'BRKN') + '</button>' +
+            (function() {
+              var mc = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+              var bc = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+              var maxLoss = (item.qty || 1) - totalSold;
+              return '<button onclick="invNewCycleMissing(' + vi + ',' + ii + ')" style="' + (mc > 0 ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (mc > 0 ? '⚠ MISS ' + mc : 'MISS') + '</button>' +
+                '<button onclick="invNewCycleBroken(' + vi + ',' + ii + ')" style="' + (bc > 0 ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (bc > 0 ? '⚠ BRKN ' + bc : 'BRKN') + '</button>';
+            })() +
             ((item.broken || item.missing)
               ? '<div style="display:flex;align-items:center;gap:2px" title="Amount recovered from others (reduces our out-of-pocket)"><span style="color:#88c98a;font-family:DM Mono,monospace;font-size:8px">REC $</span><input type="number" value="' + (item.recovered || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'recovered\',parseFloat(this.value)||0)" style="width:40px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:9px;padding:2px 4px;border-radius:3px;text-align:right"></div>'
               : '') +
@@ -9262,13 +9269,14 @@ function openSalesReport(vi) {
     var hasSz = item.sizes && item.sizes.length > 0;
     var tQty = 0, tSold = 0, tNoComm = 0;
 
-    // Missing/broken items: show as sold on the report (designer gets paid)
-    if (item.missing || item.broken) {
-      var lossQty = item.qty || 1;
-      var lossRevenue = price * lossQty;
+    // Missing/broken items: count how many are lost, add to sold on report
+    var missingC = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+    var brokenC = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+    var lossCount = missingC + brokenC;
+    if (lossCount > 0) {
+      var lossRevenue = price * lossCount;
       var lossDesignerCut = Math.round(lossRevenue * (dPct / 100));
-      soldItems.push({ name: item.name || '', price: price, qtySold: lossQty, noComm: 0, revenue: lossRevenue, designerCut: lossDesignerCut, storeCut: 0, photo: item.photo || '' });
-      return;
+      soldItems.push({ name: item.name || '' + (lossCount > 1 ? ' (x' + lossCount + ')' : ''), price: price, qtySold: lossCount, noComm: 0, revenue: lossRevenue, designerCut: lossDesignerCut, storeCut: 0, photo: item.photo || '' });
     }
 
     if (hasSz) {
@@ -9285,7 +9293,7 @@ function openSalesReport(vi) {
       var storeCut = Math.round(price * commSold * (sPct / 100));
       soldItems.push({ name: item.name || '', price: price, qtySold: tSold, noComm: tNoComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: item.photo || '' });
     }
-    var remaining = tQty - tSold;
+    var remaining = tQty - tSold - lossCount;
     if (remaining > 0) {
       remainingItems.push({ name: item.name || '', price: price, qty: remaining, photo: item.photo || '' });
     }
@@ -9862,17 +9870,35 @@ function invNewSetUnpaid(vi, ii, who) {
 }
 
 function invNewToggleMissing(vi, ii) {
+  invNewCycleMissing(vi, ii);
+}
+
+function invNewCycleMissing(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
-  data.vendors[vi].items[ii].missing = !data.vendors[vi].items[ii].missing;
+  var item = data.vendors[vi].items[ii];
+  var current = typeof item.missing === 'number' ? item.missing : (item.missing ? 1 : 0);
+  var sold = item.sold || 0;
+  var maxLoss = (item.qty || 1) - sold;
+  // Cycle: 0 -> 1 -> 2 -> ... -> max -> 0
+  item.missing = (current >= maxLoss) ? 0 : current + 1;
   saveInvNew(data);
   renderInvNew();
 }
 
 function invNewToggleBroken(vi, ii) {
+  invNewCycleBroken(vi, ii);
+}
+
+function invNewCycleBroken(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
-  data.vendors[vi].items[ii].broken = !data.vendors[vi].items[ii].broken;
+  var item = data.vendors[vi].items[ii];
+  var current = typeof item.broken === 'number' ? item.broken : (item.broken ? 1 : 0);
+  var sold = item.sold || 0;
+  var maxLoss = (item.qty || 1) - sold;
+  // Cycle: 0 -> 1 -> 2 -> ... -> max -> 0
+  item.broken = (current >= maxLoss) ? 0 : current + 1;
   saveInvNew(data);
   renderInvNew();
 }
