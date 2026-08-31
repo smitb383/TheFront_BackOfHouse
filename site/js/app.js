@@ -9486,11 +9486,10 @@ function openSalesReport(vi) {
       var bigNum = 'font-size:22px;font-weight:700';
       var lineItem = 'font-family:DM Mono,monospace;font-size:12px;padding:2px 0';
 
-      // Designer breakdown
+      // Designer breakdown — deductions are internal, don't show on report
       var designerBreakdown = '<div style="' + lineItem + '">Sales commission (' + dPct + '%): <strong>$' + totalDesigner.toLocaleString() + '</strong></div>';
-      if (totalDed > 0) designerBreakdown += '<div style="' + lineItem + ';color:#c0392b">Deductions: <strong>-$' + totalDed.toLocaleString() + '</strong></div>';
       if (totalExtras > 0) designerBreakdown += '<div style="' + lineItem + ';color:#2a7d2e">Additional payments: <strong>+$' + totalExtras.toLocaleString() + '</strong></div>';
-      if (hasAdjustments) designerBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net payout: $' + netDesigner.toLocaleString() + '</div>';
+      if (totalExtras > 0) designerBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net payout: $' + netDesigner.toLocaleString() + '</div>';
 
       // Store breakdown — deductions come back to us as recovered cost
       var netStoreReport = totalStore + totalDed - totalExtras;
@@ -9515,7 +9514,7 @@ function openSalesReport(vi) {
         '</div>' +
       '</div>' +
       soldTable +
-      dedSection +
+      // dedSection hidden from designer report (internal only)
       extraSection +
       remTable;
     })();
