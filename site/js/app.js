@@ -9423,12 +9423,40 @@ function openSalesReport(vi) {
           '</table>';
       }
 
-      return '<div style="display:flex;gap:32px;margin-bottom:24px;padding:16px;background:#f4f0e8;border-radius:6px;flex-wrap:wrap">' +
-        '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Total Revenue</div><div style="font-size:22px;font-weight:700">$' + totalRevenue.toLocaleString() + '</div></div>' +
-        '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Designer Payout</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + (hasAdjustments ? netDesigner.toLocaleString() : totalDesigner.toLocaleString()) + '</div></div>' +
-        (hasAdjustments ? '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Before Adjustments</div><div style="font-size:16px;color:#888;text-decoration:line-through">$' + totalDesigner.toLocaleString() + '</div></div>' : '') +
-        '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Store Earnings</div><div style="font-size:22px;font-weight:700;color:#2a7d2e">$' + (totalExtras > 0 ? netStore.toLocaleString() : totalStore.toLocaleString()) + '</div></div>' +
-        '<div style="text-align:center"><div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:4px">Items Sold</div><div style="font-size:22px;font-weight:700">' + totalSoldQty + '</div></div>' +
+      var lbl = 'font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;color:#888;margin-bottom:2px;letter-spacing:0.04em';
+      var bigNum = 'font-size:22px;font-weight:700';
+      var lineItem = 'font-family:DM Mono,monospace;font-size:12px;padding:2px 0';
+
+      // Designer breakdown
+      var designerBreakdown = '<div style="' + lineItem + '">Sales commission (' + dPct + '%): <strong>$' + totalDesigner.toLocaleString() + '</strong></div>';
+      if (totalDed > 0) designerBreakdown += '<div style="' + lineItem + ';color:#c0392b">Deductions: <strong>-$' + totalDed.toLocaleString() + '</strong></div>';
+      if (totalExtras > 0) designerBreakdown += '<div style="' + lineItem + ';color:#2a7d2e">Additional payments: <strong>+$' + totalExtras.toLocaleString() + '</strong></div>';
+      if (hasAdjustments) designerBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net payout: $' + netDesigner.toLocaleString() + '</div>';
+
+      // Store breakdown
+      var storeBreakdown = '<div style="' + lineItem + '">Sales commission (' + sPct + '%): <strong>$' + totalStore.toLocaleString() + '</strong></div>';
+      if (totalExtras > 0) storeBreakdown += '<div style="' + lineItem + ';color:#c0392b">Extra payments to designer: <strong>-$' + totalExtras.toLocaleString() + '</strong></div>';
+      if (totalExtras > 0) storeBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net store: $' + netStore.toLocaleString() + '</div>';
+
+      return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;padding:20px;background:#f4f0e8;border-radius:6px">' +
+        // Total Revenue
+        '<div style="text-align:center;border-right:1px solid #d4d0c8;padding-right:16px">' +
+          '<div style="' + lbl + '">Total Revenue</div>' +
+          '<div style="' + bigNum + '">$' + totalRevenue.toLocaleString() + '</div>' +
+          '<div style="' + lineItem + ';color:#888;margin-top:4px">' + totalSoldQty + ' items sold</div>' +
+        '</div>' +
+        // Designer Payout
+        '<div style="text-align:center;border-right:1px solid #d4d0c8;padding-right:16px">' +
+          '<div style="' + lbl + '">Designer Payout</div>' +
+          '<div style="' + bigNum + ';color:#2a7d2e">$' + (hasAdjustments ? netDesigner : totalDesigner).toLocaleString() + '</div>' +
+          '<div style="margin-top:6px;text-align:left;padding:0 8px">' + designerBreakdown + '</div>' +
+        '</div>' +
+        // Store Earnings
+        '<div style="text-align:center">' +
+          '<div style="' + lbl + '">Store Earnings</div>' +
+          '<div style="' + bigNum + ';color:#2a7d2e">$' + (totalExtras > 0 ? netStore : totalStore).toLocaleString() + '</div>' +
+          '<div style="margin-top:6px;text-align:left;padding:0 8px">' + storeBreakdown + '</div>' +
+        '</div>' +
       '</div>' +
       soldTable +
       dedSection +
