@@ -318,10 +318,17 @@ function _mergeInvNew(local, remote) {
       });
       vendorMap[v.vendorId].items = merged;
       vendorMap[v.vendorId].name = v.name || vendorMap[v.vendorId].name;
-      // Preserve vendor-level fields from local if remote doesn't have them
-      ['invComplete','agreementStatus','deliveryMethod','deliveryStatus','shippingCost','shippingCoveredBy','pricingModel','eurRate'].forEach(function(f) {
-        if (v[f] !== undefined && vendorMap[v.vendorId][f] === undefined) vendorMap[v.vendorId][f] = v[f];
+      // Preserve vendor-level fields: take the non-empty value from either side
+      ['invComplete','agreementStatus','deliveryMethod','deliveryStatus','shippingCost','shippingCoveredBy','pricingModel','eurRate','returnPlan','shippingStatus','paymentStatus','salesLogDone','payPlatform','payDetails'].forEach(function(f) {
+        var local = v[f];
+        var remote = vendorMap[v.vendorId][f];
+        // Keep whichever is non-empty; prefer remote if both have values
+        if (local && !remote) vendorMap[v.vendorId][f] = local;
       });
+      // Preserve deductions: take whichever array is longer
+      if (v.deductions && v.deductions.length > (vendorMap[v.vendorId].deductions || []).length) {
+        vendorMap[v.vendorId].deductions = v.deductions;
+      }
     } else {
       // Only re-add local-only vendors if they were recently edited (not stale leftovers
       // from before a deletion on the other device)
