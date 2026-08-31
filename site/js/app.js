@@ -8623,8 +8623,13 @@ function renderInvNew() {
     }
 
     // Shipping status field (rendered inside vendor body)
+    // Auto-set to 'keeping' if return plan is 'keeping'
     var shippingStatus = vendor.shippingStatus || 'not-shipped';
-    var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070', 'na': '#5c5870' };
+    if (returnPlan === 'keeping' && shippingStatus !== 'keeping') {
+      shippingStatus = 'keeping';
+      vendor.shippingStatus = 'keeping';
+    }
+    var ssColors = { 'received': '#88c98a', 'shipped': '#e2c97e', 'not-shipped': '#e07070', 'na': '#5c5870', 'keeping': '#88c98a' };
     var ssColor = ssColors[shippingStatus] || '#e07070';
 
     var payPlatform = vendor.payPlatform || '';
@@ -8640,6 +8645,7 @@ function renderInvNew() {
             '<option value="shipped"' + (shippingStatus === 'shipped' ? ' selected' : '') + '>Shipped</option>' +
             '<option value="received"' + (shippingStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
             '<option value="na"' + (shippingStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
+            '<option value="keeping"' + (shippingStatus === 'keeping' ? ' selected' : '') + '>Keeping</option>' +
           '</select>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column">' +
