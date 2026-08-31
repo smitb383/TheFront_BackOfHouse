@@ -8556,56 +8556,25 @@ function renderInvNew() {
     var shipBy = vendor.shippingCoveredBy || '';
     var shipCost = vendor.shippingCost || '';
 
-    var controlsHtml =
-      '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
-      '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-        '<div style="' + lblStyle + '">Model</div>' +
-        '<select onchange="invNewEditVendor(' + vi + ',\'pricingModel\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer">' +
-          '<option value="consignment"' + (!isWholesale ? ' selected' : '') + '>Consignment</option>' +
-          '<option value="wholesale"' + (isWholesale ? ' selected' : '') + '>Wholesale</option>' +
-        '</select>' +
-      '</div>' +
-      (isWholesale
-        ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-            '<div style="' + lblStyle + '">Currency</div>' +
-            '<select onchange="invNewEditVendor(' + vi + ',\'currency\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer">' +
-              '<option value="eur"' + (vendor.currency !== 'usd' ? ' selected' : '') + '>EUR</option>' +
-              '<option value="usd"' + (vendor.currency === 'usd' ? ' selected' : '') + '>USD</option>' +
-            '</select>' +
-          '</div>' +
-          (vendor.currency !== 'usd'
-            ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-                '<div style="' + lblStyle + '">EUR Rate</div>' +
-                '<input value="' + eurRate + '" oninput="invNewEditVendor(' + vi + ',\'eurRate\',parseFloat(this.value)||1)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;text-align:center">' +
-              '</div>'
-            : '')
-        : '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-            '<div style="' + lblStyle + '">Split</div>' +
-            '<div style="display:flex;align-items:center;gap:2px">' +
-              '<input type="number" min="0" max="100" value="' + sPct + '" oninput="invNewEditVendor(' + vi + ',\'storePct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:#88c98a;font-family:DM Mono,monospace;font-size:10px;padding:4px 4px;border-radius:3px;text-align:center">' +
-              '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">/</span>' +
-              '<input type="number" min="0" max="100" value="' + dPct + '" oninput="invNewEditVendor(' + vi + ',\'designerPct\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 4px;border-radius:3px;text-align:center">' +
-            '</div>' +
-          '</div>') +
-      (isNonNYC
-        ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-            '<div style="' + lblStyle + '">Covered By</div>' +
-            '<select onchange="invNewEditVendor(' + vi + ',\'shippingCoveredBy\',this.value);renderInvNew()" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer">' +
-              '<option value=""' + (!shipBy ? ' selected' : '') + '>—</option>' +
-              '<option value="us"' + (shipBy === 'us' ? ' selected' : '') + '>Us</option>' +
-              '<option value="vendor"' + (shipBy === 'vendor' ? ' selected' : '') + '>Vendor</option>' +
-            '</select>' +
-          '</div>' +
-          (shipBy !== 'vendor'
-            ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-                '<div style="' + lblStyle + '">Ship Cost</div>' +
-                '<div style="display:flex;align-items:center;gap:2px">' +
-                  '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">$</span>' +
-                  '<input value="' + esc(shipCost) + '" placeholder="0" oninput="invNewEditVendor(' + vi + ',\'shippingCost\',this.value)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;text-align:right">' +
-                '</div>' +
-              '</div>'
-            : '')
-        : '');
+    // For consignment 70/30, just show item count in header — no model/split controls needed
+    // For wholesale or other models, show the relevant controls
+    var controlsHtml = '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>';
+    if (isWholesale) {
+      controlsHtml +=
+        '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+          '<div style="' + lblStyle + '">Currency</div>' +
+          '<select onchange="invNewEditVendor(' + vi + ',\'currency\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer">' +
+            '<option value="eur"' + (vendor.currency !== 'usd' ? ' selected' : '') + '>EUR</option>' +
+            '<option value="usd"' + (vendor.currency === 'usd' ? ' selected' : '') + '>USD</option>' +
+          '</select>' +
+        '</div>' +
+        (vendor.currency !== 'usd'
+          ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
+              '<div style="' + lblStyle + '">EUR Rate</div>' +
+              '<input value="' + eurRate + '" oninput="invNewEditVendor(' + vi + ',\'eurRate\',parseFloat(this.value)||1)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;text-align:center">' +
+            '</div>'
+          : '');
+    }
 
     // Status fields (rendered inside vendor body, not header)
     var returnPlan = vendor.returnPlan || 'tbd';
