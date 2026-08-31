@@ -8237,6 +8237,7 @@ function renderInvNew() {
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0, vendorMerchValue = 0;
     var vendorTotalCost = 0, vendorTotalProfit = 0;
     var vendorLossCost = 0; // cost to store for missing/broken items (designer's cut we owe)
+    var vendorRecovered = 0; // money recovered from others for broken/missing items
     vendor.items.forEach(function(item) {
       // Missing/broken: we owe designer their cut, it's a cost to the store
       if (!isWholesale && (item.missing || item.broken)) {
@@ -8245,6 +8246,7 @@ function renderInvNew() {
         var lossCost = Math.round(lossPrice * lossQty * (dPct / 100));
         vendorLossCost += lossCost;
         vendorDesigner += lossCost;
+        vendorRecovered += (item.recovered || 0);
         vendorMerchValue += lossPrice * lossQty;
         return; // don't double-count in normal sales
       }
@@ -8485,6 +8487,9 @@ function renderInvNew() {
             })() +
             '<button onclick="invNewToggleMissing(' + vi + ',' + ii + ')" style="' + (item.missing ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.missing ? '⚠ MISS' : 'MISS') + '</button>' +
             '<button onclick="invNewToggleBroken(' + vi + ',' + ii + ')" style="' + (item.broken ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.broken ? '⚠ BRKN' : 'BRKN') + '</button>' +
+            ((item.broken || item.missing)
+              ? '<div style="display:flex;align-items:center;gap:2px" title="Amount recovered from others (reduces our out-of-pocket)"><span style="color:#88c98a;font-family:DM Mono,monospace;font-size:8px">REC $</span><input type="number" value="' + (item.recovered || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'recovered\',parseFloat(this.value)||0)" style="width:40px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:9px;padding:2px 4px;border-radius:3px;text-align:right"></div>'
+              : '') +
             (returnPlan === 'hybrid'
               ? '<button onclick="invNewToggleKeeping(' + vi + ',' + ii + ')" style="' + (item.keepingForSale ? 'background:#c9a2e2;border:2px solid #c9a2e2;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.keepingForSale ? '✓ KEEP' : 'KEEP') + '</button>'
               : '') +
@@ -8568,8 +8573,9 @@ function renderInvNew() {
       vendorDeductions.forEach(function(d) { totalVendorDed += (d.amount || 0); });
       vendorExtras.forEach(function(e) { totalVendorExtras += (e.amount || 0); });
       var wePayShipping = vendor.shippingCoveredBy === 'us' && shipCostNum > 0;
-      // Deductions come back to us, extra payments go out from us
-      var netStoreCalc = vendorStore + totalVendorDed - totalVendorExtras - vendorLossCost - (wePayShipping ? shipCostNum : 0);
+      // Deductions come back to us, extra payments go out from us, recoveries offset losses
+      var actualLoss = Math.max(0, vendorLossCost - vendorRecovered);
+      var netStoreCalc = vendorStore + totalVendorDed - totalVendorExtras - actualLoss - (wePayShipping ? shipCostNum : 0);
       var netDesignerCalc = vendorDesigner - totalVendorDed + totalVendorExtras;
       var hasAdj = totalVendorDed > 0 || totalVendorExtras > 0 || vendorLossCost > 0 || wePayShipping;
       statsHtml = statBlock('Total Value', vendorMerchValue) +
@@ -8578,6 +8584,7 @@ function renderInvNew() {
         (totalVendorDed > 0 ? statBlock('+ Ded. Back', totalVendorDed, '#88c98a') : '') +
         (totalVendorExtras > 0 ? statBlock('- Extra Pay', totalVendorExtras, '#e07070') : '') +
         (vendorLossCost > 0 ? statBlock('- Loss', vendorLossCost, '#e07070') : '') +
+        (vendorRecovered > 0 ? statBlock('+ Recovered', vendorRecovered, '#88c98a') : '') +
         (wePayShipping ? statBlock('- Shipping', shipCostNum, '#e07070') : '') +
         (hasAdj ? statBlock('Net Ours', netStoreCalc, '#88c98a') : '') +
         statBlock('Their Net', netDesignerCalc, 'var(--text)');
