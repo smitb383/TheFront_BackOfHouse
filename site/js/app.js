@@ -8471,7 +8471,16 @@ function renderInvNew() {
             h += '</div>';
             return h;
           })() +
-          '<button onclick="event.stopPropagation();invNewToggleSquare(' + vi + ',' + ii + ')" style="' + (isNew ? 'background:#e2c97e;border:2px solid #e2c97e;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (isNew ? 'NEW' : '✓ SQ') + '</button>' +
+          (function() {
+            var unpaid = item.unpaidBy || '';
+            if (unpaid) {
+              return '<button onclick="event.stopPropagation();invNewSetUnpaid(' + vi + ',' + ii + ',\'\')" style="background:#e0784522;border:2px solid #e07845;color:#e07845;font-family:DM Mono,monospace;font-size:8px;padding:4px 6px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap" title="Click to clear">' + esc(unpaid).toUpperCase() + ' OWES</button>';
+            }
+            return '<div style="display:flex;gap:2px" onclick="event.stopPropagation()">' +
+              '<button onclick="invNewSetUnpaid(' + vi + ',' + ii + ',\'del\')" style="background:var(--surface2);border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap" title="Del owes for this item">DEL</button>' +
+              '<button onclick="invNewSetUnpaid(' + vi + ',' + ii + ',\'brooke\')" style="background:var(--surface2);border:1px solid var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap" title="Brooke owes for this item">BROOKE</button>' +
+            '</div>';
+          })() +
           '<button onclick="event.stopPropagation();invNewToggleMissing(' + vi + ',' + ii + ')" style="' + (item.missing ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.missing ? '⚠ MISSING' : 'MISSING') + '</button>' +
           (returnPlan === 'hybrid'
             ? '<button onclick="event.stopPropagation();invNewToggleKeeping(' + vi + ',' + ii + ')" style="' + (item.keepingForSale ? 'background:#c9a2e2;border:2px solid #c9a2e2;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:4px 5px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (item.keepingForSale ? '✓ KEEPING' : 'KEEPING') + '</button>'
@@ -9406,10 +9415,10 @@ function invNewToggleFloorItem(vi, ii) {
   renderInvNew();
 }
 
-function invNewToggleSquare(vi, ii) {
+function invNewSetUnpaid(vi, ii, who) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
-  data.vendors[vi].items[ii].addedToSquare = !data.vendors[vi].items[ii].addedToSquare;
+  data.vendors[vi].items[ii].unpaidBy = who;
   saveInvNew(data);
   renderInvNew();
 }
