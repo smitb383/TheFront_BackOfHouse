@@ -338,8 +338,8 @@ function calcPL(scenario, inventory) {
     }
 
     var sale = scenario.itemSales && scenario.itemSales[item.id];
-    // "sell" qty: user override from P&L scenario, then actual sold from inventory, then total qty
-    var sales = (sale && sale.qty != null) ? sale.qty : (item.totalSold > 0 ? item.totalSold : (item.qty || 1));
+    // "sell" qty: user override from P&L scenario, then actual sold from inventory
+    var sales = (sale && sale.qty != null) ? sale.qty : (item.totalSold || 0);
     var gross = sales * item.price;
     var commission;
     if (item.isInHouse && item.costPerUnit) {
@@ -1090,16 +1090,20 @@ function renderPLSections(scenario, calc, liveInventory) {
     }
     html += '</div>';
 
+    // For retail: render Revenue first, then Variable. Others: Variable first.
+    var variableColHtml = '';
+    var revenueColHtml = '';
+
     // ── VARIABLE COSTS column ──
-    html += '<div class="pl-section-col">';
-    html += '<div class="pl-section-col-head"><span>Variable Costs</span><span class="pl-section-col-total">$' + fmt(variableTotal) + '</span></div>';
+    variableColHtml += '<div class="pl-section-col">';
+    variableColHtml += '<div class="pl-section-col-head"><span>Variable Costs</span><span class="pl-section-col-total">$' + fmt(variableTotal) + '</span></div>';
 
     var hasVariable = false;
     if (sectionVarItems.length) {
       hasVariable = true;
-      html += '<div class="pl-variable-note">Based on ' + calc.totalTransactions + ' txns, $' + fmt(calc.totalGrossRevenue) + ' gross</div>';
+      variableColHtml += '<div class="pl-variable-note">Based on ' + calc.totalTransactions + ' txns, $' + fmt(calc.totalGrossRevenue) + ' gross</div>';
       sectionVarItems.forEach(function(sv) {
-        html += '<div class="pl-cost-row">' +
+        variableColHtml += '<div class="pl-cost-row">' +
           '<span class="pl-cost-name">' + esc(sv.vc.name) + '</span>' +
           '<span class="pl-cost-note">' + esc(sv.vc.note || '') + '</span>' +
           '<span class="pl-cost-amt">$' + fmt(sv.estCost) + '</span>' +
@@ -1108,80 +1112,62 @@ function renderPLSections(scenario, calc, liveInventory) {
       });
     }
 
-    if (sec.variableType === 'cafeVariable') {
-      hasVariable = true;
-      (scenario.cafeVariable || []).forEach(function(cv) {
-        var cvOpen = document.getElementById('pl-cafe-var-' + cv.id) && document.getElementById('pl-cafe-var-' + cv.id).classList.contains('open');
-        html += '<div class="pl-cost-item' + (cvOpen ? ' open' : '') + '" id="pl-cafe-var-' + cv.id + '">' +
-          '<div class="pl-cost-top" onclick="toggleCafeVarCard(\'' + cv.id + '\')">' +
-            '<span class="pl-cost-name-display">' + esc(cv.name || '(untitled)') + '</span>' +
-            '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" onchange="updateCafeVar(this)"></div>' +
-            '<span class="pl-cost-chevron">\u203a</span>' +
-          '</div>' +
-          '<div class="pl-cost-body">' +
-            '<div class="pl-cost-fields">' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(cv.name || '') + '" data-cv-id="' + cv.id + '" data-field="name" onchange="updateCafeVarField(this)"></div>' +
-              '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" data-field="amount" onchange="updateCafeVarField(this)"></div>' +
-              '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-cv-id="' + cv.id + '" data-field="note" onchange="updateCafeVarField(this)">' + esc(cv.note || '') + '</textarea></div>' +
-            '</div>' +
-            '<button class="pl-cost-delete-btn" onclick="deleteCafeVar(\'' + cv.id + '\')">Delete item</button>' +
-          '</div>' +
-        '</div>';
-      });
-      html += '<button class="pl-add-row-btn" onclick="addCafeVar()">+ Add ingredient</button>';
-    }
-
     if (sec.variableType === 'wholesaleCOGS') {
-      // No variable costs for wholesale — costs are in fixed costs
-      // Square fee shown as a note only
-      html += '<div style="padding:8px 0;font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">Square fee (2.6% + $0.15) applies per sale</div>';
+      variableColHtml += '<div style="padding:8px 0;font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">Square fee (2.6% + $0.15) applies per sale</div>';
     }
 
     if (!hasVariable) {
-      html += '<div class="pl-section-empty">\u2014</div>';
+      variableColHtml += '<div class="pl-section-empty">\u2014</div>';
     }
-    html += '</div>';
+    variableColHtml += '</div>';
 
     // ── REVENUE column ──
-    html += '<div class="pl-section-col">';
-    html += '<div class="pl-section-col-head"><span>Revenue</span><span class="pl-section-col-total">$' + fmt(revenueTotal) + '</span></div>';
+    revenueColHtml += '<div class="pl-section-col">';
+    revenueColHtml += '<div class="pl-section-col-head"><span>Revenue</span><span class="pl-section-col-total">$' + fmt(revenueTotal) + '</span></div>';
 
     var hasRevenue = false;
 
     if (sec.revenueType === 'consignment') {
       if (consignmentItems.length) {
         hasRevenue = true;
-        html += renderConsignmentRevenue(consignmentItems, scenario);
+        revenueColHtml += renderConsignmentRevenue(consignmentItems, scenario);
       }
     } else if (sec.revenueType === 'wholesale') {
       if (wholesaleItems.length) {
         hasRevenue = true;
-        html += renderWholesaleRevenue(wholesaleItems, scenario);
+        revenueColHtml += renderWholesaleRevenue(wholesaleItems, scenario);
       }
     } else if (sec.revenueType === 'otherRevenue') {
       if (scenario.otherRevenue && scenario.otherRevenue.length) {
         hasRevenue = true;
-        html += renderOtherRevenueCards(scenario);
+        revenueColHtml += renderOtherRevenueCards(scenario);
       }
-      html += '<button class="pl-add-row-btn" onclick="addOtherRevItem()">+ Add other revenue</button>';
+      revenueColHtml += '<button class="pl-add-row-btn" onclick="addOtherRevItem()">+ Add other revenue</button>';
     } else if (sec.revenueType === 'cafeRevenue') {
       if (scenario.cafeRevenue && scenario.cafeRevenue.length) {
         hasRevenue = true;
-        html += renderCafeRevenueCards(scenario);
+        revenueColHtml += renderCafeRevenueCards(scenario);
       }
-      html += '<button class="pl-add-row-btn" onclick="addCafeRevItem()">+ Add drink</button>';
+      revenueColHtml += '<button class="pl-add-row-btn" onclick="addCafeRevItem()">+ Add drink</button>';
     } else if (sec.revenueType === 'spaceRevenue') {
       if (scenario.spaceRevenue && scenario.spaceRevenue.length) {
         hasRevenue = true;
-        html += renderCafeRevenueCards(scenario, 'spaceRevenue');
+        revenueColHtml += renderCafeRevenueCards(scenario, 'spaceRevenue');
       }
-      html += '<button class="pl-add-row-btn" onclick="addSpaceRevItem()">+ Add item</button>';
+      revenueColHtml += '<button class="pl-add-row-btn" onclick="addSpaceRevItem()">+ Add item</button>';
     }
 
     if (!hasRevenue && sec.revenueType !== 'otherRevenue' && sec.revenueType !== 'cafeRevenue' && sec.revenueType !== 'spaceRevenue') {
-      html += '<div class="pl-section-empty">\u2014</div>';
+      revenueColHtml += '<div class="pl-section-empty">\u2014</div>';
     }
-    html += '</div>';
+    revenueColHtml += '</div>';
+
+    // Retail: Revenue then Variable. Others: Variable then Revenue.
+    if (sec.id === 'retail') {
+      html += revenueColHtml + variableColHtml;
+    } else {
+      html += variableColHtml + revenueColHtml;
+    }
 
     html += '</div></div>'; // close grid + body
     html += '</div>'; // close section
