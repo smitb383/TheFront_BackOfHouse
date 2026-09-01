@@ -268,16 +268,30 @@ function inventoryToPLItems() {
         });
       } else {
         var price = item.salePrice || 0;
-        var totalQty = 0, totalSold = 0;
+        var totalQty = 0, totalSold = 0, totalNoComm = 0;
         if (item.sizes && item.sizes.length) {
           item.sizes.forEach(function(sz) {
             totalQty += (sz.qty || 0);
-            totalSold += (sz.sold || 0);
+            totalSold += Math.min(sz.sold || 0, sz.qty || 0);
+            totalNoComm += (sz.noCommission || 0);
           });
         } else {
           totalQty = item.qty || 1;
-          totalSold = item.sold || 0;
+          totalSold = Math.min(item.sold || 0, totalQty);
+          totalNoComm = item.noCommission || 0;
         }
+
+        // Calculate actual store revenue accounting for no-commission and missing/broken
+        var missingCount = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+        var brokenCount = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+        var lossCount = missingCount + brokenCount;
+        var lossCost = Math.round(price * lossCount * (dPct / 100)); // we pay designer for losses
+        var recovered = item.recovered || 0;
+        var commSold = Math.max(0, totalSold - totalNoComm);
+        var actualStoreRev = Math.round(price * commSold * (sPct / 100)); // commission sales
+        // No-commission sales: store gets $0
+        // Loss: store pays designer cut minus recovery
+        var actualNetStore = actualStoreRev - Math.max(0, lossCost - recovered);
 
         items.push({
           id: 'invnew_' + vendor.vendorId + '_' + item.id,
@@ -290,6 +304,7 @@ function inventoryToPLItems() {
           designerPct: dPct,
           qty: totalQty,
           totalSold: totalSold,
+          actualStoreRev: actualNetStore,
           pricingModel: 'consignment',
           category: item.category || ''
         });
@@ -312,6 +327,21 @@ function inventoryToPLItems() {
         price: 0, qty: 0, totalSold: 0, isInHouse: false, commissionPct: 0
       });
     }
+    // Track vendor deductions (come back to us) and extra payments (go out from us)
+    var vendorDed = 0, vendorExtras = 0;
+    (vendor.deductions || []).forEach(function(d) { vendorDed += (d.amount || 0); });
+    (vendor.extraPayments || []).forEach(function(e) { vendorExtras += (e.amount || 0); });
+    if (vendorDed > 0 || vendorExtras > 0) {
+      items.push({
+        id: 'invnew_adj_' + vendor.vendorId,
+        name: vendor.name + ' (adjustments)',
+        vendor: vendor.name || '',
+        vendorId: vendor.vendorId,
+        isAdjustment: true,
+        adjustmentAmount: vendorDed - vendorExtras, // positive = money back to us
+        price: 0, qty: 0, totalSold: 0, isInHouse: false, commissionPct: 0
+      });
+    }
   });
   items._totalShipping = totalShipping;
   return items;
@@ -329,6 +359,11 @@ function calcPL(scenario, inventory) {
   var shippingDeductions = 0;
 
   inventory.forEach(function(item) {
+    // Handle adjustment pseudo-items (deductions/extra payments)
+    if (item.isAdjustment) {
+      ourCut += (item.adjustmentAmount || 0);
+      return;
+    }
     // Handle shipping deduction pseudo-items — only deduct what we cover
     if (item.isShippingDeduction) {
       if (item.shippingCoveredBy === 'us') {
@@ -338,12 +373,10 @@ function calcPL(scenario, inventory) {
     }
 
     var sale = scenario.itemSales && scenario.itemSales[item.id];
-    // "sell" qty: user override from P&L scenario, then actual sold from inventory
     var sales = (sale && sale.qty != null) ? sale.qty : (item.totalSold || 0);
     var gross = sales * item.price;
     var commission;
     if (item.isInHouse && item.costPerUnit) {
-      // Wholesale: our cut is revenue minus COGS
       commission = gross - (sales * item.costPerUnit);
       merchGross += gross;
       merchCut += commission;
@@ -352,7 +385,8 @@ function calcPL(scenario, inventory) {
       merchGross += gross;
       merchCut += commission;
     } else {
-      commission = gross * (item.commissionPct / 100);
+      // Use actual store revenue from inventory (accounts for no-commission, missing/broken)
+      commission = (item.actualStoreRev != null) ? item.actualStoreRev : Math.round(gross * (item.commissionPct / 100));
       consignGross += gross;
       consignCut += commission;
     }
