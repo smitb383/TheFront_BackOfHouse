@@ -9639,8 +9639,9 @@ function openSalesReport(vi) {
 
       // Designer breakdown — deductions are internal, don't show on report
       var designerBreakdown = '<div style="' + lineItem + '">Sales commission (' + dPct + '%): <strong>$' + totalDesigner.toLocaleString() + '</strong></div>';
+      if (totalDed > 0) designerBreakdown += '<div style="' + lineItem + ';color:#c0392b">Deductions: <strong>-$' + totalDed.toLocaleString() + '</strong></div>';
       if (totalExtras > 0) designerBreakdown += '<div style="' + lineItem + ';color:#2a7d2e">Additional payments: <strong>+$' + totalExtras.toLocaleString() + '</strong></div>';
-      if (totalExtras > 0) designerBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net payout: $' + netDesigner.toLocaleString() + '</div>';
+      if (hasAdjustments) designerBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net payout: $' + netDesigner.toLocaleString() + '</div>';
 
       // Store breakdown — deductions come back to us as recovered cost
       var netStoreReport = totalStore + totalDed - totalExtras;
@@ -9684,7 +9685,7 @@ function openSalesReport(vi) {
         })() +
       '</div>' +
       soldTable +
-      // dedSection hidden from designer report (internal only)
+      dedSection +
       extraSection +
       remTable +
       (vendor.reportNote ? '<div style="margin-top:24px;padding:12px 16px;background:#f9f7f3;border:1px solid #e0dcd4;border-radius:6px;font-size:14px;font-family:Cormorant Garamond,serif;font-style:italic">' + esc(vendor.reportNote) + '</div>' : '');
