@@ -9679,24 +9679,45 @@ function openSalesReport(vi) {
         // Designer Payout
         (function() {
           var prevPaid = vendor.previouslyPaid || 0;
-          var totalOwed = hasAdjustments ? netDesigner : totalDesigner;
-          var remaining = totalOwed - prevPaid;
-          var payoutHtml = '<div style="text-align:center">' +
-            '<div style="' + lbl + '">Designer Payout</div>' +
-            '<div style="' + bigNum + ';color:#2a7d2e">$' + totalOwed.toLocaleString() + '</div>' +
-            '<div style="margin-top:6px;text-align:left;padding:0 8px">' + designerBreakdown + '</div>';
-          if (prevPaid > 0) {
-            payoutHtml += '<div style="margin-top:10px;padding:10px;background:#fff;border:2px solid #2a7d2e;border-radius:6px;text-align:center">' +
-              '<div style="' + lineItem + '">Previously paid: <strong>$' + prevPaid.toLocaleString() + '</strong></div>' +
-              '<div style="font-size:20px;font-weight:700;color:' + (remaining > 0 ? '#e07845' : '#2a7d2e') + ';margin-top:4px">Remaining Balance: $' + remaining.toLocaleString() + '</div>' +
+          var payoutHtml = '<div style="text-align:center">';
+
+          if (prevPaid > 0 && hasSettledPeriod) {
+            // Show settled + new balance clearly
+            payoutHtml += '<div style="' + lbl + '">Payment Summary</div>';
+            // Previously settled
+            payoutHtml += '<div style="margin-top:8px;padding:10px;background:#f4f0e8;border-radius:6px">' +
+              '<div style="' + lineItem + ';color:#888">Previous period settled</div>' +
+              '<div style="font-size:16px;font-weight:700;color:#2a7d2e">✓ Paid: $' + prevPaid.toLocaleString() + '</div>' +
             '</div>';
+            // New balance owed
+            if (currentDesigner > 0) {
+              payoutHtml += '<div style="margin-top:8px;padding:12px;background:#fff;border:3px solid #e07845;border-radius:6px">' +
+                '<div style="' + lineItem + ';color:#888">New sales since last payment</div>' +
+                '<div style="margin-top:4px;text-align:left;padding:0 4px">' +
+                  '<div style="' + lineItem + '">Sales commission (' + dPct + '%): <strong>$' + currentDesigner.toLocaleString() + '</strong></div>' +
+                '</div>' +
+                '<div style="font-size:22px;font-weight:700;color:#e07845;margin-top:6px">Balance Due: $' + currentDesigner.toLocaleString() + '</div>' +
+              '</div>';
+            } else {
+              payoutHtml += '<div style="margin-top:8px;padding:10px;background:#d4ecd5;border-radius:6px">' +
+                '<div style="font-size:14px;font-weight:700;color:#2a7d2e">✓ Fully Paid — No Balance Due</div>' +
+              '</div>';
+            }
+          } else {
+            // No settlement yet — show total payout
+            var totalOwed = hasAdjustments ? netDesigner : totalDesigner;
+            payoutHtml += '<div style="' + lbl + '">Designer Payout</div>' +
+              '<div style="' + bigNum + ';color:#2a7d2e">$' + totalOwed.toLocaleString() + '</div>' +
+              '<div style="margin-top:6px;text-align:left;padding:0 8px">' + designerBreakdown + '</div>';
+            if (prevPaid > 0) {
+              var remaining = totalOwed - prevPaid;
+              payoutHtml += '<div style="margin-top:10px;padding:10px;background:#fff;border:2px solid #2a7d2e;border-radius:6px;text-align:center">' +
+                '<div style="' + lineItem + '">Previously paid: <strong>$' + prevPaid.toLocaleString() + '</strong></div>' +
+                '<div style="font-size:20px;font-weight:700;color:' + (remaining > 0 ? '#e07845' : '#2a7d2e') + ';margin-top:4px">Remaining Balance: $' + remaining.toLocaleString() + '</div>' +
+              '</div>';
+            }
           }
-          if (hasSettledPeriod && currentDesigner > 0) {
-            payoutHtml += '<div style="margin-top:8px;padding:8px;background:#d4ecd5;border-radius:4px;text-align:center">' +
-              '<div style="' + lbl + ';color:#2a7d2e;margin-bottom:2px">Newly Owed (Current Period)</div>' +
-              '<div style="font-size:18px;font-weight:700;color:#2a7d2e">$' + currentDesigner.toLocaleString() + '</div>' +
-            '</div>';
-          }
+
           payoutHtml += '</div>';
           return payoutHtml;
         })() +
