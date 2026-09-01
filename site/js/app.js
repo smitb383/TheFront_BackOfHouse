@@ -9693,14 +9693,17 @@ function openSalesReport(vi) {
               '<div style="' + lineItem + ';color:#888">Previous period settled</div>' +
               '<div style="font-size:16px;font-weight:700;color:#2a7d2e">✓ Paid: $' + prevPaid.toLocaleString() + '</div>' +
             '</div>';
-            // New balance owed
-            if (currentDesigner > 0) {
+            // New balance owed (includes new sales + extra payments - deductions)
+            var newBalance = currentDesigner + totalExtras - totalDed;
+            if (newBalance > 0) {
               payoutHtml += '<div style="margin-top:8px;padding:12px;background:#fff;border:3px solid #e07845;border-radius:6px">' +
-                '<div style="' + lineItem + ';color:#888">New sales since last payment</div>' +
-                '<div style="margin-top:4px;text-align:left;padding:0 4px">' +
-                  '<div style="' + lineItem + '">Sales commission (' + dPct + '%): <strong>$' + currentDesigner.toLocaleString() + '</strong></div>' +
-                '</div>' +
-                '<div style="font-size:22px;font-weight:700;color:#e07845;margin-top:6px">Balance Due: $' + currentDesigner.toLocaleString() + '</div>' +
+                '<div style="' + lineItem + ';color:#888">Outstanding since last payment</div>' +
+                '<div style="margin-top:4px;text-align:left;padding:0 4px">';
+              if (currentDesigner > 0) payoutHtml += '<div style="' + lineItem + '">New sales commission (' + dPct + '%): <strong>$' + currentDesigner.toLocaleString() + '</strong></div>';
+              if (totalExtras > 0) payoutHtml += '<div style="' + lineItem + '">Additional payments: <strong>+$' + totalExtras.toLocaleString() + '</strong></div>';
+              if (totalDed > 0) payoutHtml += '<div style="' + lineItem + ';color:#c0392b">Deductions: <strong>-$' + totalDed.toLocaleString() + '</strong></div>';
+              payoutHtml += '</div>' +
+                '<div style="font-size:22px;font-weight:700;color:#e07845;margin-top:6px">Balance Due: $' + newBalance.toLocaleString() + '</div>' +
               '</div>';
             } else {
               payoutHtml += '<div style="margin-top:8px;padding:10px;background:#d4ecd5;border-radius:6px">' +
