@@ -910,7 +910,7 @@ function renderPLSections(scenario, calc, liveInventory) {
       });
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px">';
       html += '<button class="pl-add-row-btn" onclick="addCafeDrink()" style="margin:0">+ Add drink</button>';
-      html += '<div style="font-family:DM Mono,monospace;font-size:12px;color:#88c98a;font-weight:700">' + cafeTotalDrinksSold + ' drinks · $' + fmt(cafeTotalDrinkRevenue) + ' revenue</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:12px;color:#88c98a;font-weight:700">' + cafeTotalDrinksSold + ' drinks · $' + fmt(cafeTotalDrinkRevenue + cafeCashForTotal) + ' total revenue</div>';
       html += '</div></div>';
       // Cash sales / extra cash
       var cafeCash = scenario.cafeCashSales || 0;
