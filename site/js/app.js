@@ -8495,10 +8495,6 @@ function renderInvNew() {
           // Status buttons group
           '<div style="display:flex;gap:3px;align-items:center;flex-wrap:wrap" onclick="event.stopPropagation()">' +
             (function() {
-              var btnStyle = onFloor ? 'background:#88c98a;border:2px solid #88c98a;color:#fff' : 'background:var(--surface2);border:2px solid var(--faint);color:var(--muted)';
-              return '<button onclick="invNewToggleFloorItem(' + vi + ',' + ii + ')" style="' + btnStyle + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (onFloor ? '✓' : '') + 'FLOOR</button>';
-            })() +
-            (function() {
               var mc = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
               var bc = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
               var maxLoss = (item.qty || 1) - totalSold;
