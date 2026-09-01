@@ -435,13 +435,16 @@ function calcPL(scenario, inventory) {
   // Add shipping costs we cover (from live inventory)
   totalFixed += shippingDeductions;
 
-  // Variable costs
+  // Variable costs — use consignment gross for retail Square fee (not total which includes cafe)
+  var retailGross = consignGross + merchGross;
+  var retailTxns = 0;
+  itemBreakdown.forEach(function(b) { if (b.qtySold > 0) retailTxns += b.qtySold; });
   var totalVariable = 0;
   (scenario.variableCosts || []).forEach(function(vc) {
     if (vc.type === 'pct_of_sales') {
-      totalVariable += totalSalesVolume * ((vc.rate || 0) / 100) + totalTransactions * (vc.perTxn || 0);
+      totalVariable += retailGross * ((vc.rate || 0) / 100) + retailTxns * (vc.perTxn || 0);
     } else if (vc.type === 'per_txn') {
-      totalVariable += totalTransactions * (vc.perTxn || 0);
+      totalVariable += retailTxns * (vc.perTxn || 0);
     } else {
       totalVariable += (vc.rate || 0);
     }
