@@ -9361,12 +9361,12 @@ function openSalesReport(vi) {
     return { settled: settled, current: current };
   }
 
-  function makeSoldEntry(name, price, qtySold, noComm, photo) {
+  function makeSoldEntry(name, price, qtySold, noComm, photo, size) {
     var commSold = Math.max(0, qtySold - noComm);
     var revenue = price * qtySold;
     var designerCut = Math.round(price * commSold * (dPct / 100)) + Math.round(price * noComm * (dPct / 100));
     var storeCut = Math.round(price * commSold * (sPct / 100));
-    return { name: name, price: price, qtySold: qtySold, noComm: noComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: photo };
+    return { name: name, size: size || '', price: price, qtySold: qtySold, noComm: noComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: photo };
   }
 
   vendor.items.forEach(function(item) {
@@ -9393,15 +9393,14 @@ function openSalesReport(vi) {
         var szNoComm = sz.noCommission || 0;
         tQty += szQty; tSold += szSold; tNoComm += szNoComm;
         if (szSold > 0) {
-          var szName = (item.name || '') + ' [' + (sz.size || '') + ']';
           var split = splitSoldDates(sz.soldDates, szSold);
           var settledNoComm = Math.min(szNoComm, split.settled);
           var currentNoComm = szNoComm - settledNoComm;
           if (split.settled > 0) {
-            soldItemsSettled.push(makeSoldEntry(szName, price, split.settled, settledNoComm, item.photo || ''));
+            soldItemsSettled.push(makeSoldEntry(item.name || '', price, split.settled, settledNoComm, item.photo || '', sz.size || ''));
           }
           if (split.current > 0) {
-            soldItemsCurrent.push(makeSoldEntry(szName, price, split.current, currentNoComm, item.photo || ''));
+            soldItemsCurrent.push(makeSoldEntry(item.name || '', price, split.current, currentNoComm, item.photo || '', sz.size || ''));
           }
         }
       });
@@ -9421,19 +9420,23 @@ function openSalesReport(vi) {
         }
       }
     }
-    // All items combined for totals
-    if (tSold > 0) {
-      var commSold = Math.max(0, tSold - tNoComm);
-      var revenue = price * tSold;
-      var designerCut = Math.round(price * commSold * (dPct / 100)) + Math.round(price * tNoComm * (dPct / 100));
-      var storeCut = Math.round(price * commSold * (sPct / 100));
-      soldItemsAll.push({ name: item.name || '', price: price, qtySold: tSold, noComm: tNoComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: item.photo || '' });
+    // All items combined for totals — include per-size entries for sized items
+    if (hasSz) {
+      item.sizes.forEach(function(sz) {
+        var szSold = Math.min(sz.sold || 0, sz.qty || 0);
+        if (szSold > 0) {
+          var szNoComm = sz.noCommission || 0;
+          soldItemsAll.push(makeSoldEntry(item.name || '', price, szSold, szNoComm, item.photo || '', sz.size || ''));
+        }
+      });
+    } else if (tSold > 0) {
+      soldItemsAll.push(makeSoldEntry(item.name || '', price, tSold, tNoComm, item.photo || ''));
     }
     if (hasSz) {
       item.sizes.forEach(function(sz) {
         var szRemaining = (sz.qty || 0) - Math.min(sz.sold || 0, sz.qty || 0);
         if (szRemaining > 0) {
-          remainingItems.push({ name: (item.name || '') + ' [' + (sz.size || '') + ']', price: price, qty: szRemaining, photo: item.photo || '' });
+          remainingItems.push({ name: item.name || '', size: sz.size || '', price: price, qty: szRemaining, photo: item.photo || '' });
         }
       });
     } else {
@@ -9448,13 +9451,14 @@ function openSalesReport(vi) {
   function mergeSoldList(items) {
     var merged = {};
     items.forEach(function(s) {
-      if (merged[s.name]) {
-        merged[s.name].qtySold += s.qtySold;
-        merged[s.name].revenue += s.revenue;
-        merged[s.name].designerCut += s.designerCut;
-        if (!merged[s.name].photo && s.photo) merged[s.name].photo = s.photo;
+      var key = s.name + '||' + (s.size || '');
+      if (merged[key]) {
+        merged[key].qtySold += s.qtySold;
+        merged[key].revenue += s.revenue;
+        merged[key].designerCut += s.designerCut;
+        if (!merged[key].photo && s.photo) merged[key].photo = s.photo;
       } else {
-        merged[s.name] = { name: s.name, price: s.price, qtySold: s.qtySold, revenue: s.revenue, designerCut: s.designerCut, photo: s.photo };
+        merged[key] = { name: s.name, size: s.size || '', price: s.price, qtySold: s.qtySold, revenue: s.revenue, designerCut: s.designerCut, photo: s.photo };
       }
     });
     var list = Object.values(merged);
@@ -9493,6 +9497,7 @@ function openSalesReport(vi) {
           (s.photo ? '<img src="' + esc(s.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') +
         '</td>' +
         '<td style="' + tdStyle + '">' + esc(s.name) + '</td>' +
+        '<td style="text-align:center;' + tdStyle + '">' + (s.size ? esc(s.size) : '') + '</td>' +
         '<td style="text-align:center;' + tdStyle + '">' + s.qtySold + '</td>' +
         '<td style="text-align:right;' + tdStyle + '">$' + s.price + '</td>' +
         '<td style="text-align:right;' + tdStyle + '">$' + s.revenue.toLocaleString() + '</td>' +
@@ -9505,6 +9510,7 @@ function openSalesReport(vi) {
           '<th style="' + tdStyle + ';width:30px">#</th>' +
           '<th style="' + tdStyle + ';width:48px"></th>' +
           '<th style="' + tdStyle + ';text-align:left">Item</th>' +
+          '<th style="' + tdStyle + ';width:40px">Size</th>' +
           '<th style="' + tdStyle + ';width:40px">Sold</th>' +
           '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
           '<th style="' + tdStyle + ';text-align:right;width:70px">Revenue</th>' +
@@ -9512,7 +9518,7 @@ function openSalesReport(vi) {
         '</tr></thead>' +
         '<tbody>' + rows +
           '<tr style="background:#f4f0e8;font-weight:700">' +
-            '<td style="' + tdStyle + '" colspan="3">SUBTOTAL</td>' +
+            '<td style="' + tdStyle + '" colspan="4">SUBTOTAL</td>' +
             '<td style="text-align:center;' + tdStyle + '">' + subtotalQty + '</td>' +
             '<td style="' + tdStyle + '"></td>' +
             '<td style="text-align:right;' + tdStyle + '">$' + subtotalRevenue.toLocaleString() + '</td>' +
@@ -9544,6 +9550,7 @@ function openSalesReport(vi) {
         (r.photo ? '<img src="' + esc(r.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') +
       '</td>' +
       '<td style="' + tdStyle + '">' + esc(r.name) + '</td>' +
+      '<td style="text-align:center;' + tdStyle + '">' + (r.size ? esc(r.size) : '') + '</td>' +
       '<td style="text-align:center;' + tdStyle + '">' + r.qty + '</td>' +
       '<td style="text-align:right;' + tdStyle + '">$' + r.price + '</td>' +
       '<td style="text-align:right;' + tdStyle + '">$' + val.toLocaleString() + '</td>' +
@@ -9557,13 +9564,14 @@ function openSalesReport(vi) {
           '<th style="' + tdStyle + ';width:30px">#</th>' +
           '<th style="' + tdStyle + ';width:48px"></th>' +
           '<th style="' + tdStyle + ';text-align:left">Item</th>' +
+          '<th style="' + tdStyle + ';width:40px">Size</th>' +
           '<th style="' + tdStyle + ';width:40px">Qty</th>' +
           '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
           '<th style="' + tdStyle + ';text-align:right;width:70px">Value</th>' +
         '</tr></thead>' +
         '<tbody>' + remRows +
           '<tr style="background:#f4f0e8;font-weight:700">' +
-            '<td style="' + tdStyle + '" colspan="5">TOTAL REMAINING VALUE</td>' +
+            '<td style="' + tdStyle + '" colspan="6">TOTAL REMAINING VALUE</td>' +
             '<td style="text-align:right;' + tdStyle + '">$' + totalRemValue.toLocaleString() + '</td>' +
           '</tr>' +
         '</tbody>' +
