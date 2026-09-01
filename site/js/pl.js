@@ -838,8 +838,28 @@ function renderPLSections(scenario, calc, liveInventory) {
         cafeTotalDrinksSold += (cr.sold || 0);
         cafeTotalDrinkRevenue += (cr.price || 0) * (cr.sold || 0);
       });
+      // Quick-edit table for drink sales
+      html += '<div style="margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px">';
+      html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">Quick Entry — Drinks Sold</div>';
+      html += '<div style="display:grid;grid-template-columns:1fr 60px 50px 60px 70px;gap:6px;align-items:center;font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--faint)">';
+      html += '<div>Drink</div><div style="text-align:center">Price</div><div style="text-align:center">Sold</div><div style="text-align:center">Cost/ea</div><div style="text-align:right">Revenue</div></div>';
+      (scenario.cafeRevenue || []).forEach(function(cr) {
+        var drinkRev = (cr.price || 0) * (cr.sold || 0);
+        html += '<div style="display:grid;grid-template-columns:1fr 60px 50px 60px 70px;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--faint)">';
+        html += '<div style="font-family:Cormorant Garamond,serif;font-size:14px">' + esc(cr.name || '') + '</div>';
+        html += '<input type="number" min="0" step="0.5" value="' + (cr.price || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="price" onchange="updateGenRevField(this)" style="width:50px;background:var(--surface);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">';
+        html += '<input type="number" min="0" value="' + (cr.sold || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="sold" onchange="updateGenRevField(this)" style="width:40px;background:var(--surface);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center;font-weight:700">';
+        html += '<input type="number" min="0" step="0.1" value="' + (cr.costPerDrink || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="costPerDrink" onchange="updateGenRevField(this)" style="width:50px;background:var(--surface);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">';
+        html += '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);text-align:right;font-weight:600">$' + fmt(drinkRev) + '</div>';
+        html += '</div>';
+      });
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px">';
+      html += '<button class="pl-add-row-btn" onclick="addCafeDrink()" style="margin:0">+ Add drink</button>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:12px;color:#88c98a;font-weight:700">' + cafeTotalDrinksSold + ' drinks · $' + fmt(cafeTotalDrinkRevenue) + ' revenue</div>';
+      html += '</div></div>';
+
       html += '<div class="pl-section-col">';
-      html += '<div class="pl-section-col-head"><span>Revenue</span><span class="pl-section-col-total">$' + fmt(cafeTotalDrinkRevenue) + '</span></div>';
+      html += '<div class="pl-section-col-head"><span>Revenue (detail)</span><span class="pl-section-col-total">$' + fmt(cafeTotalDrinkRevenue) + '</span></div>';
       (scenario.cafeRevenue || []).forEach(function(cr) {
         var drinkRev = (cr.price || 0) * (cr.sold || 0);
         var crOpen = document.getElementById('pl-cafe-drink-' + cr.id) && document.getElementById('pl-cafe-drink-' + cr.id).classList.contains('open');
