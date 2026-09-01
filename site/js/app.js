@@ -8914,7 +8914,8 @@ function invNewEditVendor(vi, field, val) {
   data.vendors[vi][field] = val;
   saveInvNew(data);
   // Only re-render for fields that affect layout; skip for text inputs like shipping
-  if (field !== 'shippingCost' && field !== 'shippingCoveredBy' && field !== 'eurRate') renderInvNew();
+  var noRerenderFields = ['shippingCost','shippingCoveredBy','eurRate','payDetails','payPlatform','reportNote','previouslyPaid'];
+  if (noRerenderFields.indexOf(field) < 0) renderInvNew();
 }
 
 function buildSizeRows(vi, ii, item, sPct, dPct, vendor) {
