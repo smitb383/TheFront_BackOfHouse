@@ -8563,7 +8563,16 @@ function renderInvNew() {
             var noCommBtn = totalSold > 0
               ? '<button onclick="invNewToggleNoComm(' + vi + ',' + ii + ')" style="' + (totalNoComm > 0 ? 'background:#c9a2e222;border:1px solid #c9a2e2;color:#c9a2e2' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="Mark as personal purchase (no store commission)">' + (totalNoComm > 0 ? totalNoComm + ' NO COMM' : 'NO COMM') + '</button>'
               : '';
+            // Check if item has new (unsettled) sales
+            var hasNewSale = false;
+            if (totalSold > 0 && item.soldDates && item.soldDates.length > 0) {
+              var vLastSettled = vendor.lastSettled || '';
+              if (!vLastSettled) { hasNewSale = true; }
+              else { hasNewSale = item.soldDates.some(function(d) { return d > vLastSettled; }); }
+            }
+            var newDot = hasNewSale ? '<span style="display:inline-block;width:6px;height:6px;background:#88c98a;border-radius:50%;margin-right:2px" title="New unsettled sale"></span>' : '';
             return '<div style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
+              newDot +
               '<button onclick="' + (allItemSold ? 'invNewUndoSold(' + vi + ',' + ii + ')' : 'invNewMarkSold(' + vi + ',' + ii + ')') + '" style="' + soldBtnS + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">' + (allItemSold ? '✓ SOLD' : '+ SELL') + '</button>' +
               '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--text)') + '">' + totalSold + '/' + totalQty + '</span>' +
               (totalSold > 0 && !allItemSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo">↩</button>' : '') +
@@ -8575,7 +8584,7 @@ function renderInvNew() {
           '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + totalThem + '</div>' +
           '<button onclick="event.stopPropagation();invNewDeleteItem(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
         '</div>' +
-        (hasSizes ? buildSizeRows(vi, ii, item, sPct, dPct) : '') +
+        (hasSizes ? buildSizeRows(vi, ii, item, sPct, dPct, vendor) : '') +
         detailPanel +
       '</div>';
     }).join('');
@@ -8726,6 +8735,13 @@ function renderInvNew() {
         '<div style="display:flex;flex-direction:column">' +
           '<div style="' + lblStyle + '">Previously Paid</div>' +
           '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" value="' + (vendor.previouslyPaid || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditVendor(' + vi + ',\'previouslyPaid\',parseFloat(this.value)||0)" style="width:80px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;text-align:right"></div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column">' +
+          '<div style="' + lblStyle + '">Last Settled</div>' +
+          '<div style="display:flex;align-items:center;gap:4px">' +
+            '<span style="font-family:DM Mono,monospace;font-size:11px;color:' + (vendor.lastSettled ? 'var(--text)' : 'var(--muted)') + '">' + (vendor.lastSettled || 'Never') + '</span>' +
+            '<button onclick="event.stopPropagation();invNewMarkSettled(' + vi + ')" style="background:#88c98a22;border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:8px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">Settle</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
 
@@ -8881,6 +8897,16 @@ function invNewToggleItem(vi, ii) {
   renderInvNew();
 }
 
+function invNewMarkSettled(vi) {
+  if (!confirm('Mark all current sales as settled for this vendor? This will move them to the "Previous Period" in the sales report.')) return;
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  var today = new Date().toISOString().slice(0, 10);
+  data.vendors[vi].lastSettled = today;
+  saveInvNew(data);
+  renderInvNew();
+}
+
 function invNewEditVendor(vi, field, val) {
   var data = getInvNew();
   if (!data || !data.vendors[vi]) return;
@@ -8890,7 +8916,7 @@ function invNewEditVendor(vi, field, val) {
   if (field !== 'shippingCost' && field !== 'shippingCoveredBy' && field !== 'eurRate') renderInvNew();
 }
 
-function buildSizeRows(vi, ii, item, sPct, dPct) {
+function buildSizeRows(vi, ii, item, sPct, dPct, vendor) {
   var price = item.salePrice || 0;
   var rows = item.sizes.map(function(sz, si) {
     var szQty = sz.qty || 0;
@@ -8940,11 +8966,21 @@ function buildSizeRows(vi, ii, item, sPct, dPct) {
       '<div style="border-left:1px solid var(--border);height:100%"></div>' +
       '<div></div>' +
       '<div style="border-left:1px solid var(--border);height:100%"></div>' +
-      '<div style="display:flex;align-items:center;gap:4px">' +
-        '<button onclick="' + (allSold ? 'invNewUndoSold(' + vi + ',' + ii + ',' + si + ')' : 'invNewMarkSold(' + vi + ',' + ii + ',' + si + ')') + '" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="' + (allSold ? 'Click to undo sale' : 'Click to mark one sold') + '">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
-        '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
-        (szSold > 0 && !allSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
-      '</div>' +
+      (function() {
+        var szHasNew = false;
+        if (szSold > 0 && sz.soldDates && sz.soldDates.length > 0) {
+          var vls = (vendor && vendor.lastSettled) || '';
+          if (!vls) { szHasNew = true; }
+          else { szHasNew = sz.soldDates.some(function(d) { return d > vls; }); }
+        }
+        var szNewDot = szHasNew ? '<span style="display:inline-block;width:6px;height:6px;background:#88c98a;border-radius:50%;margin-right:2px" title="New unsettled sale"></span>' : '';
+        return '<div style="display:flex;align-items:center;gap:4px">' +
+          szNewDot +
+          '<button onclick="' + (allSold ? 'invNewUndoSold(' + vi + ',' + ii + ',' + si + ')' : 'invNewMarkSold(' + vi + ',' + ii + ',' + si + ')') + '" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="' + (allSold ? 'Click to undo sale' : 'Click to mark one sold') + '">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+          '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
+          (szSold > 0 && !allSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
+        '</div>';
+      })() +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a;text-align:right">$' + szUsRev + '</div>' +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + szThemRev + '</div>' +
@@ -8994,18 +9030,25 @@ function invNewAddSize(vi, ii) {
 function invNewMarkSold(vi, ii, si) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  var today = new Date().toISOString().slice(0, 10);
   if (si !== undefined && si !== null) {
     // Size-specific sell
     var sz = data.vendors[vi].items[ii].sizes[si];
     if (!sz) return;
     if ((sz.sold || 0) < (sz.qty || 0)) {
       sz.sold = (sz.sold || 0) + 1;
+      if (!sz.soldDates) sz.soldDates = [];
+      sz.soldDates.push(today);
+      sz.soldDate = today;
     }
   } else {
     // Non-sized item sell
     var item = data.vendors[vi].items[ii];
     if ((item.sold || 0) < (item.qty || 1)) {
       item.sold = (item.sold || 0) + 1;
+      if (!item.soldDates) item.soldDates = [];
+      item.soldDates.push(today);
+      item.soldDate = today;
     }
   }
   saveInvNew(data);
@@ -9024,6 +9067,8 @@ function invNewUndoSold(vi, ii, si) {
     if (!sz) return;
     if ((sz.sold || 0) > 0) {
       sz.sold = (sz.sold || 0) - 1;
+      if (sz.soldDates && sz.soldDates.length > 0) sz.soldDates.pop();
+      sz.soldDate = (sz.soldDates && sz.soldDates.length > 0) ? sz.soldDates[sz.soldDates.length - 1] : undefined;
       // Also lower high-water mark so the undo sticks
       var sk = sz.size || 'unknown';
       if (_soldHighWater[hwKey] && _soldHighWater[hwKey].sizes[sk]) {
@@ -9033,6 +9078,8 @@ function invNewUndoSold(vi, ii, si) {
   } else {
     if ((item.sold || 0) > 0) {
       item.sold = (item.sold || 0) - 1;
+      if (item.soldDates && item.soldDates.length > 0) item.soldDates.pop();
+      item.soldDate = (item.soldDates && item.soldDates.length > 0) ? item.soldDates[item.soldDates.length - 1] : undefined;
       if (_soldHighWater[hwKey]) _soldHighWater[hwKey].sold = item.sold;
     }
   }
@@ -9289,102 +9336,189 @@ function openSalesReport(vi) {
   var dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   var tdStyle = 'padding:8px 6px;border:1px solid #ccc';
 
-  // Build sold items table (sorted by price high to low)
-  var soldItems = [];
+  // Build sold items split by settlement period
+  var lastSettled = vendor.lastSettled || null;
+  var soldItemsCurrent = [];
+  var soldItemsSettled = [];
+  var soldItemsAll = [];
   var remainingItems = [];
+
+  // Helper: split soldDates into settled/current counts
+  function splitSoldDates(soldDates, totalSold) {
+    if (!lastSettled || !soldDates || soldDates.length === 0) {
+      return { settled: 0, current: totalSold };
+    }
+    var settled = 0, current = 0;
+    soldDates.forEach(function(d) {
+      if (d <= lastSettled) settled++;
+      else current++;
+    });
+    // If soldDates doesn't cover all sold (legacy items without dates), put remainder in current
+    var untracked = totalSold - (settled + current);
+    if (untracked > 0) current += untracked;
+    return { settled: settled, current: current };
+  }
+
+  function makeSoldEntry(name, price, qtySold, noComm, photo) {
+    var commSold = Math.max(0, qtySold - noComm);
+    var revenue = price * qtySold;
+    var designerCut = Math.round(price * commSold * (dPct / 100)) + Math.round(price * noComm * (dPct / 100));
+    var storeCut = Math.round(price * commSold * (sPct / 100));
+    return { name: name, price: price, qtySold: qtySold, noComm: noComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: photo };
+  }
+
   vendor.items.forEach(function(item) {
     var price = item.salePrice || 0;
     var hasSz = item.sizes && item.sizes.length > 0;
     var tQty = 0, tSold = 0, tNoComm = 0;
 
-    // Missing/broken items: count how many are lost, add to sold on report
+    // Missing/broken items: count how many are lost, add to sold on report (always current period)
     var missingC = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
     var brokenC = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
     var lossCount = missingC + brokenC;
     if (lossCount > 0) {
       var lossRevenue = price * lossCount;
       var lossDesignerCut = Math.round(lossRevenue * (dPct / 100));
-      soldItems.push({ name: item.name || '' + (lossCount > 1 ? ' (x' + lossCount + ')' : ''), price: price, qtySold: lossCount, noComm: 0, revenue: lossRevenue, designerCut: lossDesignerCut, storeCut: 0, photo: item.photo || '' });
+      var lossEntry = { name: item.name || '' + (lossCount > 1 ? ' (x' + lossCount + ')' : ''), price: price, qtySold: lossCount, noComm: 0, revenue: lossRevenue, designerCut: lossDesignerCut, storeCut: 0, photo: item.photo || '' };
+      soldItemsCurrent.push(lossEntry);
+      soldItemsAll.push(lossEntry);
     }
 
     if (hasSz) {
-      item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0); tNoComm += (sz.noCommission || 0); });
+      item.sizes.forEach(function(sz) {
+        var szQty = sz.qty || 0;
+        var szSold = sz.sold || 0;
+        var szNoComm = sz.noCommission || 0;
+        tQty += szQty; tSold += szSold; tNoComm += szNoComm;
+        if (szSold > 0) {
+          var split = splitSoldDates(sz.soldDates, szSold);
+          // Proportionally distribute noComm
+          var settledNoComm = Math.min(szNoComm, split.settled);
+          var currentNoComm = szNoComm - settledNoComm;
+          if (split.settled > 0) {
+            soldItemsSettled.push(makeSoldEntry(item.name || '', price, split.settled, settledNoComm, item.photo || ''));
+          }
+          if (split.current > 0) {
+            soldItemsCurrent.push(makeSoldEntry(item.name || '', price, split.current, currentNoComm, item.photo || ''));
+          }
+        }
+      });
     } else {
       tQty = item.qty || 1;
       tSold = Math.min(item.sold || 0, tQty);
       tNoComm = item.noCommission || 0;
+      if (tSold > 0) {
+        var split = splitSoldDates(item.soldDates, tSold);
+        var settledNoComm = Math.min(tNoComm, split.settled);
+        var currentNoComm = tNoComm - settledNoComm;
+        if (split.settled > 0) {
+          soldItemsSettled.push(makeSoldEntry(item.name || '', price, split.settled, settledNoComm, item.photo || ''));
+        }
+        if (split.current > 0) {
+          soldItemsCurrent.push(makeSoldEntry(item.name || '', price, split.current, currentNoComm, item.photo || ''));
+        }
+      }
     }
+    // All items combined for totals
     if (tSold > 0) {
       var commSold = Math.max(0, tSold - tNoComm);
       var revenue = price * tSold;
       var designerCut = Math.round(price * commSold * (dPct / 100)) + Math.round(price * tNoComm * (dPct / 100));
       var storeCut = Math.round(price * commSold * (sPct / 100));
-      soldItems.push({ name: item.name || '', price: price, qtySold: tSold, noComm: tNoComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: item.photo || '' });
+      soldItemsAll.push({ name: item.name || '', price: price, qtySold: tSold, noComm: tNoComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: item.photo || '' });
     }
     var remaining = tQty - tSold - lossCount;
     if (remaining > 0) {
       remainingItems.push({ name: item.name || '', price: price, qty: remaining, photo: item.photo || '' });
     }
   });
-  // Merge sold items with the same name (combine qty/revenue/designer cut)
-  var mergedSold = {};
-  soldItems.forEach(function(s) {
-    if (mergedSold[s.name]) {
-      mergedSold[s.name].qtySold += s.qtySold;
-      mergedSold[s.name].revenue += s.revenue;
-      mergedSold[s.name].designerCut += s.designerCut;
-      if (!mergedSold[s.name].photo && s.photo) mergedSold[s.name].photo = s.photo;
-    } else {
-      mergedSold[s.name] = { name: s.name, price: s.price, qtySold: s.qtySold, revenue: s.revenue, designerCut: s.designerCut, photo: s.photo };
-    }
-  });
-  var mergedSoldList = Object.values(mergedSold);
-  mergedSoldList.sort(function(a, b) { return b.price - a.price; });
+
+  // Merge helper
+  function mergeSoldList(items) {
+    var merged = {};
+    items.forEach(function(s) {
+      if (merged[s.name]) {
+        merged[s.name].qtySold += s.qtySold;
+        merged[s.name].revenue += s.revenue;
+        merged[s.name].designerCut += s.designerCut;
+        if (!merged[s.name].photo && s.photo) merged[s.name].photo = s.photo;
+      } else {
+        merged[s.name] = { name: s.name, price: s.price, qtySold: s.qtySold, revenue: s.revenue, designerCut: s.designerCut, photo: s.photo };
+      }
+    });
+    var list = Object.values(merged);
+    list.sort(function(a, b) { return b.price - a.price; });
+    return list;
+  }
+
+  var mergedSoldList = mergeSoldList(soldItemsAll);
+  var mergedCurrentList = mergeSoldList(soldItemsCurrent);
+  var mergedSettledList = mergeSoldList(soldItemsSettled);
   remainingItems.sort(function(a, b) { return b.price - a.price; });
 
-  // Totals
+  // Totals (all periods)
   var totalRevenue = 0, totalDesigner = 0, totalStore = 0, totalSoldQty = 0;
   mergedSoldList.forEach(function(s) { totalRevenue += s.revenue; totalDesigner += s.designerCut; totalSoldQty += s.qtySold; });
-  soldItems.forEach(function(s) { totalStore += (s.storeCut || 0); });
+  soldItemsAll.forEach(function(s) { totalStore += (s.storeCut || 0); });
 
-  var soldNum = 0;
-  var soldRows = mergedSoldList.map(function(s) {
-    soldNum++;
-    return '<tr>' +
-      '<td style="text-align:center;' + tdStyle + '">' + soldNum + '</td>' +
-      '<td style="text-align:center;' + tdStyle + ';width:48px">' +
-        (s.photo ? '<img src="' + esc(s.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') +
-      '</td>' +
-      '<td style="' + tdStyle + '">' + esc(s.name) + '</td>' +
-      '<td style="text-align:center;' + tdStyle + '">' + s.qtySold + '</td>' +
-      '<td style="text-align:right;' + tdStyle + '">$' + s.price + '</td>' +
-      '<td style="text-align:right;' + tdStyle + '">$' + s.revenue.toLocaleString() + '</td>' +
-      '<td style="text-align:right;' + tdStyle + '">$' + s.designerCut.toLocaleString() + '</td>' +
-    '</tr>';
-  }).join('');
+  // Current period totals
+  var currentRevenue = 0, currentDesigner = 0, currentStore = 0, currentSoldQty = 0;
+  mergedCurrentList.forEach(function(s) { currentRevenue += s.revenue; currentDesigner += s.designerCut; currentSoldQty += s.qtySold; });
+  soldItemsCurrent.forEach(function(s) { currentStore += (s.storeCut || 0); });
 
-  var soldTable =
-    '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-bottom:8px">Sales Summary</div>' +
-    '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
-      '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
-        '<th style="' + tdStyle + ';width:30px">#</th>' +
-        '<th style="' + tdStyle + ';width:48px"></th>' +
-        '<th style="' + tdStyle + ';text-align:left">Item</th>' +
-        '<th style="' + tdStyle + ';width:40px">Sold</th>' +
-        '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
-        '<th style="' + tdStyle + ';text-align:right;width:70px">Revenue</th>' +
-        '<th style="' + tdStyle + ';text-align:right;width:80px">Designer Cut (' + dPct + '%)</th>' +
-      '</tr></thead>' +
-      '<tbody>' + soldRows +
-        '<tr style="background:#f4f0e8;font-weight:700">' +
-          '<td style="' + tdStyle + '" colspan="3">TOTAL</td>' +
-          '<td style="text-align:center;' + tdStyle + '">' + totalSoldQty + '</td>' +
-          '<td style="' + tdStyle + '"></td>' +
-          '<td style="text-align:right;' + tdStyle + '">$' + totalRevenue.toLocaleString() + '</td>' +
-          '<td style="text-align:right;' + tdStyle + '">$' + totalDesigner.toLocaleString() + '</td>' +
-        '</tr>' +
-      '</tbody>' +
-    '</table>';
+  // Settled period totals
+  var settledRevenue = 0, settledDesigner = 0, settledSoldQty = 0;
+  mergedSettledList.forEach(function(s) { settledRevenue += s.revenue; settledDesigner += s.designerCut; settledSoldQty += s.qtySold; });
+
+  // Table builder helper
+  function buildSoldTable(title, list, subtotalQty, subtotalRevenue, subtotalDesigner, bgColor) {
+    if (list.length === 0) return '';
+    var num = 0;
+    var rows = list.map(function(s) {
+      num++;
+      return '<tr>' +
+        '<td style="text-align:center;' + tdStyle + '">' + num + '</td>' +
+        '<td style="text-align:center;' + tdStyle + ';width:48px">' +
+          (s.photo ? '<img src="' + esc(s.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') +
+        '</td>' +
+        '<td style="' + tdStyle + '">' + esc(s.name) + '</td>' +
+        '<td style="text-align:center;' + tdStyle + '">' + s.qtySold + '</td>' +
+        '<td style="text-align:right;' + tdStyle + '">$' + s.price + '</td>' +
+        '<td style="text-align:right;' + tdStyle + '">$' + s.revenue.toLocaleString() + '</td>' +
+        '<td style="text-align:right;' + tdStyle + '">$' + s.designerCut.toLocaleString() + '</td>' +
+      '</tr>';
+    }).join('');
+    return '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-bottom:8px;margin-top:24px">' + title + '</div>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
+        '<thead><tr style="background:' + (bgColor || '#e8e4dc') + ';font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
+          '<th style="' + tdStyle + ';width:30px">#</th>' +
+          '<th style="' + tdStyle + ';width:48px"></th>' +
+          '<th style="' + tdStyle + ';text-align:left">Item</th>' +
+          '<th style="' + tdStyle + ';width:40px">Sold</th>' +
+          '<th style="' + tdStyle + ';text-align:right;width:60px">Price</th>' +
+          '<th style="' + tdStyle + ';text-align:right;width:70px">Revenue</th>' +
+          '<th style="' + tdStyle + ';text-align:right;width:80px">Designer Cut (' + dPct + '%)</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows +
+          '<tr style="background:#f4f0e8;font-weight:700">' +
+            '<td style="' + tdStyle + '" colspan="3">SUBTOTAL</td>' +
+            '<td style="text-align:center;' + tdStyle + '">' + subtotalQty + '</td>' +
+            '<td style="' + tdStyle + '"></td>' +
+            '<td style="text-align:right;' + tdStyle + '">$' + subtotalRevenue.toLocaleString() + '</td>' +
+            '<td style="text-align:right;' + tdStyle + '">$' + subtotalDesigner.toLocaleString() + '</td>' +
+          '</tr>' +
+        '</tbody>' +
+      '</table>';
+  }
+
+  // Build period-split tables
+  var soldTable = '';
+  if (lastSettled && mergedSettledList.length > 0) {
+    soldTable += buildSoldTable('Previous Period (Settled ' + lastSettled + ')', mergedSettledList, settledSoldQty, settledRevenue, settledDesigner, '#ddd8d0');
+    soldTable += buildSoldTable('Current Period (New Sales)', mergedCurrentList, currentSoldQty, currentRevenue, currentDesigner, '#d4ecd5');
+  } else {
+    soldTable += buildSoldTable('Sales Summary', mergedSoldList, totalSoldQty, totalRevenue, totalDesigner, '#e8e4dc');
+  }
 
   // Remaining inventory table
   var remNum = 0;
@@ -9447,6 +9581,7 @@ function openSalesReport(vi) {
       var netDesigner = totalDesigner - totalDed + totalExtras;
       var netStore = totalStore - totalExtras;
       var hasAdjustments = totalDed > 0 || totalExtras > 0;
+      var hasSettledPeriod = lastSettled && mergedSettledList.length > 0;
 
       var dedSection = '';
       if (deductions.length > 0) {
@@ -9519,6 +9654,7 @@ function openSalesReport(vi) {
           '<div style="' + lbl + '">Total Revenue</div>' +
           '<div style="' + bigNum + '">$' + totalRevenue.toLocaleString() + '</div>' +
           '<div style="' + lineItem + ';color:#888;margin-top:4px">' + totalSoldQty + ' items sold</div>' +
+          (hasSettledPeriod ? '<div style="margin-top:8px;padding:6px 8px;background:#d4ecd5;border-radius:4px"><div style="' + lbl + ';color:#2a7d2e;margin-bottom:2px">Current Period (New)</div><div style="font-size:16px;font-weight:700;color:#2a7d2e">$' + currentRevenue.toLocaleString() + '</div><div style="font-size:10px;color:#2a7d2e">' + currentSoldQty + ' items</div></div>' : '') +
         '</div>' +
         // Designer Payout
         (function() {
@@ -9533,6 +9669,12 @@ function openSalesReport(vi) {
             payoutHtml += '<div style="margin-top:10px;padding:10px;background:#fff;border:2px solid #2a7d2e;border-radius:6px;text-align:center">' +
               '<div style="' + lineItem + '">Previously paid: <strong>$' + prevPaid.toLocaleString() + '</strong></div>' +
               '<div style="font-size:20px;font-weight:700;color:' + (remaining > 0 ? '#e07845' : '#2a7d2e') + ';margin-top:4px">Remaining Balance: $' + remaining.toLocaleString() + '</div>' +
+            '</div>';
+          }
+          if (hasSettledPeriod && currentDesigner > 0) {
+            payoutHtml += '<div style="margin-top:8px;padding:8px;background:#d4ecd5;border-radius:4px;text-align:center">' +
+              '<div style="' + lbl + ';color:#2a7d2e;margin-bottom:2px">Newly Owed (Current Period)</div>' +
+              '<div style="font-size:18px;font-weight:700;color:#2a7d2e">$' + currentDesigner.toLocaleString() + '</div>' +
             '</div>';
           }
           payoutHtml += '</div>';
@@ -9918,7 +10060,14 @@ function invNewSetSizeUnpaid(vi, ii, si, who) {
   sz.unpaidBy = who;
   var basePerson = who ? who.replace('-paid', '') : '';
   if (basePerson) {
-    sz.sold = Math.max(sz.sold || 0, 1);
+    var prevSold = sz.sold || 0;
+    sz.sold = Math.max(prevSold, 1);
+    if (sz.sold > prevSold) {
+      var today = new Date().toISOString().slice(0, 10);
+      if (!sz.soldDates) sz.soldDates = [];
+      sz.soldDates.push(today);
+      sz.soldDate = today;
+    }
     if (basePerson === 'brooke' || basePerson === 'del') {
       sz.noCommission = Math.max(sz.noCommission || 0, 1);
     }
@@ -9936,8 +10085,15 @@ function invNewSetUnpaid(vi, ii, who) {
   item.unpaidBy = who;
   var basePerson = who ? who.replace('-paid', '') : '';
   if (basePerson) {
+    var prevSold = item.sold || 0;
     // Always mark as sold when someone is set to pay
-    item.sold = Math.max(item.sold || 0, 1);
+    item.sold = Math.max(prevSold, 1);
+    if (item.sold > prevSold) {
+      var today = new Date().toISOString().slice(0, 10);
+      if (!item.soldDates) item.soldDates = [];
+      item.soldDates.push(today);
+      item.soldDate = today;
+    }
     // Brooke/Del: add 1 to noCommission (their purchase, not all sales)
     if (basePerson === 'brooke' || basePerson === 'del') {
       item.noCommission = Math.max(item.noCommission || 0, 1);
