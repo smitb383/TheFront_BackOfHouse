@@ -2192,6 +2192,7 @@ function showTab(project, tab, btn) {
   if (tab === 'popup-pl') setTimeout(function(){ initPLData(); renderPL(); }, 20);
   if (tab === 'popup-inventory') setTimeout(function(){ initPLData(); renderInventory(); }, 20);
   if (tab === 'popup-inventory-new') setTimeout(function(){ renderInvNew(); }, 20);
+  if (tab === 'web-inventory') setTimeout(function(){ renderWebInventory(); }, 20);
   if (tab === 'schedule') setTimeout(function(){ if(typeof initTracker==='function') initTracker(); if(typeof renderTracker==='function') renderTracker(); }, 20);
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
   if (tab === 'chashama-proposal') setTimeout(function(){ loadBPData(); initChaShaMa(); }, 20);
@@ -10169,6 +10170,102 @@ function invNewSort(sortBy) {
     if (btn) btn.classList.toggle('active', s === sortBy);
   });
   renderInvNew();
+}
+
+function renderWebInventory() {
+  var list = document.getElementById('web-inv-list');
+  if (!list) return;
+  var data = getInvNew();
+  if (!data || !data.vendors) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No inventory data.</div>'; return; }
+
+  // Filter to vendors marked as keeping & listing online (or hybrid)
+  var keepingVendors = data.vendors.filter(function(v) {
+    return v.returnPlan === 'keeping' || v.returnPlan === 'hybrid';
+  });
+
+  if (!keepingVendors.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No designers marked as "Keeping & Listing Online".</div>';
+    return;
+  }
+
+  var html = '';
+  var grandTotal = 0, grandItems = 0;
+
+  keepingVendors.forEach(function(vendor) {
+    var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
+    var sPct = vendor.storePct != null ? vendor.storePct : 30;
+
+    // Get available (unsold, not missing/broken) items
+    var availableItems = [];
+    vendor.items.forEach(function(item) {
+      var price = item.salePrice || 0;
+      var hasSz = item.sizes && item.sizes.length > 0;
+      var missingCount = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+      var brokenCount = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+      var lossCount = missingCount + brokenCount;
+
+      if (hasSz) {
+        item.sizes.forEach(function(sz) {
+          var available = (sz.qty || 0) - Math.min(sz.sold || 0, sz.qty || 0);
+          if (available > 0) {
+            // For hybrid, only include items marked as keeping
+            if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
+            availableItems.push({ name: (item.name || '') + ' — ' + sz.size, price: price, qty: available, photo: item.photo || '', category: item.category || '' });
+          }
+        });
+      } else {
+        var totalQty = item.qty || 1;
+        var sold = Math.min(item.sold || 0, totalQty);
+        var available = totalQty - sold - lossCount;
+        if (available > 0) {
+          if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
+          availableItems.push({ name: item.name || '', price: price, qty: available, photo: item.photo || '', category: item.category || '' });
+        }
+      }
+    });
+
+    if (!availableItems.length) return;
+
+    // Sort by price high to low
+    availableItems.sort(function(a, b) { return b.price - a.price; });
+
+    var vendorTotal = 0, vendorItemCount = 0;
+    availableItems.forEach(function(a) { vendorTotal += a.price * a.qty; vendorItemCount += a.qty; });
+    grandTotal += vendorTotal;
+    grandItems += vendorItemCount;
+
+    html += '<div style="margin-bottom:20px">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:2px solid var(--border)">';
+    html += '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600">' + esc(vendor.name) + '</span>';
+    html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted)">' + vendorItemCount + ' items · $' + Math.round(vendorTotal).toLocaleString() + ' value</span>';
+    html += '</div>';
+
+    // Item rows
+    html += '<div style="display:grid;grid-template-columns:60px 1fr 80px 50px 50px 70px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">';
+    html += '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div><div style="text-align:right">Value</div></div>';
+
+    availableItems.forEach(function(a) {
+      html += '<div style="display:grid;grid-template-columns:60px 1fr 80px 50px 50px 70px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
+      html += '<div style="width:52px;height:52px;border-radius:4px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center">' +
+        (a.photo ? '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="color:var(--muted);font-size:12px">—</span>') + '</div>';
+      html += '<div style="font-family:Cormorant Garamond,serif;font-size:15px">' + esc(a.name) + '</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-transform:uppercase">' + esc(a.category) + '</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:11px">$' + a.price + '</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:center">' + a.qty + '</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:right;font-weight:600">$' + (a.price * a.qty) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  // Summary
+  var summary = '<div style="display:flex;gap:24px;padding:16px;background:var(--surface2);border-radius:6px;margin-bottom:16px;font-family:DM Mono,monospace">';
+  summary += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Designers</span><div style="font-size:18px;font-weight:700">' + keepingVendors.filter(function(v) { return v.items.some(function(i) { var s = i.sold||0; return (i.qty||1) - s > 0; }); }).length + '</div></div>';
+  summary += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Items Available</span><div style="font-size:18px;font-weight:700">' + grandItems + '</div></div>';
+  summary += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total Value</span><div style="font-size:18px;font-weight:700">$' + Math.round(grandTotal).toLocaleString() + '</div></div>';
+  summary += '</div>';
+
+  list.innerHTML = summary + html;
 }
 
 function renderInvNewGallery() {

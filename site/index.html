@@ -70,6 +70,7 @@
         <div class="sub-bar front-side-bar" id="front-vendors-bar">
           <button class="tab" data-tab="popup-vendors" onclick="showTab('front','popup-vendors',this)"><span class="tab-icon">🤝</span>Vendors</button>
           <button class="tab active" data-tab="popup-inventory-new" onclick="showTab('front','popup-inventory-new',this)"><span class="tab-icon">📦</span>Inventory</button>
+          <button class="tab" data-tab="web-inventory" onclick="showTab('front','web-inventory',this)"><span class="tab-icon">🌐</span>Web / Post-Close</button>
         </div>
         <div class="sub-bar front-side-bar" id="front-retail-bar">
           <div class="brand-switcher">
@@ -2374,6 +2375,15 @@
         </div>
         <div id="inv-new-list"></div>
         <div id="inv-new-gallery" style="display:none"></div>
+      </div>
+
+      <!-- WEB / POST-CLOSE INVENTORY -->
+      <div class="ws-view" id="front-web-inventory">
+        <div class="view-header">
+          <div><div class="view-title">Web / Post-Close Inventory</div>
+          <div class="view-desc">Items from designers marked as "Keeping & Listing Online" that are still available for sale.</div></div>
+        </div>
+        <div id="web-inv-list"></div>
       </div>
 
       <!-- OLD BUDGET (hidden, kept for data compat) -->
