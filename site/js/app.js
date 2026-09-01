@@ -9429,9 +9429,18 @@ function openSalesReport(vi) {
       var storeCut = Math.round(price * commSold * (sPct / 100));
       soldItemsAll.push({ name: item.name || '', price: price, qtySold: tSold, noComm: tNoComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: item.photo || '' });
     }
-    var remaining = tQty - tSold - lossCount;
-    if (remaining > 0) {
-      remainingItems.push({ name: item.name || '', price: price, qty: remaining, photo: item.photo || '' });
+    if (hasSz) {
+      item.sizes.forEach(function(sz) {
+        var szRemaining = (sz.qty || 0) - Math.min(sz.sold || 0, sz.qty || 0);
+        if (szRemaining > 0) {
+          remainingItems.push({ name: (item.name || '') + ' [' + (sz.size || '') + ']', price: price, qty: szRemaining, photo: item.photo || '' });
+        }
+      });
+    } else {
+      var remaining = tQty - tSold - lossCount;
+      if (remaining > 0) {
+        remainingItems.push({ name: item.name || '', price: price, qty: remaining, photo: item.photo || '' });
+      }
     }
   });
 
