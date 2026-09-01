@@ -815,9 +815,10 @@ function renderPLSections(scenario, calc, liveInventory) {
     var revenueTotal = 0;
     if (sec.revenueType === 'consignment') {
       consignmentItems.forEach(function(item) {
-        var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
-        revenueTotal += sellQty * item.price * (item.commissionPct / 100);
+        if (item.isAdjustment) { revenueTotal += (item.adjustmentAmount || 0); return; }
+        if (item.isShippingDeduction) return;
+        var sold = item.totalSold || 0;
+        revenueTotal += (item.actualStoreRev != null) ? item.actualStoreRev : Math.round(sold * item.price * (item.commissionPct / 100));
       });
     } else if (sec.revenueType === 'wholesale') {
       wholesaleItems.forEach(function(item) {
@@ -1162,7 +1163,8 @@ function renderPLSections(scenario, calc, liveInventory) {
     var hasRevenue = false;
 
     if (sec.revenueType === 'consignment') {
-      if (consignmentItems.length) {
+      var hasSoldItems = consignmentItems.some(function(i) { return !i.isAdjustment && !i.isShippingDeduction && (i.totalSold || 0) > 0; });
+      if (hasSoldItems) {
         hasRevenue = true;
         revenueColHtml += renderConsignmentRevenue(consignmentItems, scenario);
       }
@@ -1337,13 +1339,24 @@ function renderShippingCard(shipItem) {
 }
 
 function renderConsignmentRevenue(items, scenario) {
-  // Group by vendor
+  // Group by vendor — only include items with actual sales
   var vendorMap = {};
   var vendorOrder = [];
   items.forEach(function(item) {
+    if (item.isAdjustment || item.isShippingDeduction) return;
+    var sold = item.totalSold || 0;
+    if (sold <= 0) return; // skip unsold items
     var key = item.vendor || 'Other';
-    if (!vendorMap[key]) { vendorMap[key] = { items: [], commissionPct: item.commissionPct }; vendorOrder.push(key); }
+    if (!vendorMap[key]) { vendorMap[key] = { items: [], commissionPct: item.commissionPct, vendorId: item.vendorId }; vendorOrder.push(key); }
     vendorMap[key].items.push(item);
+  });
+
+  // Also gather adjustment items per vendor
+  var adjustments = {};
+  items.forEach(function(item) {
+    if (item.isAdjustment && item.adjustmentAmount) {
+      adjustments[item.vendor] = item.adjustmentAmount;
+    }
   });
 
   var h = '';
@@ -1352,19 +1365,20 @@ function renderConsignmentRevenue(items, scenario) {
     var vendorRate = group.commissionPct || 30;
     var vendorGross = 0, vendorCut = 0, vendorItemCount = 0;
     group.items.forEach(function(item) {
-      var sale = scenario.itemSales && scenario.itemSales[item.id];
-      var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
-      vendorGross += sellQty * item.price;
-      vendorCut += sellQty * item.price * (item.commissionPct / 100);
-      vendorItemCount++;
+      var sold = item.totalSold || 0;
+      vendorGross += sold * item.price;
+      vendorCut += (item.actualStoreRev != null) ? item.actualStoreRev : Math.round(sold * item.price * (item.commissionPct / 100));
+      vendorItemCount += sold;
     });
+    var adj = adjustments[vendorName] || 0;
+    vendorCut += adj;
 
     var isVendorOpen = document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')) &&
       document.getElementById('pl-vgroup-' + vendorName.replace(/\s/g,'_')).classList.contains('open');
 
     h += '<div class="pl-vendor-collapse' + (isVendorOpen ? ' open' : '') + '" id="pl-vgroup-' + esc(vendorName.replace(/\s/g,'_')) + '">' +
       '<div class="pl-vendor-collapse-top" onclick="toggleVendorGroup(\'' + esc(vendorName.replace(/\s/g,'_')) + '\')">' +
-        '<span class="pl-vendor-collapse-name">' + esc(vendorName) + ' <span style="font-size:9px;color:var(--muted);font-weight:normal">' + vendorRate + '% \u00b7 ' + vendorItemCount + ' items</span></span>' +
+        '<span class="pl-vendor-collapse-name">' + esc(vendorName) + ' <span style="font-size:9px;color:var(--muted);font-weight:normal">' + vendorItemCount + ' sold</span></span>' +
         '<span class="pl-vendor-collapse-gross">$' + fmt(vendorGross) + '</span>' +
         '<span class="pl-vendor-collapse-cut">$' + fmt(vendorCut) + '</span>' +
         '<span class="pl-cost-chevron">\u203a</span>' +
@@ -1372,22 +1386,26 @@ function renderConsignmentRevenue(items, scenario) {
       '<div class="pl-vendor-collapse-body">';
 
     group.items.forEach(function(item) {
-      var invQty = item.qty || 1;
-      var sale = scenario.itemSales && scenario.itemSales[item.id];
-      var sellQty = (sale && sale.qty != null) ? sale.qty : invQty;
-      var gross = sellQty * item.price;
-      var cut = gross * (item.commissionPct / 100);
-      var dimmed = sellQty === 0;
+      var sold = item.totalSold || 0;
+      var gross = sold * item.price;
+      var cut = (item.actualStoreRev != null) ? item.actualStoreRev : Math.round(gross * (item.commissionPct / 100));
 
-      h += '<div class="pl-rev-spreadrow' + (dimmed ? ' pl-not-sold' : '') + '">' +
+      h += '<div class="pl-rev-spreadrow">' +
         '<span class="pl-rev-sr-item">' + esc(item.name || '(untitled)') + '</span>' +
         '<span class="pl-rev-sr-num">$' + fmt(item.price) + '</span>' +
-        '<span class="pl-rev-sr-num" style="color:var(--muted)">inv ' + invQty + '</span>' +
-        '<span class="pl-rev-sr-num" onclick="event.stopPropagation()">sell <input type="number" min="0" max="' + invQty + '" value="' + sellQty + '" class="pl-rev-sr-input" data-item-id="' + item.id + '" data-inv-qty="' + invQty + '" onchange="updateItemSellQty(this)"></span>' +
-        '<span class="pl-rev-sr-num">' + item.commissionPct + '%</span>' +
-        '<span class="pl-rev-sr-num pl-rev-sr-cut' + (dimmed ? ' pl-cut-muted' : '') + '">$' + fmt(cut) + '</span>' +
+        '<span class="pl-rev-sr-num" style="color:#88c98a">' + sold + ' sold</span>' +
+        '<span class="pl-rev-sr-num">$' + fmt(gross) + '</span>' +
+        '<span class="pl-rev-sr-num pl-rev-sr-cut">$' + fmt(cut) + '</span>' +
       '</div>';
     });
+
+    // Show adjustments (deductions/extra payments) if any
+    if (adj !== 0) {
+      h += '<div style="padding:4px 0;border-top:1px dashed var(--faint);margin-top:4px;font-family:DM Mono,monospace;font-size:10px;display:flex;justify-content:space-between">' +
+        '<span style="color:var(--muted)">' + (adj > 0 ? 'Deductions recovered' : 'Extra payments') + '</span>' +
+        '<span style="color:' + (adj > 0 ? '#88c98a' : '#e07070') + '">' + (adj > 0 ? '+' : '-') + '$' + fmt(Math.abs(adj)) + '</span>' +
+      '</div>';
+    }
 
     h += '</div></div>';
   });
