@@ -77,11 +77,11 @@ var PL_DEFAULT_BUSINESS_COSTS = [
 ];
 
 function migratePLData(existing) {
-  // Rename 'working' scenario to 'popup' / '334 PopUp'
+  // Rename 'working' scenario to 'popup' / '46 Hester'
   existing.scenarios.forEach(function(s) {
     if (s.id === 'working') {
       s.id = 'popup';
-      s.name = '334 PopUp';
+      s.name = '46 Hester';
       s.type = 'popup';
     }
   });
@@ -184,7 +184,7 @@ function initPLData() {
     scenarios: [
       {
         id: 'popup',
-        name: '334 PopUp',
+        name: '46 Hester',
         type: 'popup',
         created: new Date().toISOString().slice(0,10),
         fixedCosts: fixedCosts,
@@ -525,7 +525,7 @@ function renderScenarioBar(data) {
   var el = document.getElementById('pl-scenario-bar');
   if (!el) return;
 
-  // Permanent tabs: 334 PopUp + Business + any cloned scenarios
+  // Permanent tabs: 46 Hester + Business + any cloned scenarios
   var html = '<div class="pl-scenario-pills">';
 
   // Always show popup and business first
@@ -547,7 +547,7 @@ function renderScenarioBar(data) {
     html += '<button class="pl-scenario-pill' + (active ? ' active' : '') + '" onclick="switchScenario(\'' + s.id + '\')">' + esc(s.name) + '</button>';
   });
 
-  html += '<button class="pl-scenario-pill pl-add-scenario" onclick="addScenario()">+ 334 Budget Scenario</button>';
+  html += '<button class="pl-scenario-pill pl-add-scenario" onclick="addScenario()">+ 46 Hester Budget Scenario</button>';
   html += '</div>';
 
   // Scenario actions for cloned scenarios
@@ -2501,7 +2501,7 @@ function addScenario() {
   var name = prompt('Scenario name:');
   if (!name) return;
   var data = getPLData();
-  // Clone from 334 PopUp
+  // Clone from 46 Hester
   var popup = data.scenarios.find(function(s) { return s.id === 'popup'; }) || data.scenarios[0];
   var newScenario = JSON.parse(JSON.stringify(popup));
   newScenario.id = 'sc_' + Date.now();
