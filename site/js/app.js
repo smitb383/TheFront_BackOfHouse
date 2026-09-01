@@ -9542,7 +9542,7 @@ function openSalesReport(vi) {
   }).join('');
 
   var remTable = remainingItems.length > 0
-    ? '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Remaining Inventory</div>' +
+    ? '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Remaining Inventory' + (vendor.reportNote ? ' — ' + esc(vendor.reportNote) : '') + '</div>' +
       '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">' +
         '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">' +
           '<th style="' + tdStyle + ';width:30px">#</th>' +
