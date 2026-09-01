@@ -721,11 +721,12 @@ function renderPLSections(scenario, calc, liveInventory) {
     var isOpen = _plSectionOpen[sec.id] !== false; // default open
     if (_plSectionOpen[sec.id] === undefined) _plSectionOpen[sec.id] = true;
 
-    // Gather fixed costs for this section
+    // Gather fixed costs for this section, sorted highest to lowest
     var sectionFixed = [];
     (sec.fixedCats || []).forEach(function(cat) {
       (fcByCat[cat] || []).forEach(function(c) { sectionFixed.push(c); });
     });
+    sectionFixed.sort(function(a, b) { return ((b.amount || 0) - (b.refund || 0)) - ((a.amount || 0) - (a.refund || 0)); });
 
     // Calculate fixed total
     var fixedTotal = 0;
