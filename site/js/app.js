@@ -10172,11 +10172,16 @@ function invNewSort(sortBy) {
   renderInvNew();
 }
 
+var webInvFilter = 'all';
+var webInvView = 'grid';
+
 function renderWebInventory() {
-  var list = document.getElementById('web-inv-list');
-  if (!list) return;
+  var container = document.getElementById('web-inv-container');
+  if (!container) return;
   var data = getInvNew();
-  if (!data || !data.vendors) { list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No inventory data.</div>'; return; }
+  if (!data || !data.vendors) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No inventory data.</div>'; return; }
+
+  var categories = ['clothing','jewelry','accessories','ceramics','objects','art','textiles','furniture','other'];
 
   // Filter to vendors marked as keeping & listing online (or hybrid)
   var keepingVendors = data.vendors.filter(function(v) {
@@ -10184,33 +10189,42 @@ function renderWebInventory() {
   });
 
   if (!keepingVendors.length) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No designers marked as "Keeping & Listing Online".</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No designers marked as "Keeping &amp; Listing Online".</div>';
     return;
   }
 
-  var html = '';
-  var grandTotal = 0, grandItems = 0;
+  // Build flat list of available items with vendor/item indices for two-way sync
+  var allItems = [];
+  var designerSet = {};
 
   keepingVendors.forEach(function(vendor) {
-    var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
-    var sPct = vendor.storePct != null ? vendor.storePct : 30;
-
-    // Get available (unsold, not missing/broken) items
-    var availableItems = [];
-    vendor.items.forEach(function(item) {
+    var vi = data.vendors.indexOf(vendor);
+    vendor.items.forEach(function(item, ii) {
       var price = item.salePrice || 0;
       var hasSz = item.sizes && item.sizes.length > 0;
       var missingCount = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
       var brokenCount = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
       var lossCount = missingCount + brokenCount;
 
+      if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
+
       if (hasSz) {
         item.sizes.forEach(function(sz) {
           var available = (sz.qty || 0) - Math.min(sz.sold || 0, sz.qty || 0);
           if (available > 0) {
-            // For hybrid, only include items marked as keeping
-            if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
-            availableItems.push({ name: (item.name || '') + ' — ' + sz.size, price: price, qty: available, photo: item.photo || '', category: item.category || '' });
+            allItems.push({
+              name: (item.name || '') + ' — ' + sz.size,
+              designer: vendor.name || '',
+              price: price,
+              qty: available,
+              photo: item.photo || '',
+              category: item.category || '',
+              webPhotoDone: item.webPhotoDone || false,
+              webNotes: item.webNotes || '',
+              vi: vi,
+              ii: ii
+            });
+            designerSet[vendor.name] = true;
           }
         });
       } else {
@@ -10218,54 +10232,151 @@ function renderWebInventory() {
         var sold = Math.min(item.sold || 0, totalQty);
         var available = totalQty - sold - lossCount;
         if (available > 0) {
-          if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
-          availableItems.push({ name: item.name || '', price: price, qty: available, photo: item.photo || '', category: item.category || '' });
+          allItems.push({
+            name: item.name || '',
+            designer: vendor.name || '',
+            price: price,
+            qty: available,
+            photo: item.photo || '',
+            category: item.category || '',
+            webPhotoDone: item.webPhotoDone || false,
+            webNotes: item.webNotes || '',
+            vi: vi,
+            ii: ii
+          });
+          designerSet[vendor.name] = true;
         }
       }
     });
+  });
 
-    if (!availableItems.length) return;
+  // Sort by price high to low
+  allItems.sort(function(a, b) { return b.price - a.price; });
 
-    // Sort by price high to low
-    availableItems.sort(function(a, b) { return b.price - a.price; });
+  // Apply category filter
+  var filtered = webInvFilter === 'all' ? allItems : allItems.filter(function(a) {
+    return (a.category || '').toLowerCase() === webInvFilter;
+  });
 
-    var vendorTotal = 0, vendorItemCount = 0;
-    availableItems.forEach(function(a) { vendorTotal += a.price * a.qty; vendorItemCount += a.qty; });
-    grandTotal += vendorTotal;
-    grandItems += vendorItemCount;
+  // Totals (from all items, not filtered)
+  var grandTotal = 0, grandItems = 0;
+  allItems.forEach(function(a) { grandTotal += a.price * a.qty; grandItems += a.qty; });
+  var designerCount = Object.keys(designerSet).length;
 
-    html += '<div style="margin-bottom:20px">';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:2px solid var(--border)">';
-    html += '<span style="font-family:Cormorant Garamond,serif;font-size:20px;font-weight:600">' + esc(vendor.name) + '</span>';
-    html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted)">' + vendorItemCount + ' items · $' + Math.round(vendorTotal).toLocaleString() + ' value</span>';
+  // --- Build HTML ---
+  var html = '';
+
+  // Summary bar
+  html += '<div style="display:flex;gap:24px;padding:16px;background:var(--surface2);border-radius:6px;margin-bottom:16px;font-family:DM Mono,monospace">';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Designers</span><div style="font-size:18px;font-weight:700">' + designerCount + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Items Available</span><div style="font-size:18px;font-weight:700">' + grandItems + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total Value</span><div style="font-size:18px;font-weight:700">$' + Math.round(grandTotal).toLocaleString() + '</div></div>';
+  html += '</div>';
+
+  // Filter bar + view toggle
+  html += '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:16px">';
+  // All button
+  html += '<button onclick="webInvFilter=\'all\';renderWebInventory()" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:' + (webInvFilter === 'all' ? 'var(--front)' : 'var(--surface2)') + ';color:' + (webInvFilter === 'all' ? '#000' : 'var(--text)') + ';font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">All</button>';
+  categories.forEach(function(cat) {
+    var active = webInvFilter === cat;
+    html += '<button onclick="webInvFilter=\'' + cat + '\';renderWebInventory()" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:' + (active ? 'var(--front)' : 'var(--surface2)') + ';color:' + (active ? '#000' : 'var(--text)') + ';font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' + cat + '</button>';
+  });
+  // Spacer then view toggle
+  html += '<div style="flex:1"></div>';
+  html += '<button onclick="webInvView=\'grid\';renderWebInventory()" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:' + (webInvView === 'grid' ? 'var(--front)' : 'var(--surface2)') + ';color:' + (webInvView === 'grid' ? '#000' : 'var(--text)') + ';font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">Grid</button>';
+  html += '<button onclick="webInvView=\'list\';renderWebInventory()" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:' + (webInvView === 'list' ? 'var(--front)' : 'var(--surface2)') + ';color:' + (webInvView === 'list' ? '#000' : 'var(--text)') + ';font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">List</button>';
+  html += '</div>';
+
+  if (!filtered.length) {
+    html += '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No items match this filter.</div>';
+    container.innerHTML = html;
+    return;
+  }
+
+  // Category dropdown builder
+  function catSelect(a) {
+    var s = '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'category\',this.value);webInvFilter===\'all\'||renderWebInventory()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:3px;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;padding:2px 4px;cursor:pointer">';
+    s += '<option value=""' + (!a.category ? ' selected' : '') + '>--</option>';
+    categories.forEach(function(c) {
+      s += '<option value="' + c + '"' + (a.category.toLowerCase() === c ? ' selected' : '') + '>' + c + '</option>';
+    });
+    s += '</select>';
+    return s;
+  }
+
+  if (webInvView === 'grid') {
+    // --- GRID VIEW ---
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">';
+    filtered.forEach(function(a) {
+      html += '<div style="background:var(--surface2);border-radius:8px;overflow:hidden;border:1px solid var(--border)">';
+      // Photo
+      html += '<div style="width:100%;aspect-ratio:1/1;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
+        (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
+      if (a.photo) {
+        html += '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
+      } else {
+        html += '<span style="color:var(--muted);font-size:24px">No Photo</span>';
+      }
+      html += '</div>';
+      // Info
+      html += '<div style="padding:12px">';
+      html += '<div style="font-family:Cormorant Garamond,serif;font-size:16px;font-weight:600;line-height:1.2">' + esc(a.name) + '</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px">' + esc(a.designer) + '</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;margin-top:6px">$' + a.price + '</div>';
+      // Category + Qty row
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">';
+      html += catSelect(a);
+      html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">Qty: ' + a.qty + '</span>';
+      html += '</div>';
+      // Has Photos checkbox
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-top:8px">';
+      html += '<input type="checkbox"' + (a.webPhotoDone ? ' checked' : '') + ' onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webPhotoDone\',this.checked)" style="cursor:pointer">';
+      html += '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted)">Web Photos Done</span>';
+      html += '</div>';
+      // Notes toggle
+      html += '<details style="margin-top:8px">';
+      html += '<summary style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);cursor:pointer;letter-spacing:0.04em">Notes</summary>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webNotes\',this.value)" style="width:100%;min-height:50px;margin-top:4px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webNotes) + '</textarea>';
+      html += '</details>';
+      html += '</div></div>';
+    });
     html += '</div>';
+  } else {
+    // --- LIST VIEW ---
+    // Header
+    html += '<div style="display:grid;grid-template-columns:48px 1fr 120px 90px 60px 50px 80px 80px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:2px solid var(--border)">';
+    html += '<div></div><div>Item</div><div>Designer</div><div>Category</div><div>Price</div><div>Qty</div><div>Photos</div><div style="text-align:right">Value</div></div>';
 
-    // Item rows
-    html += '<div style="display:grid;grid-template-columns:60px 1fr 80px 50px 50px 70px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">';
-    html += '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div><div style="text-align:right">Value</div></div>';
-
-    availableItems.forEach(function(a) {
-      html += '<div style="display:grid;grid-template-columns:60px 1fr 80px 50px 50px 70px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
-      html += '<div style="width:52px;height:52px;border-radius:4px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center">' +
-        (a.photo ? '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="color:var(--muted);font-size:12px">—</span>') + '</div>';
-      html += '<div style="font-family:Cormorant Garamond,serif;font-size:15px">' + esc(a.name) + '</div>';
-      html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-transform:uppercase">' + esc(a.category) + '</div>';
+    filtered.forEach(function(a) {
+      html += '<div style="display:grid;grid-template-columns:48px 1fr 120px 90px 60px 50px 80px 80px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
+      // Thumb
+      html += '<div style="width:42px;height:42px;border-radius:4px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
+        (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
+      if (a.photo) {
+        html += '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
+      } else {
+        html += '<span style="color:var(--muted);font-size:10px">--</span>';
+      }
+      html += '</div>';
+      // Name
+      html += '<div style="font-family:Cormorant Garamond,serif;font-size:14px">' + esc(a.name) + '</div>';
+      // Designer
+      html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + esc(a.designer) + '</div>';
+      // Category
+      html += '<div>' + catSelect(a) + '</div>';
+      // Price
       html += '<div style="font-family:DM Mono,monospace;font-size:11px">$' + a.price + '</div>';
+      // Qty
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:center">' + a.qty + '</div>';
+      // Photos checkbox
+      html += '<div style="text-align:center"><input type="checkbox"' + (a.webPhotoDone ? ' checked' : '') + ' onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webPhotoDone\',this.checked)" style="cursor:pointer"></div>';
+      // Value
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:right;font-weight:600">$' + (a.price * a.qty) + '</div>';
       html += '</div>';
     });
-    html += '</div>';
-  });
+  }
 
-  // Summary
-  var summary = '<div style="display:flex;gap:24px;padding:16px;background:var(--surface2);border-radius:6px;margin-bottom:16px;font-family:DM Mono,monospace">';
-  summary += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Designers</span><div style="font-size:18px;font-weight:700">' + keepingVendors.filter(function(v) { return v.items.some(function(i) { var s = i.sold||0; return (i.qty||1) - s > 0; }); }).length + '</div></div>';
-  summary += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Items Available</span><div style="font-size:18px;font-weight:700">' + grandItems + '</div></div>';
-  summary += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total Value</span><div style="font-size:18px;font-weight:700">$' + Math.round(grandTotal).toLocaleString() + '</div></div>';
-  summary += '</div>';
-
-  list.innerHTML = summary + html;
+  container.innerHTML = html;
 }
 
 function renderInvNewGallery() {
