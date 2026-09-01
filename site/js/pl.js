@@ -439,8 +439,9 @@ function calcPL(scenario, inventory) {
     cafeDrinkTxns += (cr.sold || 0);
   });
   var cafeSquareFee = cafeDrinkRevenue * 0.026 + cafeDrinkTxns * 0.15;
-  ourCut += cafeDrinkRevenue;
-  totalRevenue += cafeDrinkRevenue;
+  var cafeCashExtra = scenario.cafeCashSales || 0;
+  ourCut += cafeDrinkRevenue + cafeCashExtra;
+  totalRevenue += cafeDrinkRevenue + cafeCashExtra;
   totalVariable += cafeDrinkCosts + cafeSquareFee;
 
   // Space revenue (insurance refund etc)
@@ -795,6 +796,7 @@ function renderPLSections(scenario, calc, liveInventory) {
       (scenario.otherRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
     } else if (sec.revenueType === 'cafeRevenue') {
       (scenario.cafeRevenue || []).forEach(function(r) { revenueTotal += (r.price || 0) * (r.sold || 0); });
+      revenueTotal += (scenario.cafeCashSales || 0);
     } else if (sec.revenueType === 'spaceRevenue') {
       (scenario.spaceRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
     }
@@ -890,7 +892,8 @@ function renderPLSections(scenario, calc, liveInventory) {
         cafeTotalDrinkRevenue += (cr.price || 0) * (cr.sold || 0);
       });
       html += '<div class="pl-section-col">';
-      html += '<div class="pl-section-col-head"><span>Revenue Details</span><span class="pl-section-col-total">$' + fmt(cafeTotalDrinkRevenue) + '</span></div>';
+      var cafeCashForTotal = scenario.cafeCashSales || 0;
+      html += '<div class="pl-section-col-head"><span>Revenue Details</span><span class="pl-section-col-total">$' + fmt(cafeTotalDrinkRevenue + cafeCashForTotal) + '</span></div>';
       // Compact inline entry for each drink
       html += '<div style="margin-bottom:8px">';
       html += '<div style="display:grid;grid-template-columns:1fr 60px 50px 70px 30px;gap:6px;align-items:center;font-family:DM Mono,monospace;font-size:8px;color:var(--muted);text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--faint)">';
@@ -908,6 +911,13 @@ function renderPLSections(scenario, calc, liveInventory) {
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px">';
       html += '<button class="pl-add-row-btn" onclick="addCafeDrink()" style="margin:0">+ Add drink</button>';
       html += '<div style="font-family:DM Mono,monospace;font-size:12px;color:#88c98a;font-weight:700">' + cafeTotalDrinksSold + ' drinks · $' + fmt(cafeTotalDrinkRevenue) + ' revenue</div>';
+      html += '</div></div>';
+      // Cash sales / extra cash
+      var cafeCash = scenario.cafeCashSales || 0;
+      html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--faint)">';
+      html += '<div style="display:flex;align-items:center;gap:8px">';
+      html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em">Extra Cash Collected</span>';
+      html += '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" min="0" step="0.01" value="' + (cafeCash || '') + '" placeholder="0" onchange="updateCafeCash(parseFloat(this.value)||0)" style="width:70px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:12px;padding:4px 6px;border-radius:3px;text-align:right;font-weight:700"></div>';
       html += '</div></div>';
       html += '</div>';
 
@@ -1530,6 +1540,14 @@ function updateCafeVarField(input) {
     item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
     savePLData(data);
   }
+}
+
+function updateCafeCash(val) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  scenario.cafeCashSales = val;
+  savePLData(data);
+  renderPL();
 }
 
 function addCafeSubItem(cvId) {
