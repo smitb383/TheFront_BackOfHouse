@@ -9347,17 +9347,21 @@ function openSalesReport(vi) {
 
   // Helper: split soldDates into settled/current counts
   function splitSoldDates(soldDates, totalSold) {
-    if (!lastSettled || !soldDates || soldDates.length === 0) {
+    if (!lastSettled) {
       return { settled: 0, current: totalSold };
+    }
+    // No soldDates = legacy items sold before settlement tracking — all settled
+    if (!soldDates || soldDates.length === 0) {
+      return { settled: totalSold, current: 0 };
     }
     var settled = 0, current = 0;
     soldDates.forEach(function(d) {
-      if (d <= lastSettled) settled++;
+      if (d < lastSettled) settled++;
       else current++;
     });
-    // If soldDates doesn't cover all sold (legacy items without dates), put remainder in current
+    // Untracked sales (more sold than dates) — assume settled (pre-tracking)
     var untracked = totalSold - (settled + current);
-    if (untracked > 0) current += untracked;
+    if (untracked > 0) settled += untracked;
     return { settled: settled, current: current };
   }
 
