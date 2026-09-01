@@ -9393,15 +9393,15 @@ function openSalesReport(vi) {
         var szNoComm = sz.noCommission || 0;
         tQty += szQty; tSold += szSold; tNoComm += szNoComm;
         if (szSold > 0) {
+          var szName = (item.name || '') + ' [' + (sz.size || '') + ']';
           var split = splitSoldDates(sz.soldDates, szSold);
-          // Proportionally distribute noComm
           var settledNoComm = Math.min(szNoComm, split.settled);
           var currentNoComm = szNoComm - settledNoComm;
           if (split.settled > 0) {
-            soldItemsSettled.push(makeSoldEntry(item.name || '', price, split.settled, settledNoComm, item.photo || ''));
+            soldItemsSettled.push(makeSoldEntry(szName, price, split.settled, settledNoComm, item.photo || ''));
           }
           if (split.current > 0) {
-            soldItemsCurrent.push(makeSoldEntry(item.name || '', price, split.current, currentNoComm, item.photo || ''));
+            soldItemsCurrent.push(makeSoldEntry(szName, price, split.current, currentNoComm, item.photo || ''));
           }
         }
       });
