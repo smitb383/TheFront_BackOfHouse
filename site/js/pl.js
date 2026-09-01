@@ -973,7 +973,7 @@ function renderPLSections(scenario, calc, liveInventory) {
 
       // Profit split column
       var cafeTotalCosts = fixedTotal + cafeTotalVar;
-      var cafeGrossProfit = cafeTotalDrinkRevenue - cafeTotalCosts;
+      var cafeGrossProfit = cafeTotalDrinkRevenue + (scenario.cafeCashSales || 0) - cafeTotalCosts;
       var cafeNetProfit = Math.max(0, cafeGrossProfit);
       var eliseShare = Math.round(cafeNetProfit * 0.30);
       var frontShare = Math.round(cafeNetProfit * 0.70);
@@ -983,7 +983,7 @@ function renderPLSections(scenario, calc, liveInventory) {
       html += '<div class="pl-section-col-head"><span>Profit Split</span><span class="pl-section-col-total" style="color:' + profitClass + '">$' + fmt(cafeNetProfit) + '</span></div>';
       html += '<div style="padding:8px 0;font-family:DM Mono,monospace;font-size:11px;display:flex;flex-direction:column;gap:10px">';
       html += '<div style="display:flex;flex-direction:column;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--border)">';
-      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>Revenue</span><span>$' + fmt(cafeTotalDrinkRevenue) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>Revenue</span><span>$' + fmt(cafeTotalDrinkRevenue + (scenario.cafeCashSales || 0)) + '</span></div>';
       html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>- Fixed</span><span>-$' + fmt(fixedTotal) + '</span></div>';
       html += '<div style="display:flex;justify-content:space-between;color:var(--muted)"><span>- Variable</span><span>-$' + fmt(cafeTotalVar) + '</span></div>';
       html += '<div style="display:flex;justify-content:space-between;font-weight:700;color:' + profitClass + '"><span>Gross Profit</span><span>' + (cafeGrossProfit >= 0 ? '' : '-') + '$' + fmt(Math.abs(cafeGrossProfit)) + '</span></div>';
