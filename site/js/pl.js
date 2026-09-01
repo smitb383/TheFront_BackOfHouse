@@ -830,6 +830,35 @@ function renderPLSections(scenario, calc, liveInventory) {
       }
       html += '</div>';
 
+      // Ongoing supplies column (right next to fixed costs)
+      var cafeSupplyCostsCol = 0;
+      (scenario.cafeVariable || []).forEach(function(cv) { cafeSupplyCostsCol += (cv.amount || 0); });
+      html += '<div class="pl-section-col">';
+      html += '<div class="pl-section-col-head"><span>Ongoing Supplies</span><span class="pl-section-col-total">$' + fmt(cafeSupplyCostsCol) + '</span></div>';
+      if (scenario.cafeVariable && scenario.cafeVariable.length) {
+        (scenario.cafeVariable || []).forEach(function(cv) {
+          var cvOpen = document.getElementById('pl-cafe-var-' + cv.id) && document.getElementById('pl-cafe-var-' + cv.id).classList.contains('open');
+          html += '<div class="pl-cost-item' + (cvOpen ? ' open' : '') + '" id="pl-cafe-var-' + cv.id + '">' +
+            '<div class="pl-cost-top" onclick="toggleCafeVarCard(\'' + cv.id + '\')">' +
+              '<span class="pl-cost-name-display">' + esc(cv.name || '(untitled)') + '</span>' +
+              (cv.who ? '<span style="font-family:DM Mono,monospace;font-size:8px;color:#88c98a;margin-right:4px">' + cv.who + '</span>' : '') +
+              '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" onchange="updateCafeVar(this)"></div>' +
+              '<span class="pl-cost-chevron">\u203a</span>' +
+            '</div>' +
+            '<div class="pl-cost-body">' +
+              '<div class="pl-cost-fields">' +
+                '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(cv.name || '') + '" data-cv-id="' + cv.id + '" data-field="name" onchange="updateCafeVarField(this)"></div>' +
+                '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" data-field="amount" onchange="updateCafeVarField(this)"></div>' +
+                '<div class="pl-cost-field"><div class="pl-cost-field-label">Purchased by</div><div style="display:flex;gap:10px;padding:4px 0">' + ['Del','Brooke'].map(function(who) { return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-family:DM Mono,monospace;font-size:10px;color:' + (cv.who === who ? '#88c98a' : 'var(--muted)') + '"><input type="checkbox"' + (cv.who === who ? ' checked' : '') + ' onclick="event.stopPropagation();updateCafeVarField({dataset:{cvId:\'' + cv.id + '\',field:\'who\'},value:this.checked?\'' + who + '\':\'\'})" style="accent-color:#88c98a">' + who + '</label>'; }).join('') + '</div></div>' +
+                '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-cv-id="' + cv.id + '" data-field="note" onchange="updateCafeVarField(this)">' + esc(cv.note || '') + '</textarea></div>' +
+              '</div>' +
+              '<button class="pl-cost-delete-btn" onclick="deleteCafeVar(\'' + cv.id + '\')">Delete</button>' +
+            '</div></div>';
+        });
+      }
+      html += '<button class="pl-add-row-btn" onclick="addCafeVar()">+ Add supply</button>';
+      html += '</div>';
+
       // Revenue column (with sell buttons)
       var cafeTotalDrinksSold = 0;
       var cafeTotalDrinkRevenue = 0;
@@ -837,27 +866,30 @@ function renderPLSections(scenario, calc, liveInventory) {
         cafeTotalDrinksSold += (cr.sold || 0);
         cafeTotalDrinkRevenue += (cr.price || 0) * (cr.sold || 0);
       });
-      // Quick-edit table for drink sales
-      html += '<div style="margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:6px">';
-      html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">Quick Entry — Drinks Sold</div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 60px 50px 70px;gap:6px;align-items:center;font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--faint)">';
-      html += '<div>Drink</div><div style="text-align:center">Price</div><div style="text-align:center">Sold</div><div style="text-align:right">Revenue</div></div>';
+      html += '<div class="pl-section-col">';
+      html += '<div class="pl-section-col-head"><span>Revenue Details</span><span class="pl-section-col-total">$' + fmt(cafeTotalDrinkRevenue) + '</span></div>';
+      // Compact inline entry for each drink
+      html += '<div style="margin-bottom:8px">';
+      html += '<div style="display:grid;grid-template-columns:1fr 60px 50px 70px 30px;gap:6px;align-items:center;font-family:DM Mono,monospace;font-size:8px;color:var(--muted);text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--faint)">';
+      html += '<div>Drink</div><div style="text-align:center">Price</div><div style="text-align:center">Sold</div><div style="text-align:right">Revenue</div><div></div></div>';
       (scenario.cafeRevenue || []).forEach(function(cr) {
         var drinkRev = (cr.price || 0) * (cr.sold || 0);
-        html += '<div style="display:grid;grid-template-columns:1fr 60px 50px 70px;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--faint)">';
-        html += '<div style="font-family:Cormorant Garamond,serif;font-size:14px">' + esc(cr.name || '') + '</div>';
-        html += '<input type="number" min="0" step="0.5" value="' + (cr.price || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="price" onchange="updateGenRevField(this)" style="width:50px;background:var(--surface);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">';
-        html += '<input type="number" min="0" value="' + (cr.sold || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="sold" onchange="updateGenRevField(this)" style="width:40px;background:var(--surface);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center;font-weight:700">';
+        html += '<div style="display:grid;grid-template-columns:1fr 60px 50px 70px 30px;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid var(--faint)">';
+        html += '<input class="pl-cost-field-input" value="' + esc(cr.name || '') + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="name" onchange="updateGenRevField(this)" style="font-family:Cormorant Garamond,serif;font-size:14px;padding:2px 4px">';
+        html += '<input type="number" min="0" step="0.5" value="' + (cr.price || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="price" onchange="updateGenRevField(this)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">';
+        html += '<input type="number" min="0" value="' + (cr.sold || 0) + '" data-arr="cafeRevenue" data-rid="' + cr.id + '" data-field="sold" onchange="updateGenRevField(this)" style="width:40px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center;font-weight:700">';
         html += '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);text-align:right;font-weight:600">$' + fmt(drinkRev) + '</div>';
+        html += '<button onclick="deleteGenRevItem(\'cafeRevenue\',\'' + cr.id + '\')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>';
         html += '</div>';
       });
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px">';
       html += '<button class="pl-add-row-btn" onclick="addCafeDrink()" style="margin:0">+ Add drink</button>';
       html += '<div style="font-family:DM Mono,monospace;font-size:12px;color:#88c98a;font-weight:700">' + cafeTotalDrinksSold + ' drinks · $' + fmt(cafeTotalDrinkRevenue) + ' revenue</div>';
       html += '</div></div>';
+      html += '</div>';
 
-      html += '<div class="pl-section-col">';
-      html += '<div class="pl-section-col-head"><span>Revenue (detail)</span><span class="pl-section-col-total">$' + fmt(cafeTotalDrinkRevenue) + '</span></div>';
+      // Remove the old expandable revenue detail — it's now combined above
+      if (false) { // kept for reference but no longer rendered
       (scenario.cafeRevenue || []).forEach(function(cr) {
         var drinkRev = (cr.price || 0) * (cr.sold || 0);
         var crOpen = document.getElementById('pl-cafe-drink-' + cr.id) && document.getElementById('pl-cafe-drink-' + cr.id).classList.contains('open');
@@ -884,8 +916,7 @@ function renderPLSections(scenario, calc, liveInventory) {
         html += '<button class="pl-cost-delete-btn" onclick="deleteGenRevItem(\'cafeRevenue\',\'' + cr.id + '\')">Delete drink</button>';
         html += '</div></div>';
       });
-      html += '<button class="pl-add-row-btn" onclick="addCafeDrink()">+ Add drink</button>';
-      html += '</div>';
+      } // end if(false)
 
       // Variable costs column (auto-calculated from sales)
       var cafeIngredientCost = 0;
@@ -904,29 +935,7 @@ function renderPLSections(scenario, calc, liveInventory) {
       html += '<div class="pl-cost-row"><span class="pl-cost-name">Square fee</span><span class="pl-cost-note">2.6% + $0.15/txn</span><span class="pl-cost-amt">$' + fmt(cafeSquare) + '</span></div>';
       html += '</div>';
 
-      // Ongoing supply costs (editable)
-      if (scenario.cafeVariable && scenario.cafeVariable.length) {
-        html += '<div class="pl-cost-cat" style="margin-top:8px"><span class="pl-cost-cat-name">Ongoing supplies</span><span class="pl-cost-cat-total">$' + fmt(cafeSupplyCosts) + '</span></div>';
-        (scenario.cafeVariable || []).forEach(function(cv) {
-          var cvOpen = document.getElementById('pl-cafe-var-' + cv.id) && document.getElementById('pl-cafe-var-' + cv.id).classList.contains('open');
-          html += '<div class="pl-cost-item' + (cvOpen ? ' open' : '') + '" id="pl-cafe-var-' + cv.id + '">' +
-            '<div class="pl-cost-top" onclick="toggleCafeVarCard(\'' + cv.id + '\')">' +
-              '<span class="pl-cost-name-display">' + esc(cv.name || '(untitled)') + '</span>' +
-              '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" onchange="updateCafeVar(this)"></div>' +
-              '<span class="pl-cost-chevron">\u203a</span>' +
-            '</div>' +
-            '<div class="pl-cost-body">' +
-              '<div class="pl-cost-fields">' +
-                '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(cv.name || '') + '" data-cv-id="' + cv.id + '" data-field="name" onchange="updateCafeVarField(this)"></div>' +
-                '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" data-field="amount" onchange="updateCafeVarField(this)"></div>' +
-                '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-cv-id="' + cv.id + '" data-field="note" onchange="updateCafeVarField(this)">' + esc(cv.note || '') + '</textarea></div>' +
-              '</div>' +
-              '<button class="pl-cost-delete-btn" onclick="deleteCafeVar(\'' + cv.id + '\')">Delete</button>' +
-            '</div>' +
-          '</div>';
-        });
-        html += '<button class="pl-add-row-btn" onclick="addCafeVar()">+ Add supply</button>';
-      }
+      // Ongoing supplies now in their own column above
       html += '</div>';
 
       // Profit split column
