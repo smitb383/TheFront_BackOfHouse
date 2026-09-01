@@ -8740,6 +8740,10 @@ function renderInvNew() {
             '<button onclick="event.stopPropagation();invNewMarkSettled(' + vi + ')" style="background:#88c98a22;border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:8px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">Settle</button>' +
           '</div>' +
         '</div>' +
+        '<div style="display:flex;flex-direction:column;flex:1">' +
+          '<div style="' + lblStyle + '">Report Note</div>' +
+          '<input value="' + esc(vendor.reportNote || '') + '" placeholder="Note shown on sales report..." onclick="event.stopPropagation()" oninput="invNewEditVendor(' + vi + ',\'reportNote\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:100%">' +
+        '</div>' +
       '</div>';
 
     var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
@@ -9681,7 +9685,8 @@ function openSalesReport(vi) {
       soldTable +
       // dedSection hidden from designer report (internal only)
       extraSection +
-      remTable;
+      remTable +
+      (vendor.reportNote ? '<div style="margin-top:24px;padding:12px 16px;background:#f9f7f3;border:1px solid #e0dcd4;border-radius:6px;font-size:14px;font-family:Cormorant Garamond,serif;font-style:italic">' + esc(vendor.reportNote) + '</div>' : '');
     })();
 
   var modal = '<div class="doc-modal-overlay" id="doc-modal-overlay">' +

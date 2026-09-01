@@ -319,7 +319,7 @@ function _mergeInvNew(local, remote) {
       vendorMap[v.vendorId].items = merged;
       vendorMap[v.vendorId].name = v.name || vendorMap[v.vendorId].name;
       // Preserve vendor-level fields: always keep the non-empty value
-      ['invComplete','agreementStatus','deliveryMethod','deliveryStatus','shippingCost','shippingCoveredBy','pricingModel','eurRate','returnPlan','shippingStatus','paymentStatus','salesLogDone','payPlatform','payDetails','previouslyPaid','lastSettled'].forEach(function(f) {
+      ['invComplete','agreementStatus','deliveryMethod','deliveryStatus','shippingCost','shippingCoveredBy','pricingModel','eurRate','returnPlan','shippingStatus','paymentStatus','salesLogDone','payPlatform','payDetails','previouslyPaid','lastSettled','reportNote'].forEach(function(f) {
         var local = v[f];
         var remote = vendorMap[v.vendorId][f];
         // If remote has value, keep it (even if local is empty)
@@ -330,7 +330,7 @@ function _mergeInvNew(local, remote) {
       });
       // Also merge these fields back into the local vendor object so they
       // survive when this merged result gets written back to localStorage
-      ['payPlatform','payDetails','previouslyPaid','lastSettled','returnPlan','shippingStatus','paymentStatus','salesLogDone'].forEach(function(f) {
+      ['payPlatform','payDetails','previouslyPaid','lastSettled','returnPlan','shippingStatus','paymentStatus','salesLogDone','reportNote'].forEach(function(f) {
         if (vendorMap[v.vendorId][f] && !v[f]) v[f] = vendorMap[v.vendorId][f];
       });
       // Preserve deductions and extra payments: take whichever array is longer
