@@ -832,31 +832,54 @@ function renderPLSections(scenario, calc, liveInventory) {
 
       // Ongoing supplies column (right next to fixed costs)
       var cafeSupplyCostsCol = 0;
-      (scenario.cafeVariable || []).forEach(function(cv) { cafeSupplyCostsCol += (cv.amount || 0); });
+      (scenario.cafeVariable || []).forEach(function(cv) {
+        // Calculate amount from sub-items if they exist, otherwise use manual amount
+        var subs = cv.subItems || [];
+        if (subs.length > 0) {
+          var subTotal = 0;
+          subs.forEach(function(s) { subTotal += (s.amount || 0); });
+          cv.amount = subTotal; // auto-update
+        }
+        cafeSupplyCostsCol += (cv.amount || 0);
+      });
       html += '<div class="pl-section-col">';
       html += '<div class="pl-section-col-head"><span>Ongoing Supplies</span><span class="pl-section-col-total">$' + fmt(cafeSupplyCostsCol) + '</span></div>';
       if (scenario.cafeVariable && scenario.cafeVariable.length) {
         (scenario.cafeVariable || []).forEach(function(cv) {
           var cvOpen = document.getElementById('pl-cafe-var-' + cv.id) && document.getElementById('pl-cafe-var-' + cv.id).classList.contains('open');
+          var subs = cv.subItems || [];
+          var subCount = subs.length;
           html += '<div class="pl-cost-item' + (cvOpen ? ' open' : '') + '" id="pl-cafe-var-' + cv.id + '">' +
             '<div class="pl-cost-top" onclick="toggleCafeVarCard(\'' + cv.id + '\')">' +
               '<span class="pl-cost-name-display">' + esc(cv.name || '(untitled)') + '</span>' +
               (cv.who ? '<span style="font-family:DM Mono,monospace;font-size:8px;color:#88c98a;margin-right:4px">' + cv.who + '</span>' : '') +
-              '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" onchange="updateCafeVar(this)"></div>' +
+              (subCount > 0 ? '<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted)">' + subCount + ' items</span>' : '') +
+              '<span class="pl-cost-amt-inline" style="pointer-events:none">$' + fmt(cv.amount || 0) + '</span>' +
               '<span class="pl-cost-chevron">\u203a</span>' +
             '</div>' +
             '<div class="pl-cost-body">' +
               '<div class="pl-cost-fields">' +
-                '<div class="pl-cost-field"><div class="pl-cost-field-label">Name</div><input class="pl-cost-field-input" value="' + esc(cv.name || '') + '" data-cv-id="' + cv.id + '" data-field="name" onchange="updateCafeVarField(this)"></div>' +
-                '<div class="pl-cost-field"><div class="pl-cost-field-label">Amount ($)</div><input class="pl-cost-field-input" type="number" min="0" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" data-field="amount" onchange="updateCafeVarField(this)"></div>' +
+                '<div class="pl-cost-field"><div class="pl-cost-field-label">Category Name</div><input class="pl-cost-field-input" value="' + esc(cv.name || '') + '" data-cv-id="' + cv.id + '" data-field="name" onchange="updateCafeVarField(this)"></div>' +
                 '<div class="pl-cost-field"><div class="pl-cost-field-label">Purchased by</div><div style="display:flex;gap:10px;padding:4px 0">' + ['Del','Brooke'].map(function(who) { return '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-family:DM Mono,monospace;font-size:10px;color:' + (cv.who === who ? '#88c98a' : 'var(--muted)') + '"><input type="checkbox"' + (cv.who === who ? ' checked' : '') + ' onclick="event.stopPropagation();updateCafeVarField({dataset:{cvId:\'' + cv.id + '\',field:\'who\'},value:this.checked?\'' + who + '\':\'\'})" style="accent-color:#88c98a">' + who + '</label>'; }).join('') + '</div></div>' +
                 '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details\u2026" data-cv-id="' + cv.id + '" data-field="note" onchange="updateCafeVarField(this)">' + esc(cv.note || '') + '</textarea></div>' +
               '</div>' +
-              '<button class="pl-cost-delete-btn" onclick="deleteCafeVar(\'' + cv.id + '\')">Delete</button>' +
+              // Sub-items
+              '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--faint)">' +
+                '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Line Items</div>' +
+                subs.map(function(sub, si) {
+                  return '<div style="display:flex;gap:6px;align-items:center;padding:3px 0">' +
+                    '<input class="pl-cost-field-input" value="' + esc(sub.name || '') + '" placeholder="Item name" oninput="updateCafeSubItem(\'' + cv.id + '\',' + si + ',\'name\',this.value)" style="flex:1;font-size:11px;padding:3px 6px">' +
+                    '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:10px">$</span><input type="number" min="0" step="0.01" value="' + (sub.amount || '') + '" placeholder="0" oninput="updateCafeSubItem(\'' + cv.id + '\',' + si + ',\'amount\',parseFloat(this.value)||0)" onblur="renderPL()" style="width:55px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:3px;border-radius:3px;text-align:right"></div>' +
+                    '<button onclick="deleteCafeSubItem(\'' + cv.id + '\',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>' +
+                  '</div>';
+                }).join('') +
+                '<button onclick="addCafeSubItem(\'' + cv.id + '\')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;margin-top:4px">+ Add item</button>' +
+              '</div>' +
+              '<button class="pl-cost-delete-btn" onclick="deleteCafeVar(\'' + cv.id + '\')">Delete category</button>' +
             '</div></div>';
         });
       }
-      html += '<button class="pl-add-row-btn" onclick="addCafeVar()">+ Add supply</button>';
+      html += '<button class="pl-add-row-btn" onclick="addCafeVar()">+ Add supply category</button>';
       html += '</div>';
 
       // Revenue column (with sell buttons)
@@ -1507,6 +1530,49 @@ function updateCafeVarField(input) {
     item[field] = field === 'amount' ? (parseFloat(input.value) || 0) : input.value;
     savePLData(data);
   }
+}
+
+function addCafeSubItem(cvId) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var cv = (scenario.cafeVariable || []).find(function(c) { return c.id === cvId; });
+  if (!cv) return;
+  if (!cv.subItems) cv.subItems = [];
+  cv.subItems.push({ name: '', amount: 0 });
+  // Recalc total
+  var total = 0;
+  cv.subItems.forEach(function(s) { total += (s.amount || 0); });
+  cv.amount = total;
+  savePLData(data);
+  renderPL();
+  setTimeout(function() { var card = document.getElementById('pl-cafe-var-' + cvId); if (card) card.classList.add('open'); }, 50);
+}
+
+function updateCafeSubItem(cvId, si, field, val) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var cv = (scenario.cafeVariable || []).find(function(c) { return c.id === cvId; });
+  if (!cv || !cv.subItems || !cv.subItems[si]) return;
+  cv.subItems[si][field] = val;
+  // Recalc total
+  var total = 0;
+  cv.subItems.forEach(function(s) { total += (s.amount || 0); });
+  cv.amount = total;
+  savePLData(data);
+}
+
+function deleteCafeSubItem(cvId, si) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var cv = (scenario.cafeVariable || []).find(function(c) { return c.id === cvId; });
+  if (!cv || !cv.subItems) return;
+  cv.subItems.splice(si, 1);
+  var total = 0;
+  cv.subItems.forEach(function(s) { total += (s.amount || 0); });
+  cv.amount = total;
+  savePLData(data);
+  renderPL();
+  setTimeout(function() { var card = document.getElementById('pl-cafe-var-' + cvId); if (card) card.classList.add('open'); }, 50);
 }
 
 function addCafeVar() {
