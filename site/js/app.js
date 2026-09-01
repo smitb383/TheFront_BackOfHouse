@@ -10258,24 +10258,31 @@ function renderWebInventory() {
       if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
 
       if (hasSz) {
+        var availSizes = [];
+        var totalSzQty = 0;
         item.sizes.forEach(function(sz) {
           var available = (sz.qty || 0) - Math.min(sz.sold || 0, sz.qty || 0);
           if (available > 0) {
-            allItems.push({
-              name: (item.name || '') + ' — ' + sz.size,
-              designer: vendor.name || '',
-              price: price,
-              qty: available,
-              photo: item.photo || '',
-              category: item.category || '',
-              webPhotoDone: item.webPhotoDone || false,
-              webNotes: item.webNotes || '',
-              vi: vi,
-              ii: ii
-            });
-            designerSet[vendor.name] = true;
+            availSizes.push({ size: sz.size, qty: available });
+            totalSzQty += available;
           }
         });
+        if (availSizes.length > 0) {
+          allItems.push({
+            name: item.name || '',
+            designer: vendor.name || '',
+            price: price,
+            qty: totalSzQty,
+            sizes: availSizes,
+            photo: item.photo || '',
+            category: item.category || '',
+            webPhotoDone: item.webPhotoDone || false,
+            webNotes: item.webNotes || '',
+            vi: vi,
+            ii: ii
+          });
+          designerSet[vendor.name] = true;
+        }
       } else {
         var totalQty = item.qty || 1;
         var sold = Math.min(item.sold || 0, totalQty);
@@ -10372,6 +10379,10 @@ function renderWebInventory() {
       html += '<div style="font-family:Cormorant Garamond,serif;font-size:16px;font-weight:600;line-height:1.2">' + esc(a.name) + '</div>';
       html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px">' + esc(a.designer) + '</div>';
       html += '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;margin-top:6px">$' + a.price + '</div>';
+      // Sizes row (if sized item)
+      if (a.sizes && a.sizes.length > 0) {
+        html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:4px">Sizes: ' + a.sizes.map(function(s) { return s.size + ' (' + s.qty + ')'; }).join(', ') + '</div>';
+      }
       // Category + Qty row
       html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">';
       html += catSelect(a);
@@ -10408,7 +10419,11 @@ function renderWebInventory() {
       }
       html += '</div>';
       // Name
-      html += '<div style="font-family:Cormorant Garamond,serif;font-size:14px">' + esc(a.name) + '</div>';
+      html += '<div style="font-family:Cormorant Garamond,serif;font-size:14px">' + esc(a.name);
+      if (a.sizes && a.sizes.length > 0) {
+        html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:1px">Sizes: ' + a.sizes.map(function(s) { return s.size + ' (' + s.qty + ')'; }).join(', ') + '</div>';
+      }
+      html += '</div>';
       // Designer
       html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + esc(a.designer) + '</div>';
       // Category
