@@ -10222,7 +10222,7 @@ function invNewSort(sortBy) {
 }
 
 var webInvFilter = 'all';
-var webInvView = 'grid';
+var webInvView = 'list';
 
 function renderWebInventory() {
   var container = document.getElementById('web-inv-container');
