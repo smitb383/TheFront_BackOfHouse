@@ -10421,7 +10421,7 @@ function renderWebInventory() {
       var wsColors = { 'not-ready': '#e07070', 'ready': '#e2c97e', 'live': '#88c98a' };
       var wsColor = wsColors[ws] || '#e07070';
       var imgSt = a.webImageStatus || 'none';
-      var imgColors = { 'none': '#e07070', 'taken': '#e2c97e', 'ready': '#82bfbb', 'uploaded': '#88c98a' };
+      var imgColors = { 'none': '#e07070', 'taken': '#e2c97e', 'ready': '#e2c97e', 'uploaded': '#88c98a' };
       var imgColor = imgColors[imgSt] || '#e07070';
       html += '<div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">';
       html += '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + wsColor + '22;border:2px solid ' + wsColor + ';color:' + wsColor + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
@@ -10508,7 +10508,7 @@ function renderWebInventory() {
       // Image status
       html += (function() {
         var is2 = a.webImageStatus || 'none';
-        var ic2 = { 'none': '#e07070', 'taken': '#e2c97e', 'ready': '#82bfbb', 'uploaded': '#88c98a' };
+        var ic2 = { 'none': '#e07070', 'taken': '#e2c97e', 'ready': '#e2c97e', 'uploaded': '#88c98a' };
         return '<div><select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webImageStatus\',this.value)" style="background:' + (ic2[is2]||'#e07070') + '22;border:2px solid ' + (ic2[is2]||'#e07070') + ';color:' + (ic2[is2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer;width:100%">' +
           '<option value="none"' + (is2==='none'?' selected':'') + '>No Imgs</option>' +
           '<option value="taken"' + (is2==='taken'?' selected':'') + '>Taken</option>' +
