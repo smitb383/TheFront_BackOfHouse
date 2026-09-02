@@ -8336,8 +8336,10 @@ function renderInvNew() {
       var tQty = 0, tSold = 0;
       if (hasSz) { item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0); }); }
       else { tQty = item.qty || 1; tSold = item.sold || 0; }
-      var allSold = tSold >= tQty && tQty > 0;
-      return { ii: ii, soldOut: allSold, price: item.salePrice || 0 };
+      var mc = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+      var bc = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+      var allGone = (tSold + mc + bc) >= tQty && tQty > 0;
+      return { ii: ii, soldOut: allGone, price: item.salePrice || 0 };
     });
     itemIndices.sort(function(a, b) {
       if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
@@ -8476,7 +8478,9 @@ function renderInvNew() {
         '</div>' : '');
       }
 
-      var itemAllSold = totalSold >= totalQty && totalQty > 0;
+      var itemMissing = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+      var itemBroken = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+      var itemAllSold = (totalSold + itemMissing + itemBroken) >= totalQty && totalQty > 0;
       var onFloor = item.onFloor && !itemAllSold;
       var floorQty = item.floorQty || 0;
       // Default all existing items to added-to-Square (only truly new items added after this deploy will be NEW)
