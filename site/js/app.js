@@ -10286,6 +10286,7 @@ function renderWebInventory() {
             webSizeDetails: item.webSizeDetails || '',
             webCare: item.webCare || '',
             webStatus: item.webStatus || 'not-ready',
+            designerInfo: vendor.webDesignerInfo || '',
             vi: vi,
             ii: ii
           });
@@ -10310,6 +10311,7 @@ function renderWebInventory() {
             webSizeDetails: item.webSizeDetails || '',
             webCare: item.webCare || '',
             webStatus: item.webStatus || 'not-ready',
+            designerInfo: vendor.webDesignerInfo || '',
             vi: vi,
             ii: ii
           });
@@ -10428,8 +10430,8 @@ function renderWebInventory() {
       html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webSizeDetails\',this.value)" placeholder="Fit notes, measurements..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webSizeDetails || '') + '</textarea></div>';
       html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Care Instructions</div>';
       html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webCare\',this.value)" placeholder="Washing, storage, special care..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webCare || '') + '</textarea></div>';
-      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Notes</div>';
-      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webNotes\',this.value)" placeholder="Internal notes..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webNotes || '') + '</textarea></div>';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Designer Description / Info</div>';
+      html += '<textarea onchange="invNewEditVendor(' + a.vi + ',\'webDesignerInfo\',this.value)" placeholder="About the designer, brand story, background..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.designerInfo || '') + '</textarea></div>';
       html += '</div></details>';
       html += '</div></div>';
     });
@@ -10502,8 +10504,8 @@ function renderWebInventory() {
       html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">';
       html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Care Instructions</div>';
       html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webCare\',this.value)" placeholder="Washing, storage, special care..." style="width:100%;min-height:60px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webCare || '') + '</textarea></div>';
-      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Notes</div>';
-      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webNotes\',this.value)" placeholder="Internal notes..." style="width:100%;min-height:40px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webNotes || '') + '</textarea></div>';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Designer Description / Info</div>';
+      html += '<textarea onchange="invNewEditVendor(' + a.vi + ',\'webDesignerInfo\',this.value)" placeholder="About the designer, brand story..." style="width:100%;min-height:40px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.designerInfo || '') + '</textarea></div>';
       html += '</div>';
       html += '</details>';
     });
