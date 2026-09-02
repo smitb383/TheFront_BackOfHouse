@@ -10281,6 +10281,9 @@ function renderWebInventory() {
             category: item.category || '',
             webPhotoDone: item.webPhotoDone || false,
             webNotes: item.webNotes || '',
+            webDescription: item.webDescription || '',
+            webMaterials: item.webMaterials || '',
+            webSizeDetails: item.webSizeDetails || '',
             vi: vi,
             ii: ii
           });
@@ -10300,6 +10303,9 @@ function renderWebInventory() {
             category: item.category || '',
             webPhotoDone: item.webPhotoDone || false,
             webNotes: item.webNotes || '',
+            webDescription: item.webDescription || '',
+            webMaterials: item.webMaterials || '',
+            webSizeDetails: item.webSizeDetails || '',
             vi: vi,
             ii: ii
           });
@@ -10396,11 +10402,19 @@ function renderWebInventory() {
       html += '<input type="checkbox"' + (a.webPhotoDone ? ' checked' : '') + ' onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webPhotoDone\',this.checked)" style="cursor:pointer">';
       html += '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted)">Web Photos Done</span>';
       html += '</div>';
-      // Notes toggle
+      // Details dropdown
       html += '<details style="margin-top:8px">';
-      html += '<summary style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);cursor:pointer;letter-spacing:0.04em">Notes</summary>';
-      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webNotes\',this.value)" style="width:100%;min-height:50px;margin-top:4px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webNotes) + '</textarea>';
-      html += '</details>';
+      html += '<summary style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);cursor:pointer;letter-spacing:0.04em">Details</summary>';
+      html += '<div style="margin-top:6px;display:flex;flex-direction:column;gap:6px">';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Description</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webDescription\',this.value)" placeholder="Item description..." style="width:100%;min-height:40px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webDescription || '') + '</textarea></div>';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Materials</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webMaterials\',this.value)" placeholder="e.g. ceramic, silk..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webMaterials || '') + '</textarea></div>';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Size Details</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webSizeDetails\',this.value)" placeholder="Fit notes, measurements..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webSizeDetails || '') + '</textarea></div>';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Notes</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webNotes\',this.value)" placeholder="Internal notes..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webNotes || '') + '</textarea></div>';
+      html += '</div></details>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -10440,6 +10454,20 @@ function renderWebInventory() {
       // Value
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:right;font-weight:600">$' + (a.price * a.qty) + '</div>';
       html += '</div>';
+      // Expandable detail row
+      html += '<details style="padding:0 0 8px 56px;border-bottom:1px solid var(--faint)">';
+      html += '<summary style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);cursor:pointer;letter-spacing:0.04em;padding:2px 0">Details</summary>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Description</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webDescription\',this.value)" placeholder="Item description for web listing..." style="width:100%;min-height:60px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webDescription || '') + '</textarea></div>';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Materials</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webMaterials\',this.value)" placeholder="e.g. 100% silk, ceramic, glass..." style="width:100%;min-height:60px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webMaterials || '') + '</textarea></div>';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Size Details</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webSizeDetails\',this.value)" placeholder="e.g. Model is 5\'7 wearing S, fits true to size..." style="width:100%;min-height:60px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webSizeDetails || '') + '</textarea></div>';
+      html += '</div>';
+      html += '<div style="margin-top:6px"><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Notes</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webNotes\',this.value)" placeholder="Internal notes..." style="width:100%;min-height:40px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webNotes || '') + '</textarea></div>';
+      html += '</details>';
     });
   }
 
