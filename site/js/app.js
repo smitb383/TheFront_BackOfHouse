@@ -10444,15 +10444,17 @@ function renderWebInventory() {
 
     var lastDesigner = '';
     filtered.forEach(function(a) {
-      // Designer group header
+      // Designer group header (collapsible)
       if (a.designer !== lastDesigner) {
+        if (lastDesigner !== '') html += '</details>'; // close previous group
         lastDesigner = a.designer;
         var designerItems = filtered.filter(function(x) { return x.designer === a.designer; });
         var designerValue = 0; designerItems.forEach(function(x) { designerValue += x.price * x.qty; });
-        html += '<div style="padding:14px 0 6px;border-bottom:2px solid var(--border);margin-top:12px;display:flex;justify-content:space-between;align-items:baseline">';
+        html += '<details style="margin-top:8px">';
+        html += '<summary style="padding:14px 0 6px;border-bottom:2px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;list-style:none">';
         html += '<span style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600">' + esc(a.designer) + '</span>';
         html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + designerItems.reduce(function(s,x){return s+x.qty;},0) + ' items · $' + Math.round(designerValue).toLocaleString() + '</span>';
-        html += '</div>';
+        html += '</summary>';
       }
       html += '<div style="display:grid;grid-template-columns:48px 1fr 120px 90px 60px 50px 80px 80px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
       // Thumb
@@ -10509,6 +10511,7 @@ function renderWebInventory() {
       html += '</div>';
       html += '</details>';
     });
+    if (lastDesigner !== '') html += '</details>'; // close last designer group
   }
 
   container.innerHTML = html;
