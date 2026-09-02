@@ -284,6 +284,10 @@ function _mergeInvItem(localItem, remoteItem) {
   if (!winner.photo && loser.photo) winner.photo = loser.photo;
   // Preserve onFloor from either side
   if (loser.onFloor && !winner.onFloor) winner.onFloor = loser.onFloor;
+  // Preserve web fields — keep non-empty value from either side
+  ['webCare','webDescription','webMaterials','webSizeDetails','webNotes','webStatus','webImageStatus','webPhotoDone','unpaidBy','noCommission','missing','broken','recovered','keepingForSale','soldDates','soldDate'].forEach(function(f) {
+    if (loser[f] && !winner[f]) winner[f] = loser[f];
+  });
   return winner;
 }
 
