@@ -10455,8 +10455,7 @@ function renderWebInventory() {
   } else {
     // --- LIST VIEW ---
     // Header
-    html += '<div style="display:grid;grid-template-columns:48px 1fr 120px 90px 60px 50px 80px 80px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:2px solid var(--border)">';
-    html += '<div></div><div>Item</div><div>Designer</div><div>Category</div><div>Price</div><div>Qty</div><div>Status</div><div style="text-align:right">Value</div></div>';
+    // Column headers shown per designer group below
 
     var lastDesigner = '';
     filtered.forEach(function(a) {
@@ -10471,8 +10470,11 @@ function renderWebInventory() {
         html += '<span style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600">' + esc(a.designer) + '</span>';
         html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + designerItems.reduce(function(s,x){return s+x.qty;},0) + ' items · $' + Math.round(designerValue).toLocaleString() + '</span>';
         html += '</summary>';
+        // Column headers per designer
+        html += '<div style="display:grid;grid-template-columns:48px 1fr 90px 60px 50px 70px 70px 80px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:1px solid var(--border);margin-top:4px">';
+        html += '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div><div>Web</div><div>Images</div><div style="text-align:right">Value</div></div>';
       }
-      html += '<div style="display:grid;grid-template-columns:48px 1fr 120px 90px 60px 50px 80px 80px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
+      html += '<div style="display:grid;grid-template-columns:48px 1fr 90px 60px 50px 70px 70px 80px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
       // Thumb
       html += '<div style="width:42px;height:42px;border-radius:4px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
         (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
@@ -10488,30 +10490,31 @@ function renderWebInventory() {
         html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:1px">Sizes: ' + a.sizes.map(function(s) { return s.size + ' (' + s.qty + ')'; }).join(', ') + '</div>';
       }
       html += '</div>';
-      // Designer
-      html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + esc(a.designer) + '</div>';
       // Category
       html += '<div>' + catSelect(a) + '</div>';
       // Price
       html += '<div style="font-family:DM Mono,monospace;font-size:11px">$' + a.price + '</div>';
       // Qty
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:center">' + a.qty + '</div>';
-      // Web status + Image status
-      html += '<div style="display:flex;flex-direction:column;gap:3px">' + (function() {
+      // Web status
+      html += (function() {
         var ws2 = a.webStatus || 'not-ready';
         var wc2 = { 'not-ready': '#e07070', 'ready': '#e2c97e', 'live': '#88c98a' };
-        var is2 = a.webImageStatus || 'none';
-        var ic2 = { 'none': '#e07070', 'taken': '#e2c97e', 'ready': '#82bfbb', 'uploaded': '#88c98a' };
-        return '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + (wc2[ws2]||'#e07070') + '22;border:2px solid ' + (wc2[ws2]||'#e07070') + ';color:' + (wc2[ws2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:7px;padding:2px 3px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer">' +
+        return '<div><select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + (wc2[ws2]||'#e07070') + '22;border:2px solid ' + (wc2[ws2]||'#e07070') + ';color:' + (wc2[ws2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer;width:100%">' +
           '<option value="not-ready"' + (ws2==='not-ready'?' selected':'') + '>Not Ready</option>' +
           '<option value="ready"' + (ws2==='ready'?' selected':'') + '>Ready</option>' +
-          '<option value="live"' + (ws2==='live'?' selected':'') + '>Live</option></select>' +
-        '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webImageStatus\',this.value)" style="background:' + (ic2[is2]||'#e07070') + '22;border:2px solid ' + (ic2[is2]||'#e07070') + ';color:' + (ic2[is2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:7px;padding:2px 3px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer">' +
+          '<option value="live"' + (ws2==='live'?' selected':'') + '>Live</option></select></div>';
+      })();
+      // Image status
+      html += (function() {
+        var is2 = a.webImageStatus || 'none';
+        var ic2 = { 'none': '#e07070', 'taken': '#e2c97e', 'ready': '#82bfbb', 'uploaded': '#88c98a' };
+        return '<div><select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webImageStatus\',this.value)" style="background:' + (ic2[is2]||'#e07070') + '22;border:2px solid ' + (ic2[is2]||'#e07070') + ';color:' + (ic2[is2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer;width:100%">' +
           '<option value="none"' + (is2==='none'?' selected':'') + '>No Imgs</option>' +
           '<option value="taken"' + (is2==='taken'?' selected':'') + '>Taken</option>' +
           '<option value="ready"' + (is2==='ready'?' selected':'') + '>Ready</option>' +
-          '<option value="uploaded"' + (is2==='uploaded'?' selected':'') + '>Uploaded</option></select>';
-      })() + '</div>';
+          '<option value="uploaded"' + (is2==='uploaded'?' selected':'') + '>Uploaded</option></select></div>';
+      })();
       // Value
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:right;font-weight:600">$' + (a.price * a.qty) + '</div>';
       html += '</div>';
