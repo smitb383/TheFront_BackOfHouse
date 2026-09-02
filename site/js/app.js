@@ -10315,8 +10315,12 @@ function renderWebInventory() {
     });
   });
 
-  // Sort by price high to low
-  allItems.sort(function(a, b) { return b.price - a.price; });
+  // Sort by designer name, then price high to low within each designer
+  allItems.sort(function(a, b) {
+    var dCmp = (a.designer || '').toLowerCase().localeCompare((b.designer || '').toLowerCase());
+    if (dCmp !== 0) return dCmp;
+    return b.price - a.price;
+  });
 
   // Apply category filter
   var filtered = webInvFilter === 'all' ? allItems : allItems.filter(function(a) {
@@ -10424,7 +10428,18 @@ function renderWebInventory() {
     html += '<div style="display:grid;grid-template-columns:48px 1fr 120px 90px 60px 50px 80px 80px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:2px solid var(--border)">';
     html += '<div></div><div>Item</div><div>Designer</div><div>Category</div><div>Price</div><div>Qty</div><div>Photos</div><div style="text-align:right">Value</div></div>';
 
+    var lastDesigner = '';
     filtered.forEach(function(a) {
+      // Designer group header
+      if (a.designer !== lastDesigner) {
+        lastDesigner = a.designer;
+        var designerItems = filtered.filter(function(x) { return x.designer === a.designer; });
+        var designerValue = 0; designerItems.forEach(function(x) { designerValue += x.price * x.qty; });
+        html += '<div style="padding:14px 0 6px;border-bottom:2px solid var(--border);margin-top:12px;display:flex;justify-content:space-between;align-items:baseline">';
+        html += '<span style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600">' + esc(a.designer) + '</span>';
+        html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + designerItems.reduce(function(s,x){return s+x.qty;},0) + ' items · $' + Math.round(designerValue).toLocaleString() + '</span>';
+        html += '</div>';
+      }
       html += '<div style="display:grid;grid-template-columns:48px 1fr 120px 90px 60px 50px 80px 80px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
       // Thumb
       html += '<div style="width:42px;height:42px;border-radius:4px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
