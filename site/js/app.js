@@ -10286,6 +10286,7 @@ function renderWebInventory() {
             webSizeDetails: item.webSizeDetails || '',
             webCare: item.webCare || '',
             webStatus: item.webStatus || 'not-ready',
+            webImageStatus: item.webImageStatus || 'none',
             designerInfo: vendor.webDesignerInfo || '',
             vi: vi,
             ii: ii
@@ -10311,6 +10312,7 @@ function renderWebInventory() {
             webSizeDetails: item.webSizeDetails || '',
             webCare: item.webCare || '',
             webStatus: item.webStatus || 'not-ready',
+            webImageStatus: item.webImageStatus || 'none',
             designerInfo: vendor.webDesignerInfo || '',
             vi: vi,
             ii: ii
@@ -10407,25 +10409,31 @@ function renderWebInventory() {
       html += catSelect(a);
       html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">Qty: ' + a.qty + '</span>';
       html += '</div>';
-      // Has Photos checkbox
       var ws = a.webStatus || 'not-ready';
       var wsColors = { 'not-ready': '#e07070', 'ready': '#e2c97e', 'live': '#88c98a' };
       var wsColor = wsColors[ws] || '#e07070';
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px">';
-      html += '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + wsColor + '22;border:2px solid ' + wsColor + ';color:' + wsColor + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 6px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
+      var imgSt = a.webImageStatus || 'none';
+      var imgColors = { 'none': '#e07070', 'taken': '#e2c97e', 'ready': '#82bfbb', 'uploaded': '#88c98a' };
+      var imgColor = imgColors[imgSt] || '#e07070';
+      html += '<div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">';
+      html += '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + wsColor + '22;border:2px solid ' + wsColor + ';color:' + wsColor + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
         '<option value="not-ready"' + (ws === 'not-ready' ? ' selected' : '') + '>Not Ready</option>' +
-        '<option value="ready"' + (ws === 'ready' ? ' selected' : '') + '>Ready for Web</option>' +
-        '<option value="live"' + (ws === 'live' ? ' selected' : '') + '>On Website</option>' +
+        '<option value="ready"' + (ws === 'ready' ? ' selected' : '') + '>Ready</option>' +
+        '<option value="live"' + (ws === 'live' ? ' selected' : '') + '>Live</option>' +
+      '</select>';
+      html += '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webImageStatus\',this.value)" style="background:' + imgColor + '22;border:2px solid ' + imgColor + ';color:' + imgColor + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
+        '<option value="none"' + (imgSt === 'none' ? ' selected' : '') + '>No Images</option>' +
+        '<option value="taken"' + (imgSt === 'taken' ? ' selected' : '') + '>Taken</option>' +
+        '<option value="ready"' + (imgSt === 'ready' ? ' selected' : '') + '>Ready</option>' +
+        '<option value="uploaded"' + (imgSt === 'uploaded' ? ' selected' : '') + '>Uploaded</option>' +
       '</select>';
       html += '</div>';
       // Details dropdown
       html += '<details style="margin-top:8px">';
       html += '<summary style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);cursor:pointer;letter-spacing:0.04em">Details</summary>';
       html += '<div style="margin-top:6px;display:flex;flex-direction:column;gap:6px">';
-      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Description</div>';
-      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webDescription\',this.value)" placeholder="Item description..." style="width:100%;min-height:40px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webDescription || '') + '</textarea></div>';
-      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Materials</div>';
-      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webMaterials\',this.value)" placeholder="e.g. ceramic, silk..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webMaterials || '') + '</textarea></div>';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Description & Materials</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webDescription\',this.value)" placeholder="Item description, materials, details..." style="width:100%;min-height:40px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webDescription || '') + '</textarea></div>';
       html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Size Details</div>';
       html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webSizeDetails\',this.value)" placeholder="Fit notes, measurements..." style="width:100%;min-height:30px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:10px;padding:4px;resize:vertical">' + esc(a.webSizeDetails || '') + '</textarea></div>';
       html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:2px">Care Instructions</div>';
@@ -10480,14 +10488,21 @@ function renderWebInventory() {
       html += '<div style="font-family:DM Mono,monospace;font-size:11px">$' + a.price + '</div>';
       // Qty
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:center">' + a.qty + '</div>';
-      // Web status
-      html += '<div>' + (function() {
+      // Web status + Image status
+      html += '<div style="display:flex;flex-direction:column;gap:3px">' + (function() {
         var ws2 = a.webStatus || 'not-ready';
         var wc2 = { 'not-ready': '#e07070', 'ready': '#e2c97e', 'live': '#88c98a' };
-        return '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + (wc2[ws2]||'#e07070') + '22;border:2px solid ' + (wc2[ws2]||'#e07070') + ';color:' + (wc2[ws2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer">' +
+        var is2 = a.webImageStatus || 'none';
+        var ic2 = { 'none': '#e07070', 'taken': '#e2c97e', 'ready': '#82bfbb', 'uploaded': '#88c98a' };
+        return '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + (wc2[ws2]||'#e07070') + '22;border:2px solid ' + (wc2[ws2]||'#e07070') + ';color:' + (wc2[ws2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:7px;padding:2px 3px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer">' +
           '<option value="not-ready"' + (ws2==='not-ready'?' selected':'') + '>Not Ready</option>' +
           '<option value="ready"' + (ws2==='ready'?' selected':'') + '>Ready</option>' +
-          '<option value="live"' + (ws2==='live'?' selected':'') + '>Live</option></select>';
+          '<option value="live"' + (ws2==='live'?' selected':'') + '>Live</option></select>' +
+        '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webImageStatus\',this.value)" style="background:' + (ic2[is2]||'#e07070') + '22;border:2px solid ' + (ic2[is2]||'#e07070') + ';color:' + (ic2[is2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:7px;padding:2px 3px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer">' +
+          '<option value="none"' + (is2==='none'?' selected':'') + '>No Imgs</option>' +
+          '<option value="taken"' + (is2==='taken'?' selected':'') + '>Taken</option>' +
+          '<option value="ready"' + (is2==='ready'?' selected':'') + '>Ready</option>' +
+          '<option value="uploaded"' + (is2==='uploaded'?' selected':'') + '>Uploaded</option></select>';
       })() + '</div>';
       // Value
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:right;font-weight:600">$' + (a.price * a.qty) + '</div>';
@@ -10495,11 +10510,9 @@ function renderWebInventory() {
       // Expandable detail row
       html += '<details style="padding:0 0 8px 56px;border-bottom:1px solid var(--faint)">';
       html += '<summary style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);cursor:pointer;letter-spacing:0.04em;padding:2px 0">Details</summary>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">';
-      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Description</div>';
-      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webDescription\',this.value)" placeholder="Item description for web listing..." style="width:100%;min-height:60px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webDescription || '') + '</textarea></div>';
-      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Materials</div>';
-      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webMaterials\',this.value)" placeholder="e.g. 100% silk, ceramic, glass..." style="width:100%;min-height:60px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webMaterials || '') + '</textarea></div>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">';
+      html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Description & Materials</div>';
+      html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webDescription\',this.value)" placeholder="Item description, materials, details..." style="width:100%;min-height:60px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webDescription || '') + '</textarea></div>';
       html += '<div><div style="font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;margin-bottom:3px">Size Details</div>';
       html += '<textarea onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webSizeDetails\',this.value)" placeholder="e.g. Model is 5\'7 wearing S, fits true to size..." style="width:100%;min-height:60px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px;font-family:DM Mono,monospace;font-size:11px;padding:6px;resize:vertical">' + esc(a.webSizeDetails || '') + '</textarea></div>';
       html += '</div>';
