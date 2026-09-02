@@ -8470,7 +8470,10 @@ function renderInvNew() {
           '<div><label style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Packaging</label>' +
             '<input class="field-input" value="' + esc(item.packaging || '') + '" placeholder="e.g. Tissue + kraft bag" oninput="invNewEditItem(' + vi + ',' + ii + ',\'packaging\',this.value)" style="margin-top:3px"></div>' +
         '</div>' +
-        (item.category === 'clothing' && !hasSizes ? '<div style="padding:6px 0"><button onclick="event.stopPropagation();invNewInitSizes(' + vi + ',' + ii + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:4px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Enable size tracking</button></div>' : '');
+        (!hasSizes ? '<div style="padding:6px 0;display:flex;gap:6px">' +
+          '<button onclick="event.stopPropagation();invNewInitSizes(' + vi + ',' + ii + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:4px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Clothing Sizes</button>' +
+          '<button onclick="event.stopPropagation();invNewInitRingSizes(' + vi + ',' + ii + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:4px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">+ Ring Sizes</button>' +
+        '</div>' : '');
       }
 
       var itemAllSold = totalSold >= totalQty && totalQty > 0;
@@ -9001,7 +9004,6 @@ function invNewInitSizes(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var item = data.vendors[vi].items[ii];
-  var qty = item.qty || 1;
   item.sizes = [
     { size: 'S', qty: 0, sold: 0 },
     { size: 'M', qty: 0, sold: 0 },
@@ -9011,20 +9013,26 @@ function invNewInitSizes(vi, ii) {
   renderInvNew();
 }
 
+function invNewInitRingSizes(vi, ii) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
+  var item = data.vendors[vi].items[ii];
+  item.sizes = [];
+  for (var r = 4; r <= 10; r++) {
+    item.sizes.push({ size: 'US ' + r, qty: 0, sold: 0 });
+  }
+  saveInvNew(data);
+  renderInvNew();
+}
+
 function invNewAddSize(vi, ii) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var item = data.vendors[vi].items[ii];
   if (!item.sizes) item.sizes = [];
-  var defaultSizes = ['XS','XS/S','S','S/M','M','M/L','L','XL'];
-  var existing = item.sizes.map(function(s) { return s.size; });
-  var next = '';
-  for (var i = 0; i < defaultSizes.length; i++) {
-    if (existing.indexOf(defaultSizes[i]) === -1) { next = defaultSizes[i]; break; }
-  }
-  if (!next) next = prompt('Size name:') || '';
-  if (!next) return;
-  item.sizes.push({ size: next, qty: 0, sold: 0 });
+  var sz = prompt('Enter size (e.g. S, M, L, XS/S, US 7, One Size):');
+  if (!sz || !sz.trim()) return;
+  item.sizes.push({ size: sz.trim(), qty: 0, sold: 0 });
   saveInvNew(data);
   renderInvNew();
 }
