@@ -10285,6 +10285,7 @@ function renderWebInventory() {
             webMaterials: item.webMaterials || '',
             webSizeDetails: item.webSizeDetails || '',
             webCare: item.webCare || '',
+            webStatus: item.webStatus || 'not-ready',
             vi: vi,
             ii: ii
           });
@@ -10308,6 +10309,7 @@ function renderWebInventory() {
             webMaterials: item.webMaterials || '',
             webSizeDetails: item.webSizeDetails || '',
             webCare: item.webCare || '',
+            webStatus: item.webStatus || 'not-ready',
             vi: vi,
             ii: ii
           });
@@ -10391,7 +10393,7 @@ function renderWebInventory() {
       html += '</div>';
       // Info
       html += '<div style="padding:12px">';
-      html += '<div style="font-family:Cormorant Garamond,serif;font-size:16px;font-weight:600;line-height:1.2">' + esc(a.name) + '</div>';
+      html += '<input value="' + esc(a.name) + '" onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:16px;font-weight:600;line-height:1.2;background:none;border:none;border-bottom:1px solid transparent;color:var(--text);width:100%;padding:2px 0;outline:none" onfocus="this.style.borderBottomColor=\'var(--border)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
       html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px">' + esc(a.designer) + '</div>';
       html += '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;margin-top:6px">$' + a.price + '</div>';
       // Sizes row (if sized item)
@@ -10404,9 +10406,15 @@ function renderWebInventory() {
       html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">Qty: ' + a.qty + '</span>';
       html += '</div>';
       // Has Photos checkbox
-      html += '<div style="display:flex;align-items:center;gap:6px;margin-top:8px">';
-      html += '<input type="checkbox"' + (a.webPhotoDone ? ' checked' : '') + ' onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webPhotoDone\',this.checked)" style="cursor:pointer">';
-      html += '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted)">Web Photos Done</span>';
+      var ws = a.webStatus || 'not-ready';
+      var wsColors = { 'not-ready': '#e07070', 'ready': '#e2c97e', 'live': '#88c98a' };
+      var wsColor = wsColors[ws] || '#e07070';
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px">';
+      html += '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + wsColor + '22;border:2px solid ' + wsColor + ';color:' + wsColor + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 6px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' +
+        '<option value="not-ready"' + (ws === 'not-ready' ? ' selected' : '') + '>Not Ready</option>' +
+        '<option value="ready"' + (ws === 'ready' ? ' selected' : '') + '>Ready for Web</option>' +
+        '<option value="live"' + (ws === 'live' ? ' selected' : '') + '>On Website</option>' +
+      '</select>';
       html += '</div>';
       // Details dropdown
       html += '<details style="margin-top:8px">';
@@ -10430,7 +10438,7 @@ function renderWebInventory() {
     // --- LIST VIEW ---
     // Header
     html += '<div style="display:grid;grid-template-columns:48px 1fr 120px 90px 60px 50px 80px 80px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:2px solid var(--border)">';
-    html += '<div></div><div>Item</div><div>Designer</div><div>Category</div><div>Price</div><div>Qty</div><div>Photos</div><div style="text-align:right">Value</div></div>';
+    html += '<div></div><div>Item</div><div>Designer</div><div>Category</div><div>Price</div><div>Qty</div><div>Status</div><div style="text-align:right">Value</div></div>';
 
     var lastDesigner = '';
     filtered.forEach(function(a) {
@@ -10454,8 +10462,8 @@ function renderWebInventory() {
         html += '<span style="color:var(--muted);font-size:10px">--</span>';
       }
       html += '</div>';
-      // Name
-      html += '<div style="font-family:Cormorant Garamond,serif;font-size:14px">' + esc(a.name);
+      // Name (editable, syncs two-way with main inventory)
+      html += '<div><input value="' + esc(a.name) + '" onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:14px;background:none;border:none;border-bottom:1px solid transparent;color:var(--text);width:100%;padding:2px 0;outline:none" onfocus="this.style.borderBottomColor=\'var(--border)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
       if (a.sizes && a.sizes.length > 0) {
         html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:1px">Sizes: ' + a.sizes.map(function(s) { return s.size + ' (' + s.qty + ')'; }).join(', ') + '</div>';
       }
@@ -10468,8 +10476,15 @@ function renderWebInventory() {
       html += '<div style="font-family:DM Mono,monospace;font-size:11px">$' + a.price + '</div>';
       // Qty
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:center">' + a.qty + '</div>';
-      // Photos checkbox
-      html += '<div style="text-align:center"><input type="checkbox"' + (a.webPhotoDone ? ' checked' : '') + ' onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webPhotoDone\',this.checked)" style="cursor:pointer"></div>';
+      // Web status
+      html += '<div>' + (function() {
+        var ws2 = a.webStatus || 'not-ready';
+        var wc2 = { 'not-ready': '#e07070', 'ready': '#e2c97e', 'live': '#88c98a' };
+        return '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webStatus\',this.value)" style="background:' + (wc2[ws2]||'#e07070') + '22;border:2px solid ' + (wc2[ws2]||'#e07070') + ';color:' + (wc2[ws2]||'#e07070') + ';font-family:DM Mono,monospace;font-size:8px;padding:2px 4px;border-radius:3px;font-weight:700;text-transform:uppercase;cursor:pointer">' +
+          '<option value="not-ready"' + (ws2==='not-ready'?' selected':'') + '>Not Ready</option>' +
+          '<option value="ready"' + (ws2==='ready'?' selected':'') + '>Ready</option>' +
+          '<option value="live"' + (ws2==='live'?' selected':'') + '>Live</option></select>';
+      })() + '</div>';
       // Value
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:right;font-weight:600">$' + (a.price * a.qty) + '</div>';
       html += '</div>';
