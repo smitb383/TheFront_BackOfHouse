@@ -8435,7 +8435,7 @@ function renderInvNew() {
       // ── Consignment item row ──
       var price = item.salePrice || 0;
       var unitUs = Math.round(price * (sPct / 100));
-      var unitThem = Math.round(price * (dPct / 100));
+      var unitThem = Math.floor(price * (dPct / 100));
       var hasSizes = item.sizes && item.sizes.length > 0;
       var totalQty = 0, totalSold = 0, totalNoComm = 0;
       if (hasSizes) {
@@ -8453,7 +8453,7 @@ function renderInvNew() {
       var totalSales = price * totalSold;
       var commSoldDisplay = Math.max(0, totalSold - totalNoComm);
       var totalUs = Math.round(price * commSoldDisplay * (sPct / 100));
-      var totalThem = Math.round(price * commSoldDisplay * (dPct / 100)) + Math.round(price * totalNoComm * (dPct / 100));
+      var totalThem = Math.floor(price * commSoldDisplay * (dPct / 100)) + Math.floor(price * totalNoComm * (dPct / 100));
       var isItemOpen = invNewOpenItem === vi + '-' + ii;
 
       var detailPanel = '';
@@ -8940,11 +8940,11 @@ function buildSizeRows(vi, ii, item, sPct, dPct, vendor) {
     var szUnpaid = sz.unpaidBy || '';
     var szUnpaidBase = szUnpaid.replace('-paid', '');
     var szIsPaid = szUnpaid.indexOf('-paid') > 0;
-    var szUnpaidAmt = szUnpaidBase === 'morgan' ? price : Math.round(price * (dPct / 100));
+    var szUnpaidAmt = szUnpaidBase === 'morgan' ? price : Math.floor(price * (dPct / 100));
     var szNoComm = sz.noCommission || 0;
     var szCommSold = Math.max(0, szSold - szNoComm);
     var szUsRev = Math.round(price * szCommSold * (sPct / 100));
-    var szThemRev = Math.round(price * szCommSold * (dPct / 100)) + Math.round(price * szNoComm * (dPct / 100));
+    var szThemRev = Math.floor(price * szCommSold * (dPct / 100)) + Math.floor(price * szNoComm * (dPct / 100));
     var szSelectStyle = szIsPaid
       ? 'background:#88c98a22;border:2px solid #88c98a;color:#88c98a;font-weight:700'
       : (szUnpaid ? 'background:#e0784522;border:2px solid #e07845;color:#e07845;font-weight:700' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)');
@@ -9238,7 +9238,7 @@ function openExhibitA(vi) {
       '<td style="' + tdStyle + '"><input value="' + esc(item.dimensions || '') + '" placeholder="—" style="' + inputStyle + '" onchange="exhibitAUpdateField(' + vi + ',' + idx + ',\'dimensions\',this.value)"></td>' +
       '<td style="text-align:center;' + tdStyle + '">' + qty + '</td>' +
       '<td style="text-align:right;' + tdStyle + '">$' + price + '</td>' +
-      '<td style="text-align:right;' + tdStyle + '">$' + Math.round(price * (dPct / 100)) + '</td>' +
+      '<td style="text-align:right;' + tdStyle + '">$' + Math.floor(price * (dPct / 100)) + '</td>' +
       '<td style="text-align:right;' + tdStyle + '">$' + Math.round(price * (sPct / 100)) + '</td>' +
     '</tr>';
   }).join('');
@@ -9380,7 +9380,7 @@ function openSalesReport(vi) {
   function makeSoldEntry(name, price, qtySold, noComm, photo, size) {
     var commSold = Math.max(0, qtySold - noComm);
     var revenue = price * qtySold;
-    var designerCut = Math.round(price * commSold * (dPct / 100)) + Math.round(price * noComm * (dPct / 100));
+    var designerCut = Math.floor(price * commSold * (dPct / 100)) + Math.floor(price * noComm * (dPct / 100));
     var storeCut = Math.round(price * commSold * (sPct / 100));
     return { name: name, size: size || '', price: price, qtySold: qtySold, noComm: noComm, revenue: revenue, designerCut: designerCut, storeCut: storeCut, photo: photo };
   }
@@ -9911,7 +9911,7 @@ async function downloadExhibitAPDF(vi) {
       { val: item.dimensions || '', w: cols[3].w },
       { val: String(qty), w: cols[4].w },
       { val: '$' + price, w: cols[5].w, align: 'right' },
-      { val: '$' + Math.round(price * (dPct / 100)), w: cols[6].w, align: 'right' },
+      { val: '$' + Math.floor(price * (dPct / 100)), w: cols[6].w, align: 'right' },
       { val: '$' + Math.round(price * (sPct / 100)), w: cols[7].w, align: 'right' }
     ];
 
