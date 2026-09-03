@@ -9357,6 +9357,8 @@ function openSalesReport(vi) {
   var soldItemsSettled = [];
   var soldItemsAll = [];
   var remainingItems = [];
+  var brokenForMendItems = [];
+  var extraInventoryItems = [];
 
   // Helper: split soldDates into settled/current counts
   function splitSoldDates(soldDates, totalSold) {
@@ -9391,13 +9393,23 @@ function openSalesReport(vi) {
     var hasSz = item.sizes && item.sizes.length > 0;
     var tQty = 0, tSold = 0, tNoComm = 0;
 
-    // Missing/broken items: count how many are lost, add to sold on report (always current period)
+    // Missing/broken items
     var missingC = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
     var brokenC = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
-    var lossCount = missingC + brokenC;
+    // If brokenNotPaidByStore, broken items go to separate list, not sold
+    var paidLossCount = missingC + (vendor.brokenNotPaidByStore ? 0 : brokenC);
+    if (brokenC > 0 && vendor.brokenNotPaidByStore) {
+      brokenForMendItems.push({ name: item.name || '', price: price, qty: brokenC, photo: item.photo || '' });
+    }
+    // Extra rings (no price, name starts with EXTRA)
+    if ((item.name || '').toUpperCase().indexOf('EXTRA') === 0) {
+      extraInventoryItems.push({ name: item.name || '', photo: item.photo || '' });
+      return; // don't include in sold/remaining
+    }
+    var lossCount = paidLossCount;
     if (lossCount > 0) {
       var lossRevenue = price * lossCount;
-      var lossDesignerCut = Math.round(lossRevenue * (dPct / 100));
+      var lossDesignerCut = Math.floor(lossRevenue * (dPct / 100));
       var lossEntry = { name: item.name || '' + (lossCount > 1 ? ' (x' + lossCount + ')' : ''), price: price, qtySold: lossCount, noComm: 0, revenue: lossRevenue, designerCut: lossDesignerCut, storeCut: 0, photo: item.photo || '' };
       soldItemsCurrent.push(lossEntry);
       soldItemsAll.push(lossEntry);
@@ -9457,7 +9469,8 @@ function openSalesReport(vi) {
         }
       });
     } else {
-      var remaining = tQty - tSold - lossCount;
+      var totalLoss = missingC + brokenC; // all losses for remaining calc
+      var remaining = tQty - tSold - totalLoss;
       if (remaining > 0) {
         remainingItems.push({ name: item.name || '', price: price, qty: remaining, photo: item.photo || '' });
       }
@@ -9745,6 +9758,34 @@ function openSalesReport(vi) {
       soldTable +
       dedSection +
       extraSection +
+      // Broken items for designer to mend
+      (brokenForMendItems.length > 0 ? (function() {
+        var bh = '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Broken — For Designer to Mend</div>';
+        bh += '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">';
+        bh += '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">';
+        bh += '<th style="' + tdStyle + ';width:30px">#</th><th style="' + tdStyle + ';width:48px"></th><th style="' + tdStyle + ';text-align:left">Item</th><th style="' + tdStyle + ';width:40px">Qty</th></tr></thead><tbody>';
+        brokenForMendItems.forEach(function(b, bi) {
+          bh += '<tr><td style="text-align:center;' + tdStyle + '">' + (bi+1) + '</td>';
+          bh += '<td style="text-align:center;' + tdStyle + ';width:48px">' + (b.photo ? '<img src="' + esc(b.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') + '</td>';
+          bh += '<td style="' + tdStyle + '">' + esc(b.name) + '</td>';
+          bh += '<td style="text-align:center;' + tdStyle + '">' + b.qty + '</td></tr>';
+        });
+        bh += '</tbody></table>';
+        return bh;
+      })() : '') +
+      // Extra inventory (no price items)
+      (extraInventoryItems.length > 0 ? (function() {
+        var eh = '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Extra Inventory</div>';
+        eh += '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">';
+        eh += '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">';
+        eh += '<th style="' + tdStyle + ';width:30px">#</th><th style="' + tdStyle + ';text-align:left">Item</th></tr></thead><tbody>';
+        extraInventoryItems.forEach(function(e, ei) {
+          eh += '<tr><td style="text-align:center;' + tdStyle + '">' + (ei+1) + '</td>';
+          eh += '<td style="' + tdStyle + '">' + esc(e.name) + '</td></tr>';
+        });
+        eh += '</tbody></table>';
+        return eh;
+      })() : '') +
       remTable +
       (vendor.reportNote ? '<div style="margin-top:24px;padding:12px 16px;background:#f9f7f3;border:1px solid #e0dcd4;border-radius:6px;font-size:14px;font-family:Cormorant Garamond,serif;font-style:italic">' + esc(vendor.reportNote) + '</div>' : '');
     })();
