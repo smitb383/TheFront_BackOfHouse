@@ -9503,17 +9503,21 @@ function openSalesReport(vi) {
 
   // Totals (all periods)
   var totalRevenue = 0, totalDesigner = 0, totalStore = 0, totalSoldQty = 0;
-  mergedSoldList.forEach(function(s) { totalRevenue += s.revenue; totalDesigner += s.designerCut; totalSoldQty += s.qtySold; });
+  mergedSoldList.forEach(function(s) { totalRevenue += s.revenue; totalSoldQty += s.qtySold; });
   soldItemsAll.forEach(function(s) { totalStore += (s.storeCut || 0); });
+  // Calculate designer cut as straight percentage of total revenue (not sum of per-item floors)
+  totalDesigner = Math.floor(totalRevenue * (dPct / 100) * 100) / 100;
 
   // Current period totals
   var currentRevenue = 0, currentDesigner = 0, currentStore = 0, currentSoldQty = 0;
-  mergedCurrentList.forEach(function(s) { currentRevenue += s.revenue; currentDesigner += s.designerCut; currentSoldQty += s.qtySold; });
+  mergedCurrentList.forEach(function(s) { currentRevenue += s.revenue; currentSoldQty += s.qtySold; });
+  currentDesigner = Math.floor(currentRevenue * (dPct / 100) * 100) / 100;
   soldItemsCurrent.forEach(function(s) { currentStore += (s.storeCut || 0); });
 
   // Settled period totals
   var settledRevenue = 0, settledDesigner = 0, settledSoldQty = 0;
-  mergedSettledList.forEach(function(s) { settledRevenue += s.revenue; settledDesigner += s.designerCut; settledSoldQty += s.qtySold; });
+  mergedSettledList.forEach(function(s) { settledRevenue += s.revenue; settledSoldQty += s.qtySold; });
+  settledDesigner = Math.floor(settledRevenue * (dPct / 100) * 100) / 100;
 
   // Table builder helper
   function buildSoldTable(title, list, subtotalQty, subtotalRevenue, subtotalDesigner, bgColor) {
