@@ -9778,9 +9778,10 @@ function openSalesReport(vi) {
         var eh = '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Extra Inventory</div>';
         eh += '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">';
         eh += '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">';
-        eh += '<th style="' + tdStyle + ';width:30px">#</th><th style="' + tdStyle + ';text-align:left">Item</th></tr></thead><tbody>';
+        eh += '<th style="' + tdStyle + ';width:30px">#</th><th style="' + tdStyle + ';width:48px"></th><th style="' + tdStyle + ';text-align:left">Item</th></tr></thead><tbody>';
         extraInventoryItems.forEach(function(e, ei) {
           eh += '<tr><td style="text-align:center;' + tdStyle + '">' + (ei+1) + '</td>';
+          eh += '<td style="text-align:center;' + tdStyle + ';width:48px">' + (e.photo ? '<img src="' + esc(e.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') + '</td>';
           eh += '<td style="' + tdStyle + '">' + esc(e.name) + '</td></tr>';
         });
         eh += '</tbody></table>';
