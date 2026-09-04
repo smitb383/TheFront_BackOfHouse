@@ -280,6 +280,11 @@ function _mergeInvItem(localItem, remoteItem) {
   // Start with whichever has more sold, then merge in any fields the other has
   var winner = lSold >= rSold ? JSON.parse(JSON.stringify(localItem)) : JSON.parse(JSON.stringify(remoteItem));
   var loser = lSold >= rSold ? remoteItem : localItem;
+  // If loser has a more recent name update, use its name
+  if (loser._nameUpdated && (!winner._nameUpdated || loser._nameUpdated > winner._nameUpdated)) {
+    winner.name = loser.name;
+    winner._nameUpdated = loser._nameUpdated;
+  }
   // Preserve photo URLs from either side (don't lose uploaded photos)
   if (!winner.photo && loser.photo) winner.photo = loser.photo;
   // Preserve onFloor from either side

@@ -9145,6 +9145,7 @@ function invNewEditItem(vi, ii, field, val) {
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   data.vendors[vi].items[ii][field] = val;
+  if (field === 'name') data.vendors[vi].items[ii]._nameUpdated = new Date().toISOString();
   saveInvNew(data);
   // Debounce re-render so typing doesn't jump the page
   if (field === 'category') { renderInvNew(); return; }
