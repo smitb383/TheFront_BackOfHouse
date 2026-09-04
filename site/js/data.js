@@ -82,6 +82,108 @@ function _safeSetItem(key, value) {
   }
 }
 
+// ── Per-vendor inventory helpers ──
+// Instead of one huge blob, each vendor's inventory is stored as its own
+// kv_store row: inv_vendor_{vendorId}.  The master key popup_inv_new_v1
+// becomes a lightweight index: { vendorIds: [...] }.
+// app.js still reads/writes the full blob via localStorage — the split
+// is transparent to everything outside data.js.
+
+var INV_VENDOR_PREFIX = 'inv_vendor_';
+
+// Reconstruct the full blob from per-vendor rows and write to localStorage
+function _reconstructInvBlob(rows) {
+  // Separate index row, per-vendor rows, and legacy blob (if any)
+  var indexRow = null;
+  var vendorRows = {};  // vendorId -> vendor data
+  var legacyBlob = null;
+
+  rows.forEach(function(row) {
+    if (row.key === 'popup_inv_new_v1') {
+      var val = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+      // Check if this is the new index format (has vendorIds array) or old blob (has vendors array)
+      if (val && val.vendorIds) {
+        indexRow = val;
+      } else if (val && val.vendors) {
+        legacyBlob = val;
+      }
+    } else if (row.key.indexOf(INV_VENDOR_PREFIX) === 0) {
+      var vid = row.key.slice(INV_VENDOR_PREFIX.length);
+      vendorRows[vid] = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+    }
+  });
+
+  // If we have per-vendor rows, reconstruct from those (new format)
+  if (indexRow && indexRow.vendorIds && indexRow.vendorIds.length > 0) {
+    var vendors = [];
+    indexRow.vendorIds.forEach(function(vid) {
+      if (vendorRows[vid]) {
+        vendors.push(vendorRows[vid]);
+      }
+    });
+    // Also include any vendor rows not in the index (safety net)
+    Object.keys(vendorRows).forEach(function(vid) {
+      if (indexRow.vendorIds.indexOf(vid) < 0) {
+        vendors.push(vendorRows[vid]);
+        indexRow.vendorIds.push(vid);
+      }
+    });
+    return { vendors: vendors };
+  }
+
+  // Fallback: if we have a legacy blob, use it (will be migrated later)
+  if (legacyBlob) return legacyBlob;
+
+  // Nothing found
+  return null;
+}
+
+// Split a full blob into per-vendor rows for Supabase
+function _splitInvToVendorRows(blob) {
+  if (!blob || !blob.vendors) return { index: null, rows: [] };
+  var vendorIds = [];
+  var rows = [];
+  blob.vendors.forEach(function(v) {
+    if (!v.vendorId) return;
+    vendorIds.push(v.vendorId);
+    rows.push({ key: INV_VENDOR_PREFIX + v.vendorId, value: v });
+  });
+  return {
+    index: { key: 'popup_inv_new_v1', value: { vendorIds: vendorIds } },
+    rows: rows
+  };
+}
+
+// Migrate old monolithic blob to per-vendor rows in Supabase
+function _migrateInvToPerVendor(sb) {
+  // Check if migration is needed: look for old-format blob in Supabase
+  return sb.from('kv_store').select('key,value').eq('key', 'popup_inv_new_v1').single().then(function(res) {
+    if (res.error || !res.data) return false;
+    var val = typeof res.data.value === 'string' ? JSON.parse(res.data.value) : res.data.value;
+    // If it already has vendorIds, migration is done
+    if (val && val.vendorIds) return false;
+    // If it has vendors array, migrate
+    if (!val || !val.vendors || !val.vendors.length) return false;
+
+    console.log('[data] Migrating inventory to per-vendor rows (' + val.vendors.length + ' vendors)...');
+    var split = _splitInvToVendorRows(val);
+    var allRows = split.rows.slice(); // per-vendor rows
+    if (split.index) allRows.push(split.index); // new index row
+
+    return sb.from('kv_store').upsert(allRows, { onConflict: 'key' }).then(function(uRes) {
+      if (uRes.error) {
+        console.error('[data] Migration failed:', uRes.error);
+        return false;
+      }
+      console.log('[data] Migration complete: ' + split.rows.length + ' vendor rows + index');
+      return true;
+    });
+  });
+}
+
+// Track the last-known vendor data for diffing on write
+var _lastKnownVendors = {}; // vendorId -> JSON string of vendor data
+
 function _pullAllData() {
   var sb = _initSB();
   if (!sb) { console.warn('[data] No Supabase, using localStorage only'); return Promise.resolve(); }
@@ -93,33 +195,59 @@ function _pullAllData() {
     }
     var count = 0;
     var pulledKeys = [];
+    var invRelatedRows = []; // collect inv rows for reconstruction
+
     (res.data || []).forEach(function(row) {
       var val = row.value;
+
+      // Collect inventory-related rows for later reconstruction
+      // Skip inv_vendor snapshot rows (inv_vendor_xyz__snap_2026-01-01)
+      var isInvVendorKey = row.key.indexOf(INV_VENDOR_PREFIX) === 0 && row.key.indexOf('__snap_') < 0;
+      var isInvIndexKey = row.key === 'popup_inv_new_v1';
+      if (isInvVendorKey || isInvIndexKey) {
+        invRelatedRows.push(row);
+        return; // handle these after the loop
+      }
 
       // Strip base64 photos before writing to localStorage
       if (VENDOR_KEYS.indexOf(row.key) >= 0) {
         val = _stripBase64Photos(row.key, val);
       }
 
-      // Supabase is the source of truth. For inventory, merge sold counts
-      // to preserve any marks made locally before this pull completes.
-      if (row.key === 'popup_inv_new_v1') {
-        var localStr = _origGetItem.call(localStorage, row.key);
-        if (localStr) {
-          try {
-            var localData = JSON.parse(localStr);
-            var remoteData = typeof val === 'string' ? JSON.parse(val) : val;
-            var merged = _mergeInvNew(localData, remoteData);
-            val = merged;
-          } catch(e) { /* use remote as-is */ }
-        }
-      }
       var str = typeof val === 'string' ? val : JSON.stringify(val);
       if (_safeSetItem(row.key, str)) {
         pulledKeys.push(row.key);
         count++;
       }
     });
+
+    // Reconstruct inventory blob from per-vendor rows (or legacy blob)
+    if (invRelatedRows.length > 0) {
+      var remoteBlob = _reconstructInvBlob(invRelatedRows);
+      if (remoteBlob) {
+        // Merge with local data to preserve any sold marks made before pull
+        var localStr = _origGetItem.call(localStorage, 'popup_inv_new_v1');
+        var finalBlob = remoteBlob;
+        if (localStr) {
+          try {
+            var localData = JSON.parse(localStr);
+            finalBlob = _mergeInvNew(localData, remoteBlob);
+          } catch(e) { /* use remote as-is */ }
+        }
+        var blobStr = JSON.stringify(finalBlob);
+        if (_safeSetItem('popup_inv_new_v1', blobStr)) {
+          pulledKeys.push('popup_inv_new_v1');
+          count++;
+        }
+        // Cache vendor data for future diffing
+        if (finalBlob.vendors) {
+          finalBlob.vendors.forEach(function(v) {
+            if (v.vendorId) _lastKnownVendors[v.vendorId] = JSON.stringify(v);
+          });
+        }
+      }
+    }
+
     console.log('[data] Pulled ' + count + ' keys from Supabase');
     // Notify any listeners that all keys are fresh from server
     pulledKeys.forEach(function(k) {
@@ -142,7 +270,13 @@ function _flushWrites() {
   if (!sb) return;
 
   var rows = [];
+  var deleteKeys = [];
   Object.keys(_writeQueue).forEach(function(key) {
+    // Handle vendor row deletions
+    if (key.indexOf('__delete__') === 0) {
+      deleteKeys.push(key.slice('__delete__'.length));
+      return;
+    }
     var raw = _writeQueue[key];
     // Try to parse as JSON for JSONB column, fallback to string
     var val;
@@ -150,6 +284,16 @@ function _flushWrites() {
     rows.push({ key: key, value: val });
   });
   _writeQueue = {};
+
+  if (rows.length === 0 && deleteKeys.length === 0) return;
+
+  // Handle deletions of removed vendor rows
+  if (deleteKeys.length > 0) {
+    console.log('[data] Deleting ' + deleteKeys.length + ' vendor rows from Supabase');
+    sb.from('kv_store').delete().in('key', deleteKeys).then(function(res) {
+      if (res.error) console.warn('[data] Delete error:', res.error.message);
+    });
+  }
 
   if (rows.length === 0) return;
 
@@ -159,11 +303,15 @@ function _flushWrites() {
     console.log('[data] Successfully synced ' + rows.length + ' keys to Supabase');
     // Daily snapshot: for any critical key we just wrote, mirror to a dated snapshot row.
     // Caps automatically because the key includes YYYY-MM-DD (one snapshot per day, max).
-    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1', 'popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1', 'popup_graphic_scope_v1'];
+    var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1', 'popup_vendors_v1', 'front_vendors_v1', 'popup_graphic_scope_v1'];
     var today = new Date().toISOString().slice(0, 10);
     var snapRows = [];
     rows.forEach(function(r) {
       if (SNAPSHOT_KEYS.indexOf(r.key) >= 0) {
+        snapRows.push({ key: r.key + '__snap_' + today, value: r.value });
+      }
+      // For per-vendor rows, snapshot them too (lightweight individual snapshots)
+      if (r.key.indexOf(INV_VENDOR_PREFIX) === 0) {
         snapRows.push({ key: r.key + '__snap_' + today, value: r.value });
       }
     });
@@ -232,6 +380,50 @@ localStorage.setItem = function(key, value) {
     return;
   }
 
+  // ── Per-vendor inventory write: only sync changed vendors ──
+  if (key === 'popup_inv_new_v1') {
+    try {
+      var newBlob = typeof cleanValue === 'string' ? JSON.parse(cleanValue) : cleanValue;
+      if (newBlob && newBlob.vendors) {
+        var changedCount = 0;
+        var currentVendorIds = [];
+        newBlob.vendors.forEach(function(v) {
+          if (!v.vendorId) return;
+          currentVendorIds.push(v.vendorId);
+          var vStr = JSON.stringify(v);
+          // Only queue write if this vendor actually changed
+          if (_lastKnownVendors[v.vendorId] !== vStr) {
+            _writeQueue[INV_VENDOR_PREFIX + v.vendorId] = vStr;
+            _lastKnownVendors[v.vendorId] = vStr;
+            _markLocalEdit(key, v.vendorId);
+            changedCount++;
+          }
+        });
+        // Detect removed vendors: if a vendorId was in _lastKnownVendors but
+        // not in the new blob, it was deleted — remove its row
+        Object.keys(_lastKnownVendors).forEach(function(vid) {
+          if (currentVendorIds.indexOf(vid) < 0) {
+            // Queue a deletion by writing a null-ish marker (handled in _flushWrites)
+            _writeQueue['__delete__' + INV_VENDOR_PREFIX + vid] = true;
+            delete _lastKnownVendors[vid];
+            changedCount++;
+          }
+        });
+        // Always update the index with current vendor IDs
+        _writeQueue['popup_inv_new_v1'] = JSON.stringify({ vendorIds: currentVendorIds });
+        if (changedCount > 0) {
+          console.log('[data] Inventory: ' + changedCount + ' vendor(s) changed');
+        }
+        if (_writeTimer) clearTimeout(_writeTimer);
+        _writeTimer = setTimeout(_flushWrites, 300);
+        return; // Don't fall through to the generic queue
+      }
+    } catch(e) {
+      console.warn('[data] Per-vendor inv write failed, falling back to blob write:', e);
+      // Fall through to generic queue below
+    }
+  }
+
   // Queue write to Supabase (send cleaned value)
   _writeQueue[key] = cleanValue;
   if (_writeTimer) clearTimeout(_writeTimer);
@@ -294,6 +486,15 @@ function _mergeInvItem(localItem, remoteItem) {
     if (loser[f] && !winner[f]) winner[f] = loser[f];
   });
   return winner;
+}
+
+// Merge a single vendor's data (local vs remote), preserving sold counts
+function _mergeInvVendor(localV, remoteV) {
+  if (!localV) return remoteV;
+  if (!remoteV) return localV;
+  // Use _mergeInvNew with single-vendor blobs to reuse all the field-level logic
+  var merged = _mergeInvNew({ vendors: [localV] }, { vendors: [remoteV] });
+  return (merged && merged.vendors && merged.vendors[0]) || remoteV;
 }
 
 function _mergeInvNew(local, remote) {
@@ -385,6 +586,103 @@ function _startRealtime() {
         // Ignore snapshot rows — they're just backups, not live data
         if (key.indexOf('__snap_') >= 0) return;
         var val = payload.new.value;
+
+        // ── Per-vendor inventory realtime: merge single vendor into local blob ──
+        if (key.indexOf(INV_VENDOR_PREFIX) === 0) {
+          var vendorId = key.slice(INV_VENDOR_PREFIX.length);
+          // If this vendor was recently edited locally, skip (our write is in flight)
+          var localEdits = _localEditedIds['popup_inv_new_v1'] || {};
+          if (localEdits[vendorId]) {
+            console.log('[realtime] Skipping inv_vendor update for locally-edited vendor:', vendorId);
+            return;
+          }
+          var remoteVendor = typeof val === 'string' ? JSON.parse(val) : val;
+          // Update the local blob in localStorage
+          var localBlobStr = _origGetItem.call(localStorage, 'popup_inv_new_v1');
+          if (localBlobStr) {
+            try {
+              var localBlob = JSON.parse(localBlobStr);
+              if (localBlob && localBlob.vendors) {
+                var found = false;
+                var mergedVendor = remoteVendor;
+                localBlob.vendors = localBlob.vendors.map(function(v) {
+                  if (v.vendorId === vendorId) {
+                    found = true;
+                    // Merge: preserve local sold counts if higher
+                    mergedVendor = _mergeInvVendor(v, remoteVendor);
+                    return mergedVendor;
+                  }
+                  return v;
+                });
+                if (!found) {
+                  localBlob.vendors.push(remoteVendor);
+                }
+                _safeSetItem('popup_inv_new_v1', JSON.stringify(localBlob));
+                // Update cache with merged result so next user-initiated save
+                // can detect if there's still a difference to push
+                _lastKnownVendors[vendorId] = JSON.stringify(mergedVendor);
+                console.log('[realtime] Merged vendor:', vendorId);
+                window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: 'popup_inv_new_v1', source: 'realtime' } }));
+                return;
+              }
+            } catch(e) { console.warn('[realtime] Vendor merge error:', e); }
+          }
+          return;
+        }
+
+        // ── Index row update (vendor added/removed on other device) ──
+        if (key === 'popup_inv_new_v1') {
+          var indexVal = typeof val === 'string' ? JSON.parse(val) : val;
+          // If this is the new index format, pull any missing vendor rows
+          if (indexVal && indexVal.vendorIds) {
+            var localBlobStr2 = _origGetItem.call(localStorage, 'popup_inv_new_v1');
+            var localBlob2 = null;
+            try { localBlob2 = localBlobStr2 ? JSON.parse(localBlobStr2) : null; } catch(e) {}
+            var localVidSet = {};
+            if (localBlob2 && localBlob2.vendors) {
+              localBlob2.vendors.forEach(function(v) { if (v.vendorId) localVidSet[v.vendorId] = true; });
+            }
+            // Check for new vendors we don't have locally
+            var missingVids = indexVal.vendorIds.filter(function(vid) { return !localVidSet[vid]; });
+            if (missingVids.length > 0) {
+              var sb2 = _initSB();
+              if (sb2) {
+                var missingKeys = missingVids.map(function(vid) { return INV_VENDOR_PREFIX + vid; });
+                sb2.from('kv_store').select('key,value').in('key', missingKeys).then(function(res2) {
+                  if (res2.error || !res2.data) return;
+                  var blob = localBlob2 || { vendors: [] };
+                  res2.data.forEach(function(row) {
+                    var v = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+                    blob.vendors.push(v);
+                    _lastKnownVendors[v.vendorId] = JSON.stringify(v);
+                  });
+                  _safeSetItem('popup_inv_new_v1', JSON.stringify(blob));
+                  window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: 'popup_inv_new_v1', source: 'realtime' } }));
+                });
+              }
+            }
+            // Check for removed vendors
+            if (localBlob2 && localBlob2.vendors) {
+              var remoteVidSet = {};
+              indexVal.vendorIds.forEach(function(vid) { remoteVidSet[vid] = true; });
+              var hadRemovals = false;
+              localBlob2.vendors = localBlob2.vendors.filter(function(v) {
+                if (v.vendorId && !remoteVidSet[v.vendorId]) {
+                  delete _lastKnownVendors[v.vendorId];
+                  hadRemovals = true;
+                  return false;
+                }
+                return true;
+              });
+              if (hadRemovals) {
+                _safeSetItem('popup_inv_new_v1', JSON.stringify(localBlob2));
+                window.dispatchEvent(new CustomEvent('kv-updated', { detail: { key: 'popup_inv_new_v1', source: 'realtime' } }));
+              }
+            }
+            return; // Don't store the index in localStorage (blob is there instead)
+          }
+          // If it's still the old blob format, fall through to legacy merge
+        }
 
         // Strip base64 photos from vendor data
         if (VENDOR_KEYS.indexOf(key) >= 0) {
@@ -558,13 +856,33 @@ function _migrateVisualImgs() {
 window.addEventListener('beforeunload', function() {
   if (Object.keys(_writeQueue).length > 0) {
     var rows = [];
+    var deleteKeys = [];
     Object.keys(_writeQueue).forEach(function(key) {
+      // Handle vendor row deletions
+      if (key.indexOf('__delete__') === 0) {
+        deleteKeys.push(key.slice('__delete__'.length));
+        return;
+      }
       var raw = _writeQueue[key];
       var val;
       try { val = JSON.parse(raw); } catch(e) { val = raw; }
       rows.push({ key: key, value: val });
     });
     _writeQueue = {};
+    // Handle deletions via keepalive DELETE (best effort)
+    if (deleteKeys.length > 0) {
+      var delUrl = SUPABASE_URL + '/rest/v1/kv_store?key=in.(' + deleteKeys.map(encodeURIComponent).join(',') + ')';
+      try {
+        fetch(delUrl, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+          },
+          keepalive: true
+        });
+      } catch(e) { /* best effort */ }
+    }
     if (rows.length === 0) return;
     // Use fetch with keepalive so the request survives page close
     var url = SUPABASE_URL + '/rest/v1/kv_store';
@@ -590,8 +908,12 @@ window.addEventListener('beforeunload', function() {
 });
 
 (function() {
-  _initSB();
-  _pullAllData().then(function() {
+  var sb = _initSB();
+  // First, migrate old monolithic inventory blob to per-vendor rows (if needed)
+  var migrationPromise = sb ? _migrateInvToPerVendor(sb) : Promise.resolve(false);
+  migrationPromise.then(function() {
+    return _pullAllData();
+  }).then(function() {
     window._sbPullDone = true;
     _startRealtime();
     window.dispatchEvent(new Event('supabase-ready'));
