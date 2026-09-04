@@ -2168,44 +2168,44 @@
         <!-- DASHBOARD HEADER -->
         <div class="ov-hero">
           <div class="ov-hero-left">
-            <div class="ov-title">46 Hester St</div>
-            <div class="ov-sub">Pop-up · The Front · Jul 23 – Aug 23 · Tue–Sun 11am–8pm</div>
+            <div class="ov-title">The Front NYC</div>
+            <div class="ov-sub">Hot Phenomena · 46 Hester St · Jul 23 – Aug 23, 2026 · ✓ Complete</div>
           </div>
         </div>
 
-        <!-- KEY DATES STRIP — populated by tracker.js FRONT_KEY_DATES -->
+        <!-- COMPLETED TIMELINE -->
         <div class="ov-dates-strip">
-          <div class="ov-date-slot">
+          <div class="ov-date-slot" style="opacity:0.6">
             <div class="ov-date-label">Setup</div>
-            <div class="ov-date-value" id="ov-date-setup">—</div>
+            <div class="ov-date-value">Jul 20–22 ✓</div>
+          </div>
+          <div class="ov-date-slot" style="opacity:0.6">
+            <div class="ov-date-label">Opened</div>
+            <div class="ov-date-value">Jul 23 ✓</div>
+          </div>
+          <div class="ov-date-slot" style="opacity:0.6">
+            <div class="ov-date-label">Closed</div>
+            <div class="ov-date-value">Aug 23 ✓</div>
+          </div>
+          <div class="ov-date-slot" style="opacity:0.6">
+            <div class="ov-date-label">Deinstall</div>
+            <div class="ov-date-value">Aug 24 ✓</div>
           </div>
           <div class="ov-date-slot ov-date-accent">
-            <div class="ov-date-label">Opens</div>
-            <div class="ov-date-value" id="ov-date-opens">—</div>
-          </div>
-          <div class="ov-date-slot">
-            <div class="ov-date-label">Opening event</div>
-            <div class="ov-date-value" id="ov-date-event">—</div>
-          </div>
-          <div class="ov-date-slot ov-date-accent">
-            <div class="ov-date-label">Closes</div>
-            <div class="ov-date-value" id="ov-date-closes">—</div>
-          </div>
-          <div class="ov-date-slot">
-            <div class="ov-date-label">Space confirmed</div>
-            <div class="ov-date-value">Booked ✓</div>
+            <div class="ov-date-label">Post-Close</div>
+            <div class="ov-date-value">In Progress</div>
           </div>
         </div>
 
         <!-- STATUS CARDS -->
         <div class="ov-status-grid" id="ov-status-grid">
-          <div class="ov-stat-card" onclick="showTab('front','popup-vendors',document.querySelector('[data-tab=popup-vendors]'))">
-            <div class="ov-stat-label">Vendors confirmed</div>
+          <div class="ov-stat-card" onclick="showTab('front','popup-inventory-new',document.querySelector('[data-tab=popup-inventory-new]'))">
+            <div class="ov-stat-label">Designer Payouts</div>
             <div class="ov-stat-val" id="ov-vendor-count">—</div>
             <div class="ov-stat-hint">tap to open →</div>
           </div>
-          <div class="ov-stat-card" onclick="showTab('front','popup-marketing',document.querySelector('[data-tab=popup-marketing]'))">
-            <div class="ov-stat-label">Marketing tasks done</div>
+          <div class="ov-stat-card" onclick="showTab('front','web-inventory',document.querySelector('[data-tab=web-inventory]'))">
+            <div class="ov-stat-label">Web Inventory</div>
             <div class="ov-stat-val" id="ov-mkt-count">—</div>
             <div class="ov-stat-hint">tap to open →</div>
           </div>
@@ -2239,18 +2239,18 @@
 
         <!-- THIS WEEK FOCUS — pulls from schedule -->
         <div class="ov-week-section">
-          <div class="ov-week-label">This week — what needs to happen</div>
+          <div class="ov-week-label">This week — post-close priorities</div>
           <div id="ov-week-from-schedule"></div>
         </div>
 
-        <!-- MEETING / ACTION / QUESTIONS -->
+        <!-- ACTION ITEMS -->
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
           <div class="today-card" style="flex:1;min-width:200px" id="ov-meeting-items">
-            <div class="today-card-label">Items for Next Meeting</div>
+            <div class="today-card-label">Next Steps</div>
             <div id="ov-meeting-list"></div>
           </div>
           <div class="today-card" style="flex:1;min-width:200px" id="ov-action-items">
-            <div class="today-card-label">New Action Items</div>
+            <div class="today-card-label">Action Items</div>
             <div id="ov-action-list"></div>
           </div>
           <div class="today-card" style="flex:1;min-width:200px" id="ov-open-questions">
