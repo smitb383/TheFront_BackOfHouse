@@ -10358,39 +10358,58 @@ function renderCherryBomb() {
     return;
   }
 
-  // Group by category
-  var categories = ['clothing','jewelry','accessories','ceramics','objects','art','textiles','furniture','other'];
-  var catLabels = { clothing:'Clothing', jewelry:'Jewelry', accessories:'Accessories', ceramics:'Ceramics', objects:'Objects', art:'Art', textiles:'Textiles', furniture:'Furniture', other:'Other' };
+  // Primary groups: Yes > Maybe > No. Sub-groups within each.
   var bringColors = { 'yes': '#88c98a', 'maybe': '#e2c97e', 'no': 'var(--border)' };
+  var bringLabels = { 'yes': 'Bringing', 'maybe': 'Maybe', 'no': 'Not Bringing' };
+  var bringHeaderColors = { 'yes': '#88c98a', 'maybe': '#e2c97e', 'no': 'var(--muted)' };
 
-  categories.forEach(function(cat) {
-    var catItems = filtered.filter(function(a) { return a.category === cat; });
-    if (!catItems.length) return;
+  // Sub-categories: Homeware/Objects, Jewelry/Accessories, Clothing
+  var subCatMap = {
+    'ceramics': 'Homeware / Objects', 'objects': 'Homeware / Objects', 'furniture': 'Homeware / Objects', 'other': 'Homeware / Objects', 'art': 'Homeware / Objects',
+    'jewelry': 'Jewelry / Accessories', 'accessories': 'Jewelry / Accessories',
+    'clothing': 'Clothing', 'textiles': 'Clothing'
+  };
+  var subCatOrder = ['Clothing', 'Jewelry / Accessories', 'Homeware / Objects'];
 
-    html += '<div style="margin-bottom:20px">';
-    html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border)">' + (catLabels[cat] || cat) + ' (' + catItems.length + ')</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:10px">';
+  function renderCard(a) {
+    var bc = bringColors[a.bringing] || 'var(--border)';
+    var h = '<div style="background:var(--surface2);border-radius:8px;overflow:hidden;border:2px solid ' + bc + '">';
+    h += '<div style="width:100%;aspect-ratio:1/1;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
+      (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
+    if (a.photo) h += '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
+    else h += '<span style="color:var(--muted);font-size:20px">—</span>';
+    h += '</div><div style="padding:10px">';
+    h += '<div style="font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600;line-height:1.2">' + esc(a.name) + '</div>';
+    h += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px">' + esc(a.designer) + '</div>';
+    h += '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;margin-top:4px">$' + a.price + '</div>';
+    h += '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'cherryBringing\',this.value);renderCherryBomb()" style="margin-top:8px;background:' + bc + '22;border:2px solid ' + bc + ';color:' + bc + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;width:100%">';
+    h += '<option value="no"' + (a.bringing === 'no' ? ' selected' : '') + '>No</option>';
+    h += '<option value="maybe"' + (a.bringing === 'maybe' ? ' selected' : '') + '>Maybe</option>';
+    h += '<option value="yes"' + (a.bringing === 'yes' ? ' selected' : '') + '>Yes</option>';
+    h += '</select></div></div>';
+    return h;
+  }
 
-    catItems.forEach(function(a) {
-      var bc = bringColors[a.bringing] || 'var(--border)';
-      html += '<div style="background:var(--surface2);border-radius:8px;overflow:hidden;border:2px solid ' + bc + '">';
-      html += '<div style="width:100%;aspect-ratio:1/1;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
-        (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
-      if (a.photo) html += '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
-      else html += '<span style="color:var(--muted);font-size:20px">—</span>';
-      html += '</div>';
-      html += '<div style="padding:10px">';
-      html += '<div style="font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600;line-height:1.2">' + esc(a.name) + '</div>';
-      html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px">' + esc(a.designer) + '</div>';
-      html += '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;margin-top:4px">$' + a.price + '</div>';
-      html += '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'cherryBringing\',this.value);renderCherryBomb()" style="margin-top:8px;background:' + bc + '22;border:2px solid ' + bc + ';color:' + bc + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;width:100%">';
-      html += '<option value="no"' + (a.bringing === 'no' ? ' selected' : '') + '>No</option>';
-      html += '<option value="maybe"' + (a.bringing === 'maybe' ? ' selected' : '') + '>Maybe</option>';
-      html += '<option value="yes"' + (a.bringing === 'yes' ? ' selected' : '') + '>Yes</option>';
-      html += '</select>';
+  ['yes', 'maybe', 'no'].forEach(function(bringStatus) {
+    var groupItems = filtered.filter(function(a) { return a.bringing === bringStatus; });
+    if (!groupItems.length) return;
+
+    var headerColor = bringHeaderColors[bringStatus];
+    html += '<div style="margin-bottom:24px">';
+    html += '<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:700;color:' + headerColor + ';padding:12px 0;border-bottom:3px solid ' + headerColor + '">' + bringLabels[bringStatus] + ' <span style="font-family:DM Mono,monospace;font-size:12px;font-weight:400;color:var(--muted)">(' + groupItems.length + ')</span></div>';
+
+    subCatOrder.forEach(function(subCat) {
+      var subItems = groupItems.filter(function(a) { return (subCatMap[a.category] || 'Homeware / Objects') === subCat; });
+      if (!subItems.length) return;
+      subItems.sort(function(a, b) { return b.price - a.price; });
+
+      html += '<div style="margin-top:12px">';
+      html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:6px 0">' + subCat + ' (' + subItems.length + ')</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">';
+      subItems.forEach(function(a) { html += renderCard(a); });
       html += '</div></div>';
     });
-    html += '</div></div>';
+    html += '</div>';
   });
 
   container.innerHTML = html;
