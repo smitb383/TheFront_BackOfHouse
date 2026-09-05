@@ -10401,7 +10401,11 @@ function renderCherryBomb() {
     subCatOrder.forEach(function(subCat) {
       var subItems = groupItems.filter(function(a) { return (subCatMap[a.category] || 'Homeware / Objects') === subCat; });
       if (!subItems.length) return;
-      subItems.sort(function(a, b) { return b.price - a.price; });
+      subItems.sort(function(a, b) {
+        var d = a.designer.toLowerCase().localeCompare(b.designer.toLowerCase());
+        if (d !== 0) return d;
+        return b.price - a.price;
+      });
 
       html += '<div style="margin-top:12px">';
       html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:6px 0">' + subCat + ' (' + subItems.length + ')</div>';
