@@ -10289,7 +10289,7 @@ var webInvFilter = 'all';
 var webInvView = 'list';
 
 // ═══ CHERRY BOMB MARKET ═══
-var cherryBombFilterBringing = false;
+var cherryBombFilter = 'all'; // 'all', 'yes', 'maybe', 'no'
 
 function renderCherryBomb() {
   var container = document.getElementById('cherry-bomb-container');
@@ -10297,7 +10297,6 @@ function renderCherryBomb() {
   var data = getInvNew();
   if (!data || !data.vendors) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No inventory data.</div>'; return; }
 
-  // Pull all available items from keeping/hybrid vendors
   var allItems = [];
   data.vendors.forEach(function(vendor, vi) {
     if (vendor.returnPlan !== 'keeping' && vendor.returnPlan !== 'hybrid') return;
@@ -10320,53 +10319,79 @@ function renderCherryBomb() {
         designer: vendor.name || '',
         price: item.salePrice || 0,
         photo: item.photo || '',
-        bringing: item.cherryBringing || false,
+        bringing: item.cherryBringing || 'no',
+        category: (item.category || 'other').toLowerCase(),
         vi: vi, ii: ii
       });
     });
   });
 
-  allItems.sort(function(a, b) { return b.price - a.price; });
-  var filtered = cherryBombFilterBringing ? allItems.filter(function(a) { return a.bringing; }) : allItems;
+  // Sort: yes first, maybe second, no last. Within each, by price high to low
+  var bringOrder = { 'yes': 0, 'maybe': 1, 'no': 2 };
+  allItems.sort(function(a, b) {
+    var bo = (bringOrder[a.bringing] || 2) - (bringOrder[b.bringing] || 2);
+    if (bo !== 0) return bo;
+    return b.price - a.price;
+  });
 
-  var bringingCount = allItems.filter(function(a) { return a.bringing; }).length;
+  var filtered = cherryBombFilter === 'all' ? allItems : allItems.filter(function(a) { return a.bringing === cherryBombFilter; });
+
+  var yesCount = allItems.filter(function(a) { return a.bringing === 'yes'; }).length;
+  var maybeCount = allItems.filter(function(a) { return a.bringing === 'maybe'; }).length;
 
   var html = '';
-  // Summary
-  html += '<div style="display:flex;gap:24px;padding:12px 16px;background:var(--surface2);border-radius:6px;margin-bottom:12px;font-family:DM Mono,monospace;align-items:center">';
-  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total Items</span><div style="font-size:18px;font-weight:700">' + allItems.length + '</div></div>';
-  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Bringing</span><div style="font-size:18px;font-weight:700;color:#88c98a">' + bringingCount + '</div></div>';
-  html += '<div style="margin-left:auto">';
-  html += '<button onclick="cherryBombFilterBringing=!cherryBombFilterBringing;renderCherryBomb()" style="padding:5px 14px;border-radius:4px;border:1px solid var(--border);background:' + (cherryBombFilterBringing ? 'var(--front)' : 'var(--surface2)') + ';color:' + (cherryBombFilterBringing ? '#000' : 'var(--text)') + ';font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' + (cherryBombFilterBringing ? '✓ Bringing Only' : 'Show Bringing Only') + '</button>';
+  // Summary + filters
+  html += '<div style="display:flex;gap:24px;padding:12px 16px;background:var(--surface2);border-radius:6px;margin-bottom:12px;font-family:DM Mono,monospace;align-items:center;flex-wrap:wrap">';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total</span><div style="font-size:18px;font-weight:700">' + allItems.length + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Yes</span><div style="font-size:18px;font-weight:700;color:#88c98a">' + yesCount + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Maybe</span><div style="font-size:18px;font-weight:700;color:#e2c97e">' + maybeCount + '</div></div>';
+  html += '<div style="margin-left:auto;display:flex;gap:4px">';
+  ['all','yes','maybe','no'].forEach(function(f) {
+    var active = cherryBombFilter === f;
+    html += '<button onclick="cherryBombFilter=\'' + f + '\';renderCherryBomb()" style="padding:5px 12px;border-radius:4px;border:1px solid var(--border);background:' + (active ? 'var(--front)' : 'var(--surface2)') + ';color:' + (active ? '#000' : 'var(--text)') + ';font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' + (f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)) + '</button>';
+  });
   html += '</div></div>';
 
   if (!filtered.length) {
-    html += '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">' + (cherryBombFilterBringing ? 'No items marked as bringing yet.' : 'No available items.') + '</div>';
+    html += '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No items in this filter.</div>';
     container.innerHTML = html;
     return;
   }
 
-  // Grid
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">';
-  filtered.forEach(function(a) {
-    var borderColor = a.bringing ? '#88c98a' : 'var(--border)';
-    html += '<div style="background:var(--surface2);border-radius:8px;overflow:hidden;border:2px solid ' + borderColor + '">';
-    html += '<div style="width:100%;aspect-ratio:1/1;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
-      (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
-    if (a.photo) html += '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
-    else html += '<span style="color:var(--muted);font-size:20px">No Photo</span>';
-    html += '</div>';
-    html += '<div style="padding:10px">';
-    html += '<div style="font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600;line-height:1.2">' + esc(a.name) + '</div>';
-    html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px">' + esc(a.designer) + '</div>';
-    html += '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;margin-top:4px">$' + a.price + '</div>';
-    html += '<label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer">';
-    html += '<input type="checkbox"' + (a.bringing ? ' checked' : '') + ' onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'cherryBringing\',this.checked);renderCherryBomb()" style="accent-color:#88c98a;width:16px;height:16px">';
-    html += '<span style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:' + (a.bringing ? '#88c98a' : 'var(--muted)') + ';font-weight:' + (a.bringing ? '700' : '400') + '">Bringing</span>';
-    html += '</label>';
+  // Group by category
+  var categories = ['clothing','jewelry','accessories','ceramics','objects','art','textiles','furniture','other'];
+  var catLabels = { clothing:'Clothing', jewelry:'Jewelry', accessories:'Accessories', ceramics:'Ceramics', objects:'Objects', art:'Art', textiles:'Textiles', furniture:'Furniture', other:'Other' };
+  var bringColors = { 'yes': '#88c98a', 'maybe': '#e2c97e', 'no': 'var(--border)' };
+
+  categories.forEach(function(cat) {
+    var catItems = filtered.filter(function(a) { return a.category === cat; });
+    if (!catItems.length) return;
+
+    html += '<div style="margin-bottom:20px">';
+    html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border)">' + (catLabels[cat] || cat) + ' (' + catItems.length + ')</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:10px">';
+
+    catItems.forEach(function(a) {
+      var bc = bringColors[a.bringing] || 'var(--border)';
+      html += '<div style="background:var(--surface2);border-radius:8px;overflow:hidden;border:2px solid ' + bc + '">';
+      html += '<div style="width:100%;aspect-ratio:1/1;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
+        (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
+      if (a.photo) html += '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
+      else html += '<span style="color:var(--muted);font-size:20px">—</span>';
+      html += '</div>';
+      html += '<div style="padding:10px">';
+      html += '<div style="font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600;line-height:1.2">' + esc(a.name) + '</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px">' + esc(a.designer) + '</div>';
+      html += '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;margin-top:4px">$' + a.price + '</div>';
+      html += '<select onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'cherryBringing\',this.value);renderCherryBomb()" style="margin-top:8px;background:' + bc + '22;border:2px solid ' + bc + ';color:' + bc + ';font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;width:100%">';
+      html += '<option value="no"' + (a.bringing === 'no' ? ' selected' : '') + '>No</option>';
+      html += '<option value="maybe"' + (a.bringing === 'maybe' ? ' selected' : '') + '>Maybe</option>';
+      html += '<option value="yes"' + (a.bringing === 'yes' ? ' selected' : '') + '>Yes</option>';
+      html += '</select>';
+      html += '</div></div>';
+    });
     html += '</div></div>';
   });
-  html += '</div>';
 
   container.innerHTML = html;
 }
