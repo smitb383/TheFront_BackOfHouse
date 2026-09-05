@@ -224,7 +224,8 @@ body::before {
 /* Inventory New & Store Build Out — break out of ws-inner to use full width */
 #front-popup-inventory-new,
 #front-store-buildout,
-#front-web-inventory {
+#front-web-inventory,
+#front-cherry-bomb {
   width: 100vw; position: relative; left: 50%; right: 50%;
   margin-left: -50vw; margin-right: -50vw;
   max-width: 100vw !important; padding: 24px 60px 80px !important;

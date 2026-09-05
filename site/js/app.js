@@ -2193,6 +2193,7 @@ function showTab(project, tab, btn) {
   if (tab === 'popup-inventory') setTimeout(function(){ initPLData(); renderInventory(); }, 20);
   if (tab === 'popup-inventory-new') setTimeout(function(){ renderInvNew(); }, 20);
   if (tab === 'web-inventory') setTimeout(function(){ renderWebInventory(); }, 20);
+  if (tab === 'cherry-bomb') setTimeout(function(){ renderCherryBomb(); }, 20);
   if (tab === 'schedule') setTimeout(function(){ if(typeof initTracker==='function') initTracker(); if(typeof renderTracker==='function') renderTracker(); }, 20);
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
   if (tab === 'chashama-proposal') setTimeout(function(){ loadBPData(); initChaShaMa(); }, 20);
@@ -10286,6 +10287,89 @@ function invNewSort(sortBy) {
 
 var webInvFilter = 'all';
 var webInvView = 'list';
+
+// ═══ CHERRY BOMB MARKET ═══
+var cherryBombFilterBringing = false;
+
+function renderCherryBomb() {
+  var container = document.getElementById('cherry-bomb-container');
+  if (!container) return;
+  var data = getInvNew();
+  if (!data || !data.vendors) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No inventory data.</div>'; return; }
+
+  // Pull all available items from keeping/hybrid vendors
+  var allItems = [];
+  data.vendors.forEach(function(vendor, vi) {
+    if (vendor.returnPlan !== 'keeping' && vendor.returnPlan !== 'hybrid') return;
+    vendor.items.forEach(function(item, ii) {
+      var mc = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+      var bc = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+      var hasSz = item.sizes && item.sizes.length > 0;
+      var totalQty = 0, totalSold = 0;
+      if (hasSz) {
+        item.sizes.forEach(function(sz) { totalQty += (sz.qty || 0); totalSold += Math.min(sz.sold || 0, sz.qty || 0); });
+      } else {
+        totalQty = item.qty || 1;
+        totalSold = Math.min(item.sold || 0, totalQty);
+      }
+      var available = totalQty - totalSold - mc - bc;
+      if (available <= 0) return;
+      if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
+      allItems.push({
+        name: item.name || '',
+        designer: vendor.name || '',
+        price: item.salePrice || 0,
+        photo: item.photo || '',
+        bringing: item.cherryBringing || false,
+        vi: vi, ii: ii
+      });
+    });
+  });
+
+  allItems.sort(function(a, b) { return b.price - a.price; });
+  var filtered = cherryBombFilterBringing ? allItems.filter(function(a) { return a.bringing; }) : allItems;
+
+  var bringingCount = allItems.filter(function(a) { return a.bringing; }).length;
+
+  var html = '';
+  // Summary
+  html += '<div style="display:flex;gap:24px;padding:12px 16px;background:var(--surface2);border-radius:6px;margin-bottom:12px;font-family:DM Mono,monospace;align-items:center">';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total Items</span><div style="font-size:18px;font-weight:700">' + allItems.length + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Bringing</span><div style="font-size:18px;font-weight:700;color:#88c98a">' + bringingCount + '</div></div>';
+  html += '<div style="margin-left:auto">';
+  html += '<button onclick="cherryBombFilterBringing=!cherryBombFilterBringing;renderCherryBomb()" style="padding:5px 14px;border-radius:4px;border:1px solid var(--border);background:' + (cherryBombFilterBringing ? 'var(--front)' : 'var(--surface2)') + ';color:' + (cherryBombFilterBringing ? '#000' : 'var(--text)') + ';font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">' + (cherryBombFilterBringing ? '✓ Bringing Only' : 'Show Bringing Only') + '</button>';
+  html += '</div></div>';
+
+  if (!filtered.length) {
+    html += '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">' + (cherryBombFilterBringing ? 'No items marked as bringing yet.' : 'No available items.') + '</div>';
+    container.innerHTML = html;
+    return;
+  }
+
+  // Grid
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">';
+  filtered.forEach(function(a) {
+    var borderColor = a.bringing ? '#88c98a' : 'var(--border)';
+    html += '<div style="background:var(--surface2);border-radius:8px;overflow:hidden;border:2px solid ' + borderColor + '">';
+    html += '<div style="width:100%;aspect-ratio:1/1;background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
+      (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
+    if (a.photo) html += '<img src="' + esc(a.photo) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
+    else html += '<span style="color:var(--muted);font-size:20px">No Photo</span>';
+    html += '</div>';
+    html += '<div style="padding:10px">';
+    html += '<div style="font-family:Cormorant Garamond,serif;font-size:15px;font-weight:600;line-height:1.2">' + esc(a.name) + '</div>';
+    html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);margin-top:2px">' + esc(a.designer) + '</div>';
+    html += '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;margin-top:4px">$' + a.price + '</div>';
+    html += '<label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer">';
+    html += '<input type="checkbox"' + (a.bringing ? ' checked' : '') + ' onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'cherryBringing\',this.checked);renderCherryBomb()" style="accent-color:#88c98a;width:16px;height:16px">';
+    html += '<span style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:' + (a.bringing ? '#88c98a' : 'var(--muted)') + ';font-weight:' + (a.bringing ? '700' : '400') + '">Bringing</span>';
+    html += '</label>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  container.innerHTML = html;
+}
 
 function renderWebInventory() {
   var container = document.getElementById('web-inv-container');
