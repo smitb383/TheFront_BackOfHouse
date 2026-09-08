@@ -8678,7 +8678,7 @@ function renderInvNew() {
         (vendorLossCost > 0 ? statBlock('- Loss', vendorLossCost, '#e07070') : '') +
         (vendorRecovered > 0 ? statBlock('+ Recovered', vendorRecovered, '#88c98a') : '') +
         (wePayShipping ? statBlock('- Shipping', shipCostNum, '#e07070') : '') +
-        (hasAdj ? statBlock('Net Ours', netStoreCalc, '#88c98a') : '') +
+        (hasAdj ? statBlock('Net Ours', netStoreCalc, netStoreCalc >= 0 ? '#88c98a' : '#e07070') : '') +
         statBlock('Their Net', netDesignerCalc, 'var(--text)');
       grandCosts += totalVendorExtras + actualLoss + (wePayShipping ? shipCostNum : 0);
     }
