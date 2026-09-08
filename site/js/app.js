@@ -8127,7 +8127,20 @@ function getInvNew() {
     return data;
   } catch(e) { return null; }
 }
+var _lastSavedVendorHashes = {};
 function saveInvNew(d) {
+  // Stamp _modified on any vendor that changed since last save
+  if (d && d.vendors) {
+    var now = new Date().toISOString();
+    d.vendors.forEach(function(v) {
+      var vid = v.vendorId;
+      var hash = JSON.stringify(v.items) + (v.returnPlan||'') + (v.paymentStatus||'') + (v.name||'');
+      if (_lastSavedVendorHashes[vid] && _lastSavedVendorHashes[vid] !== hash) {
+        v._modified = now;
+      }
+      _lastSavedVendorHashes[vid] = hash;
+    });
+  }
   // Enforce: sold counts can never decrease (protects against sync overwrites)
   _enforceSoldHighWater(d);
   _updateSoldHighWater(d);
@@ -8921,6 +8934,7 @@ function invNewEditVendor(vi, field, val) {
   var data = getInvNew();
   if (!data || !data.vendors[vi]) return;
   data.vendors[vi][field] = val;
+  data.vendors[vi]._modified = new Date().toISOString();
   saveInvNew(data);
   // Only re-render for fields that affect layout; skip for text inputs like shipping
   var noRerenderFields = ['shippingCost','shippingCoveredBy','eurRate','payDetails','payPlatform','reportNote','previouslyPaid'];
@@ -9147,6 +9161,7 @@ function invNewEditItem(vi, ii, field, val) {
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   data.vendors[vi].items[ii][field] = val;
   if (field === 'name') data.vendors[vi].items[ii]._nameUpdated = new Date().toISOString();
+  data.vendors[vi]._modified = new Date().toISOString();
   saveInvNew(data);
   // Debounce re-render so typing doesn't jump the page
   if (field === 'category') { renderInvNew(); return; }
