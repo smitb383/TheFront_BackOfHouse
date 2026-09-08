@@ -8353,23 +8353,47 @@ function renderInvNew() {
     grandShipping += shipCostForMax;
     grandMaxTakeHome += vendorMaxTakeHome;
 
-    // Sort items: sold-out at bottom, then by price highest to lowest
+    // Sort items: Available first, then sold grouped by venue (Store → Cherry → Online)
     var itemIndices = vendor.items.map(function(item, ii) {
       var hasSz = item.sizes && item.sizes.length > 0;
-      var tQty = 0, tSold = 0;
-      if (hasSz) { item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0); }); }
-      else { tQty = item.qty || 1; tSold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0); }
+      var tQty = 0, storeSold = 0, cherrySold = 0, onlineSold = 0;
+      if (hasSz) {
+        item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); storeSold += (sz.sold || 0); cherrySold += (sz.cherrySold || 0); onlineSold += (sz.onlineSold || 0); });
+      } else {
+        tQty = item.qty || 1; storeSold = item.sold || 0; cherrySold = item.cherrySold || 0; onlineSold = item.onlineSold || 0;
+      }
+      var tSold = storeSold + cherrySold + onlineSold;
       var mc = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
       var bc = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
       var allGone = (tSold + mc + bc) >= tQty && tQty > 0;
-      return { ii: ii, soldOut: allGone, price: item.salePrice || 0 };
+      // Determine primary sold venue for grouping
+      var soldGroup = 0; // 0=available, 1=store, 2=cherry, 3=online
+      if (allGone) {
+        if (cherrySold > 0 && storeSold === 0 && onlineSold === 0) soldGroup = 2;
+        else if (onlineSold > 0 && storeSold === 0 && cherrySold === 0) soldGroup = 3;
+        else soldGroup = 1; // default to store if mixed or store-only
+      }
+      return { ii: ii, soldOut: allGone, soldGroup: soldGroup, price: item.salePrice || 0, storeSold: storeSold, cherrySold: cherrySold, onlineSold: onlineSold };
     });
     itemIndices.sort(function(a, b) {
-      if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
+      if (a.soldGroup !== b.soldGroup) return a.soldGroup - b.soldGroup;
       return b.price - a.price;
     });
+    // Insert group headers
+    var lastGroup = -1;
+    var groupLabels = { 1: '46 Hester Sales', 2: 'Cherry Bomb Sales', 3: 'Online Sales' };
+    var groupColors = { 1: 'var(--muted)', 2: '#e07070', 3: '#82bfbb' };
 
-    var itemRows = itemIndices.map(function(entry) { var ii = entry.ii; var item = vendor.items[ii];
+    var itemRows = itemIndices.map(function(entry) {
+      // Insert venue group header when transitioning between groups
+      var groupHeader = '';
+      if (entry.soldGroup > 0 && entry.soldGroup !== lastGroup) {
+        lastGroup = entry.soldGroup;
+        var gLabel = groupLabels[entry.soldGroup] || 'Sales';
+        var gColor = groupColors[entry.soldGroup] || 'var(--muted)';
+        groupHeader = '<div style="padding:10px 0 4px;margin-top:8px;border-top:2px solid ' + gColor + ';font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:' + gColor + '">' + gLabel + '</div>';
+      }
+      var ii = entry.ii; var item = vendor.items[ii];
       // Floor filter: skip items not on floor (unless sold out, which auto-removes from floor)
       if (invNewFilterFloor) {
         var hasSz = item.sizes && item.sizes.length > 0;
@@ -8510,10 +8534,11 @@ function renderInvNew() {
       if (item.addedToSquare === undefined) item.addedToSquare = true;
       var isNew = !item.addedToSquare;
       var itemRowOpacity = itemAllSold ? 'opacity:0.45;' : '';
+      var itemPrefix = groupHeader; // venue group header if needed
       var unpaidPerson = item.unpaidBy || '';
       var unpaidBase = unpaidPerson.replace('-paid', '');
       var unpaidAmt = unpaidBase === 'morgan' ? (item.salePrice || 0) : Math.round((item.salePrice || 0) * (dPct / 100));
-      return '<div style="border-bottom:1px solid var(--faint);padding:8px 0;' + itemRowOpacity + '">' +
+      return itemPrefix + '<div style="border-bottom:1px solid var(--faint);padding:8px 0;' + itemRowOpacity + '">' +
         '<div style="display:grid;grid-template-columns:76px 1fr 160px 80px 50px 50px 70px 2px 80px 2px 120px 80px 70px 70px 28px;align-items:center;gap:5px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
           '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
             (item.photo
