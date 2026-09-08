@@ -8235,10 +8235,11 @@ function renderInvNew() {
     vendorIndices = vendorIndices.filter(function(vi) { var ps = data.vendors[vi].paymentStatus || 'not-paid'; return ps === 'not-paid' || ps === 'sent-report'; });
   }
 
-  // Split into consignment, 100% commission, and wholesale
-  var consignIndices = vendorIndices.filter(function(vi) { var m = data.vendors[vi].pricingModel; return m !== 'wholesale' && m !== 'consignment-100'; });
+  // Split into consignment, 100% commission, wholesale, and loss-only
+  var consignIndices = vendorIndices.filter(function(vi) { var m = data.vendors[vi].pricingModel; return m !== 'wholesale' && m !== 'consignment-100' && m !== 'loss-only'; });
   var fullCommIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].pricingModel === 'consignment-100'; });
   var wholesaleIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].pricingModel === 'wholesale'; });
+  var lossOnlyIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].pricingModel === 'loss-only'; });
 
   var html = '';
   if (consignIndices.length) {
@@ -8252,6 +8253,10 @@ function renderInvNew() {
   if (wholesaleIndices.length) {
     html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:24px 0 4px;border-bottom:1px solid var(--border);margin-top:12px">Wholesale / In-House</div>';
     html += wholesaleIndices.map(function(vi) { return renderInvVendor(vi, data, popupVendorsAll); }).join('');
+  }
+  if (lossOnlyIndices.length) {
+    html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#e07070;padding:24px 0 4px;border-bottom:1px solid var(--border);margin-top:12px">Loss / Write-Off</div>';
+    html += lossOnlyIndices.map(function(vi) { return renderInvVendor(vi, data, popupVendorsAll); }).join('');
   }
 
   // Wrap the vendor render in a function
