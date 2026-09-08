@@ -8088,12 +8088,14 @@ function _updateSoldHighWater(data) {
       var key = v.vendorId + ':' + item.id;
       if (!_soldHighWater[key]) _soldHighWater[key] = { sold: 0, sizes: {} };
       var hw = _soldHighWater[key];
-      if ((item.sold || 0) > hw.sold) hw.sold = item.sold;
+      var itemTotal = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
+      if (itemTotal > hw.sold) hw.sold = itemTotal;
       if (item.sizes) {
         item.sizes.forEach(function(sz) {
           var sk = sz.size || 'unknown';
           if (!hw.sizes[sk]) hw.sizes[sk] = 0;
-          if ((sz.sold || 0) > hw.sizes[sk]) hw.sizes[sk] = sz.sold;
+          var szTotal = (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0);
+          if (szTotal > hw.sizes[sk]) hw.sizes[sk] = szTotal;
         });
       }
     });
@@ -8109,11 +8111,13 @@ function _enforceSoldHighWater(data) {
       var key = v.vendorId + ':' + item.id;
       var hw = _soldHighWater[key];
       if (!hw) return;
-      if (hw.sold > (item.sold || 0)) item.sold = hw.sold;
+      var itemTotal = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
+      if (hw.sold > itemTotal) item.sold = hw.sold - (item.cherrySold || 0) - (item.onlineSold || 0);
       if (item.sizes) {
         item.sizes.forEach(function(sz) {
           var sk = sz.size || 'unknown';
-          if (hw.sizes[sk] && hw.sizes[sk] > (sz.sold || 0)) sz.sold = hw.sizes[sk];
+          var szTotal = (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0);
+          if (hw.sizes[sk] && hw.sizes[sk] > szTotal) sz.sold = hw.sizes[sk] - (sz.cherrySold || 0) - (sz.onlineSold || 0);
         });
       }
     });
@@ -8204,7 +8208,7 @@ function renderInvNew() {
     return;
   }
 
-  var grandTotal = 0, grandStore = 0, grandDesigner = 0, grandItems = 0, grandMerchValue = 0, grandShipping = 0, grandMaxTakeHome = 0;
+  var grandTotal = 0, grandStore = 0, grandDesigner = 0, grandItems = 0, grandMerchValue = 0, grandShipping = 0, grandMaxTakeHome = 0, grandCosts = 0;
 
   var popupVendorsAll = getPopupVendors ? getPopupVendors() : [];
 
@@ -8283,7 +8287,7 @@ function renderInvNew() {
         var upcharge = item.upchargePct || 0;
         var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
         var qty = item.qty || 1;
-        var sold = item.sold || 0;
+        var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
         vendorTotalCost += costUsd * qty;
         vendorMerchValue += retailPrice * qty;
         var profitPerItem = retailPrice - costUsd;
@@ -8297,7 +8301,7 @@ function renderInvNew() {
             var szQty = sz.qty || 0;
             vendorMerchValue += price * szQty;
             var szNoComm = Math.min(sz.noCommission || 0, szQty);
-            var szSold = Math.min(sz.sold || 0, szQty);
+            var szSold = Math.min((sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0), szQty);
             var commSold = Math.max(0, szSold - szNoComm);
             // Commission sales: normal split
             var commRevenue = price * commSold;
@@ -8312,7 +8316,7 @@ function renderInvNew() {
         } else {
           var itemQty = item.qty || 1;
           vendorMerchValue += price * itemQty;
-          var totalSold = Math.min(item.sold || 0, itemQty);
+          var totalSold = Math.min((item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0), itemQty);
           var commSold = Math.max(0, totalSold - noComm);
           // Commission sales: normal split
           var commRevenue = price * commSold;
@@ -8348,8 +8352,8 @@ function renderInvNew() {
     var itemIndices = vendor.items.map(function(item, ii) {
       var hasSz = item.sizes && item.sizes.length > 0;
       var tQty = 0, tSold = 0;
-      if (hasSz) { item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0); }); }
-      else { tQty = item.qty || 1; tSold = item.sold || 0; }
+      if (hasSz) { item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0); }); }
+      else { tQty = item.qty || 1; tSold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0); }
       var mc = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
       var bc = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
       var allGone = (tSold + mc + bc) >= tQty && tQty > 0;
@@ -8365,8 +8369,8 @@ function renderInvNew() {
       if (invNewFilterFloor) {
         var hasSz = item.sizes && item.sizes.length > 0;
         var tQty = 0, tSold = 0;
-        if (hasSz) { item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0); }); }
-        else { tQty = item.qty || 1; tSold = item.sold || 0; }
+        if (hasSz) { item.sizes.forEach(function(sz) { tQty += (sz.qty || 0); tSold += (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0); }); }
+        else { tQty = item.qty || 1; tSold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0); }
         var allSoldOut = tSold >= tQty && tQty > 0;
         if (!item.onFloor || allSoldOut) return '';
       }
@@ -8385,7 +8389,7 @@ function renderInvNew() {
         var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
         var profitEa = retailPrice - Math.round(costUsd);
         var qty = item.qty || 1;
-        var sold = item.sold || 0;
+        var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
         var totalProfit = profitEa * sold;
         var totalRevenue = retailPrice * sold;
 
@@ -8456,12 +8460,12 @@ function renderInvNew() {
         item.sizes.forEach(function(sz) {
           var szQty = sz.qty || 0;
           totalQty += szQty;
-          totalSold += Math.min(sz.sold || 0, szQty);
+          totalSold += Math.min((sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0), szQty);
           totalNoComm += Math.min(sz.noCommission || 0, szQty);
         });
       } else {
         totalQty = item.qty || 1;
-        totalSold = Math.min(item.sold || 0, totalQty);
+        totalSold = Math.min((item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0), totalQty);
         totalNoComm = Math.min(item.noCommission || 0, totalQty);
       }
       var totalSales = price * totalSold;
@@ -8519,7 +8523,7 @@ function renderInvNew() {
             (function() {
               var mc = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
               var bc = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
-              var maxLoss = (item.qty || 1) - totalSold;
+              var maxLoss = (item.qty || 1) - totalSold; // totalSold already includes all venues
               return '<button onclick="invNewCycleMissing(' + vi + ',' + ii + ')" style="' + (mc > 0 ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (mc > 0 ? '⚠ MISS ' + mc : 'MISS') + '</button>' +
                 '<button onclick="invNewCycleBroken(' + vi + ',' + ii + ')" style="' + (bc > 0 ? 'background:#e07070;border:2px solid #e07070;color:#fff' : 'background:var(--surface2);border:1px solid var(--faint);color:var(--muted)') + ';font-family:DM Mono,monospace;font-size:8px;padding:3px 5px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">' + (bc > 0 ? '⚠ BRKN ' + bc : 'BRKN') + '</button>';
             })() +
@@ -8590,11 +8594,37 @@ function renderInvNew() {
               else { hasNewSale = item.soldDates.some(function(d) { return d > vLastSettled; }); }
             }
             var newDot = hasNewSale ? '<span style="display:inline-block;width:6px;height:6px;background:#88c98a;border-radius:50%;margin-right:2px" title="New unsettled sale"></span>' : '';
+            var sellDropdown = allItemSold
+              ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ')" style="' + soldBtnS + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">✓ SOLD</button>'
+              : '<select onchange="if(this.value){invNewMarkSold(' + vi + ',' + ii + ',null,this.value);this.value=\'\'}" style="' + soldBtnS + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 6px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;appearance:none;-webkit-appearance:none;min-width:70px">' +
+                  '<option value="">+ SELL</option>' +
+                  '<option value="store">Store</option>' +
+                  '<option value="cherry">Cherry</option>' +
+                  '<option value="online">Online</option>' +
+                '</select>';
+            var soldBreakdown = '';
+            if (totalSold > 0) {
+              var sSold = item.sold || 0, cSold = item.cherrySold || 0, oSold = item.onlineSold || 0;
+              var parts = [];
+              if (sSold > 0) parts.push(sSold + 'S');
+              if (cSold > 0) parts.push(cSold + 'C');
+              if (oSold > 0) parts.push(oSold + 'O');
+              soldBreakdown = parts.length > 0 ? '<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted)" title="S=Store C=Cherry O=Online">(' + parts.join('+') + ')</span>' : '';
+            }
+            var undoDropdown = '';
+            if (totalSold > 0 && !allItemSold) {
+              var undoOpts = '<option value="">↩</option>';
+              if ((item.sold || 0) > 0) undoOpts += '<option value="store">Undo Store</option>';
+              if ((item.cherrySold || 0) > 0) undoOpts += '<option value="cherry">Undo Cherry</option>';
+              if ((item.onlineSold || 0) > 0) undoOpts += '<option value="online">Undo Online</option>';
+              undoDropdown = '<select onchange="if(this.value){invNewUndoSold(' + vi + ',' + ii + ',null,this.value);this.value=\'\'}" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;font-family:DM Mono,monospace;padding:0;width:22px;appearance:none;-webkit-appearance:none;text-align:center" title="Undo sale">' + undoOpts + '</select>';
+            }
             return '<div style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">' +
               newDot +
-              '<button onclick="' + (allItemSold ? 'invNewUndoSold(' + vi + ',' + ii + ')' : 'invNewMarkSold(' + vi + ',' + ii + ')') + '" style="' + soldBtnS + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">' + (allItemSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+              sellDropdown +
               '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allItemSold ? '#88c98a' : 'var(--text)') + '">' + totalSold + '/' + totalQty + '</span>' +
-              (totalSold > 0 && !allItemSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo">↩</button>' : '') +
+              soldBreakdown +
+              undoDropdown +
               noCommBtn +
             '</div>';
           })() +
@@ -8645,6 +8675,7 @@ function renderInvNew() {
         (wePayShipping ? statBlock('- Shipping', shipCostNum, '#e07070') : '') +
         (hasAdj ? statBlock('Net Ours', netStoreCalc, '#88c98a') : '') +
         statBlock('Their Net', netDesignerCalc, 'var(--text)');
+      grandCosts += totalVendorExtras + actualLoss + (wePayShipping ? shipCostNum : 0);
     }
 
     // Row 1: name + controls (with vertical labels matching status badges)
@@ -8851,11 +8882,9 @@ function renderInvNew() {
   if (totalsEl) {
     totalsEl.innerHTML =
       '<span>Items: <strong style="color:var(--text)">' + grandItems + '</strong></span>' +
-      '<span>Total value: <strong style="color:var(--text)">$' + Math.round(grandMerchValue).toLocaleString() + '</strong></span>' +
-      '<span>Max take-home: <strong style="color:#88c98a">$' + Math.round(grandMaxTakeHome).toLocaleString() + '</strong></span>' +
-      '<span>Shipping: <strong style="color:var(--text)">$' + Math.round(grandShipping).toLocaleString() + '</strong></span>' +
       '<span>Total sold: <strong style="color:var(--text)">$' + Math.round(grandTotal).toLocaleString() + '</strong></span>' +
-      '<span>Our total: <strong style="color:#88c98a">$' + Math.round(grandStore).toLocaleString() + '</strong></span>' +
+      '<span>Costs: <strong style="color:#e07070">-$' + Math.round(grandCosts).toLocaleString() + '</strong></span>' +
+      '<span>Our total: <strong style="color:#88c98a">$' + Math.round(grandStore - grandCosts).toLocaleString() + '</strong></span>' +
       '<span>Designer total: <strong style="color:var(--text)">$' + Math.round(grandDesigner).toLocaleString() + '</strong></span>';
   }
 }
@@ -8945,7 +8974,7 @@ function buildSizeRows(vi, ii, item, sPct, dPct, vendor) {
   var price = item.salePrice || 0;
   var rows = item.sizes.map(function(sz, si) {
     var szQty = sz.qty || 0;
-    var szSold = sz.sold || 0;
+    var szSold = (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0);
     var szRevenue = price * szSold;
     var allSold = szSold >= szQty && szQty > 0;
     var rowOpacity = allSold ? 'opacity:0.4;' : '';
@@ -8999,11 +9028,37 @@ function buildSizeRows(vi, ii, item, sPct, dPct, vendor) {
           else { szHasNew = sz.soldDates.some(function(d) { return d > vls; }); }
         }
         var szNewDot = szHasNew ? '<span style="display:inline-block;width:6px;height:6px;background:#88c98a;border-radius:50%;margin-right:2px" title="New unsettled sale"></span>' : '';
+        var szSellDropdown = allSold
+          ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">✓ SOLD</button>'
+          : '<select onchange="if(this.value){invNewMarkSold(' + vi + ',' + ii + ',' + si + ',this.value);this.value=\'\'}" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 6px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;appearance:none;-webkit-appearance:none;min-width:70px">' +
+              '<option value="">+ SELL</option>' +
+              '<option value="store">Store</option>' +
+              '<option value="cherry">Cherry</option>' +
+              '<option value="online">Online</option>' +
+            '</select>';
+        var szBreakdown = '';
+        if (szSold > 0) {
+          var sS = sz.sold || 0, cS = sz.cherrySold || 0, oS = sz.onlineSold || 0;
+          var szParts = [];
+          if (sS > 0) szParts.push(sS + 'S');
+          if (cS > 0) szParts.push(cS + 'C');
+          if (oS > 0) szParts.push(oS + 'O');
+          szBreakdown = szParts.length > 0 ? '<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted)" title="S=Store C=Cherry O=Online">(' + szParts.join('+') + ')</span>' : '';
+        }
+        var szUndoDropdown = '';
+        if (szSold > 0 && !allSold) {
+          var szUndoOpts = '<option value="">↩</option>';
+          if ((sz.sold || 0) > 0) szUndoOpts += '<option value="store">Undo Store</option>';
+          if ((sz.cherrySold || 0) > 0) szUndoOpts += '<option value="cherry">Undo Cherry</option>';
+          if ((sz.onlineSold || 0) > 0) szUndoOpts += '<option value="online">Undo Online</option>';
+          szUndoDropdown = '<select onchange="if(this.value){invNewUndoSold(' + vi + ',' + ii + ',' + si + ',this.value);this.value=\'\'}" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;font-family:DM Mono,monospace;padding:0;width:22px;appearance:none;-webkit-appearance:none;text-align:center" title="Undo sale">' + szUndoOpts + '</select>';
+        }
         return '<div style="display:flex;align-items:center;gap:4px">' +
           szNewDot +
-          '<button onclick="' + (allSold ? 'invNewUndoSold(' + vi + ',' + ii + ',' + si + ')' : 'invNewMarkSold(' + vi + ',' + ii + ',' + si + ')') + '" style="' + soldBtnStyle + ';font-family:DM Mono,monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" title="' + (allSold ? 'Click to undo sale' : 'Click to mark one sold') + '">' + (allSold ? '✓ SOLD' : '+ SELL') + '</button>' +
+          szSellDropdown +
           '<span style="font-family:DM Mono,monospace;font-size:10px;color:' + (allSold ? '#88c98a' : 'var(--text)') + '">' + szSold + '/' + szQty + '</span>' +
-          (szSold > 0 && !allSold ? '<button onclick="invNewUndoSold(' + vi + ',' + ii + ',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px" title="Undo one sale">↩</button>' : '') +
+          szBreakdown +
+          szUndoDropdown +
         '</div>';
       })() +
       '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-align:right">$' + Math.round(szRevenue) + '</div>' +
@@ -9057,7 +9112,14 @@ function invNewAddSize(vi, ii) {
   renderInvNew();
 }
 
-function invNewMarkSold(vi, ii, si) {
+// Helper: compute total sold across all venues for an item or size
+function _totalSoldAllVenues(obj) {
+  return (obj.sold || 0) + (obj.cherrySold || 0) + (obj.onlineSold || 0);
+}
+
+function invNewMarkSold(vi, ii, si, venue) {
+  // venue: 'store' (default/46 Hester), 'cherry', 'online'
+  venue = venue || 'store';
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var today = new Date().toISOString().slice(0, 10);
@@ -9065,8 +9127,15 @@ function invNewMarkSold(vi, ii, si) {
     // Size-specific sell
     var sz = data.vendors[vi].items[ii].sizes[si];
     if (!sz) return;
-    if ((sz.sold || 0) < (sz.qty || 0)) {
-      sz.sold = (sz.sold || 0) + 1;
+    var totalUsed = _totalSoldAllVenues(sz);
+    if (totalUsed < (sz.qty || 0)) {
+      if (venue === 'cherry') {
+        sz.cherrySold = (sz.cherrySold || 0) + 1;
+      } else if (venue === 'online') {
+        sz.onlineSold = (sz.onlineSold || 0) + 1;
+      } else {
+        sz.sold = (sz.sold || 0) + 1;
+      }
       if (!sz.soldDates) sz.soldDates = [];
       sz.soldDates.push(today);
       sz.soldDate = today;
@@ -9074,8 +9143,15 @@ function invNewMarkSold(vi, ii, si) {
   } else {
     // Non-sized item sell
     var item = data.vendors[vi].items[ii];
-    if ((item.sold || 0) < (item.qty || 1)) {
-      item.sold = (item.sold || 0) + 1;
+    var totalUsed = _totalSoldAllVenues(item);
+    if (totalUsed < (item.qty || 1)) {
+      if (venue === 'cherry') {
+        item.cherrySold = (item.cherrySold || 0) + 1;
+      } else if (venue === 'online') {
+        item.onlineSold = (item.onlineSold || 0) + 1;
+      } else {
+        item.sold = (item.sold || 0) + 1;
+      }
       if (!item.soldDates) item.soldDates = [];
       item.soldDates.push(today);
       item.soldDate = today;
@@ -9087,7 +9163,8 @@ function invNewMarkSold(vi, ii, si) {
   if (typeof renderPL === 'function') try { renderPL(); } catch(e) {}
 }
 
-function invNewUndoSold(vi, ii, si) {
+function invNewUndoSold(vi, ii, si, venue) {
+  venue = venue || 'store';
   var data = getInvNew();
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var item = data.vendors[vi].items[ii];
@@ -9095,22 +9172,24 @@ function invNewUndoSold(vi, ii, si) {
   if (si !== undefined && si !== null) {
     var sz = item.sizes[si];
     if (!sz) return;
-    if ((sz.sold || 0) > 0) {
-      sz.sold = (sz.sold || 0) - 1;
+    var field = venue === 'cherry' ? 'cherrySold' : venue === 'online' ? 'onlineSold' : 'sold';
+    if ((sz[field] || 0) > 0) {
+      sz[field] = (sz[field] || 0) - 1;
       if (sz.soldDates && sz.soldDates.length > 0) sz.soldDates.pop();
       sz.soldDate = (sz.soldDates && sz.soldDates.length > 0) ? sz.soldDates[sz.soldDates.length - 1] : undefined;
       // Also lower high-water mark so the undo sticks
       var sk = sz.size || 'unknown';
       if (_soldHighWater[hwKey] && _soldHighWater[hwKey].sizes[sk]) {
-        _soldHighWater[hwKey].sizes[sk] = sz.sold;
+        _soldHighWater[hwKey].sizes[sk] = _totalSoldAllVenues(sz);
       }
     }
   } else {
-    if ((item.sold || 0) > 0) {
-      item.sold = (item.sold || 0) - 1;
+    var field = venue === 'cherry' ? 'cherrySold' : venue === 'online' ? 'onlineSold' : 'sold';
+    if ((item[field] || 0) > 0) {
+      item[field] = (item[field] || 0) - 1;
       if (item.soldDates && item.soldDates.length > 0) item.soldDates.pop();
       item.soldDate = (item.soldDates && item.soldDates.length > 0) ? item.soldDates[item.soldDates.length - 1] : undefined;
-      if (_soldHighWater[hwKey]) _soldHighWater[hwKey].sold = item.sold;
+      if (_soldHighWater[hwKey]) _soldHighWater[hwKey].sold = _totalSoldAllVenues(item);
     }
   }
   saveInvNew(data);
@@ -9435,7 +9514,7 @@ function openSalesReport(vi) {
     if (hasSz) {
       item.sizes.forEach(function(sz) {
         var szQty = sz.qty || 0;
-        var szSold = sz.sold || 0;
+        var szSold = (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0);
         var szNoComm = sz.noCommission || 0;
         tQty += szQty; tSold += szSold; tNoComm += szNoComm;
         if (szSold > 0) {
@@ -9452,7 +9531,7 @@ function openSalesReport(vi) {
       });
     } else {
       tQty = item.qty || 1;
-      tSold = Math.min(item.sold || 0, tQty);
+      tSold = Math.min((item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0), tQty);
       tNoComm = item.noCommission || 0;
       if (tSold > 0) {
         var split = splitSoldDates(item.soldDates, tSold);
@@ -9469,7 +9548,7 @@ function openSalesReport(vi) {
     // All items combined for totals — include per-size entries for sized items
     if (hasSz) {
       item.sizes.forEach(function(sz) {
-        var szSold = Math.min(sz.sold || 0, sz.qty || 0);
+        var szSold = Math.min((sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0), sz.qty || 0);
         if (szSold > 0) {
           var szNoComm = sz.noCommission || 0;
           soldItemsAll.push(makeSoldEntry(item.name || '', price, szSold, szNoComm, item.photo || '', sz.size || ''));
@@ -9480,7 +9559,7 @@ function openSalesReport(vi) {
     }
     if (hasSz) {
       item.sizes.forEach(function(sz) {
-        var szRemaining = (sz.qty || 0) - Math.min(sz.sold || 0, sz.qty || 0);
+        var szRemaining = (sz.qty || 0) - Math.min((sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0), sz.qty || 0);
         if (szRemaining > 0) {
           remainingItems.push({ name: item.name || '', size: sz.size || '', price: price, qty: szRemaining, photo: item.photo || '' });
         }
@@ -10185,9 +10264,9 @@ function invNewSetSizeUnpaid(vi, ii, si, who) {
   sz.unpaidBy = who;
   var basePerson = who ? who.replace('-paid', '') : '';
   if (basePerson) {
-    var prevSold = sz.sold || 0;
-    sz.sold = Math.max(prevSold, 1);
-    if (sz.sold > prevSold) {
+    var prevSoldTotal = (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0);
+    if (prevSoldTotal < 1) {
+      sz.sold = (sz.sold || 0) + 1;
       var today = new Date().toISOString().slice(0, 10);
       if (!sz.soldDates) sz.soldDates = [];
       sz.soldDates.push(today);
@@ -10210,10 +10289,10 @@ function invNewSetUnpaid(vi, ii, who) {
   item.unpaidBy = who;
   var basePerson = who ? who.replace('-paid', '') : '';
   if (basePerson) {
-    var prevSold = item.sold || 0;
+    var prevSoldTotal = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
     // Always mark as sold when someone is set to pay
-    item.sold = Math.max(prevSold, 1);
-    if (item.sold > prevSold) {
+    if (prevSoldTotal < 1) {
+      item.sold = (item.sold || 0) + 1;
       var today = new Date().toISOString().slice(0, 10);
       if (!item.soldDates) item.soldDates = [];
       item.soldDates.push(today);
@@ -10239,7 +10318,7 @@ function invNewCycleMissing(vi, ii) {
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var item = data.vendors[vi].items[ii];
   var current = typeof item.missing === 'number' ? item.missing : (item.missing ? 1 : 0);
-  var sold = item.sold || 0;
+  var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
   var maxLoss = (item.qty || 1) - sold;
   // Cycle: 0 -> 1 -> 2 -> ... -> max -> 0
   item.missing = (current >= maxLoss) ? 0 : current + 1;
@@ -10256,7 +10335,7 @@ function invNewCycleBroken(vi, ii) {
   if (!data || !data.vendors[vi] || !data.vendors[vi].items[ii]) return;
   var item = data.vendors[vi].items[ii];
   var current = typeof item.broken === 'number' ? item.broken : (item.broken ? 1 : 0);
-  var sold = item.sold || 0;
+  var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
   var maxLoss = (item.qty || 1) - sold;
   // Cycle: 0 -> 1 -> 2 -> ... -> max -> 0
   item.broken = (current >= maxLoss) ? 0 : current + 1;
@@ -10280,11 +10359,11 @@ function invNewToggleNoComm(vi, ii, si) {
     // Size-specific
     var sz = item.sizes[si];
     if (!sz) return;
-    var maxSold = sz.sold || 0;
+    var maxSold = (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0);
     sz.noCommission = (sz.noCommission || 0) < maxSold ? (sz.noCommission || 0) + 1 : 0;
   } else {
     // Non-sized item
-    var maxSold = item.sold || 0;
+    var maxSold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
     item.noCommission = (item.noCommission || 0) < maxSold ? (item.noCommission || 0) + 1 : 0;
   }
   saveInvNew(data);
@@ -10321,10 +10400,10 @@ function renderCherryBomb() {
       var hasSz = item.sizes && item.sizes.length > 0;
       var totalQty = 0, totalSold = 0;
       if (hasSz) {
-        item.sizes.forEach(function(sz) { totalQty += (sz.qty || 0); totalSold += Math.min(sz.sold || 0, sz.qty || 0); });
+        item.sizes.forEach(function(sz) { totalQty += (sz.qty || 0); totalSold += Math.min((sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0), sz.qty || 0); });
       } else {
         totalQty = item.qty || 1;
-        totalSold = Math.min(item.sold || 0, totalQty);
+        totalSold = Math.min((item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0), totalQty);
       }
       var available = totalQty - totalSold - mc - bc;
       if (available <= 0) return;
@@ -10471,7 +10550,7 @@ function renderWebInventory() {
         var availSizes = [];
         var totalSzQty = 0;
         item.sizes.forEach(function(sz) {
-          var available = (sz.qty || 0) - Math.min(sz.sold || 0, sz.qty || 0);
+          var available = (sz.qty || 0) - Math.min((sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0), sz.qty || 0);
           if (available > 0) {
             availSizes.push({ size: sz.size, qty: available });
             totalSzQty += available;
@@ -10502,7 +10581,7 @@ function renderWebInventory() {
         }
       } else {
         var totalQty = item.qty || 1;
-        var sold = Math.min(item.sold || 0, totalQty);
+        var sold = Math.min((item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0), totalQty);
         var available = totalQty - sold - lossCount;
         if (available > 0) {
           allItems.push({

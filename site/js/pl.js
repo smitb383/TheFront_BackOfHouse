@@ -250,7 +250,7 @@ function inventoryToPLItems() {
         var upcharge = item.upchargePct || 0;
         var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
         var qty = item.qty || 1;
-        var sold = item.sold || 0;
+        var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
 
         items.push({
           id: 'invnew_' + vendor.vendorId + '_' + item.id,
@@ -272,12 +272,12 @@ function inventoryToPLItems() {
         if (item.sizes && item.sizes.length) {
           item.sizes.forEach(function(sz) {
             totalQty += (sz.qty || 0);
-            totalSold += Math.min(sz.sold || 0, sz.qty || 0);
+            totalSold += Math.min((sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0), sz.qty || 0);
             totalNoComm += (sz.noCommission || 0);
           });
         } else {
           totalQty = item.qty || 1;
-          totalSold = Math.min(item.sold || 0, totalQty);
+          totalSold = Math.min((item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0), totalQty);
           totalNoComm = item.noCommission || 0;
         }
 
