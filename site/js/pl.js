@@ -416,19 +416,10 @@ function calcPL(scenario, inventory) {
     totalRevenue += (scenario.eventRevenue || 0) + (scenario.merchRevenue || 0);
   }
 
-  // Fixed costs — contingency auto-calculates as 10% of all other fixed costs
-  // Refunds reduce the net cost of an item (e.g. prorated insurance refund)
+  // Fixed costs — refunds reduce the net cost of an item
   var totalFixed = 0;
-  var nonContingencyTotal = 0;
   (scenario.fixedCosts || []).forEach(function(c) {
     if (c.id === 'fc_contingency' || (c.name && c.name.toLowerCase().indexOf('contingency') >= 0)) return;
-    var net = (c.amount || 0) - (c.refund || 0);
-    nonContingencyTotal += net;
-  });
-  (scenario.fixedCosts || []).forEach(function(c) {
-    if (c.id === 'fc_contingency' || (c.name && c.name.toLowerCase().indexOf('contingency') >= 0)) {
-      c.amount = Math.round(nonContingencyTotal * 0.10);
-    }
     var net = (c.amount || 0) - (c.refund || 0);
     totalFixed += net;
   });
