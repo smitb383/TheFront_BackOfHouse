@@ -482,7 +482,9 @@ function calcPL(scenario, inventory) {
     cherryDrinkTxns += (cr.sold || 0);
   });
 
-  var cafeSquareFee = cafeDrinkRevenue * 0.026 + cafeDrinkTxns * 0.15;
+  var allDrinkRevenue = cafeDrinkRevenue + cherryDrinkRevenue;
+  var allDrinkTxns = cafeDrinkTxns + cherryDrinkTxns;
+  var cafeSquareFee = allDrinkRevenue * 0.026 + allDrinkTxns * 0.15;
   var cafeCashExtra = scenario.cafeCashSales || 0;
   ourCut += cafeDrinkRevenue + cafeCashExtra + cherryDrinkRevenue;
   totalRevenue += cafeDrinkRevenue + cafeCashExtra + cherryDrinkRevenue;
@@ -1027,7 +1029,7 @@ function renderPLSections(scenario, calc, liveInventory) {
       // Variable costs column (auto-calculated from sales)
       var cafeIngredientCost = 0;
       (scenario.cafeRevenue || []).forEach(function(cr) { cafeIngredientCost += (cr.costPerDrink || 0) * (cr.sold || 0); });
-      var cafeSquare = cafeTotalDrinkRevenue * 0.026 + cafeTotalDrinksSold * 0.15;
+      var cafeSquare = (cafeTotalDrinkRevenue + cherryRevForTotal) * 0.026 + (cafeTotalDrinksSold + cherryTotalSold) * 0.15;
       var cafeSupplyCosts = 0;
       (scenario.cafeVariable || []).forEach(function(cv) { cafeSupplyCosts += (cv.amount || 0); });
       var cafeTotalVar = cafeIngredientCost + cafeSquare + cafeSupplyCosts;
