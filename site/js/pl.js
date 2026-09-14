@@ -234,6 +234,7 @@ function inventoryToPLItems() {
   var items = [];
   var totalShipping = 0;
   inv.vendors.forEach(function(vendor) {
+    if (vendor.pricingModel === 'loss-only') return; // skip loss-only vendors
     var vendorInfo = popupVendorsAll.find(function(v) { return v.id === vendor.vendorId; }) || {};
     var isWholesale = vendor.pricingModel === 'wholesale';
     var sPct = vendor.storePct != null ? vendor.storePct : 30;
