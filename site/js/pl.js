@@ -540,7 +540,10 @@ function calcPL(scenario, inventory) {
     totalTransactions: totalTransactions,
     itemBreakdown: itemBreakdown,
     shippingCosts: shippingDeductions,
-    eliseShare: eliseShare
+    eliseShare: eliseShare,
+    cafeSupplyCosts: cafeSupplyCosts,
+    cafeDrinkCosts: cafeDrinkCosts,
+    cafeSquareFee: cafeSquareFee
   };
 }
 
@@ -669,6 +672,7 @@ function renderPLSummary(calc, scenario) {
         '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
         '<div class="pl-summary-detail">Fixed: $' + fmt(calc.totalFixed) + '</div>' +
         '<div class="pl-summary-detail">Variable: $' + fmt(calc.totalVariable) + '</div>' +
+        (calc.cafeSupplyCosts > 0 ? '<div class="pl-summary-detail" style="padding-left:8px;font-size:10px">incl. ongoing supplies: $' + fmt(calc.cafeSupplyCosts) + '</div>' : '') +
         (calc.totalDesignerCosts > 0 ? '<div class="pl-summary-detail">Designer costs/losses: $' + fmt(calc.totalDesignerCosts) + '</div>' : '') +
       '</div>' +
       '<div class="pl-summary-card">' +
@@ -841,6 +845,15 @@ function renderPLSections(scenario, calc, liveInventory) {
       (scenario.cafeVariable || []).forEach(function(cv) {
         variableTotal += (cv.amount || 0);
       });
+      // Include ingredient costs and Square fees in cafe variable total for header
+      (scenario.cafeRevenue || []).forEach(function(cr) {
+        variableTotal += (cr.costPerDrink || 0) * (cr.sold || 0);
+      });
+      var _cafeDrinkRev = 0, _cafeDrinkTxns = 0;
+      (scenario.cafeRevenue || []).forEach(function(cr) { _cafeDrinkRev += (cr.price || 0) * (cr.sold || 0); _cafeDrinkTxns += (cr.sold || 0); });
+      var _cherryDrinkRev = 0, _cherryDrinkTxns = 0;
+      (scenario.cherryRevenue || []).forEach(function(cr) { _cherryDrinkRev += (cr.price || 0) * (cr.sold || 0); _cherryDrinkTxns += (cr.sold || 0); });
+      variableTotal += (_cafeDrinkRev + _cherryDrinkRev) * 0.026 + (_cafeDrinkTxns + _cherryDrinkTxns) * 0.15;
     }
 
     if (sec.variableType === 'wholesaleCOGS') {
@@ -1107,7 +1120,13 @@ function renderPLSections(scenario, calc, liveInventory) {
 
       // Auto-calc items
       html += '<div style="padding:4px 0;display:flex;flex-direction:column;gap:4px">';
+      if (cafeIngredientCost > 0) {
+        html += '<div class="pl-cost-row"><span class="pl-cost-name">Ingredient costs</span><span class="pl-cost-note">cost per drink × sold</span><span class="pl-cost-amt">$' + fmt(cafeIngredientCost) + '</span></div>';
+      }
       html += '<div class="pl-cost-row"><span class="pl-cost-name">Square fee</span><span class="pl-cost-note">2.6% + $0.15/txn</span><span class="pl-cost-amt">$' + fmt(cafeSquare) + '</span></div>';
+      if (cafeSupplyCosts > 0) {
+        html += '<div class="pl-cost-row"><span class="pl-cost-name">Ongoing supplies</span><span class="pl-cost-note">see column</span><span class="pl-cost-amt">$' + fmt(cafeSupplyCosts) + '</span></div>';
+      }
       html += '</div>';
 
       // Ongoing supplies now in their own column above
