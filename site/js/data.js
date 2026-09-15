@@ -597,5 +597,22 @@ window.addEventListener('beforeunload', function() {
     window.dispatchEvent(new Event('supabase-ready'));
     // Run photo migrations after data is loaded
     setTimeout(function() { _migrateBase64Photos(); _migrateVisualImgs(); }, 2000);
+    // One-time fix: Hadaikum shipping cost = $437.23 and clear double-counted extraPayments
+    setTimeout(function() {
+      try {
+        var inv = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+        if (inv && inv.vendors) {
+          var hadaikum = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('hadaikum') >= 0; });
+          if (hadaikum && !hadaikum._shipFix437) {
+            hadaikum.shippingCost = '437.23';
+            hadaikum.shippingCoveredBy = 'us';
+            hadaikum.extraPayments = []; // shipping is the only cost, not an extra payment
+            hadaikum._shipFix437 = true;
+            localStorage.setItem('popup_inv_new_v1', JSON.stringify(inv));
+            console.log('[data] Fixed Hadaikum shipping cost to $437.23');
+          }
+        }
+      } catch(e) {}
+    }, 3000);
   });
 })();

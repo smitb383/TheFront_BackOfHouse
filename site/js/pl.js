@@ -1248,25 +1248,31 @@ function renderPLSections(scenario, calc, liveInventory) {
           var extras = 0, losses = 0, shipping = 0;
           var lossItems = [];
           var extraItems = [];
-          (v.extraPayments || []).forEach(function(e) {
-            extras += (e.amount || 0);
-            extraItems.push({ name: e.description || 'Extra spend', amount: e.amount || 0, paidBy: e.paidBy || '' });
-          });
-          (v.items || []).forEach(function(item) {
-            var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
-            var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
-            if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
-              var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
-              var lossCost = (item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100);
-              losses += lossCost;
-              var label = (item.name || 'Unnamed');
-              if (m > 0 && b > 0) label += ' (' + m + ' missing, ' + b + ' broken)';
-              else if (m > 0) label += ' (' + m + ' missing)';
-              else label += ' (' + b + ' broken)';
-              lossItems.push({ name: label, amount: lossCost });
-            }
-          });
-          if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) shipping = parseFloat(v.shippingCost);
+          // Loss-only vendors (e.g. Hadaikum): only count shipping cost, skip extras/item losses
+          if (v.pricingModel === 'loss-only') {
+            if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) shipping = parseFloat(v.shippingCost);
+            if (shipping > 0) lossItems.push({ name: 'Shipping loss', amount: shipping });
+          } else {
+            (v.extraPayments || []).forEach(function(e) {
+              extras += (e.amount || 0);
+              extraItems.push({ name: e.description || 'Extra spend', amount: e.amount || 0, paidBy: e.paidBy || '' });
+            });
+            (v.items || []).forEach(function(item) {
+              var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+              var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+              if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
+                var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
+                var lossCost = (item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100);
+                losses += lossCost;
+                var label = (item.name || 'Unnamed');
+                if (m > 0 && b > 0) label += ' (' + m + ' missing, ' + b + ' broken)';
+                else if (m > 0) label += ' (' + m + ' missing)';
+                else label += ' (' + b + ' broken)';
+                lossItems.push({ name: label, amount: lossCost });
+              }
+            });
+            if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) shipping = parseFloat(v.shippingCost);
+          }
           var total = extras + losses + shipping;
           if (total > 0) {
             costVendors.push({ name: v.name, extras: extras, losses: losses, shipping: shipping, total: total, lossItems: lossItems, extraItems: extraItems });
