@@ -699,10 +699,10 @@ function renderPLSections(scenario, calc, liveInventory) {
     { id: 'or_merch', name: 'Merch / branded goods', amount: scenario.merchRevenue || 0, note: '' }
   ];
 
-  // Ensure spaceRevenue exists (e.g. insurance prorated refund)
-  if (!scenario.spaceRevenue) scenario.spaceRevenue = [
-    { id: 'sr_insurance_refund', name: 'Insurance prorated refund', amount: 0, note: 'Prorated return when GL policy cancelled after popup ends' }
-  ];
+  // Ensure spaceRevenue exists
+  if (!scenario.spaceRevenue) scenario.spaceRevenue = [];
+  // Remove insurance refund from space revenue — it's tracked as a refund on the insurance cost item instead
+  scenario.spaceRevenue = scenario.spaceRevenue.filter(function(r) { return r.id !== 'sr_insurance_refund'; });
 
   // Ensure cafeVariable exists (ongoing supply costs — not per-drink)
   if (!scenario.cafeVariable || !scenario.cafeVariable.length) {
