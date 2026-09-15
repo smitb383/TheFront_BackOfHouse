@@ -1244,32 +1244,57 @@ function renderPLSections(scenario, calc, liveInventory) {
         var costVendors = [];
         inv.vendors.forEach(function(v) {
           var extras = 0, losses = 0, shipping = 0;
-          (v.extraPayments || []).forEach(function(e) { extras += (e.amount || 0); });
-          var mc = 0, bc = 0;
+          var lossItems = [];
+          var extraItems = [];
+          (v.extraPayments || []).forEach(function(e) {
+            extras += (e.amount || 0);
+            extraItems.push({ name: e.note || 'Extra payment', amount: e.amount || 0 });
+          });
           (v.items || []).forEach(function(item) {
             var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
             var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
             if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
               var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
-              losses += Math.floor((item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100));
+              var lossCost = Math.floor((item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100));
+              losses += lossCost;
+              var label = (item.name || 'Unnamed');
+              if (m > 0 && b > 0) label += ' (' + m + ' missing, ' + b + ' broken)';
+              else if (m > 0) label += ' (' + m + ' missing)';
+              else label += ' (' + b + ' broken)';
+              lossItems.push({ name: label, amount: lossCost });
             }
           });
           if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) shipping = parseFloat(v.shippingCost);
           var total = extras + losses + shipping;
           if (total > 0) {
-            costVendors.push({ name: v.name, extras: extras, losses: losses, shipping: shipping, total: total });
+            costVendors.push({ name: v.name, extras: extras, losses: losses, shipping: shipping, total: total, lossItems: lossItems, extraItems: extraItems });
             totalDesignerCosts += total;
           }
         });
         designerCostsHtml += '<div class="pl-section-col-head"><span>Designer Costs / Losses</span><span class="pl-section-col-total" style="color:#e07070">$' + fmt(totalDesignerCosts) + '</span></div>';
         costVendors.sort(function(a, b) { return b.total - a.total; });
-        costVendors.forEach(function(cv) {
+        costVendors.forEach(function(cv, ci) {
           var breakdown = [];
           if (cv.extras > 0) breakdown.push('Extra payments: $' + fmt(cv.extras));
           if (cv.losses > 0) breakdown.push('Losses (missing/broken): $' + fmt(cv.losses));
           if (cv.shipping > 0) breakdown.push('Shipping: $' + fmt(cv.shipping));
-          var tip = breakdown.join(' | ');
-          designerCostsHtml += '<div class="pl-cost-row" title="' + esc(tip) + '"><span class="pl-cost-name">' + esc(cv.name) + '</span><span class="pl-cost-note" style="color:var(--muted);font-size:9px">' + breakdown.join(' · ') + '</span><span class="pl-cost-amt" style="color:#e07070">$' + fmt(cv.total) + '</span></div>';
+          var detailId = 'pl-dcost-' + ci;
+          designerCostsHtml += '<div class="pl-cost-row" style="cursor:pointer" onclick="var d=document.getElementById(\'' + detailId + '\');d.style.display=d.style.display===\'none\'?\'block\':\'none\'">' +
+            '<span class="pl-cost-name">' + esc(cv.name) + ' <span style="font-size:8px;color:var(--muted)">▸</span></span>' +
+            '<span class="pl-cost-note" style="color:var(--muted);font-size:9px">' + breakdown.join(' · ') + '</span>' +
+            '<span class="pl-cost-amt" style="color:#e07070">$' + fmt(cv.total) + '</span></div>';
+          // Expandable detail panel
+          designerCostsHtml += '<div id="' + detailId + '" style="display:none;padding:4px 0 8px 16px;border-bottom:1px solid var(--faint)">';
+          cv.extraItems.forEach(function(ei) {
+            designerCostsHtml += '<div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:9px;padding:2px 0;color:var(--text)"><span>' + esc(ei.name) + '</span><span style="color:#e07070">$' + fmt(ei.amount) + '</span></div>';
+          });
+          cv.lossItems.forEach(function(li) {
+            designerCostsHtml += '<div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:9px;padding:2px 0;color:var(--text)"><span>' + esc(li.name) + '</span><span style="color:#e07070">$' + fmt(li.amount) + '</span></div>';
+          });
+          if (cv.shipping > 0) {
+            designerCostsHtml += '<div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:9px;padding:2px 0;color:var(--text)"><span>Shipping</span><span style="color:#e07070">$' + fmt(cv.shipping) + '</span></div>';
+          }
+          designerCostsHtml += '</div>';
         });
         if (!costVendors.length) designerCostsHtml += '<div class="pl-section-empty">\u2014</div>';
       }
