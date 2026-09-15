@@ -1243,7 +1243,6 @@ function renderPLSections(scenario, calc, liveInventory) {
       if (inv && inv.vendors) {
         var costVendors = [];
         inv.vendors.forEach(function(v) {
-          if (v.pricingModel === 'loss-only') return;
           var extras = 0, losses = 0, shipping = 0;
           (v.extraPayments || []).forEach(function(e) { extras += (e.amount || 0); });
           var mc = 0, bc = 0;
@@ -1262,15 +1261,27 @@ function renderPLSections(scenario, calc, liveInventory) {
             totalDesignerCosts += total;
           }
         });
-        designerCostsHtml += '<div class="pl-section-col-head"><span>Designer Costs</span><span class="pl-section-col-total" style="color:#e07070">$' + fmt(totalDesignerCosts) + '</span></div>';
+        designerCostsHtml += '<div class="pl-section-col-head"><span>Designer Costs / Losses</span><span class="pl-section-col-total" style="color:#e07070">$' + fmt(totalDesignerCosts) + '</span></div>';
         costVendors.sort(function(a, b) { return b.total - a.total; });
         costVendors.forEach(function(cv) {
-          designerCostsHtml += '<div class="pl-cost-row"><span class="pl-cost-name">' + esc(cv.name) + '</span><span class="pl-cost-amt" style="color:#e07070">$' + fmt(cv.total) + '</span></div>';
+          var breakdown = [];
+          if (cv.extras > 0) breakdown.push('Extra payments: $' + fmt(cv.extras));
+          if (cv.losses > 0) breakdown.push('Losses (missing/broken): $' + fmt(cv.losses));
+          if (cv.shipping > 0) breakdown.push('Shipping: $' + fmt(cv.shipping));
+          var tip = breakdown.join(' | ');
+          designerCostsHtml += '<div class="pl-cost-row" title="' + esc(tip) + '"><span class="pl-cost-name">' + esc(cv.name) + '</span><span class="pl-cost-note" style="color:var(--muted);font-size:9px">' + breakdown.join(' · ') + '</span><span class="pl-cost-amt" style="color:#e07070">$' + fmt(cv.total) + '</span></div>';
         });
         if (!costVendors.length) designerCostsHtml += '<div class="pl-section-empty">\u2014</div>';
       }
       designerCostsHtml += '</div>';
-      html += revenueColHtml + designerCostsHtml + variableColHtml;
+      // Combine designer costs + variable costs in one column
+      var combinedCostsHtml = designerCostsHtml.replace('</div><!-- end col -->', '').replace(/<\/div>\s*$/, '');
+      // Strip the closing div from designerCosts and append variable contents
+      var varInner = variableColHtml.replace(/^<div class="pl-section-col">/, '').replace(/<\/div>\s*$/, '');
+      html += revenueColHtml + designerCostsHtml.slice(0, -6) + '<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">' + varInner + '</div></div>';
+    } else if (sec.id === 'wholesale') {
+      // Wholesale: Revenue first, then Variable (COGS)
+      html += revenueColHtml + variableColHtml;
     } else {
       html += variableColHtml + revenueColHtml;
     }

@@ -9301,6 +9301,30 @@ function invNewAddVendor() {
   renderInvNew();
 }
 
+function invNewAddWholesale() {
+  var name = prompt('Wholesale vendor name:', 'The Front');
+  if (!name) return;
+  var data = getInvNew() || { vendors: [] };
+  // Check if wholesale vendor with this name already exists
+  var existing = data.vendors.find(function(v) { return v.name.toLowerCase() === name.toLowerCase() && v.pricingModel === 'wholesale'; });
+  if (existing) {
+    alert(name + ' wholesale vendor already exists. Add items to it directly.');
+    return;
+  }
+  var items = [];
+  // Pre-seed items if it's "The Front"
+  if (name.toLowerCase() === 'the front') {
+    items = [
+      { name: 'The Front T-Shirt', category: 'clothing', costUsd: 0, upchargePct: 0, qty: 1, sold: 0 },
+      { name: 'The Front Stickers', category: 'other', costUsd: 0, upchargePct: 0, qty: 1, sold: 0 },
+      { name: 'The Front Sticker Packs', category: 'other', costUsd: 0, upchargePct: 0, qty: 1, sold: 0 }
+    ];
+  }
+  data.vendors.push({ vendorId: Date.now(), name: name, pricingModel: 'wholesale', currency: 'usd', items: items });
+  saveInvNew(data);
+  renderInvNew();
+}
+
 function invNewPickPhoto(vi, ii) {
   var input = document.createElement('input');
   input.type = 'file';
