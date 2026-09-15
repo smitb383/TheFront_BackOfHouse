@@ -845,14 +845,12 @@ function renderPLSections(scenario, calc, liveInventory) {
     html += '<div class="pl-section' + (isOpen ? ' open' : '') + '" id="pl-sec-' + sec.id + '" data-section="' + sec.id + '">';
     html += '<div class="pl-section-head" onclick="togglePLSection(\'' + sec.id + '\')">';
     html += '<span class="pl-section-head-name">' + sec.name + '</span>';
-    html += '<span class="pl-section-head-totals">';
-    html += '<span class="pl-section-head-fixed">Fixed $' + fmt(fixedTotal) + '</span>';
-    html += '<span class="pl-section-head-variable">Var $' + fmt(variableTotal) + '</span>';
-    html += '<span class="pl-section-head-revenue">Rev $' + fmt(revenueTotal) + '</span>';
-    if (sec.id === 'cafe') {
-      var cafeProfit = Math.max(0, revenueTotal - fixedTotal - variableTotal);
-      html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">Profit $' + fmt(cafeProfit) + '</span>';
-    }
+    var sectionPL = revenueTotal - fixedTotal - variableTotal;
+    html += '<span class="pl-section-head-totals" style="display:flex;gap:16px;align-items:center">';
+    html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Fixed <strong style="color:var(--text)">$' + fmt(fixedTotal) + '</strong></span>';
+    html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Var <strong style="color:var(--text)">$' + fmt(variableTotal) + '</strong></span>';
+    html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Rev <strong style="color:#88c98a">$' + fmt(revenueTotal) + '</strong></span>';
+    html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:' + (sectionPL >= 0 ? '#88c98a' : '#e07070') + '">' + (sectionPL >= 0 ? 'P/L +' : 'P/L -') + '$' + fmt(Math.abs(sectionPL)) + '</span>';
     html += '</span>';
     html += '<span class="pl-section-head-chevron">\u203a</span>';
     html += '</div>';
@@ -1232,9 +1230,43 @@ function renderPLSections(scenario, calc, liveInventory) {
     }
     revenueColHtml += '</div>';
 
-    // Retail: Revenue then Variable. Others: Variable then Revenue.
+    // Retail: Revenue, Designer Costs, then Variable. Others: Variable then Revenue.
     if (sec.id === 'retail') {
-      html += revenueColHtml + variableColHtml;
+      // Build designer costs column from inventory data
+      var designerCostsHtml = '<div class="pl-section-col">';
+      var totalDesignerCosts = 0;
+      var inv = (typeof getInvNew === 'function') ? getInvNew() : null;
+      if (inv && inv.vendors) {
+        var costVendors = [];
+        inv.vendors.forEach(function(v) {
+          if (v.pricingModel === 'loss-only') return;
+          var extras = 0, losses = 0, shipping = 0;
+          (v.extraPayments || []).forEach(function(e) { extras += (e.amount || 0); });
+          var mc = 0, bc = 0;
+          (v.items || []).forEach(function(item) {
+            var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+            var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+            if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
+              var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
+              losses += Math.floor((item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100));
+            }
+          });
+          if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) shipping = parseFloat(v.shippingCost);
+          var total = extras + losses + shipping;
+          if (total > 0) {
+            costVendors.push({ name: v.name, extras: extras, losses: losses, shipping: shipping, total: total });
+            totalDesignerCosts += total;
+          }
+        });
+        designerCostsHtml += '<div class="pl-section-col-head"><span>Designer Costs</span><span class="pl-section-col-total" style="color:#e07070">$' + fmt(totalDesignerCosts) + '</span></div>';
+        costVendors.sort(function(a, b) { return b.total - a.total; });
+        costVendors.forEach(function(cv) {
+          designerCostsHtml += '<div class="pl-cost-row"><span class="pl-cost-name">' + esc(cv.name) + '</span><span class="pl-cost-amt" style="color:#e07070">$' + fmt(cv.total) + '</span></div>';
+        });
+        if (!costVendors.length) designerCostsHtml += '<div class="pl-section-empty">\u2014</div>';
+      }
+      designerCostsHtml += '</div>';
+      html += revenueColHtml + designerCostsHtml + variableColHtml;
     } else {
       html += variableColHtml + revenueColHtml;
     }
