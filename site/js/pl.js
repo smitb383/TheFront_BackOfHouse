@@ -896,7 +896,9 @@ function renderPLSections(scenario, calc, liveInventory) {
               '<span class="pl-cost-name-display">' + esc(cv.name || '(untitled)') + '</span>' +
               (cv.who ? '<span style="font-family:DM Mono,monospace;font-size:8px;color:#88c98a;margin-right:4px">' + cv.who + '</span>' : '') +
               (subCount > 0 ? '<span style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted)">' + subCount + ' items</span>' : '') +
-              '<span class="pl-cost-amt-inline" style="pointer-events:none">$' + fmt(cv.amount || 0) + '</span>' +
+              (subCount > 0
+                ? '<span class="pl-cost-amt-inline" style="pointer-events:none">$' + fmt(cv.amount || 0) + '</span>'
+                : '<div class="pl-cost-amt-inline" onclick="event.stopPropagation()">$<input type="number" min="0" class="pl-cost-amt-num" value="' + (cv.amount || 0) + '" data-cv-id="' + cv.id + '" onchange="updateCafeVar(this)"></div>') +
               '<span class="pl-cost-chevron">\u203a</span>' +
             '</div>' +
             '<div class="pl-cost-body">' +
