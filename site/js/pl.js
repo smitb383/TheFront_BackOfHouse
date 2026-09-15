@@ -1339,6 +1339,19 @@ function renderFixedCostCard(c) {
         '<div class="pl-cost-field"><div class="pl-cost-field-label">Refund (prorated return)</div><div class="pl-cost-refund-wrap"><span class="pl-dollar-sign">$</span><input class="pl-cost-field-input pl-cost-refund-input" type="number" min="0" value="' + (c.refund || 0) + '" placeholder="0" data-cost-id="' + c.id + '" data-field="refund" onchange="updateFixedCost(this)">' + (hasRefund ? '<span class="pl-refund-net">net $' + fmt(netCost) + '</span>' : '') + '</div></div>' +
         '<div class="pl-cost-field pl-cost-field-full"><div class="pl-cost-field-label">Notes</div><textarea class="pl-cost-field-textarea" placeholder="Details, alternatives\u2026" data-cost-id="' + c.id + '" data-field="note" onchange="updateFixedCost(this)">' + esc(c.note || '') + '</textarea></div>' +
       '</div>' +
+      // Sub-items section
+      '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--faint)">' +
+        '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Line Items</div>' +
+        (c.subItems || []).map(function(sub, si) {
+          return '<div style="display:flex;gap:6px;align-items:center;padding:3px 0">' +
+            '<input class="pl-cost-field-input" value="' + esc(sub.name || '') + '" placeholder="Item name" onchange="updateFixedSubItem(\'' + c.id + '\',' + si + ',\'name\',this.value)" style="flex:1;font-size:11px;padding:3px 6px">' +
+            '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:10px">$</span><input type="number" min="0" step="0.01" value="' + (sub.amount || '') + '" placeholder="0" onchange="updateFixedSubItem(\'' + c.id + '\',' + si + ',\'amount\',parseFloat(this.value)||0);renderPL()" style="width:55px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:3px;border-radius:3px;text-align:right"></div>' +
+            '<div style="display:flex;gap:4px">' + ['Del','Brooke','Front CC'].map(function(who) { return '<label style="display:flex;align-items:center;gap:2px;cursor:pointer;font-family:DM Mono,monospace;font-size:8px;color:' + (sub.who === who ? '#88c98a' : 'var(--muted)') + '"><input type="checkbox"' + (sub.who === who ? ' checked' : '') + ' onclick="updateFixedSubItem(\'' + c.id + '\',' + si + ',\'who\',this.checked?\'' + who + '\':\'\');renderPL()" style="accent-color:#88c98a">' + who + '</label>'; }).join('') + '</div>' +
+            '<button onclick="deleteFixedSubItem(\'' + c.id + '\',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>' +
+          '</div>';
+        }).join('') +
+        '<button onclick="addFixedSubItem(\'' + c.id + '\')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;margin-top:4px">+ Add line item</button>' +
+      '</div>' +
       '<button class="pl-cost-delete-btn" onclick="deleteFixedCost(\'' + c.id + '\')">Delete item</button>' +
     '</div>' +
   '</div>';
@@ -2567,6 +2580,49 @@ function updateOtherRevenue(field, value) {
   scenario[field] = parseFloat(value) || 0;
   savePLData(data);
   renderPL();
+}
+
+function addFixedSubItem(costId) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var c = (scenario.fixedCosts || []).find(function(fc) { return fc.id === costId; });
+  if (!c) return;
+  if (!c.subItems) c.subItems = [];
+  c.subItems.push({ name: '', amount: 0, who: '' });
+  savePLData(data);
+  renderPL();
+  setTimeout(function() { var card = document.getElementById('pl-cost-' + costId); if (card) card.classList.add('open'); }, 50);
+}
+
+function updateFixedSubItem(costId, si, field, val) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var c = (scenario.fixedCosts || []).find(function(fc) { return fc.id === costId; });
+  if (!c || !c.subItems || !c.subItems[si]) return;
+  c.subItems[si][field] = val;
+  // Auto-sum sub-item amounts to parent if there are sub-items
+  if (c.subItems.length > 0) {
+    var total = 0;
+    c.subItems.forEach(function(s) { total += (s.amount || 0); });
+    c.amount = total;
+  }
+  savePLData(data);
+}
+
+function deleteFixedSubItem(costId, si) {
+  var data = getPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === data.activeScenario; });
+  var c = (scenario.fixedCosts || []).find(function(fc) { return fc.id === costId; });
+  if (!c || !c.subItems) return;
+  c.subItems.splice(si, 1);
+  if (c.subItems.length > 0) {
+    var total = 0;
+    c.subItems.forEach(function(s) { total += (s.amount || 0); });
+    c.amount = total;
+  }
+  savePLData(data);
+  renderPL();
+  setTimeout(function() { var card = document.getElementById('pl-cost-' + costId); if (card) card.classList.add('open'); }, 50);
 }
 
 function updateFixedCost(input) {
