@@ -869,17 +869,42 @@ function renderPLSections(scenario, calc, liveInventory) {
     html += '<div class="pl-section' + (isOpen ? ' open' : '') + '" id="pl-sec-' + sec.id + '" data-section="' + sec.id + '">';
     html += '<div class="pl-section-head" onclick="togglePLSection(\'' + sec.id + '\')">';
     html += '<span class="pl-section-head-name">' + sec.name + '</span>';
-    var sectionPL = revenueTotal - fixedTotal - variableTotal;
+    // Pre-calculate designer costs for retail section P/L
+    var sectionDesignerCosts = 0;
+    if (sec.id === 'retail') {
+      var _inv = (typeof getInvNew === 'function') ? getInvNew() : null;
+      if (_inv && _inv.vendors) {
+        _inv.vendors.forEach(function(v) {
+          if (v.pricingModel === 'loss-only') {
+            if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) sectionDesignerCosts += parseFloat(v.shippingCost);
+          } else {
+            (v.extraPayments || []).forEach(function(e) { sectionDesignerCosts += (e.amount || 0); });
+            (v.items || []).forEach(function(item) {
+              var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+              var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+              if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
+                var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
+                sectionDesignerCosts += (item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100);
+              }
+            });
+          }
+        });
+      }
+    }
+    var sectionPL = revenueTotal - fixedTotal - variableTotal - sectionDesignerCosts;
     html += '<span class="pl-section-head-totals" style="display:flex;gap:16px;align-items:center">';
     html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Fixed <strong style="color:var(--text)">$' + fmt(fixedTotal) + '</strong></span>';
     html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Var <strong style="color:var(--text)">$' + fmt(variableTotal) + '</strong></span>';
+    if (sectionDesignerCosts > 0) {
+      html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Dsgnr <strong style="color:#e07070">$' + fmt(sectionDesignerCosts) + '</strong></span>';
+    }
     html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Rev <strong style="color:#88c98a">$' + fmt(revenueTotal) + '</strong></span>';
     if (sectionPL >= 0) {
       html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:#88c98a">P/L +$' + fmt(sectionPL) + '</span>';
     } else if (revenueTotal > 0) {
       html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:#e07070">P/L -$' + fmt(Math.abs(sectionPL)) + '</span>';
     } else {
-      html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:#e07070">Cost $' + fmt(fixedTotal + variableTotal) + '</span>';
+      html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:#e07070">Cost $' + fmt(fixedTotal + variableTotal + sectionDesignerCosts) + '</span>';
     }
     html += '</span>';
     html += '<span class="pl-section-head-chevron">\u203a</span>';
