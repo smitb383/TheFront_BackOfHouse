@@ -478,8 +478,20 @@ function calcPL(scenario, inventory) {
   var allDrinkTxns = cafeDrinkTxns + cherryDrinkTxns;
   var cafeSquareFee = allDrinkRevenue * 0.026 + allDrinkTxns * 0.15;
   var cafeCashExtra = scenario.cafeCashSales || 0;
-  ourCut += cafeDrinkRevenue + cafeCashExtra + cherryDrinkRevenue;
-  totalRevenue += cafeDrinkRevenue + cafeCashExtra + cherryDrinkRevenue;
+  var cafeAllRevenue = cafeDrinkRevenue + cafeCashExtra + cherryDrinkRevenue;
+  // Cafe fixed costs for this calculation
+  var cafeFixedCosts = 0;
+  (scenario.fixedCosts || []).forEach(function(c) {
+    if (c.category === 'cafe') cafeFixedCosts += (c.amount || 0) - (c.refund || 0);
+  });
+  var cafeSupplyCosts = 0;
+  (scenario.cafeVariable || []).forEach(function(cv) { cafeSupplyCosts += (cv.amount || 0); });
+  var cafeTotalCosts = cafeFixedCosts + cafeDrinkCosts + cafeSquareFee + cafeSupplyCosts;
+  var cafeGrossProfit = cafeAllRevenue - cafeTotalCosts;
+  var cafeNetProfit = Math.max(0, cafeGrossProfit);
+  var eliseShare = Math.round(cafeNetProfit * 0.30);
+  totalRevenue += cafeAllRevenue;
+  ourCut += cafeAllRevenue - eliseShare; // Elise's 30% of profit comes out of our cut
   totalVariable += cafeDrinkCosts + cafeSquareFee;
 
   // Space revenue (insurance refund etc)
@@ -527,7 +539,8 @@ function calcPL(scenario, inventory) {
     breakeven: breakeven,
     totalTransactions: totalTransactions,
     itemBreakdown: itemBreakdown,
-    shippingCosts: shippingDeductions
+    shippingCosts: shippingDeductions,
+    eliseShare: eliseShare
   };
 }
 
@@ -669,6 +682,7 @@ function renderPLSummary(calc, scenario) {
         '<div class="pl-summary-val">$' + fmt(calc.ourCut) + '</div>' +
         '<div class="pl-summary-detail">From consignment: $' + fmt(calc.consignCut) + '</div>' +
         '<div class="pl-summary-detail">From merch: $' + fmt(calc.merchCut) + '</div>' +
+        (calc.eliseShare > 0 ? '<div class="pl-summary-detail">- Elise\'s cafe cut: $' + fmt(calc.eliseShare) + '</div>' : '') +
       '</div>' +
       '<div class="pl-summary-card ' + netClass + '">' +
         '<div class="pl-summary-label">Net P/L</div>' +
