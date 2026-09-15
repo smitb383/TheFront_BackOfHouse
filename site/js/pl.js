@@ -939,8 +939,14 @@ function renderPLSections(scenario, calc, liveInventory) {
               '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--faint)">' +
                 '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Line Items</div>' +
                 subs.map(function(sub, si) {
+                  var subPaidBy = sub.who || '';
+                  var subPaidBtns = ['Del','Brooke','The Front'].map(function(who) {
+                    var active = subPaidBy === who;
+                    return '<span onclick="event.stopPropagation();updateCafeSubItem(\'' + cv.id + '\',' + si + ',\'who\',\'' + who + '\');renderPL();setTimeout(function(){var el=document.getElementById(\'pl-cafe-var-' + cv.id + '\');if(el)el.classList.add(\'open\')},20)" style="font-family:DM Mono,monospace;font-size:8px;padding:2px 5px;border-radius:3px;cursor:pointer;border:1px solid ' + (active ? '#88c98a' : 'var(--faint)') + ';color:' + (active ? '#88c98a' : 'var(--muted)') + ';background:' + (active ? '#88c98a18' : 'transparent') + '">' + who + '</span>';
+                  }).join('');
                   return '<div style="display:flex;gap:6px;align-items:center;padding:3px 0">' +
                     '<input class="pl-cost-field-input" value="' + esc(sub.name || '') + '" placeholder="Item name" onchange="updateCafeSubItem(\'' + cv.id + '\',' + si + ',\'name\',this.value)" style="flex:1;font-size:11px;padding:3px 6px">' +
+                    '<div style="display:flex;align-items:center;gap:3px">' + subPaidBtns + '</div>' +
                     '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:10px">$</span><input type="number" min="0" step="0.01" value="' + (sub.amount || '') + '" placeholder="0" onchange="updateCafeSubItem(\'' + cv.id + '\',' + si + ',\'amount\',parseFloat(this.value)||0);renderPL()" style="width:55px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:3px;border-radius:3px;text-align:right"></div>' +
                     '<button onclick="deleteCafeSubItem(\'' + cv.id + '\',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>' +
                   '</div>';
