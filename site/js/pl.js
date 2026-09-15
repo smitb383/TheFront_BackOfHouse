@@ -1248,14 +1248,14 @@ function renderPLSections(scenario, calc, liveInventory) {
           var extraItems = [];
           (v.extraPayments || []).forEach(function(e) {
             extras += (e.amount || 0);
-            extraItems.push({ name: e.note || 'Extra payment', amount: e.amount || 0 });
+            extraItems.push({ name: e.description || 'Extra spend', amount: e.amount || 0 });
           });
           (v.items || []).forEach(function(item) {
             var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
             var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
             if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
               var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
-              var lossCost = Math.floor((item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100));
+              var lossCost = (item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100);
               losses += lossCost;
               var label = (item.name || 'Unnamed');
               if (m > 0 && b > 0) label += ' (' + m + ' missing, ' + b + ' broken)';
@@ -1275,7 +1275,7 @@ function renderPLSections(scenario, calc, liveInventory) {
         costVendors.sort(function(a, b) { return b.total - a.total; });
         costVendors.forEach(function(cv, ci) {
           var breakdown = [];
-          if (cv.extras > 0) breakdown.push('Extra payments: $' + fmt(cv.extras));
+          if (cv.extras > 0) breakdown.push('Extra spend: $' + fmt(cv.extras));
           if (cv.losses > 0) breakdown.push('Losses (missing/broken): $' + fmt(cv.losses));
           if (cv.shipping > 0) breakdown.push('Shipping: $' + fmt(cv.shipping));
           var detailId = 'pl-dcost-' + ci;
