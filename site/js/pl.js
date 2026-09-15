@@ -1426,7 +1426,7 @@ function renderFixedCostCard(c) {
           return '<div style="display:flex;gap:6px;align-items:center;padding:3px 0">' +
             '<input class="pl-cost-field-input" value="' + esc(sub.name || '') + '" placeholder="Item name" onchange="updateFixedSubItem(\'' + c.id + '\',' + si + ',\'name\',this.value)" style="flex:1;font-size:11px;padding:3px 6px">' +
             '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:10px">$</span><input type="number" min="0" step="0.01" value="' + (sub.amount || '') + '" placeholder="0" onchange="updateFixedSubItem(\'' + c.id + '\',' + si + ',\'amount\',parseFloat(this.value)||0);renderPL()" style="width:55px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:3px;border-radius:3px;text-align:right"></div>' +
-            '<div style="display:flex;gap:4px">' + ['Del','Brooke','The Front'].map(function(who) { return '<label style="display:flex;align-items:center;gap:2px;cursor:pointer;font-family:DM Mono,monospace;font-size:8px;color:' + (sub.who === who ? '#88c98a' : 'var(--muted)') + '"><input type="checkbox"' + (sub.who === who ? ' checked' : '') + ' onclick="updateFixedSubItem(\'' + c.id + '\',' + si + ',\'who\',this.checked?\'' + who + '\':\'\');renderPL()" style="accent-color:#88c98a">' + who + '</label>'; }).join('') + '</div>' +
+            '<div style="display:flex;gap:4px">' + ['Del','Brooke','The Front'].map(function(who) { return '<label style="display:flex;align-items:center;gap:2px;cursor:pointer;font-family:DM Mono,monospace;font-size:8px;color:' + (sub.who === who ? '#88c98a' : 'var(--muted)') + '"><input type="checkbox"' + (sub.who === who ? ' checked' : '') + ' onclick="updateFixedSubItem(\'' + c.id + '\',' + si + ',\'who\',this.checked?\'' + who + '\':\'\');renderPL();setTimeout(function(){var el=document.getElementById(\'pl-cost-' + c.id + '\');if(el)el.classList.add(\'open\')},20)" style="accent-color:#88c98a">' + who + '</label>'; }).join('') + '</div>' +
             '<button onclick="deleteFixedSubItem(\'' + c.id + '\',' + si + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>' +
           '</div>';
         }).join('') +
@@ -2713,19 +2713,15 @@ function updateFixedCost(input) {
   var field = input.dataset.field;
   cost[field] = (field === 'amount' || field === 'refund') ? (parseFloat(input.value) || 0) : input.value;
   savePLData(data);
-  // Only re-render summary, not the whole thing (to keep focus)
   var liveInv = inventoryToPLItems();
   var calc = calcPL(scenario, liveInv);
   renderPLSummary(calc, scenario);
-  // For refund or category changes, re-render fully
-  if (field === 'refund' || field === 'category') {
-    renderPLSections(scenario, calc, liveInv);
+  renderPLSections(scenario, calc, liveInv);
+  // Re-open the card after re-render so user sees their change
+  if (field === 'refund' || field === 'category' || field === 'who' || field === 'status') {
     var card = document.getElementById('pl-cost-' + input.dataset.costId);
     if (card) card.classList.add('open');
-    return;
   }
-  // Update section head totals inline (lightweight)
-  renderPLSections(scenario, calc, liveInv);
 }
 
 function toggleCostCard(id) {
