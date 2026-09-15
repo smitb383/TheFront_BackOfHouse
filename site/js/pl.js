@@ -1324,7 +1324,7 @@ function renderPLSections(scenario, calc, liveInventory) {
     });
     if (!assigned) miscCats.push(cat);
   });
-  if (miscCats.length) {
+  {
     var miscTotal = 0;
     miscCats.forEach(function(cat) {
       fcByCat[cat].forEach(function(c) { miscTotal += (c.amount || 0) - (c.refund || 0); });
@@ -1335,21 +1335,26 @@ function renderPLSections(scenario, calc, liveInventory) {
     html += '<div class="pl-section' + (miscOpen ? ' open' : '') + '" id="pl-sec-misc" data-section="misc">';
     html += '<div class="pl-section-head" onclick="togglePLSection(\'misc\')">';
     html += '<span class="pl-section-head-name">Other / Misc</span>';
-    html += '<span class="pl-section-head-totals"><span class="pl-section-head-fixed">Fixed $' + fmt(miscTotal) + '</span></span>';
+    html += '<span class="pl-section-head-totals"><span class="pl-section-head-fixed">' + (miscTotal > 0 ? 'Cost $' + fmt(miscTotal) : '') + '</span></span>';
     html += '<span class="pl-section-head-chevron">\u203a</span>';
     html += '</div>';
     html += '<div class="pl-section-body"><div class="pl-section-grid">';
     html += '<div class="pl-section-col">';
     html += '<div class="pl-section-col-head"><span>Fixed Costs</span><span class="pl-section-col-total">$' + fmt(miscTotal) + '</span></div>';
-    miscCats.forEach(function(cat) {
-      var catTotal = 0;
-      fcByCat[cat].forEach(function(c) { catTotal += (c.amount || 0) - (c.refund || 0); });
-      html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(cat) + '</span><span class="pl-cost-cat-total">$' + fmt(catTotal) + '</span></div>';
-      fcByCat[cat].forEach(function(c) {
-        html += renderFixedCostCard(c);
+    if (miscCats.length) {
+      miscCats.forEach(function(cat) {
+        var catTotal = 0;
+        fcByCat[cat].forEach(function(c) { catTotal += (c.amount || 0) - (c.refund || 0); });
+        html += '<div class="pl-cost-cat"><span class="pl-cost-cat-name">' + esc(cat) + '</span><span class="pl-cost-cat-total">$' + fmt(catTotal) + '</span></div>';
+        fcByCat[cat].forEach(function(c) {
+          html += renderFixedCostCard(c);
+        });
+        html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'' + esc(cat) + '\')">+ Add to ' + esc(cat) + '</button>';
       });
-      html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'' + esc(cat) + '\')">+ Add to ' + esc(cat) + '</button>';
-    });
+    } else {
+      html += '<div class="pl-section-empty">\u2014</div>';
+    }
+    html += '<button class="pl-add-row-btn" onclick="addFixedCostToCat(\'misc\')">+ Add item</button>';
     html += '</div>';
     html += '<div class="pl-section-col"><div class="pl-section-col-head"><span>Variable Costs</span></div><div class="pl-section-empty">\u2014</div></div>';
     html += '<div class="pl-section-col"><div class="pl-section-col-head"><span>Revenue</span></div><div class="pl-section-empty">\u2014</div></div>';
