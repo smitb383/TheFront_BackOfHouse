@@ -8724,7 +8724,9 @@ function renderInvNew() {
     var rpColor = rpColors[returnPlan] || '#e2c97e';
     var psColor = psColors[paymentStatus] || '#e07070';
 
-    var controlsHtml = '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>' +
+    var controlsHtml = '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + vendor.items.length + ' items</span>';
+    if (!isWholesale) {
+      controlsHtml +=
       '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
         '<div style="' + lblStyle + '">Return Plan</div>' +
         '<select onchange="invNewEditVendor(' + vi + ',\'returnPlan\',this.value);renderInvNew()" style="background:' + rpColor + '22;border:2px solid ' + rpColor + ';color:' + rpColor + ';' + selBase + '">' +
@@ -8751,21 +8753,6 @@ function renderInvNew() {
         '<input type="checkbox"' + (salesLogDone ? ' checked' : '') + ' onchange="invNewEditVendor(' + vi + ',\'salesLogDone\',this.checked);renderInvNew()">' +
         '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:' + (salesLogDone ? '#88c98a' : 'var(--muted)') + ';font-weight:' + (salesLogDone ? '700' : '400') + '">Sales Log</span>' +
       '</label>';
-    if (isWholesale) {
-      controlsHtml +=
-        '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-          '<div style="' + lblStyle + '">Currency</div>' +
-          '<select onchange="invNewEditVendor(' + vi + ',\'currency\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer">' +
-            '<option value="eur"' + (vendor.currency !== 'usd' ? ' selected' : '') + '>EUR</option>' +
-            '<option value="usd"' + (vendor.currency === 'usd' ? ' selected' : '') + '>USD</option>' +
-          '</select>' +
-        '</div>' +
-        (vendor.currency !== 'usd'
-          ? '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-              '<div style="' + lblStyle + '">EUR Rate</div>' +
-              '<input value="' + eurRate + '" oninput="invNewEditVendor(' + vi + ',\'eurRate\',parseFloat(this.value)||1)" style="width:48px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;text-align:center">' +
-            '</div>'
-          : '');
     }
 
     // Shipping status field (rendered inside vendor body)
