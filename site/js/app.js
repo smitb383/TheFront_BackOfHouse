@@ -8867,8 +8867,14 @@ function renderInvNew() {
             '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#82bfbb;margin-bottom:6px">Extra Payments to Designer (from our earnings)</div>' +
             extraPayments.map(function(ep, ei) {
               totalExtras += (ep.amount || 0);
+              var paidBy = ep.paidBy || '';
+              var paidByBtns = ['Del','Brooke','Front CC'].map(function(who) {
+                var active = paidBy === who;
+                return '<span onclick="event.stopPropagation();invNewEditExtra(' + vi + ',' + ei + ',\'paidBy\',\'' + who + '\')" style="font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:3px;cursor:pointer;border:1px solid ' + (active ? '#88c98a' : 'var(--faint)') + ';color:' + (active ? '#88c98a' : 'var(--muted)') + ';background:' + (active ? '#88c98a18' : 'transparent') + '">' + who + '</span>';
+              }).join('');
               return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0">' +
                 '<input class="field-input" value="' + esc(ep.description || '') + '" placeholder="e.g. Rush fee" onclick="event.stopPropagation()" oninput="invNewEditExtra(' + vi + ',' + ei + ',\'description\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:11px">' +
+                '<div style="display:flex;align-items:center;gap:3px">' + paidByBtns + '</div>' +
                 '<div style="display:flex;align-items:center;gap:2px"><span style="color:#82bfbb;font-size:11px">+$</span><input type="number" value="' + (ep.amount || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditExtra(' + vi + ',' + ei + ',\'amount\',parseFloat(this.value)||0)" onblur="renderInvNew()" style="width:60px;background:var(--surface2);border:1px solid #82bfbb;color:#82bfbb;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
                 '<button onclick="invNewDeleteExtra(' + vi + ',' + ei + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
               '</div>';

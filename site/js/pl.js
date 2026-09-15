@@ -1248,7 +1248,7 @@ function renderPLSections(scenario, calc, liveInventory) {
           var extraItems = [];
           (v.extraPayments || []).forEach(function(e) {
             extras += (e.amount || 0);
-            extraItems.push({ name: e.description || 'Extra spend', amount: e.amount || 0 });
+            extraItems.push({ name: e.description || 'Extra spend', amount: e.amount || 0, paidBy: e.paidBy || '' });
           });
           (v.items || []).forEach(function(item) {
             var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
@@ -1286,7 +1286,8 @@ function renderPLSections(scenario, calc, liveInventory) {
           // Expandable detail panel
           designerCostsHtml += '<div id="' + detailId + '" style="display:none;padding:4px 0 8px 16px;border-bottom:1px solid var(--faint)">';
           cv.extraItems.forEach(function(ei) {
-            designerCostsHtml += '<div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:9px;padding:2px 0;color:var(--text)"><span>' + esc(ei.name) + '</span><span style="color:#e07070">$' + fmt(ei.amount) + '</span></div>';
+            var paidTag = ei.paidBy ? ' <span style="color:var(--muted);font-size:8px">(' + esc(ei.paidBy) + ')</span>' : '';
+            designerCostsHtml += '<div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:9px;padding:2px 0;color:var(--text)"><span>' + esc(ei.name) + paidTag + '</span><span style="color:#e07070">$' + fmt(ei.amount) + '</span></div>';
           });
           cv.lossItems.forEach(function(li) {
             designerCostsHtml += '<div style="display:flex;justify-content:space-between;font-family:DM Mono,monospace;font-size:9px;padding:2px 0;color:var(--text)"><span>' + esc(li.name) + '</span><span style="color:#e07070">$' + fmt(li.amount) + '</span></div>';
