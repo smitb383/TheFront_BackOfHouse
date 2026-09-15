@@ -669,7 +669,7 @@ var PL_SECTIONS = [
     variableType: 'eventsVariable',
     revenueType: 'otherRevenue' },
   { id: 'space', name: '\ud83c\udfe0 Space & Operations', color: '#82bfbb',
-    fixedCats: ['space', 'operations', 'fit out'],
+    fixedCats: ['space', 'fit out', 'operations'],
     revenueType: 'spaceRevenue' },
   { id: 'marketing', name: '\ud83d\udce3 Marketing & Branding', color: '#6aaad8',
     fixedCats: ['marketing', 'branding'] },
