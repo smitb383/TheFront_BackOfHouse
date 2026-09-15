@@ -8868,9 +8868,11 @@ function renderInvNew() {
             extraPayments.map(function(ep, ei) {
               totalExtras += (ep.amount || 0);
               var paidBy = ep.paidBy || '';
+              var paidByColors = { 'Del': '#c9a2e2', 'Brooke': '#6aaad8', 'The Front': '#e2c97e' };
               var paidByBtns = ['Del','Brooke','The Front'].map(function(who) {
                 var active = paidBy === who;
-                return '<span onclick="event.stopPropagation();invNewEditExtra(' + vi + ',' + ei + ',\'paidBy\',\'' + who + '\')" style="font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:3px;cursor:pointer;border:1px solid ' + (active ? '#88c98a' : 'var(--faint)') + ';color:' + (active ? '#88c98a' : 'var(--muted)') + ';background:' + (active ? '#88c98a18' : 'transparent') + '">' + who + '</span>';
+                var clr = paidByColors[who];
+                return '<span onclick="event.stopPropagation();invNewEditExtra(' + vi + ',' + ei + ',\'paidBy\',\'' + who + '\')" style="font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:3px;cursor:pointer;border:1px solid ' + (active ? clr : 'var(--faint)') + ';color:' + (active ? clr : 'var(--muted)') + ';background:' + (active ? clr + '18' : 'transparent') + '">' + who + '</span>';
               }).join('');
               return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0">' +
                 '<input class="field-input" value="' + esc(ep.description || '') + '" placeholder="e.g. Rush fee" onclick="event.stopPropagation()" oninput="invNewEditExtra(' + vi + ',' + ei + ',\'description\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:11px">' +
