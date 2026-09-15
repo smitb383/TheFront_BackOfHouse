@@ -8868,7 +8868,7 @@ function renderInvNew() {
             extraPayments.map(function(ep, ei) {
               totalExtras += (ep.amount || 0);
               var paidBy = ep.paidBy || '';
-              var paidByBtns = ['Del','Brooke','Front CC'].map(function(who) {
+              var paidByBtns = ['Del','Brooke','The Front'].map(function(who) {
                 var active = paidBy === who;
                 return '<span onclick="event.stopPropagation();invNewEditExtra(' + vi + ',' + ei + ',\'paidBy\',\'' + who + '\')" style="font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:3px;cursor:pointer;border:1px solid ' + (active ? '#88c98a' : 'var(--faint)') + ';color:' + (active ? '#88c98a' : 'var(--muted)') + ';background:' + (active ? '#88c98a18' : 'transparent') + '">' + who + '</span>';
               }).join('');
