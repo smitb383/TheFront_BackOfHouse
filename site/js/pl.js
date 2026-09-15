@@ -850,7 +850,11 @@ function renderPLSections(scenario, calc, liveInventory) {
     html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Fixed <strong style="color:var(--text)">$' + fmt(fixedTotal) + '</strong></span>';
     html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Var <strong style="color:var(--text)">$' + fmt(variableTotal) + '</strong></span>';
     html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Rev <strong style="color:#88c98a">$' + fmt(revenueTotal) + '</strong></span>';
-    html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:' + (sectionPL >= 0 ? '#88c98a' : '#e07070') + '">' + (sectionPL >= 0 ? 'P/L +' : 'P/L -') + '$' + fmt(Math.abs(sectionPL)) + '</span>';
+    if (revenueTotal > 0 || sectionPL > 0) {
+      html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:' + (sectionPL >= 0 ? '#88c98a' : '#e07070') + '">' + (sectionPL >= 0 ? 'P/L +' : 'P/L -') + '$' + fmt(Math.abs(sectionPL)) + '</span>';
+    } else {
+      html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:#e07070">Cost $' + fmt(Math.abs(sectionPL)) + '</span>';
+    }
     html += '</span>';
     html += '<span class="pl-section-head-chevron">\u203a</span>';
     html += '</div>';
