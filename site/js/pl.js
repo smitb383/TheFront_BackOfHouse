@@ -488,8 +488,30 @@ function calcPL(scenario, inventory) {
     totalRevenue += (sr.amount || 0);
   });
 
-  var netPL = ourCut - totalFixed - totalVariable;
-  var breakeven = totalFixed + totalVariable;
+  // Designer costs (extra payments, missing/broken losses, loss-only vendor shipping)
+  var totalDesignerCosts = 0;
+  var inv = (typeof getInvNew === 'function') ? getInvNew() : null;
+  if (inv && inv.vendors) {
+    inv.vendors.forEach(function(v) {
+      if (v.pricingModel === 'loss-only') {
+        if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) totalDesignerCosts += parseFloat(v.shippingCost);
+      } else {
+        (v.extraPayments || []).forEach(function(e) { totalDesignerCosts += (e.amount || 0); });
+        (v.items || []).forEach(function(item) {
+          var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+          var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+          if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
+            var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
+            totalDesignerCosts += (item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100);
+          }
+        });
+        // Don't double-count shipping already in totalFixed via shippingDeductions
+      }
+    });
+  }
+
+  var netPL = ourCut - totalFixed - totalVariable - totalDesignerCosts;
+  var breakeven = totalFixed + totalVariable + totalDesignerCosts;
 
   return {
     totalGrossRevenue: totalRevenue,
@@ -500,6 +522,7 @@ function calcPL(scenario, inventory) {
     merchCut: merchCut,
     totalFixed: totalFixed,
     totalVariable: totalVariable,
+    totalDesignerCosts: totalDesignerCosts,
     netPL: netPL,
     breakeven: breakeven,
     totalTransactions: totalTransactions,
@@ -602,7 +625,7 @@ function renderPLSummary(calc, scenario) {
   var el = document.getElementById('pl-summary');
   if (!el) return;
   var netClass = calc.netPL >= 0 ? 'pl-positive' : 'pl-negative';
-  var totalCosts = calc.totalFixed + calc.totalVariable;
+  var totalCosts = calc.totalFixed + calc.totalVariable + (calc.totalDesignerCosts || 0);
 
   // Consignment-only break-even: if all revenue were 30% commission
   var beConsignment = totalCosts > 0 ? Math.ceil(totalCosts / 0.30) : 0;
@@ -633,6 +656,7 @@ function renderPLSummary(calc, scenario) {
         '<div class="pl-summary-val">$' + fmt(totalCosts) + '</div>' +
         '<div class="pl-summary-detail">Fixed: $' + fmt(calc.totalFixed) + '</div>' +
         '<div class="pl-summary-detail">Variable: $' + fmt(calc.totalVariable) + '</div>' +
+        (calc.totalDesignerCosts > 0 ? '<div class="pl-summary-detail">Designer costs/losses: $' + fmt(calc.totalDesignerCosts) + '</div>' : '') +
       '</div>' +
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Gross Revenue</div>' +
