@@ -3265,9 +3265,9 @@ function renderCostSummary() {
   var people = {};
   function addSpend(who, name, amount, category) {
     if (!amount || amount <= 0) return;
-    var key = who || 'Unassigned';
-    // Normalize old "Front CC" to "The Front"
-    if (key === 'Front CC') key = 'The Front';
+    var key = who || 'The Front';
+    // Normalize: unassigned and old "Front CC" all go to The Front
+    if (key === 'Front CC' || key === 'Unassigned') key = 'The Front';
     if (!people[key]) people[key] = { items: [], total: 0 };
     people[key].items.push({ name: name, amount: amount, category: category });
     people[key].total += amount;
@@ -3299,15 +3299,38 @@ function renderCostSummary() {
     }
   });
 
-  // Extra payments from inventory (designer extra spend)
+  // Extra payments and designer losses from inventory
   var inv = (typeof getInvNew === 'function') ? getInvNew() : null;
   if (inv && inv.vendors) {
     inv.vendors.forEach(function(v) {
+      // Extra payments to designers
       (v.extraPayments || []).forEach(function(ep) {
         if ((ep.amount || 0) > 0) {
           addSpend(ep.paidBy, (ep.description || 'Extra payment') + ' (' + v.name + ')', ep.amount, 'designer extra');
         }
       });
+      // Loss-only vendors (e.g. Hadaikum shipping)
+      if (v.pricingModel === 'loss-only') {
+        if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) {
+          addSpend('The Front', v.name + ' — shipping loss', parseFloat(v.shippingCost), 'designer loss');
+        }
+      } else {
+        // Missing/broken item losses
+        (v.items || []).forEach(function(item) {
+          var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+          var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+          if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
+            var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
+            var lossCost = (item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100);
+            if (lossCost > 0) {
+              var label = (item.name || 'Item') + ' (' + v.name + ')';
+              if (m > 0) label += ' — missing';
+              if (b > 0 && !v.brokenNotPaidByStore) label += ' — broken';
+              addSpend('The Front', label, lossCost, 'designer loss');
+            }
+          }
+        });
+      }
     });
   }
 
@@ -3322,22 +3345,15 @@ function renderCostSummary() {
 
   var brookeTotal = (people['Brooke'] || { total: 0 }).total;
   var delTotal = (people['Del'] || { total: 0 }).total;
-  var frontTotal = (people['The Front'] || { total: 0 }).total + (people['Front CC'] || { total: 0 }).total;
-  var unassignedTotal = (people['Unassigned'] || { total: 0 }).total;
+  var frontTotal = (people['The Front'] || { total: 0 }).total;
 
-  // Del's capital account
+  // Del's capital account (separate from spend — does not affect cost totals)
   var delInjected = 10000;
   var delWithdrawn = 5000;
-  var delNetInjection = delInjected - delWithdrawn;
+  var delRemainingInAccount = delInjected - delWithdrawn; // $5K still in Front account
 
-  // What The Front owes each person
-  var frontOwes = {
-    'Brooke': brookeTotal,
-    'Del': Math.max(0, delTotal - delNetInjection)
-  };
-  // Del's net: she spent delTotal but injected 10K and took 5K back
-  // If delTotal < delNetInjection, The Front still has some of Del's injection
-  var delRemainingCredit = Math.max(0, delNetInjection - delTotal);
+  // Owed back: personal spend + remaining injection balance
+  var delTotalOwed = delTotal + delRemainingInAccount;
 
   var html = '';
 
@@ -3348,57 +3364,55 @@ function renderCostSummary() {
   html += '</div>';
 
   // ── Top-level cards ──
-  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px">';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">';
 
   // Brooke card
-  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px">';
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px">';
   html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#6aaad8;margin-bottom:8px">Brooke</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;color:var(--text)">$' + fmt(brookeTotal) + '</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:6px">Owed back: <span style="color:#e07070">$' + fmt(brookeTotal) + '</span></div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;color:var(--text)">$' + fmt(brookeTotal) + ' <span style="font-size:11px;color:var(--muted);font-weight:400">spent</span></div>';
+  html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--faint);font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">Owed back: <span style="color:#e07070;font-weight:700">$' + fmt(brookeTotal) + '</span></div>';
   html += '</div>';
 
   // Del card
-  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px">';
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px">';
   html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#c9a2e2;margin-bottom:8px">Del</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;color:var(--text)">$' + fmt(delTotal) + '</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px">Injected $' + fmt(delInjected) + ' into Front account</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">Withdrew $' + fmt(delWithdrawn) + ' back</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid var(--faint)">Net injection: <span style="color:#88c98a">$' + fmt(delNetInjection) + '</span></div>';
-  if (delRemainingCredit > 0) {
-    html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a">Remaining credit: $' + fmt(delRemainingCredit) + '</div>';
-  } else {
-    html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">Owed back: <span style="color:#e07070">$' + fmt(frontOwes['Del']) + '</span></div>';
-  }
-  html += '</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;color:var(--text)">$' + fmt(delTotal) + ' <span style="font-size:11px;color:var(--muted);font-weight:400">spent</span></div>';
+  html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--faint);font-family:DM Mono,monospace;font-size:10px">';
+  html += '<div style="color:var(--muted);margin-bottom:4px">Capital injection into Front account:</div>';
+  html += '<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--muted)">Deposited</span><span style="color:#88c98a">+$' + fmt(delInjected) + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--muted)">Withdrew</span><span style="color:#e07070">-$' + fmt(delWithdrawn) + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--faint);margin-top:4px"><span style="color:var(--muted)">Still in account</span><span style="color:#88c98a;font-weight:700">$' + fmt(delRemainingInAccount) + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);margin-top:6px"><span style="color:var(--muted)">Total owed back</span><span style="color:#e07070;font-weight:700">$' + fmt(delTotalOwed) + '</span></div>';
+  html += '<div style="font-size:9px;color:var(--muted);font-style:italic;margin-top:2px">spend ($' + fmt(delTotal) + ') + remaining injection ($' + fmt(delRemainingInAccount) + ')</div>';
+  html += '</div></div>';
 
   // The Front card
-  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px">';
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px">';
   html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#e2c97e;margin-bottom:8px">The Front</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;color:var(--text)">$' + fmt(frontTotal) + '</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:6px">Paid from Front account</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;color:var(--text)">$' + fmt(frontTotal) + ' <span style="font-size:11px;color:var(--muted);font-weight:400">spent</span></div>';
+  html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--faint);font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">Paid from Front account (incl. designer costs & losses)</div>';
+  html += '</div>';
   html += '</div>';
 
-  // Total card
-  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px">';
+  // ── Total + Repayment ──
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px">';
+
+  // Total spend
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px">';
   html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px">Total Spend</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;color:var(--text)">$' + fmt(grandTotal) + '</div>';
-  if (unassignedTotal > 0) {
-    html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:#e07070;margin-top:6px">$' + fmt(unassignedTotal) + ' unassigned</div>';
-  }
-  html += '</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:22px;font-weight:700;color:var(--text)">$' + fmt(grandTotal) + '</div>';
   html += '</div>';
 
-  // ── Repayment summary ──
-  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin-bottom:32px">';
-  html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:12px">Repayment Summary</div>';
-  html += '<div style="display:flex;gap:32px;font-family:DM Mono,monospace;font-size:12px">';
-  html += '<div>The Front owes <span style="color:#6aaad8;font-weight:700">Brooke</span>: <span style="color:#e07070;font-weight:700">$' + fmt(brookeTotal) + '</span></div>';
-  if (frontOwes['Del'] > 0) {
-    html += '<div>The Front owes <span style="color:#c9a2e2;font-weight:700">Del</span>: <span style="color:#e07070;font-weight:700">$' + fmt(frontOwes['Del']) + '</span> <span style="font-size:9px;color:var(--muted)">(spent $' + fmt(delTotal) + ' − $' + fmt(delNetInjection) + ' net injection)</span></div>';
-  } else {
-    html += '<div><span style="color:#c9a2e2;font-weight:700">Del</span>: <span style="color:#88c98a;font-weight:700">covered</span> <span style="font-size:9px;color:var(--muted)">($' + fmt(delRemainingCredit) + ' credit remains from injection)</span></div>';
-  }
-  html += '</div></div>';
+  // Repayment
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px">';
+  html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px">The Front Owes</div>';
+  html += '<div style="display:flex;gap:24px;font-family:DM Mono,monospace;font-size:13px;margin-top:4px">';
+  html += '<div><span style="color:#6aaad8;font-weight:700">Brooke</span> <span style="color:#e07070;font-weight:700">$' + fmt(brookeTotal) + '</span></div>';
+  html += '<div><span style="color:#c9a2e2;font-weight:700">Del</span> <span style="color:#e07070;font-weight:700">$' + fmt(delTotalOwed) + '</span></div>';
+  html += '</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:6px">Total to repay: <span style="color:#e07070">$' + fmt(brookeTotal + delTotalOwed) + '</span></div>';
+  html += '</div>';
+  html += '</div>';
 
   // ── Collapsible spend lists per person ──
   var order = ['Brooke', 'Del', 'The Front'];
@@ -3440,20 +3454,6 @@ function renderCostSummary() {
     html += '</tbody></table></div></div>';
   });
 
-  // Unassigned section (if any)
-  if (unassignedTotal > 0 && people['Unassigned'] && people['Unassigned'].items.length) {
-    var p = people['Unassigned'];
-    html += '<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden;opacity:0.6">';
-    html += '<div onclick="var b=document.getElementById(\'cs-unassigned\');b.style.display=b.style.display===\'none\'?\'block\':\'none\'" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer;background:var(--surface2)">';
-    html += '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--muted)">Unassigned <span style="font-size:10px">(' + p.items.length + ' items · $0 total)</span></span>';
-    html += '<span style="font-size:16px;color:var(--muted)">›</span>';
-    html += '</div>';
-    html += '<div id="cs-unassigned" style="display:none;padding:8px 16px">';
-    p.items.forEach(function(item) {
-      html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);padding:2px 0">' + esc(item.name) + '</div>';
-    });
-    html += '</div></div>';
-  }
 
   el.innerHTML = html;
 }
