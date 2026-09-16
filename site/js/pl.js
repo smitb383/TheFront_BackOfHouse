@@ -3657,5 +3657,51 @@ function renderLearnings() {
   html += 'Based on $' + fmt(actualCalc.consignGross) + ' consignment gross. Only standard consignment splits change \u2014 100% commission vendors, wholesale, and cafe unchanged. Costs held constant.';
   html += '</div>';
 
+  // ── Transaction Fee Scenarios ──
+  // Calculate actual total Square fees
+  var retailGross = actualCalc.consignGross + actualCalc.merchGross;
+  var retailTxns = actualCalc.totalTransactions;
+  var retailSquare = retailGross * 0.026 + retailTxns * 0.15;
+  var cafeSquare = actualCalc.cafeSquareFee || 0;
+  var totalSquare = retailSquare + cafeSquare;
+  var halfSquare = totalSquare / 2;
+  var savings = totalSquare - halfSquare;
+  var halfPL = actualPL + savings;
+
+  html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin:32px 0 16px">Transaction Fee Scenarios</div>';
+
+  html += '<table style="width:100%;border-collapse:collapse;background:var(--surface2);border-radius:8px;overflow:hidden">';
+  html += '<thead><tr>';
+  html += '<th style="' + thS + ';text-align:left">Scenario</th>';
+  html += '<th style="' + thS + ';text-align:right">Square Fees</th>';
+  html += '<th style="' + thS + ';text-align:right">Total Costs</th>';
+  html += '<th style="' + thS + ';text-align:right">Net P/L</th>';
+  html += '<th style="' + thS + ';text-align:right">vs Actual</th>';
+  html += '</tr></thead><tbody>';
+
+  // Actual
+  html += '<tr style="background:var(--surface)">';
+  html += '<td style="' + tdS + ';font-weight:700;color:var(--text)">Actual \u2014 2.6% + $0.15 <span style="font-size:9px;color:var(--muted);font-weight:400">(Square standard)</span></td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--text)">$' + fmt(totalSquare) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--muted)">$' + fmt(actualCosts) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:' + (actualPL >= 0 ? '#88c98a' : '#e07070') + ';font-weight:700">' + (actualPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(actualPL)) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--muted)">\u2014</td>';
+  html += '</tr>';
+
+  // Half fees
+  html += '<tr>';
+  html += '<td style="' + tdS + ';font-weight:700;color:var(--text)">What if \u2014 50% lower fees <span style="font-size:9px;color:var(--muted);font-weight:400">(1.3% + $0.075)</span></td>';
+  html += '<td style="' + tdS + ';text-align:right;color:#88c98a">$' + fmt(halfSquare) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--muted)">$' + fmt(actualCosts - savings) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:' + (halfPL >= 0 ? '#88c98a' : '#e07070') + ';font-weight:700">' + (halfPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(halfPL)) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:#88c98a;font-weight:700">+$' + fmt(savings) + '</td>';
+  html += '</tr>';
+
+  html += '</tbody></table>';
+
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:12px">';
+  html += 'Current Square fees: $' + fmt(retailSquare) + ' retail + $' + fmt(cafeSquare) + ' cafe = $' + fmt(totalSquare) + ' total. Half would save $' + fmt(savings) + '.';
+  html += '</div>';
+
   el.innerHTML = html;
 }
