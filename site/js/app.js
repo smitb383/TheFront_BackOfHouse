@@ -8744,8 +8744,18 @@ function renderInvNew() {
     var payDetails = vendor.payDetails || '';
     var inputFieldStyle = 'background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:160px';
 
+    // Calculate designer's owed amount for payout section
+    var designerOwed = isWholesale ? 0 : vendorDesigner;
+    var payments = vendor.paymentHistory || [];
+    var totalPaid = 0;
+    payments.forEach(function(p) { totalPaid += (p.amount || 0); });
+    var remainingBalance = designerOwed - totalPaid;
+    var hasSales = vendorTotal > 0;
+    var poId = 'po-' + vi;
+    var poOpen = document.getElementById(poId) && document.getElementById(poId).style.display !== 'none';
+
     var vendorStatusFields =
-      '<div style="display:flex;gap:16px;align-items:flex-end;padding:10px 0;border-bottom:1px solid var(--faint);margin-bottom:8px" onclick="event.stopPropagation()">' +
+      '<div style="display:flex;gap:16px;align-items:flex-end;padding:10px 0;' + (hasSales ? 'border-bottom:1px solid var(--faint);' : '') + 'margin-bottom:8px" onclick="event.stopPropagation()">' +
         '<div style="display:flex;flex-direction:column">' +
           '<div style="' + lblStyle + '">Shipping Status</div>' +
           '<select onchange="invNewEditVendor(' + vi + ',\'shippingStatus\',this.value);renderInvNew()" style="background:' + ssColor + '22;border:2px solid ' + ssColor + ';color:' + ssColor + ';' + selBase + '">' +
@@ -8757,55 +8767,59 @@ function renderInvNew() {
             '<option value="picked-up"' + (shippingStatus === 'picked-up' ? ' selected' : '') + '>Picked Up</option>' +
           '</select>' +
         '</div>' +
-        '<div style="display:flex;flex-direction:column">' +
-          '<div style="' + lblStyle + '">Payment Platform</div>' +
-          '<select onchange="invNewEditVendor(' + vi + ',\'payPlatform\',this.value)" style="' + inputFieldStyle + ';cursor:pointer">' +
-            '<option value=""' + (!payPlatform ? ' selected' : '') + '>—</option>' +
-            '<option value="venmo"' + (payPlatform === 'venmo' ? ' selected' : '') + '>Venmo</option>' +
-            '<option value="zelle"' + (payPlatform === 'zelle' ? ' selected' : '') + '>Zelle</option>' +
-            '<option value="paypal"' + (payPlatform === 'paypal' ? ' selected' : '') + '>PayPal</option>' +
-            '<option value="wire"' + (payPlatform === 'wire' ? ' selected' : '') + '>Wire Transfer</option>' +
-            '<option value="check"' + (payPlatform === 'check' ? ' selected' : '') + '>Check</option>' +
-            '<option value="cash"' + (payPlatform === 'cash' ? ' selected' : '') + '>Cash</option>' +
-            '<option value="other"' + (payPlatform === 'other' ? ' selected' : '') + '>Other</option>' +
-          '</select>' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column;flex:1">' +
-          '<div style="' + lblStyle + '">Payment Details</div>' +
-          '<input value="' + esc(payDetails) + '" placeholder="e.g. @handle, email, account #" oninput="invNewEditVendor(' + vi + ',\'payDetails\',this.value)" style="' + inputFieldStyle + ';width:100%">' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column;flex:1">' +
-          '<div style="' + lblStyle + '">Report Note</div>' +
-          '<input value="' + esc(vendor.reportNote || '') + '" placeholder="Note shown on sales report..." onclick="event.stopPropagation()" oninput="invNewEditVendor(' + vi + ',\'reportNote\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:100%">' +
-        '</div>' +
       '</div>' +
-      // Payment history
-      (function() {
-        var payments = vendor.paymentHistory || [];
-        var totalPaid = 0;
-        payments.forEach(function(p) { totalPaid += (p.amount || 0); });
-        var phId = 'ph-' + vi;
-        var phOpen = document.getElementById(phId) && document.getElementById(phId).style.display !== 'none';
-        var h = '<div style="border-top:1px solid var(--faint);padding:8px 0" onclick="event.stopPropagation()">';
-        h += '<div onclick="var el=document.getElementById(\'' + phId + '\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:4px 0">';
-        h += '<span style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">Payment History</span>';
-        h += '<span style="font-family:DM Mono,monospace;font-size:11px;color:' + (totalPaid > 0 ? '#88c98a' : 'var(--muted)') + ';font-weight:700">$' + (totalPaid || 0) + ' paid' + (payments.length ? ' \u00b7 ' + payments.length + ' payment' + (payments.length > 1 ? 's' : '') : '') + ' \u203a</span>';
+      // Payout section (only for vendors with sales)
+      (hasSales && !isWholesale ? (function() {
+        var h = '<div style="margin-bottom:8px" onclick="event.stopPropagation()">';
+        h += '<div onclick="var el=document.getElementById(\'' + poId + '\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:8px 0;border-bottom:1px solid var(--faint)">';
+        h += '<span style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:600">Payout Details</span>';
+        h += '<div style="display:flex;gap:16px;align-items:center">';
+        if (totalPaid > 0) h += '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a">$' + fmt(totalPaid) + ' paid</span>';
+        if (remainingBalance > 0) h += '<span style="font-family:DM Mono,monospace;font-size:10px;color:#e07070;font-weight:700">$' + fmt(remainingBalance) + ' remaining</span>';
+        else if (remainingBalance <= 0 && totalPaid > 0) h += '<span style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;font-weight:700">\u2713 Paid in full</span>';
+        h += '<span style="font-size:14px;color:var(--muted)">\u203a</span>';
+        h += '</div></div>';
+        h += '<div id="' + poId + '" style="display:' + (poOpen ? 'block' : 'none') + ';padding:10px 0">';
+        // Payment info row
+        h += '<div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:12px">';
+        h += '<div style="display:flex;flex-direction:column"><div style="' + lblStyle + '">Platform</div>';
+        h += '<select onchange="invNewEditVendor(' + vi + ',\'payPlatform\',this.value)" style="' + inputFieldStyle + ';cursor:pointer">';
+        h += '<option value=""' + (!payPlatform ? ' selected' : '') + '>\u2014</option>';
+        h += '<option value="venmo"' + (payPlatform === 'venmo' ? ' selected' : '') + '>Venmo</option>';
+        h += '<option value="zelle"' + (payPlatform === 'zelle' ? ' selected' : '') + '>Zelle</option>';
+        h += '<option value="paypal"' + (payPlatform === 'paypal' ? ' selected' : '') + '>PayPal</option>';
+        h += '<option value="wire"' + (payPlatform === 'wire' ? ' selected' : '') + '>Wire Transfer</option>';
+        h += '<option value="check"' + (payPlatform === 'check' ? ' selected' : '') + '>Check</option>';
+        h += '<option value="cash"' + (payPlatform === 'cash' ? ' selected' : '') + '>Cash</option>';
+        h += '<option value="other"' + (payPlatform === 'other' ? ' selected' : '') + '>Other</option>';
+        h += '</select></div>';
+        h += '<div style="display:flex;flex-direction:column;flex:1"><div style="' + lblStyle + '">Details</div>';
+        h += '<input value="' + esc(payDetails) + '" placeholder="@handle, email, account #" oninput="invNewEditVendor(' + vi + ',\'payDetails\',this.value)" style="' + inputFieldStyle + ';width:100%"></div>';
+        h += '<div style="display:flex;flex-direction:column;flex:1"><div style="' + lblStyle + '">Payout Notes</div>';
+        h += '<input value="' + esc(vendor.reportNote || '') + '" placeholder="Notes..." oninput="invNewEditVendor(' + vi + ',\'reportNote\',this.value)" style="' + inputFieldStyle + ';width:100%"></div>';
         h += '</div>';
-        h += '<div id="' + phId + '" style="display:' + (phOpen ? 'block' : 'none') + '">';
+        // Balance summary
+        h += '<div style="display:flex;gap:20px;padding:8px 12px;background:var(--surface);border-radius:6px;margin-bottom:10px;font-family:DM Mono,monospace;font-size:11px">';
+        h += '<div><span style="color:var(--muted)">Owed</span> <span style="color:var(--text);font-weight:700">$' + fmt(designerOwed) + '</span></div>';
+        h += '<div><span style="color:var(--muted)">Paid</span> <span style="color:#88c98a;font-weight:700">$' + fmt(totalPaid) + '</span></div>';
+        h += '<div><span style="color:var(--muted)">Balance</span> <span style="color:' + (remainingBalance > 0 ? '#e07070' : '#88c98a') + ';font-weight:700">' + (remainingBalance > 0 ? '$' + fmt(remainingBalance) : '\u2713 $0') + '</span></div>';
+        h += '</div>';
+        // Payment history entries
         if (payments.length) {
+          h += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Payments</div>';
           payments.forEach(function(p, pi) {
-            h += '<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--faint)">';
+            h += '<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--faint)">';
             h += '<input type="date" value="' + esc(p.date || '') + '" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'date\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;width:120px">';
-            h += '<div style="display:flex;align-items:center;gap:2px"><span style="color:#88c98a;font-size:10px">$</span><input type="number" value="' + (p.amount || '') + '" placeholder="0" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'amount\',parseFloat(this.value)||0)" style="width:70px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right;font-weight:700"></div>';
+            h += '<div style="display:flex;align-items:center;gap:2px"><span style="color:#88c98a;font-size:10px">$</span><input type="number" value="' + (p.amount || '') + '" placeholder="0" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'amount\',parseFloat(this.value)||0);renderInvNew()" style="width:70px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right;font-weight:700"></div>';
             h += '<input class="field-input" value="' + esc(p.items || '') + '" placeholder="Items paid for..." onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'items\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:10px;padding:4px 6px">';
             h += '<button onclick="invNewDeletePaymentHistory(' + vi + ',' + pi + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
             h += '</div>';
           });
         }
-        h += '<button onclick="invNewAddPaymentHistory(' + vi + ')" style="background:none;border:1px dashed #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:9px;padding:4px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-top:6px">+ Add Payment</button>';
+        h += '<button onclick="invNewAddPaymentHistory(' + vi + ')" style="background:none;border:1px dashed #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:9px;padding:5px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-top:8px">+ Add Payout</button>';
         h += '</div></div>';
         return h;
-      })()
+      })() : '')
 
     var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
       '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
