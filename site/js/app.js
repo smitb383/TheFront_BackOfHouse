@@ -8744,8 +8744,11 @@ function renderInvNew() {
     var payDetails = vendor.payDetails || '';
     var inputFieldStyle = 'background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:160px';
 
-    // Calculate designer's owed amount for payout section
-    var designerOwed = isWholesale ? 0 : vendorDesigner;
+    // Calculate designer's owed amount for payout section (matches "Their Net" stat)
+    var vendorDeductionsForPO = 0, vendorExtrasForPO = 0;
+    (vendor.deductions || []).forEach(function(d) { vendorDeductionsForPO += (d.amount || 0); });
+    (vendor.extraPayments || []).forEach(function(e) { vendorExtrasForPO += (e.amount || 0); });
+    var designerOwed = isWholesale ? 0 : (vendorDesigner - vendorDeductionsForPO + vendorExtrasForPO);
     var payments = vendor.paymentHistory || [];
     var totalPaid = 0;
     payments.forEach(function(p) { totalPaid += (p.amount || 0); });
