@@ -553,42 +553,18 @@ function renderPL() {
   var isBusiness = scenario.id === 'business';
   var isFunding = data.activeScenario === 'funding';
 
-  renderScenarioBar(data);
-
-  // Funding view — show/hide
-  var fundingView = document.getElementById('pl-funding-view');
   var plSummary = document.getElementById('pl-summary');
   var plSections = document.getElementById('pl-sections');
 
-  var plCalcs = document.getElementById('pl-calculators');
+  if (plSummary) plSummary.style.display = '';
+  if (plSections) plSections.style.display = '';
 
-  if (isFunding) {
-    if (fundingView) fundingView.style.display = 'block';
-    if (plSummary) plSummary.style.display = 'none';
-    if (plSections) plSections.style.display = 'none';
-    if (plCalcs) plCalcs.style.display = 'none';
-    return;
-  } else {
-    if (fundingView) fundingView.style.display = 'none';
-    if (plSummary) plSummary.style.display = '';
-    if (plSections) plSections.style.display = '';
-    if (plCalcs) plCalcs.style.display = '';
-  }
   renderPLSummary(calc, scenario);
 
-  var calcEl = document.getElementById('pl-calculators');
-
   if (isBusiness) {
-    // Business tab: just fixed costs in a flat list
-    if (calcEl) calcEl.innerHTML = '';
     renderPLSectionsBusiness(scenario);
   } else {
-    // Popup tabs: section-based layout
     renderPLSections(scenario, calc, liveInventory);
-
-    // Calculators go at the very bottom (after all sections)
-    renderPLCalculators(scenario);
-    initBECalc();
   }
 }
 
