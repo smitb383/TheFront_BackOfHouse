@@ -401,7 +401,9 @@ function calcPL(scenario, inventory) {
   // Shipping we cover is tracked as a fixed cost (not a revenue deduction)
 
   // Add other revenue (events, branded goods, etc.)
+  var otherRevenueTotal = 0;
   (scenario.otherRevenue || []).forEach(function(r) {
+    otherRevenueTotal += (r.amount || 0);
     ourCut += (r.amount || 0);
     totalRevenue += (r.amount || 0);
   });
@@ -490,7 +492,9 @@ function calcPL(scenario, inventory) {
   totalVariable += cafeDrinkCosts + cafeSquareFee;
 
   // Space revenue (insurance refund etc)
+  var spaceRevenueTotal = 0;
   (scenario.spaceRevenue || []).forEach(function(sr) {
+    spaceRevenueTotal += (sr.amount || 0);
     ourCut += (sr.amount || 0);
     totalRevenue += (sr.amount || 0);
   });
@@ -538,7 +542,10 @@ function calcPL(scenario, inventory) {
     eliseShare: eliseShare,
     cafeSupplyCosts: cafeSupplyCosts,
     cafeDrinkCosts: cafeDrinkCosts,
-    cafeSquareFee: cafeSquareFee
+    cafeSquareFee: cafeSquareFee,
+    cafeAllRevenue: cafeAllRevenue,
+    otherRevenueTotal: otherRevenueTotal,
+    spaceRevenueTotal: spaceRevenueTotal
   };
 }
 
@@ -649,15 +656,19 @@ function renderPLSummary(calc, scenario) {
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Gross Revenue</div>' +
         '<div class="pl-summary-val">$' + fmt(calc.totalGrossRevenue) + '</div>' +
-        '<div class="pl-summary-detail">Consignment: $' + fmt(calc.consignGross) + (calc.totalGrossRevenue > 0 ? ' (' + Math.round(calc.consignGross / calc.totalGrossRevenue * 100) + '%)' : '') + '</div>' +
-        '<div class="pl-summary-detail">Merch: $' + fmt(calc.merchGross) + (calc.totalGrossRevenue > 0 ? ' (' + Math.round(calc.merchGross / calc.totalGrossRevenue * 100) + '%)' : '') + '</div>' +
+        '<div class="pl-summary-detail">Consignment: $' + fmt(calc.consignGross) + '</div>' +
+        (calc.merchGross > 0 ? '<div class="pl-summary-detail">Wholesale/Merch: $' + fmt(calc.merchGross) + '</div>' : '') +
+        (calc.cafeAllRevenue > 0 ? '<div class="pl-summary-detail">Cafe: $' + fmt(calc.cafeAllRevenue) + '</div>' : '') +
+        (calc.otherRevenueTotal > 0 ? '<div class="pl-summary-detail">Other (events, etc): $' + fmt(calc.otherRevenueTotal) + '</div>' : '') +
+        (calc.spaceRevenueTotal > 0 ? '<div class="pl-summary-detail">Space: $' + fmt(calc.spaceRevenueTotal) + '</div>' : '') +
       '</div>' +
       '<div class="pl-summary-card">' +
         '<div class="pl-summary-label">Front\'s Revenue</div>' +
         '<div class="pl-summary-val">$' + fmt(calc.ourCut) + '</div>' +
-        '<div class="pl-summary-detail">From consignment: $' + fmt(calc.consignCut) + '</div>' +
-        '<div class="pl-summary-detail">From merch: $' + fmt(calc.merchCut) + '</div>' +
-        (calc.eliseShare > 0 ? '<div class="pl-summary-detail">- Elise\'s cafe cut: $' + fmt(calc.eliseShare) + '</div>' : '') +
+        '<div class="pl-summary-detail">Consignment (30%): $' + fmt(calc.consignCut) + '</div>' +
+        (calc.merchCut > 0 ? '<div class="pl-summary-detail">Wholesale/Merch (100%): $' + fmt(calc.merchCut) + '</div>' : '') +
+        (calc.cafeAllRevenue > 0 ? '<div class="pl-summary-detail">Cafe: $' + fmt(calc.cafeAllRevenue) + (calc.eliseShare > 0 ? ' - Elise $' + fmt(calc.eliseShare) : '') + '</div>' : '') +
+        (calc.otherRevenueTotal > 0 ? '<div class="pl-summary-detail">Other: $' + fmt(calc.otherRevenueTotal) + '</div>' : '') +
       '</div>' +
       '<div class="pl-summary-card ' + netClass + '">' +
         '<div class="pl-summary-label">Net P/L</div>' +
