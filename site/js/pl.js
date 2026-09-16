@@ -3343,13 +3343,103 @@ function renderCostSummary() {
   // Owed back: personal spend + remaining injection balance
   var delTotalOwed = delTotal + delRemainingInAccount;
 
+  // ── Pull live P&L calc for master totals ──
+  var liveInv = inventoryToPLItems();
+  var calc = calcPL(scenario, liveInv);
+  var plTotalCosts = calc.totalFixed + calc.totalVariable + (calc.totalDesignerCosts || 0);
+
+  // Analytics: Square fees
+  var retailSquareFee = 0;
+  (scenario.variableCosts || []).forEach(function(vc) {
+    if (vc.id === 'vc_square' && vc.type === 'pct_of_sales') {
+      retailSquareFee = (calc.consignGross + calc.merchGross) * ((vc.rate || 0) / 100) + calc.totalTransactions * (vc.perTxn || 0);
+    }
+  });
+  var cafeSquareFee = calc.cafeSquareFee || 0;
+  var totalSquareFees = retailSquareFee + cafeSquareFee;
+
+  // Analytics: designer extra payments total
+  var totalDesignerExtras = 0;
+  var totalDesignerLosses = 0;
+  if (inv && inv.vendors) {
+    inv.vendors.forEach(function(v) {
+      if (v.pricingModel === 'loss-only') {
+        if (v.shippingCoveredBy === 'us' && parseFloat(v.shippingCost) > 0) totalDesignerLosses += parseFloat(v.shippingCost);
+      } else {
+        (v.extraPayments || []).forEach(function(e) { totalDesignerExtras += (e.amount || 0); });
+        (v.items || []).forEach(function(item) {
+          var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+          var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+          if (m > 0 || (b > 0 && !v.brokenNotPaidByStore)) {
+            var lossCount = m + (v.brokenNotPaidByStore ? 0 : b);
+            totalDesignerLosses += (item.salePrice || 0) * lossCount * ((v.designerPct || 70) / 100);
+          }
+        });
+      }
+    });
+  }
+
+  // Analytics: Elise's share
+  var eliseShare = calc.eliseShare || 0;
+
+  // Analytics: cafe supplies total
+  var cafeSuppliesTotal = calc.cafeSupplyCosts || 0;
+
   var html = '';
 
   // ── Header ──
   html += '<div style="padding:20px 0 24px">';
   html += '<div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:600;color:var(--text)">Cost Summary</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px">Who paid what · Live from Budget & P/L</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px">Live from Budget & P/L</div>';
   html += '</div>';
+
+  // ── Master cost breakdown (matches P&L exactly) ──
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:24px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:baseline">';
+  html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Total Costs</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:28px;font-weight:700;color:var(--text)">$' + fmt(plTotalCosts) + '</div>';
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-family:DM Mono,monospace;font-size:11px">';
+  html += '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;margin-bottom:4px">Fixed Costs</div><div style="font-weight:700">$' + fmt(calc.totalFixed) + '</div></div>';
+  html += '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;margin-bottom:4px">Variable Costs</div><div style="font-weight:700">$' + fmt(calc.totalVariable) + '</div></div>';
+  html += '<div><div style="color:var(--muted);font-size:9px;text-transform:uppercase;margin-bottom:4px">Designer Costs / Losses</div><div style="font-weight:700;color:#e07070">$' + fmt(calc.totalDesignerCosts || 0) + '</div></div>';
+  html += '</div></div>';
+
+  // ── Analytics cards ──
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">';
+
+  // Square fees
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Total Square Fees</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:var(--text)">$' + fmt(totalSquareFees) + '</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px">Retail: $' + fmt(retailSquareFee) + '</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">Cafe: $' + fmt(cafeSquareFee) + '</div>';
+  html += '</div>';
+
+  // Designer extras
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Designer Extra Spend</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:#e07070">$' + fmt(totalDesignerExtras) + '</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px">Additional payments to designers</div>';
+  html += '</div>';
+
+  // Designer losses
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Losses (Missing/Broken)</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:#e07070">$' + fmt(totalDesignerLosses) + '</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px">Items missing, broken, shipping lost</div>';
+  html += '</div>';
+
+  // Elise cafe share
+  html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Elise Cafe Share (30%)</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:18px;font-weight:700;color:#6aaad8">$' + fmt(eliseShare) + '</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px">Owed from cafe profit</div>';
+  html += '</div>';
+  html += '</div>';
+
+  // ── Section divider ──
+  html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:16px 0 12px;border-top:1px solid var(--border);margin-top:8px">Personal Spend Breakdown</div>';
 
   // ── Top-level cards ──
   html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">';
