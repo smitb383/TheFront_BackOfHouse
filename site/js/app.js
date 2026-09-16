@@ -8811,12 +8811,44 @@ function renderInvNew() {
         if (payments.length) {
           h += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:6px">Payments</div>';
           payments.forEach(function(p, pi) {
-            h += '<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--faint)">';
-            h += '<input type="date" value="' + esc(p.date || '') + '" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'date\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;width:120px">';
-            h += '<div style="display:flex;align-items:center;gap:2px"><span style="color:#88c98a;font-size:10px">$</span><input type="number" value="' + (p.amount || '') + '" placeholder="0" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'amount\',parseFloat(this.value)||0);renderInvNew()" style="width:70px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right;font-weight:700"></div>';
-            h += '<input class="field-input" value="' + esc(p.items || '') + '" placeholder="Items paid for..." onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'items\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:10px;padding:4px 6px">';
-            h += '<button onclick="invNewDeletePaymentHistory(' + vi + ',' + pi + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
+            var phLineId = 'ph-line-' + vi + '-' + pi;
+            var phLineOpen = document.getElementById(phLineId) && document.getElementById(phLineId).style.display !== 'none';
+            var lineItems = p.lineItems || [];
+            var lineTotal = 0;
+            lineItems.forEach(function(li) { lineTotal += (li.amount || 0); });
+            // Header row
+            h += '<div style="border-bottom:1px solid var(--faint)">';
+            h += '<div onclick="var el=document.getElementById(\'' + phLineId + '\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="display:flex;gap:8px;align-items:center;padding:6px 0;cursor:pointer">';
+            h += '<span style="font-size:10px;color:var(--muted)">\u25B8</span>';
+            h += '<input type="date" value="' + esc(p.date || '') + '" onclick="event.stopPropagation()" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'date\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;width:120px">';
+            h += '<span style="font-family:DM Mono,monospace;font-size:12px;color:#88c98a;font-weight:700">$' + fmt(p.amount || 0) + '</span>';
+            h += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);flex:1">' + esc(p.items || '') + '</span>';
+            h += '<button onclick="event.stopPropagation();invNewDeletePaymentHistory(' + vi + ',' + pi + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
             h += '</div>';
+            // Expandable line items
+            h += '<div id="' + phLineId + '" style="display:' + (phLineOpen ? 'block' : 'none') + ';padding:4px 0 10px 20px">';
+            h += '<input class="field-input" value="' + esc(p.items || '') + '" placeholder="Payment note..." onclick="event.stopPropagation()" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'items\',this.value)" style="width:100%;font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;margin-bottom:8px">';
+            // Line items table
+            if (lineItems.length) {
+              lineItems.forEach(function(li, lii) {
+                h += '<div style="display:flex;gap:6px;align-items:center;padding:3px 0">';
+                h += '<input class="field-input" value="' + esc(li.name || '') + '" placeholder="Item name" onclick="event.stopPropagation()" onchange="invNewEditPaymentLineItem(' + vi + ',' + pi + ',' + lii + ',\'name\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:10px;padding:3px 6px">';
+                h += '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:var(--muted);font-size:9px">$</span><input type="number" value="' + (li.amount || '') + '" placeholder="0" onchange="invNewEditPaymentLineItem(' + vi + ',' + pi + ',' + lii + ',\'amount\',parseFloat(this.value)||0)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px;border-radius:3px;text-align:right"></div>';
+                h += '<button onclick="event.stopPropagation();invNewDeletePaymentLineItem(' + vi + ',' + pi + ',' + lii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px">x</button>';
+                h += '</div>';
+              });
+              h += '<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:4px;border-top:1px solid var(--faint);font-family:DM Mono,monospace;font-size:10px"><span style="color:var(--muted)">Line items total</span><span style="color:' + (Math.abs(lineTotal - (p.amount || 0)) < 0.01 ? '#88c98a' : '#e07070') + ';font-weight:700">$' + fmt(lineTotal) + '</span></div>';
+            }
+            h += '<div style="display:flex;gap:6px;margin-top:6px">';
+            h += '<button onclick="event.stopPropagation();invNewAddPaymentLineItem(' + vi + ',' + pi + ')" style="background:none;border:1px dashed var(--faint);color:var(--muted);font-family:DM Mono,monospace;font-size:8px;padding:3px 10px;border-radius:3px;cursor:pointer;text-transform:uppercase">+ Add line item</button>';
+            h += '<button onclick="event.stopPropagation();invNewAutoFillPaymentLineItems(' + vi + ',' + pi + ')" style="background:none;border:1px dashed #82bfbb;color:#82bfbb;font-family:DM Mono,monospace;font-size:8px;padding:3px 10px;border-radius:3px;cursor:pointer;text-transform:uppercase">Auto-fill from sales</button>';
+            h += '</div>';
+            // Total amount override
+            h += '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid var(--faint)">';
+            h += '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);text-transform:uppercase">Payment total:</span>';
+            h += '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:#88c98a;font-size:10px">$</span><input type="number" value="' + (p.amount || '') + '" placeholder="0" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'amount\',parseFloat(this.value)||0);renderInvNew()" style="width:80px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right;font-weight:700"></div>';
+            h += '</div>';
+            h += '</div></div>';
           });
         }
         h += '<button onclick="invNewAddPaymentHistory(' + vi + ')" style="background:none;border:1px dashed #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:9px;padding:5px 14px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-top:8px">+ Add Payout</button>';
@@ -9042,6 +9074,83 @@ function invNewDeletePaymentHistory(vi, pi) {
   data.vendors[vi].paymentHistory.forEach(function(p) { total += (p.amount || 0); });
   data.vendors[vi].previouslyPaid = total;
   data.vendors[vi]._modified = new Date().toISOString();
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewAddPaymentLineItem(vi, pi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].paymentHistory[pi]) return;
+  var p = data.vendors[vi].paymentHistory[pi];
+  if (!p.lineItems) p.lineItems = [];
+  p.lineItems.push({ name: '', amount: 0 });
+  data.vendors[vi]._modified = new Date().toISOString();
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewEditPaymentLineItem(vi, pi, lii, field, val) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].paymentHistory[pi]) return;
+  var p = data.vendors[vi].paymentHistory[pi];
+  if (!p.lineItems || !p.lineItems[lii]) return;
+  p.lineItems[lii][field] = val;
+  data.vendors[vi]._modified = new Date().toISOString();
+  saveInvNew(data);
+}
+
+function invNewDeletePaymentLineItem(vi, pi, lii) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].paymentHistory[pi]) return;
+  var p = data.vendors[vi].paymentHistory[pi];
+  if (!p.lineItems) return;
+  p.lineItems.splice(lii, 1);
+  data.vendors[vi]._modified = new Date().toISOString();
+  saveInvNew(data);
+  renderInvNew();
+}
+
+function invNewAutoFillPaymentLineItems(vi, pi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].paymentHistory[pi]) return;
+  var vendor = data.vendors[vi];
+  var p = vendor.paymentHistory[pi];
+  var dPct = vendor.designerPct != null ? vendor.designerPct : 70;
+  var lineItems = [];
+  // Add sold items (store only — not cherry/online)
+  vendor.items.forEach(function(item) {
+    var price = item.salePrice || 0;
+    var storeSold = 0;
+    if (item.sizes && item.sizes.length) {
+      item.sizes.forEach(function(sz) { storeSold += (sz.sold || 0); });
+    } else {
+      storeSold = item.sold || 0;
+    }
+    if (storeSold > 0 && price > 0) {
+      var cut = Math.floor(price * storeSold * (dPct / 100));
+      lineItems.push({ name: (item.name || 'Item') + (storeSold > 1 ? ' x' + storeSold : ''), amount: cut });
+    }
+  });
+  // Add deductions as negative
+  (vendor.deductions || []).forEach(function(d) {
+    if ((d.amount || 0) > 0) {
+      lineItems.push({ name: 'Deduction: ' + (d.description || 'deduction'), amount: -(d.amount || 0) });
+    }
+  });
+  // Add extra payments as positive
+  (vendor.extraPayments || []).forEach(function(e) {
+    if ((e.amount || 0) > 0) {
+      lineItems.push({ name: 'Extra: ' + (e.description || 'extra payment'), amount: e.amount || 0 });
+    }
+  });
+  p.lineItems = lineItems;
+  // Auto-sum
+  var total = 0;
+  lineItems.forEach(function(li) { total += (li.amount || 0); });
+  p.amount = total;
+  vendor.previouslyPaid = 0;
+  vendor.paymentHistory.forEach(function(ph) { vendor.previouslyPaid += (ph.amount || 0); });
+  vendor._modified = new Date().toISOString();
   saveInvNew(data);
   renderInvNew();
 }
