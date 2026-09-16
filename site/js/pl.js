@@ -3703,5 +3703,88 @@ function renderLearnings() {
   html += 'Current Square fees: $' + fmt(retailSquare) + ' retail + $' + fmt(cafeSquare) + ' cafe = $' + fmt(totalSquare) + ' total. Half would save $' + fmt(savings) + '.';
   html += '</div>';
 
+  // ── Extra Month Cafe Scenario ──
+  // Cafe numbers from actual run
+  var cafeRev = actualCalc.cafeAllRevenue || 0;
+  var cafeIngredients = actualCalc.cafeDrinkCosts || 0;
+  var cafeSupplies = actualCalc.cafeSupplyCosts || 0;
+  var cafeVarCosts = cafeIngredients + cafeSupplies; // same ingredient + supply spend
+  var cafeSquareOnRev = cafeRev * 0.026;
+  // Estimate txns from cafe revenue items
+  var cafeTxns = 0;
+  (scenario.cafeRevenue || []).forEach(function(cr) { cafeTxns += (cr.sold || 0); });
+  (scenario.cherryRevenue || []).forEach(function(cr) { cafeTxns += (cr.sold || 0); });
+  var cafeSquarePerTxn = cafeTxns * 0.15;
+  var cafeTotalSquare = cafeSquareOnRev + cafeSquarePerTxn;
+
+  // Extra month: no fixed costs, same variable + same revenue
+  var extraMonthCosts = cafeVarCosts + cafeTotalSquare;
+  var extraMonthProfit = cafeRev - extraMonthCosts;
+  var extraMonthElise = Math.round(Math.max(0, extraMonthProfit) * 0.30);
+  var extraMonthFront = extraMonthProfit - extraMonthElise;
+
+  // +10% sales
+  var cafeRev10 = Math.round(cafeRev * 1.10);
+  var cafeSquare10 = cafeRev10 * 0.026 + Math.round(cafeTxns * 1.10) * 0.15;
+  var extraMonth10Costs = cafeVarCosts + cafeSquare10;
+  var extraMonth10Profit = cafeRev10 - extraMonth10Costs;
+  var extraMonth10Elise = Math.round(Math.max(0, extraMonth10Profit) * 0.30);
+  var extraMonth10Front = extraMonth10Profit - extraMonth10Elise;
+
+  html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin:32px 0 16px">Extra Month \u2014 Cafe Only</div>';
+
+  html += '<table style="width:100%;border-collapse:collapse;background:var(--surface2);border-radius:8px;overflow:hidden">';
+  html += '<thead><tr>';
+  html += '<th style="' + thS + ';text-align:left">Scenario</th>';
+  html += '<th style="' + thS + ';text-align:right">Revenue</th>';
+  html += '<th style="' + thS + ';text-align:right">Costs</th>';
+  html += '<th style="' + thS + ';text-align:right">Gross Profit</th>';
+  html += '<th style="' + thS + ';text-align:right">Elise (30%)</th>';
+  html += '<th style="' + thS + ';text-align:right">The Front (70%)</th>';
+  html += '</tr></thead><tbody>';
+
+  // Actual month row (for reference)
+  var actualCafeFixedCosts = 0;
+  (scenario.fixedCosts || []).forEach(function(c) { if (c.category === 'cafe') actualCafeFixedCosts += (c.amount || 0) - (c.refund || 0); });
+  var actualCafeTotalCosts = actualCafeFixedCosts + cafeVarCosts + cafeTotalSquare;
+  var actualCafeProfit = cafeRev - actualCafeTotalCosts;
+  var actualCafeElise = Math.round(Math.max(0, actualCafeProfit) * 0.30);
+  var actualCafeFront = actualCafeProfit - actualCafeElise;
+
+  html += '<tr style="background:var(--surface)">';
+  html += '<td style="' + tdS + ';font-weight:700;color:var(--text)">Actual month <span style="font-size:9px;color:var(--muted);font-weight:400">(incl. $' + fmt(actualCafeFixedCosts) + ' fixed costs)</span></td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--text)">$' + fmt(cafeRev) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--muted)">$' + fmt(actualCafeTotalCosts) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:' + (actualCafeProfit >= 0 ? '#88c98a' : '#e07070') + ';font-weight:700">' + (actualCafeProfit >= 0 ? '' : '-') + '$' + fmt(Math.abs(actualCafeProfit)) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:#6aaad8">$' + fmt(actualCafeElise) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:#88c98a;font-weight:700">$' + fmt(actualCafeFront) + '</td>';
+  html += '</tr>';
+
+  // Extra month same sales
+  html += '<tr>';
+  html += '<td style="' + tdS + ';font-weight:700;color:var(--text)">Extra month \u2014 same sales <span style="font-size:9px;color:var(--muted);font-weight:400">(no fixed costs)</span></td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--text)">$' + fmt(cafeRev) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--muted)">$' + fmt(extraMonthCosts) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:' + (extraMonthProfit >= 0 ? '#88c98a' : '#e07070') + ';font-weight:700">$' + fmt(extraMonthProfit) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:#6aaad8">$' + fmt(extraMonthElise) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:#88c98a;font-weight:700">$' + fmt(extraMonthFront) + '</td>';
+  html += '</tr>';
+
+  // Extra month +10%
+  html += '<tr>';
+  html += '<td style="' + tdS + ';font-weight:700;color:var(--text)">Extra month \u2014 +10% sales <span style="font-size:9px;color:var(--muted);font-weight:400">(no fixed costs)</span></td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--text)">$' + fmt(cafeRev10) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:var(--muted)">$' + fmt(extraMonth10Costs) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:' + (extraMonth10Profit >= 0 ? '#88c98a' : '#e07070') + ';font-weight:700">$' + fmt(extraMonth10Profit) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:#6aaad8">$' + fmt(extraMonth10Elise) + '</td>';
+  html += '<td style="' + tdS + ';text-align:right;color:#88c98a;font-weight:700">$' + fmt(extraMonth10Front) + '</td>';
+  html += '</tr>';
+
+  html += '</tbody></table>';
+
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:12px">';
+  html += 'Assumes fixed costs (equipment, setup) already paid. Extra month only incurs ingredient costs ($' + fmt(cafeIngredients) + '), supplies ($' + fmt(cafeSupplies) + '), and Square fees. Elise split applies to profit only.';
+  html += '</div>';
+
   el.innerHTML = html;
 }
