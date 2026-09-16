@@ -64,6 +64,7 @@
           <button class="tab active" data-tab="popup" onclick="showTab('front','popup',this)"><span class="tab-icon">🏮</span>Overview</button>
           <button class="tab" data-tab="schedule" onclick="showTab('front','schedule',this)"><span class="tab-icon">📋</span>Schedule</button>
           <button class="tab" data-tab="popup-pl" onclick="showTab('front','popup-pl',this)"><span class="tab-icon">💰</span>Budget & P/L</button>
+          <button class="tab" data-tab="cost-summary" onclick="showTab('front','cost-summary',this)"><span class="tab-icon">📊</span>Cost Summary</button>
           <button class="tab" data-tab="popup-resources" onclick="showTab('front','popup-resources',this)"><span class="tab-icon">📋</span>Resources</button>
           <button class="tab" data-tab="store-buildout" onclick="showTab('front','store-buildout',this)"><span class="tab-icon">🔨</span>Store Build Out</button>
         </div>
@@ -2305,6 +2306,11 @@
         <div id="pl-summary"></div>
         <div id="pl-sections"></div>
 
+      </div>
+
+      <!-- ═══ COST SUMMARY VIEW ═══ -->
+      <div class="ws-view pl-fullwidth" id="front-cost-summary">
+        <div id="cost-summary-content"></div>
       </div>
 
       <!-- FUNDING SOURCES (separate view, shown via scenario tab) -->
