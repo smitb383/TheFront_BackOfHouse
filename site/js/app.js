@@ -8232,7 +8232,27 @@ function renderInvNew() {
     vendorIndices = vendorIndices.filter(function(vi) { return data.vendors[vi].returnPlan === 'keeping' || data.vendors[vi].returnPlan === 'hybrid'; });
   }
   if (invNewFilterUnpaid) {
-    vendorIndices = vendorIndices.filter(function(vi) { var ps = data.vendors[vi].paymentStatus || 'not-paid'; return ps === 'not-paid' || ps === 'sent-report'; });
+    vendorIndices = vendorIndices.filter(function(vi) {
+      var v = data.vendors[vi];
+      if (v.pricingModel === 'wholesale' || v.pricingModel === 'loss-only') return false;
+      // Check if vendor has any remaining balance
+      var dPctV = v.designerPct != null ? v.designerPct : 70;
+      var totalDesignerV = 0;
+      (v.items || []).forEach(function(item) {
+        var price = item.salePrice || 0;
+        var sold = 0;
+        if (item.sizes && item.sizes.length) { item.sizes.forEach(function(sz) { sold += (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0); }); }
+        else { sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0); }
+        if (sold > 0) totalDesignerV += Math.floor(price * sold * (dPctV / 100));
+      });
+      var dedsV = 0, extrasV = 0;
+      (v.deductions || []).forEach(function(d) { dedsV += (d.amount || 0); });
+      (v.extraPayments || []).forEach(function(e) { extrasV += (e.amount || 0); });
+      var owedV = totalDesignerV - dedsV + extrasV;
+      var paidV = 0;
+      (v.paymentHistory || []).forEach(function(p) { paidV += (p.amount || 0); });
+      return owedV - paidV > 0;
+    });
   }
 
   // Split into consignment, 100% commission, wholesale, and loss-only
@@ -8385,7 +8405,8 @@ function renderInvNew() {
         lastGroup = entry.soldGroup;
         var gLabel = groupLabels[entry.soldGroup] || 'Sales';
         var gColor = groupColors[entry.soldGroup] || 'var(--muted)';
-        groupHeader = '<div style="padding:10px 0 4px;margin-top:8px;border-top:2px solid ' + gColor + ';font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:' + gColor + '">' + gLabel + '</div>';
+        var unpaidTag = (entry.soldGroup === 2 || entry.soldGroup === 3) ? ' <span style="background:#e0707033;color:#e07070;font-size:8px;padding:2px 6px;border-radius:3px;margin-left:6px;font-weight:700">UNPAID</span>' : '';
+        groupHeader = '<div style="padding:10px 0 4px;margin-top:8px;border-top:2px solid ' + gColor + ';font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:' + gColor + '">' + gLabel + unpaidTag + '</div>';
       }
       var ii = entry.ii; var item = vendor.items[ii];
       // Floor filter: skip items not on floor (unless sold out, which auto-removes from floor)
