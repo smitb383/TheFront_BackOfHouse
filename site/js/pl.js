@@ -245,11 +245,7 @@ function inventoryToPLItems() {
 
     vendor.items.forEach(function(item) {
       if (isWholesale) {
-        var isUsdVendor = vendor.currency === 'usd';
-        var costEur = item.costEur || 0;
-        var costUsd = isUsdVendor ? (item.costUsd || item.costEur || 0) : Math.round(costEur * eurRate * 100) / 100;
-        var upcharge = item.upchargePct || 0;
-        var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
+        var wsPrice = item.salePrice || item.costUsd || item.costEur || 0;
         var qty = item.qty || 1;
         var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
 
@@ -258,10 +254,9 @@ function inventoryToPLItems() {
           name: item.name || '(untitled)',
           vendor: vendor.name || '',
           vendorId: vendor.vendorId,
-          price: retailPrice,
+          price: wsPrice,
           isInHouse: true,
           commissionPct: 100,
-          costPerUnit: costUsd,
           qty: qty,
           totalSold: sold,
           pricingModel: 'wholesale',
@@ -718,7 +713,6 @@ var PL_SECTIONS = [
   { id: 'wholesale', name: '\ud83d\udcca Wholesale / In-House', color: '#e0845a',
     fixedCats: ['wholesale'],
     revenueType: 'wholesale',
-    variableType: 'wholesaleCOGS',
     includeShipping: true }
 ];
 
@@ -856,15 +850,7 @@ function renderPLSections(scenario, calc, liveInventory) {
       variableTotal += (_cafeDrinkRev + _cherryDrinkRev) * 0.026 + (_cafeDrinkTxns + _cherryDrinkTxns) * 0.15;
     }
 
-    if (sec.variableType === 'wholesaleCOGS') {
-      wholesaleItems.forEach(function(item) {
-        if (item.costPerUnit) {
-          var sale = scenario.itemSales && scenario.itemSales[item.id];
-          var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
-          variableTotal += sellQty * item.costPerUnit;
-        }
-      });
-    }
+    // Wholesale COGS removed — production costs tracked in fixed costs instead
 
     // Calculate revenue total
     var revenueTotal = 0;
@@ -877,10 +863,9 @@ function renderPLSections(scenario, calc, liveInventory) {
       });
     } else if (sec.revenueType === 'wholesale') {
       wholesaleItems.forEach(function(item) {
-        var sale = scenario.itemSales && scenario.itemSales[item.id];
-        var sellQty = (sale && sale.qty != null) ? sale.qty : (item.qty || 1);
-        var gross = sellQty * item.price;
-        revenueTotal += item.costPerUnit ? gross - (sellQty * item.costPerUnit) : gross;
+        var sold = item.totalSold || 0;
+        var gross = sold * item.price;
+        revenueTotal += gross;
       });
     } else if (sec.revenueType === 'otherRevenue') {
       (scenario.otherRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
@@ -1273,9 +1258,6 @@ function renderPLSections(scenario, calc, liveInventory) {
       });
     }
 
-    if (sec.variableType === 'wholesaleCOGS') {
-      variableColHtml += '<div style="padding:8px 0;font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">Square fee (2.6% + $0.15) applies per sale</div>';
-    }
 
     if (!hasVariable) {
       variableColHtml += '<div class="pl-section-empty">\u2014</div>';
