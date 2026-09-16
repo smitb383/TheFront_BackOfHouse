@@ -658,5 +658,69 @@ window.addEventListener('beforeunload', function() {
         }
       } catch(e) {}
     }, 3000);
+    // One-time: set previouslyPaid from sales reports for vendors marked as sent
+    setTimeout(function() {
+      try {
+        var inv = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+        if (!inv || !inv.vendors || inv._payoutFix2) return;
+        var payouts = {
+          'aric': { paid: 385, status: 'sent' },
+          'ceramicism': { paid: 1035, status: 'sent' },
+          'dalmatina': { paid: 1596, status: 'sent' },
+          'deconner': { paid: 0, status: 'not-paid' }, // bounced
+          'deposit unknown': { paid: 355, status: 'sent' },
+          'dev': { paid: 1728, status: 'sent' },
+          'eerie': { paid: 1832, status: 'sent' },
+          'emily': { paid: 1015, status: 'sent' },
+          'eventyr': { paid: 2556, status: 'sent' },
+          'gigi': { paid: 1466.50, status: 'sent' },
+          'harlot': { paid: 2629, status: 'sent' },
+          'isa': { paid: 56, status: 'sent' },
+          'sucre': { paid: 56, status: 'sent' },
+          'ivey': { paid: 669, status: 'sent' },
+          'konsensuss': { paid: 529, status: 'sent' },
+          'leonie': { paid: 937, status: 'sent' },
+          'medea': { paid: 753, status: 'sent' },
+          'minena': { paid: 2366, status: 'sent' },
+          'nora': { paid: 992, status: 'sent' },
+          'ogbff': { paid: 952, status: 'sent' },
+          'orchard': { paid: 402, status: 'sent' },
+          'oscr': { paid: 392, status: 'sent' },
+          'ossinger': { paid: 106, status: 'sent' },
+          'pote': { paid: 385, status: 'sent' },
+          'sagitta': { paid: 322, status: 'sent' },
+          'salteye': { paid: 599, status: 'sent' },
+          'sticky': { paid: 1414, status: 'sent' },
+          'svetlana': { paid: 1531, status: 'sent' },
+          'taotao': { paid: 0, status: 'not-paid' },
+          'taottao': { paid: 0, status: 'not-paid' },
+          'twinker': { paid: 355, status: 'sent' },
+          'ugly': { paid: 714, status: 'sent' },
+          'veda': { paid: 287, status: 'sent' },
+          'zoe': { paid: 180, status: 'sent' }
+        };
+        var changed = false;
+        inv.vendors.forEach(function(v) {
+          var name = (v.name || '').toLowerCase();
+          var match = Object.keys(payouts).find(function(k) { return name.indexOf(k) >= 0; });
+          if (match) {
+            var p = payouts[match];
+            if (p.paid > 0 && v.previouslyPaid !== p.paid) {
+              v.previouslyPaid = p.paid;
+              changed = true;
+            }
+            if (p.status && v.paymentStatus !== p.status && v.paymentStatus !== 'received') {
+              v.paymentStatus = p.status;
+              changed = true;
+            }
+          }
+        });
+        if (changed) {
+          inv._payoutFix2 = true;
+          localStorage.setItem('popup_inv_new_v1', JSON.stringify(inv));
+          console.log('[data] Set previouslyPaid from sales reports');
+        }
+      } catch(e) {}
+    }, 3500);
   });
 })();
