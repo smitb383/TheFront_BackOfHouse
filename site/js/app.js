@@ -8287,17 +8287,11 @@ function renderInvNew() {
         }
       }
       if (isWholesale) {
-        var costEur = item.costEur || 0;
-        var costUsd = Math.round(costEur * eurRate * 100) / 100;
-        var upcharge = item.upchargePct || 0;
-        var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
+        var wsPrice = item.salePrice || item.costUsd || item.costEur || 0;
         var qty = item.qty || 1;
         var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
-        vendorTotalCost += costUsd * qty;
-        vendorMerchValue += retailPrice * qty;
-        var profitPerItem = retailPrice - costUsd;
-        vendorTotalProfit += profitPerItem * sold;
-        vendorTotal += retailPrice * sold;
+        vendorMerchValue += wsPrice * qty;
+        vendorTotal += wsPrice * sold;
       } else {
         var price = item.salePrice || 0;
         var noComm = Math.min(item.noCommission || 0, item.qty || 1); // units purchased by us (no store commission)
@@ -8340,7 +8334,7 @@ function renderInvNew() {
     var wePayShipForMax = vendor.shippingCoveredBy === 'us' && shipCostForMax > 0;
     var vendorMaxTakeHome;
     if (isWholesale) {
-      vendorMaxTakeHome = vendorMerchValue - vendorTotalCost - (wePayShipForMax ? shipCostForMax : 0);
+      vendorMaxTakeHome = vendorMerchValue;
     } else {
       vendorMaxTakeHome = vendorMerchValue * (sPct / 100) - (wePayShipForMax ? shipCostForMax : 0);
     }
@@ -8411,16 +8405,10 @@ function renderInvNew() {
 
       // ── Wholesale item row ──
       if (isWholesale) {
-        var isUsd = vendor.currency === 'usd';
-        var costEur = item.costEur || 0;
-        var costUsd = isUsd ? (item.costUsd || item.costEur || 0) : Math.round(costEur * eurRate * 100) / 100;
-        var upcharge = item.upchargePct || 0;
-        var retailPrice = Math.round(costUsd * (1 + upcharge / 100));
-        var profitEa = retailPrice - Math.round(costUsd);
+        var price = item.salePrice || item.costUsd || item.costEur || 0;
         var qty = item.qty || 1;
         var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
-        var totalProfit = profitEa * sold;
-        var totalRevenue = retailPrice * sold;
+        var totalRevenue = price * sold;
 
         var wsDetail = '';
         if (isItemOpen) {
@@ -8437,7 +8425,7 @@ function renderInvNew() {
         }
 
         return '<div style="border-bottom:1px solid var(--faint);padding:8px 0">' +
-          '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 60px 80px 70px 2px 50px 70px 50px 80px 70px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
+          '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 2px 50px 50px 80px 28px;align-items:center;gap:6px;cursor:pointer" onclick="invNewToggleItem(' + vi + ',' + ii + ')">' +
             '<div style="width:72px;height:72px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative">' +
               (item.photo
                 ? '<img src="' + esc(item.photo) + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onclick="event.stopPropagation();openLightbox(\'' + esc(item.photo) + '\')">' +
@@ -8458,21 +8446,11 @@ function renderInvNew() {
               '<option value="furniture"' + (item.category === 'furniture' ? ' selected' : '') + '>Furniture</option>' +
               '<option value="other"' + (item.category === 'other' ? ' selected' : '') + '>Other</option>' +
             '</select>' +
-            (isUsd
-              ? '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:var(--muted);font-size:10px">$</span><input value="' + (costUsd || '') + '" placeholder="0" oninput="invNewEditItem(' + vi + ',' + ii + ',\'costUsd\',parseFloat(this.value)||0)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
-                '<div></div>' +
-                '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><input value="' + (upcharge || '') + '" placeholder="%" oninput="invNewEditItem(' + vi + ',' + ii + ',\'upchargePct\',parseFloat(this.value)||0)" style="width:36px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"><span style="color:var(--muted);font-size:10px">%</span></div>'
-              : '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:var(--muted);font-size:10px">EUR</span><input value="' + (costEur || '') + '" placeholder="0" oninput="invNewEditItem(' + vi + ',' + ii + ',\'costEur\',parseFloat(this.value)||0)" style="width:50px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
-                '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:right">$' + costUsd.toFixed(0) + '</div>' +
-                '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><input value="' + (upcharge || '') + '" placeholder="%" oninput="invNewEditItem(' + vi + ',' + ii + ',\'upchargePct\',parseFloat(this.value)||0)" style="width:36px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"><span style="color:var(--muted);font-size:10px">%</span></div>') +
-            '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--text);text-align:right;font-weight:600">$' + retailPrice + '</div>' +
-            '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right">+$' + profitEa + '</div>' +
+            '<div style="display:flex;align-items:center;gap:2px" onclick="event.stopPropagation()"><span style="color:var(--muted);font-size:10px">$</span><input type="number" value="' + (price || '') + '" placeholder="0" oninput="invNewEditItem(' + vi + ',' + ii + ',\'salePrice\',parseFloat(this.value)||0)" style="width:60px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right"></div>' +
             '<div style="border-left:1px solid var(--border);height:100%"></div>' +
             '<input type="number" min="1" value="' + qty + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'qty\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
-            '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-align:right">$' + Math.round(costUsd * qty) + '</div>' +
             '<input type="number" min="0" value="' + sold + '" onclick="event.stopPropagation()" oninput="invNewEditItem(' + vi + ',' + ii + ',\'sold\',+this.value)" style="width:40px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:center">' +
             '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text);text-align:right">$' + totalRevenue + '</div>' +
-            '<div style="font-family:DM Mono,monospace;font-size:10px;color:#88c98a;text-align:right;font-weight:600">$' + totalProfit + '</div>' +
             '<button onclick="event.stopPropagation();invNewDeleteItem(' + vi + ',' + ii + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
           '</div>' +
           wsDetail +
@@ -8678,11 +8656,8 @@ function renderInvNew() {
     var statsHtml;
     var shipCostNum = parseFloat(vendor.shippingCost) || 0;
     if (isWholesale) {
-      var totalCostWithShip = vendorTotalCost + shipCostNum;
       statsHtml = statBlock('Total Value', vendorMerchValue) +
-        statBlock('Cost (+ship)', totalCostWithShip, 'var(--muted)') +
-        statBlock('Sold', vendorTotal) +
-        statBlock('Profit', vendorTotalProfit, '#88c98a');
+        statBlock('Sold', vendorTotal);
     } else {
       var vendorDeductions = vendor.deductions || [];
       var vendorExtras = vendor.extraPayments || [];
@@ -8830,9 +8805,9 @@ function renderInvNew() {
     if (invNewCollapsed[vi] === false) {
       var colHeaders;
       if (isWholesale) {
-        colHeaders = '<div style="display:grid;grid-template-columns:76px 180px 90px 80px 70px 60px 80px 70px 2px 50px 70px 50px 80px 70px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
-          '<div></div><div>Item</div><div>Category</div><div>Cost EUR</div><div style="text-align:right">Cost USD</div><div>Markup</div><div style="text-align:right">Retail $</div><div style="text-align:right">Profit/ea</div>' +
-          '<div></div><div style="text-align:center">Qty</div><div style="text-align:right">Total Cost</div><div style="text-align:center">Sold</div><div style="text-align:right">Revenue</div><div style="text-align:right">Profit</div><div></div>' +
+        colHeaders = '<div style="display:grid;grid-template-columns:76px 1fr 90px 80px 2px 50px 50px 80px 28px;gap:6px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
+          '<div></div><div>Item</div><div>Category</div><div style="text-align:right">Price</div>' +
+          '<div></div><div style="text-align:center">Qty</div><div style="text-align:center">Sold</div><div style="text-align:right">Revenue</div><div></div>' +
         '</div>';
       } else {
         colHeaders = '<div style="display:grid;grid-template-columns:76px 1fr 160px 80px 50px 50px 70px 2px 80px 2px 120px 80px 70px 70px 28px;gap:5px;padding:6px 0;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">' +
