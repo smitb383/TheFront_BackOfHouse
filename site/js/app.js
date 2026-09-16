@@ -8269,7 +8269,7 @@ function renderInvNew() {
     var isWholesale = vendor.pricingModel === 'wholesale';
     var eurRate = vendor.eurRate || 1.08;
     var vendorTotal = 0, vendorStore = 0, vendorDesigner = 0, vendorMerchValue = 0;
-    var vendorTotalCost = 0, vendorTotalProfit = 0;
+    var vendorTotalProfit = 0;
     var vendorLossCost = 0; // cost to store for missing/broken items (designer's cut we owe)
     var vendorRecovered = 0; // money recovered from others for broken/missing items
     vendor.items.forEach(function(item) {
