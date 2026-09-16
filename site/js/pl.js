@@ -688,6 +688,10 @@ var PL_SECTIONS = [
     fixedCats: ['retail supplies'],
     variableIds: ['vc_square', 'vc_packaging'],
     revenueType: 'consignment' },
+  { id: 'wholesale', name: '\ud83d\udcca Wholesale / In-House', color: '#e0845a',
+    fixedCats: ['wholesale'],
+    revenueType: 'wholesale',
+    includeShipping: true },
   { id: 'events', name: '\ud83c\udfee Events', color: '#c77dba',
     fixedCats: ['events'],
     variableType: 'eventsVariable',
@@ -696,11 +700,7 @@ var PL_SECTIONS = [
     fixedCats: ['space', 'fit out', 'operations'],
     revenueType: 'spaceRevenue' },
   { id: 'marketing', name: '\ud83d\udce3 Marketing & Branding', color: '#6aaad8',
-    fixedCats: ['marketing', 'branding'] },
-  { id: 'wholesale', name: '\ud83d\udcca Wholesale / In-House', color: '#e0845a',
-    fixedCats: ['wholesale'],
-    revenueType: 'wholesale',
-    includeShipping: true }
+    fixedCats: ['marketing', 'branding'] }
 ];
 
 // Track which sections are open between renders
