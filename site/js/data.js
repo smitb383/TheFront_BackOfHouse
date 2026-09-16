@@ -658,66 +658,55 @@ window.addEventListener('beforeunload', function() {
         }
       } catch(e) {}
     }, 3000);
-    // One-time: seed payment history from sales reports
+    // Seed payment history from sales reports — runs until all vendors have correct data
     setTimeout(function() {
       try {
         var inv = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
-        if (!inv || !inv.vendors || inv._payHistSeed) return;
+        if (!inv || !inv.vendors) return;
         var payouts = {
-          'aric': { paid: 385, status: 'sent', items: '46 Hester store sales' },
-          'ceramicism': { paid: 1035, status: 'sent', items: '46 Hester store sales' },
-          'dalmatina': { paid: 1596, status: 'sent', items: '46 Hester store sales' },
-          'deconner': { paid: 0, status: 'not-paid', items: '' },
-          'deposit unknown': { paid: 355, status: 'sent', items: '46 Hester store sales' },
-          'dev': { paid: 1728, status: 'sent', items: '46 Hester store sales (-$35 deduction)' },
-          'eerie': { paid: 1832, status: 'sent', items: '46 Hester store sales (-$160 shipping deduction)' },
-          'emily': { paid: 1015, status: 'sent', items: '46 Hester store sales (+$108 broken Chrome Star)' },
-          'eventyr': { paid: 2556, status: 'sent', items: '46 Hester store sales (period 1)' },
-          'gigi': { paid: 1466.50, status: 'sent', items: '46 Hester store sales' },
-          'harlot': { paid: 2629, status: 'sent', items: '46 Hester store sales' },
-          'isa': { paid: 56, status: 'sent', items: '46 Hester store sales' },
-          'sucre': { paid: 56, status: 'sent', items: '46 Hester store sales' },
-          'ivey': { paid: 669, status: 'sent', items: '46 Hester store sales' },
-          'konsensuss': { paid: 529, status: 'sent', items: '46 Hester store sales' },
-          'leonie': { paid: 937, status: 'sent', items: '46 Hester store sales' },
-          'medea': { paid: 753, status: 'sent', items: '46 Hester store sales' },
-          'minena': { paid: 2366, status: 'sent', items: '46 Hester store sales' },
-          'nora': { paid: 992, status: 'sent', items: '46 Hester store sales (period 1)' },
-          'ogbff': { paid: 952, status: 'sent', items: '46 Hester store sales' },
-          'orchard': { paid: 402, status: 'sent', items: '46 Hester store sales' },
-          'oscr': { paid: 392, status: 'sent', items: '46 Hester store sales' },
-          'ossinger': { paid: 106, status: 'sent', items: '46 Hester store sales' },
-          'pote': { paid: 385, status: 'sent', items: '46 Hester store sales' },
-          'sagitta': { paid: 322, status: 'sent', items: '46 Hester store sales' },
-          'salteye': { paid: 599, status: 'sent', items: '46 Hester store sales' },
-          'sticky': { paid: 1414, status: 'sent', items: '46 Hester store sales' },
-          'svetlana': { paid: 1531, status: 'sent', items: '46 Hester store sales' },
-          'taotao': { paid: 0, status: 'not-paid', items: '' },
-          'taottao': { paid: 0, status: 'not-paid', items: '' },
-          'twinker': { paid: 355, status: 'sent', items: '46 Hester store sales' },
-          'ugly': { paid: 714, status: 'sent', items: '46 Hester store sales' },
-          'veda': { paid: 287, status: 'sent', items: '46 Hester store sales' },
-          'zoe': { paid: 180, status: 'sent', items: '46 Hester store sales' }
+          'aric': 385, 'ceramicism': 1035, 'dalmatina': 1596,
+          'deposit unknown': 355, 'dev': 1728, 'eerie': 1832,
+          'emily': 1015, 'eventyr': 2556, 'gigi': 1466.50,
+          'harlot': 2629, 'isa': 56, 'sucre': 56, 'ivey': 669,
+          'konsensuss': 529, 'leonie': 937, 'medea': 753,
+          'minena': 2366, 'nora': 992, 'ogbff': 952, 'orchard': 402,
+          'oscr': 392, 'ossinger': 106, 'pote': 385, 'sagitta': 322,
+          'salteye': 599, 'sticky': 1414, 'svetlana': 1531,
+          'twinker': 355, 'ugly': 714, 'veda': 287, 'zoe': 180,
+          'chunky': 39
         };
+        var noPay = ['taotao', 'taottao', 'deconner', 'tori'];
         var changed = false;
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
+          // Skip Tori, Taotao, Deconner
+          if (noPay.some(function(n) { return name.indexOf(n) >= 0; })) {
+            if (name.indexOf('deconner') >= 0 && v.paymentStatus !== 'not-paid') {
+              v.paymentStatus = 'not-paid'; changed = true;
+            }
+            if ((name.indexOf('taotao') >= 0 || name.indexOf('taottao') >= 0) && v.paymentStatus !== 'not-paid') {
+              v.paymentStatus = 'not-paid'; changed = true;
+            }
+            return;
+          }
+          // Find matching payout amount
           var match = Object.keys(payouts).find(function(k) { return name.indexOf(k) >= 0; });
-          if (match) {
-            var p = payouts[match];
-            if (p.paid > 0 && (!v.paymentHistory || !v.paymentHistory.length)) {
-              v.paymentHistory = [{ date: '2026-09-01', amount: p.paid, items: p.items }];
-              v.previouslyPaid = p.paid;
-              changed = true;
-            }
-            if (p.status && v.paymentStatus !== 'received') {
-              v.paymentStatus = p.status;
-              changed = true;
-            }
+          if (!match) return;
+          var amt = payouts[match];
+          // Seed payment history if missing or wrong amount
+          var hasCorrectPayment = v.paymentHistory && v.paymentHistory.length && v.paymentHistory.some(function(p) { return p.amount === amt; });
+          if (!hasCorrectPayment) {
+            v.paymentHistory = [{ date: '2026-09-01', amount: amt, items: '46 Hester store sales' }];
+            v.previouslyPaid = amt;
+            changed = true;
+          }
+          // Mark as sent if not already received
+          if (v.paymentStatus !== 'received' && v.paymentStatus !== 'sent') {
+            v.paymentStatus = 'sent';
+            changed = true;
           }
         });
         if (changed) {
-          inv._payHistSeed = true;
           localStorage.setItem('popup_inv_new_v1', JSON.stringify(inv));
           console.log('[data] Seeded payment history from sales reports');
         }
