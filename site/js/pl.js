@@ -1233,13 +1233,14 @@ function renderPLSections(scenario, calc, liveInventory) {
     var hasVariable = false;
     if (sectionVarItems.length) {
       hasVariable = true;
-      variableColHtml += '<div class="pl-variable-note">Based on ' + calc.totalTransactions + ' txns, $' + fmt(calc.totalGrossRevenue) + ' gross</div>';
+      variableColHtml += '<div class="pl-variable-note">Based on ' + sectionTxns + ' txns, $' + fmt(sectionGrossRevenue) + ' gross</div>';
       sectionVarItems.forEach(function(sv) {
+        var isAutoCalc = sv.vc.id === 'ws_square';
         variableColHtml += '<div class="pl-cost-row">' +
           '<span class="pl-cost-name">' + esc(sv.vc.name) + '</span>' +
-          '<span class="pl-cost-note">' + esc(sv.vc.note || '') + '</span>' +
+          '<span class="pl-cost-note">' + esc(sv.vc.note || (sv.vc.rate ? sv.vc.rate + '% + $' + (sv.vc.perTxn || 0).toFixed(2) + '/txn' : '')) + '</span>' +
           '<span class="pl-cost-amt">$' + fmt(sv.estCost) + '</span>' +
-          '<button class="pl-row-del" onclick="deleteVariableCost(\'' + sv.vc.id + '\')">x</button>' +
+          (isAutoCalc ? '' : '<button class="pl-row-del" onclick="deleteVariableCost(\'' + sv.vc.id + '\')">x</button>') +
         '</div>';
       });
     }
