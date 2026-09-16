@@ -816,56 +816,26 @@ function renderPLSections(scenario, calc, liveInventory) {
       });
     }
 
-    // Calculate variable total
-    var variableTotal = 0;
-    var sectionVarItems = [];
-
-    if (sec.variableIds) {
-      (scenario.variableCosts || []).forEach(function(vc) {
-        if (sec.variableIds.indexOf(vc.id) >= 0) {
-          var estCost = 0;
-          if (vc.type === 'pct_of_sales') {
-            estCost = calc.totalGrossRevenue * ((vc.rate || 0) / 100) + calc.totalTransactions * (vc.perTxn || 0);
-          } else if (vc.type === 'per_txn') {
-            estCost = calc.totalTransactions * (vc.perTxn || 0);
-          }
-          variableTotal += estCost;
-          sectionVarItems.push({ vc: vc, estCost: estCost });
-        }
-      });
-    }
-
-    if (sec.variableType === 'cafeVariable') {
-      (scenario.cafeVariable || []).forEach(function(cv) {
-        variableTotal += (cv.amount || 0);
-      });
-      // Include ingredient costs and Square fees in cafe variable total for header
-      (scenario.cafeRevenue || []).forEach(function(cr) {
-        variableTotal += (cr.costPerDrink || 0) * (cr.sold || 0);
-      });
-      var _cafeDrinkRev = 0, _cafeDrinkTxns = 0;
-      (scenario.cafeRevenue || []).forEach(function(cr) { _cafeDrinkRev += (cr.price || 0) * (cr.sold || 0); _cafeDrinkTxns += (cr.sold || 0); });
-      var _cherryDrinkRev = 0, _cherryDrinkTxns = 0;
-      (scenario.cherryRevenue || []).forEach(function(cr) { _cherryDrinkRev += (cr.price || 0) * (cr.sold || 0); _cherryDrinkTxns += (cr.sold || 0); });
-      variableTotal += (_cafeDrinkRev + _cherryDrinkRev) * 0.026 + (_cafeDrinkTxns + _cherryDrinkTxns) * 0.15;
-    }
-
-    // Wholesale COGS removed — production costs tracked in fixed costs instead
-
-    // Calculate revenue total
+    // Calculate revenue total FIRST (needed for accurate variable cost calc)
     var revenueTotal = 0;
+    var sectionGrossRevenue = 0; // gross sales for Square fee calc
+    var sectionTxns = 0;
     if (sec.revenueType === 'consignment') {
       consignmentItems.forEach(function(item) {
         if (item.isAdjustment) { revenueTotal += (item.adjustmentAmount || 0); return; }
         if (item.isShippingDeduction) return;
         var sold = item.totalSold || 0;
         revenueTotal += (item.actualStoreRev != null) ? item.actualStoreRev : Math.round(sold * item.price * (item.commissionPct / 100));
+        sectionGrossRevenue += sold * item.price;
+        if (sold > 0) sectionTxns += sold;
       });
     } else if (sec.revenueType === 'wholesale') {
       wholesaleItems.forEach(function(item) {
         var sold = item.totalSold || 0;
         var gross = sold * item.price;
         revenueTotal += gross;
+        sectionGrossRevenue += gross;
+        if (sold > 0) sectionTxns += sold;
       });
     } else if (sec.revenueType === 'otherRevenue') {
       (scenario.otherRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
@@ -875,6 +845,46 @@ function renderPLSections(scenario, calc, liveInventory) {
       revenueTotal += (scenario.cafeCashSales || 0);
     } else if (sec.revenueType === 'spaceRevenue') {
       (scenario.spaceRevenue || []).forEach(function(r) { revenueTotal += (r.amount || 0); });
+    }
+
+    // Calculate variable total (after revenue so we can use section-specific values)
+    var variableTotal = 0;
+    var sectionVarItems = [];
+
+    if (sec.variableIds) {
+      (scenario.variableCosts || []).forEach(function(vc) {
+        if (sec.variableIds.indexOf(vc.id) >= 0) {
+          var estCost = 0;
+          if (vc.type === 'pct_of_sales') {
+            estCost = sectionGrossRevenue * ((vc.rate || 0) / 100) + sectionTxns * (vc.perTxn || 0);
+          } else if (vc.type === 'per_txn') {
+            estCost = sectionTxns * (vc.perTxn || 0);
+          }
+          variableTotal += estCost;
+          sectionVarItems.push({ vc: vc, estCost: estCost });
+        }
+      });
+    }
+
+    // Wholesale section: add Square fees on wholesale sales
+    if (sec.revenueType === 'wholesale' && sectionGrossRevenue > 0) {
+      var wsSquare = sectionGrossRevenue * 0.026 + sectionTxns * 0.15;
+      variableTotal += wsSquare;
+      sectionVarItems.push({ vc: { id: 'ws_square', name: 'Square processing fee', rate: 2.6, perTxn: 0.15, type: 'pct_of_sales' }, estCost: wsSquare });
+    }
+
+    if (sec.variableType === 'cafeVariable') {
+      (scenario.cafeVariable || []).forEach(function(cv) {
+        variableTotal += (cv.amount || 0);
+      });
+      (scenario.cafeRevenue || []).forEach(function(cr) {
+        variableTotal += (cr.costPerDrink || 0) * (cr.sold || 0);
+      });
+      var _cafeDrinkRev = 0, _cafeDrinkTxns = 0;
+      (scenario.cafeRevenue || []).forEach(function(cr) { _cafeDrinkRev += (cr.price || 0) * (cr.sold || 0); _cafeDrinkTxns += (cr.sold || 0); });
+      var _cherryDrinkRev = 0, _cherryDrinkTxns = 0;
+      (scenario.cherryRevenue || []).forEach(function(cr) { _cherryDrinkRev += (cr.price || 0) * (cr.sold || 0); _cherryDrinkTxns += (cr.sold || 0); });
+      variableTotal += (_cafeDrinkRev + _cherryDrinkRev) * 0.026 + (_cafeDrinkTxns + _cherryDrinkTxns) * 0.15;
     }
 
     // Build section HTML
