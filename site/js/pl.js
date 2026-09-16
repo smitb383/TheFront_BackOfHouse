@@ -3376,14 +3376,11 @@ function renderCostSummary() {
   // Del card
   html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px">';
   html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#c9a2e2;margin-bottom:8px">Del</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:24px;font-weight:700;color:var(--text)">$' + fmt(delTotal) + ' <span style="font-size:11px;color:var(--muted);font-weight:400">spent</span></div>';
-  html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--faint);font-family:DM Mono,monospace;font-size:10px">';
-  html += '<div style="color:var(--muted);margin-bottom:4px">Capital injection into Front account:</div>';
-  html += '<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--muted)">Deposited</span><span style="color:#88c98a">+$' + fmt(delInjected) + '</span></div>';
-  html += '<div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--muted)">Withdrew</span><span style="color:#e07070">-$' + fmt(delWithdrawn) + '</span></div>';
-  html += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid var(--faint);margin-top:4px"><span style="color:var(--muted)">Still in account</span><span style="color:#88c98a;font-weight:700">$' + fmt(delRemainingInAccount) + '</span></div>';
-  html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--border);margin-top:6px"><span style="color:var(--muted)">Total owed back</span><span style="color:#e07070;font-weight:700">$' + fmt(delTotalOwed) + '</span></div>';
-  html += '<div style="font-size:9px;color:var(--muted);font-style:italic;margin-top:2px">spend ($' + fmt(delTotal) + ') + remaining injection ($' + fmt(delRemainingInAccount) + ')</div>';
+  html += '<div style="margin-top:4px;font-family:DM Mono,monospace;font-size:11px;display:flex;flex-direction:column;gap:6px">';
+  html += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Personal spend</span><span style="color:var(--text);font-weight:600">$' + fmt(delTotal) + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Injected into company</span><span style="color:#88c98a">$' + fmt(delInjected) + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Withdrew</span><span style="color:#e07070">-$' + fmt(delWithdrawn) + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;border-top:1px solid var(--border)"><span style="color:var(--muted);font-weight:700">Owed back</span><span style="color:#e07070;font-size:16px;font-weight:700">$' + fmt(delTotalOwed) + '</span></div>';
   html += '</div></div>';
 
   // The Front card
