@@ -8774,22 +8774,38 @@ function renderInvNew() {
           '<div style="' + lblStyle + '">Payment Details</div>' +
           '<input value="' + esc(payDetails) + '" placeholder="e.g. @handle, email, account #" oninput="invNewEditVendor(' + vi + ',\'payDetails\',this.value)" style="' + inputFieldStyle + ';width:100%">' +
         '</div>' +
-        '<div style="display:flex;flex-direction:column">' +
-          '<div style="' + lblStyle + '">Previously Paid</div>' +
-          '<div style="display:flex;align-items:center;gap:2px"><span style="color:var(--muted);font-size:11px">$</span><input type="number" value="' + (vendor.previouslyPaid || '') + '" placeholder="0" onclick="event.stopPropagation()" oninput="invNewEditVendor(' + vi + ',\'previouslyPaid\',parseFloat(this.value)||0)" style="width:80px;background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;text-align:right"></div>' +
-        '</div>' +
-        '<div style="display:flex;flex-direction:column">' +
-          '<div style="' + lblStyle + '">Last Settled</div>' +
-          '<div style="display:flex;align-items:center;gap:4px">' +
-            '<span style="font-family:DM Mono,monospace;font-size:11px;color:' + (vendor.lastSettled ? 'var(--text)' : 'var(--muted)') + '">' + (vendor.lastSettled || 'Never') + '</span>' +
-            '<button onclick="event.stopPropagation();invNewMarkSettled(' + vi + ')" style="background:#88c98a22;border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:8px;padding:3px 8px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap">Settle</button>' +
-          '</div>' +
-        '</div>' +
         '<div style="display:flex;flex-direction:column;flex:1">' +
           '<div style="' + lblStyle + '">Report Note</div>' +
           '<input value="' + esc(vendor.reportNote || '') + '" placeholder="Note shown on sales report..." onclick="event.stopPropagation()" oninput="invNewEditVendor(' + vi + ',\'reportNote\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:100%">' +
         '</div>' +
-      '</div>';
+      '</div>' +
+      // Payment history
+      (function() {
+        var payments = vendor.paymentHistory || [];
+        var totalPaid = 0;
+        payments.forEach(function(p) { totalPaid += (p.amount || 0); });
+        var phId = 'ph-' + vi;
+        var phOpen = document.getElementById(phId) && document.getElementById(phId).style.display !== 'none';
+        var h = '<div style="border-top:1px solid var(--faint);padding:8px 0" onclick="event.stopPropagation()">';
+        h += '<div onclick="var el=document.getElementById(\'' + phId + '\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:4px 0">';
+        h += '<span style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">Payment History</span>';
+        h += '<span style="font-family:DM Mono,monospace;font-size:11px;color:' + (totalPaid > 0 ? '#88c98a' : 'var(--muted)') + ';font-weight:700">$' + (totalPaid || 0) + ' paid' + (payments.length ? ' \u00b7 ' + payments.length + ' payment' + (payments.length > 1 ? 's' : '') : '') + ' \u203a</span>';
+        h += '</div>';
+        h += '<div id="' + phId + '" style="display:' + (phOpen ? 'block' : 'none') + '">';
+        if (payments.length) {
+          payments.forEach(function(p, pi) {
+            h += '<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--faint)">';
+            h += '<input type="date" value="' + esc(p.date || '') + '" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'date\',this.value)" style="background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px;width:120px">';
+            h += '<div style="display:flex;align-items:center;gap:2px"><span style="color:#88c98a;font-size:10px">$</span><input type="number" value="' + (p.amount || '') + '" placeholder="0" onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'amount\',parseFloat(this.value)||0)" style="width:70px;background:var(--surface2);border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:11px;padding:4px;border-radius:3px;text-align:right;font-weight:700"></div>';
+            h += '<input class="field-input" value="' + esc(p.items || '') + '" placeholder="Items paid for..." onchange="invNewEditPaymentHistory(' + vi + ',' + pi + ',\'items\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:10px;padding:4px 6px">';
+            h += '<button onclick="invNewDeletePaymentHistory(' + vi + ',' + pi + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
+            h += '</div>';
+          });
+        }
+        h += '<button onclick="invNewAddPaymentHistory(' + vi + ')" style="background:none;border:1px dashed #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:9px;padding:4px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-top:6px">+ Add Payment</button>';
+        h += '</div></div>';
+        return h;
+      })()
 
     var vendorHeader = '<div onclick="invNewToggleVendor(' + vi + ')" style="padding:14px 0;cursor:pointer;border-bottom:1px solid var(--border)">' +
       '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
@@ -8968,6 +8984,49 @@ function invNewEditVendor(vi, field, val) {
   // Only re-render for fields that affect layout; skip for text inputs like shipping
   var noRerenderFields = ['shippingCost','shippingCoveredBy','eurRate','payDetails','payPlatform','reportNote','previouslyPaid'];
   if (noRerenderFields.indexOf(field) < 0) renderInvNew();
+}
+
+function invNewAddPaymentHistory(vi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  if (!data.vendors[vi].paymentHistory) data.vendors[vi].paymentHistory = [];
+  data.vendors[vi].paymentHistory.push({
+    date: new Date().toISOString().slice(0, 10),
+    amount: 0,
+    items: ''
+  });
+  data.vendors[vi]._modified = new Date().toISOString();
+  saveInvNew(data);
+  renderInvNew();
+  // Re-open vendor and payment history
+  setTimeout(function() {
+    var el = document.getElementById('ph-' + vi);
+    if (el) el.style.display = 'block';
+  }, 50);
+}
+
+function invNewEditPaymentHistory(vi, pi, field, val) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].paymentHistory || !data.vendors[vi].paymentHistory[pi]) return;
+  data.vendors[vi].paymentHistory[pi][field] = val;
+  // Update previouslyPaid total for compatibility
+  var total = 0;
+  data.vendors[vi].paymentHistory.forEach(function(p) { total += (p.amount || 0); });
+  data.vendors[vi].previouslyPaid = total;
+  data.vendors[vi]._modified = new Date().toISOString();
+  saveInvNew(data);
+}
+
+function invNewDeletePaymentHistory(vi, pi) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi] || !data.vendors[vi].paymentHistory) return;
+  data.vendors[vi].paymentHistory.splice(pi, 1);
+  var total = 0;
+  data.vendors[vi].paymentHistory.forEach(function(p) { total += (p.amount || 0); });
+  data.vendors[vi].previouslyPaid = total;
+  data.vendors[vi]._modified = new Date().toISOString();
+  saveInvNew(data);
+  renderInvNew();
 }
 
 function buildSizeRows(vi, ii, item, sPct, dPct, vendor) {

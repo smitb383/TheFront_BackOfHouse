@@ -3802,54 +3802,60 @@ function renderLearnings() {
   }
   var merchSquare = actualMerchGross * 0.026 + merchTxns * 0.15;
 
-  // 2x scenario
+  // Wholesale fixed costs (production, tariffs, etc)
+  var merchFixedCosts = 0;
+  (scenario.fixedCosts || []).forEach(function(c) {
+    if (c.category === 'wholesale') merchFixedCosts += (c.amount || 0) - (c.refund || 0);
+  });
+  var merchTotalCosts = merchFixedCosts + merchSquare;
+  var merchProfit = actualMerchGross - merchTotalCosts;
+
+  // 2x scenario — fixed costs same (already produced), only extra Square
   var merch2xGross = actualMerchGross * 2;
   var merch2xSquare = merch2xGross * 0.026 + (merchTxns * 2) * 0.15;
-  var merch2xExtraRev = merch2xGross - actualMerchGross; // extra revenue (100% ours)
-  var merch2xExtraCost = merch2xSquare - merchSquare;
-  var merch2xExtraProfit = merch2xExtraRev - merch2xExtraCost;
-  var merch2xPL = actualPL + merch2xExtraProfit;
+  var merch2xCosts = merchFixedCosts + merch2xSquare;
+  var merch2xProfit = merch2xGross - merch2xCosts;
+  var merch2xPL = actualPL + (merch2xProfit - merchProfit);
 
   // 3x scenario
   var merch3xGross = actualMerchGross * 3;
   var merch3xSquare = merch3xGross * 0.026 + (merchTxns * 3) * 0.15;
-  var merch3xExtraRev = merch3xGross - actualMerchGross;
-  var merch3xExtraCost = merch3xSquare - merchSquare;
-  var merch3xExtraProfit = merch3xExtraRev - merch3xExtraCost;
-  var merch3xPL = actualPL + merch3xExtraProfit;
+  var merch3xCosts = merchFixedCosts + merch3xSquare;
+  var merch3xProfit = merch3xGross - merch3xCosts;
+  var merch3xPL = actualPL + (merch3xProfit - merchProfit);
 
   html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin:32px 0 16px">Merch Volume Scenarios</div>';
 
   html += '<table style="width:100%;border-collapse:collapse;background:var(--surface2);border-radius:8px;overflow:hidden">';
   html += '<thead><tr>';
   html += '<th style="' + thS + ';text-align:left">Scenario</th>';
-  html += '<th style="' + thS + ';text-align:right">Merch Revenue</th>';
-  html += '<th style="' + thS + ';text-align:right">Square Fees</th>';
+  html += '<th style="' + thS + ';text-align:right">Revenue</th>';
+  html += '<th style="' + thS + ';text-align:right">Costs</th>';
   html += '<th style="' + thS + ';text-align:right">Merch Profit</th>';
   html += '<th style="' + thS + ';text-align:right">Overall P/L</th>';
   html += '<th style="' + thS + ';text-align:right">vs Actual</th>';
   html += '</tr></thead><tbody>';
 
-  function merchRow(label, note, rev, sq, profit, overallPL, diff, hl) {
+  function merchRow(label, note, rev, costs, profit, overallPL, diff, hl) {
     var bg = hl ? 'background:var(--surface)' : '';
     var diffCell = diff == null ? '<span style="color:var(--muted)">\u2014</span>' : '<span style="color:#88c98a;font-weight:700">+$' + fmt(diff) + '</span>';
     return '<tr style="' + bg + '">' +
       '<td style="' + tdS + ';font-weight:700;color:var(--text)">' + label + ' <span style="font-size:9px;color:var(--muted);font-weight:400">' + note + '</span></td>' +
       '<td style="' + tdS + ';text-align:right;color:var(--text)">$' + fmt(rev) + '</td>' +
-      '<td style="' + tdS + ';text-align:right;color:var(--muted)">$' + fmt(sq) + '</td>' +
-      '<td style="' + tdS + ';text-align:right;color:#88c98a;font-weight:700">$' + fmt(profit) + '</td>' +
+      '<td style="' + tdS + ';text-align:right;color:var(--muted)">$' + fmt(costs) + '</td>' +
+      '<td style="' + tdS + ';text-align:right;color:' + (profit >= 0 ? '#88c98a' : '#e07070') + ';font-weight:700">' + (profit >= 0 ? '' : '-') + '$' + fmt(Math.abs(profit)) + '</td>' +
       '<td style="' + tdS + ';text-align:right;color:' + (overallPL >= 0 ? '#88c98a' : '#e07070') + ';font-weight:700">' + (overallPL >= 0 ? '+' : '-') + '$' + fmt(Math.abs(overallPL)) + '</td>' +
       '<td style="' + tdS + ';text-align:right">' + diffCell + '</td></tr>';
   }
 
-  html += merchRow('Actual', '(' + merchTxns + ' items sold)', actualMerchGross, merchSquare, actualMerchGross - merchSquare, actualPL, null, true);
-  html += merchRow('2\u00d7 merch sales', '', merch2xGross, merch2xSquare, merch2xGross - merch2xSquare, merch2xPL, merch2xExtraProfit, false);
-  html += merchRow('3\u00d7 merch sales', '', merch3xGross, merch3xSquare, merch3xGross - merch3xSquare, merch3xPL, merch3xExtraProfit, false);
+  html += merchRow('Actual', '(' + merchTxns + ' sold)', actualMerchGross, merchTotalCosts, merchProfit, actualPL, null, true);
+  html += merchRow('2\u00d7 merch sales', '', merch2xGross, merch2xCosts, merch2xProfit, merch2xPL, merch2xProfit - merchProfit, false);
+  html += merchRow('3\u00d7 merch sales', '', merch3xGross, merch3xCosts, merch3xProfit, merch3xPL, merch3xProfit - merchProfit, false);
 
   html += '</tbody></table>';
 
   html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:12px">';
-  html += 'Merch/wholesale is 100% our revenue (no designer split). Only additional cost is Square fees. Production costs assumed same.';
+  html += 'Costs include production ($' + fmt(merchFixedCosts) + ' fixed: t-shirts, stickers, tariffs) + Square fees. Fixed costs same across scenarios. 100% our revenue.';
   html += '</div>';
 
   el.innerHTML = html;

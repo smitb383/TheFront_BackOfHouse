@@ -658,46 +658,46 @@ window.addEventListener('beforeunload', function() {
         }
       } catch(e) {}
     }, 3000);
-    // One-time: set previouslyPaid from sales reports for vendors marked as sent
+    // One-time: seed payment history from sales reports
     setTimeout(function() {
       try {
         var inv = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
-        if (!inv || !inv.vendors || inv._payoutFix2) return;
+        if (!inv || !inv.vendors || inv._payHistSeed) return;
         var payouts = {
-          'aric': { paid: 385, status: 'sent' },
-          'ceramicism': { paid: 1035, status: 'sent' },
-          'dalmatina': { paid: 1596, status: 'sent' },
-          'deconner': { paid: 0, status: 'not-paid' }, // bounced
-          'deposit unknown': { paid: 355, status: 'sent' },
-          'dev': { paid: 1728, status: 'sent' },
-          'eerie': { paid: 1832, status: 'sent' },
-          'emily': { paid: 1015, status: 'sent' },
-          'eventyr': { paid: 2556, status: 'sent' },
-          'gigi': { paid: 1466.50, status: 'sent' },
-          'harlot': { paid: 2629, status: 'sent' },
-          'isa': { paid: 56, status: 'sent' },
-          'sucre': { paid: 56, status: 'sent' },
-          'ivey': { paid: 669, status: 'sent' },
-          'konsensuss': { paid: 529, status: 'sent' },
-          'leonie': { paid: 937, status: 'sent' },
-          'medea': { paid: 753, status: 'sent' },
-          'minena': { paid: 2366, status: 'sent' },
-          'nora': { paid: 992, status: 'sent' },
-          'ogbff': { paid: 952, status: 'sent' },
-          'orchard': { paid: 402, status: 'sent' },
-          'oscr': { paid: 392, status: 'sent' },
-          'ossinger': { paid: 106, status: 'sent' },
-          'pote': { paid: 385, status: 'sent' },
-          'sagitta': { paid: 322, status: 'sent' },
-          'salteye': { paid: 599, status: 'sent' },
-          'sticky': { paid: 1414, status: 'sent' },
-          'svetlana': { paid: 1531, status: 'sent' },
-          'taotao': { paid: 0, status: 'not-paid' },
-          'taottao': { paid: 0, status: 'not-paid' },
-          'twinker': { paid: 355, status: 'sent' },
-          'ugly': { paid: 714, status: 'sent' },
-          'veda': { paid: 287, status: 'sent' },
-          'zoe': { paid: 180, status: 'sent' }
+          'aric': { paid: 385, status: 'sent', items: '46 Hester store sales' },
+          'ceramicism': { paid: 1035, status: 'sent', items: '46 Hester store sales' },
+          'dalmatina': { paid: 1596, status: 'sent', items: '46 Hester store sales' },
+          'deconner': { paid: 0, status: 'not-paid', items: '' },
+          'deposit unknown': { paid: 355, status: 'sent', items: '46 Hester store sales' },
+          'dev': { paid: 1728, status: 'sent', items: '46 Hester store sales (-$35 deduction)' },
+          'eerie': { paid: 1832, status: 'sent', items: '46 Hester store sales (-$160 shipping deduction)' },
+          'emily': { paid: 1015, status: 'sent', items: '46 Hester store sales (+$108 broken Chrome Star)' },
+          'eventyr': { paid: 2556, status: 'sent', items: '46 Hester store sales (period 1)' },
+          'gigi': { paid: 1466.50, status: 'sent', items: '46 Hester store sales' },
+          'harlot': { paid: 2629, status: 'sent', items: '46 Hester store sales' },
+          'isa': { paid: 56, status: 'sent', items: '46 Hester store sales' },
+          'sucre': { paid: 56, status: 'sent', items: '46 Hester store sales' },
+          'ivey': { paid: 669, status: 'sent', items: '46 Hester store sales' },
+          'konsensuss': { paid: 529, status: 'sent', items: '46 Hester store sales' },
+          'leonie': { paid: 937, status: 'sent', items: '46 Hester store sales' },
+          'medea': { paid: 753, status: 'sent', items: '46 Hester store sales' },
+          'minena': { paid: 2366, status: 'sent', items: '46 Hester store sales' },
+          'nora': { paid: 992, status: 'sent', items: '46 Hester store sales (period 1)' },
+          'ogbff': { paid: 952, status: 'sent', items: '46 Hester store sales' },
+          'orchard': { paid: 402, status: 'sent', items: '46 Hester store sales' },
+          'oscr': { paid: 392, status: 'sent', items: '46 Hester store sales' },
+          'ossinger': { paid: 106, status: 'sent', items: '46 Hester store sales' },
+          'pote': { paid: 385, status: 'sent', items: '46 Hester store sales' },
+          'sagitta': { paid: 322, status: 'sent', items: '46 Hester store sales' },
+          'salteye': { paid: 599, status: 'sent', items: '46 Hester store sales' },
+          'sticky': { paid: 1414, status: 'sent', items: '46 Hester store sales' },
+          'svetlana': { paid: 1531, status: 'sent', items: '46 Hester store sales' },
+          'taotao': { paid: 0, status: 'not-paid', items: '' },
+          'taottao': { paid: 0, status: 'not-paid', items: '' },
+          'twinker': { paid: 355, status: 'sent', items: '46 Hester store sales' },
+          'ugly': { paid: 714, status: 'sent', items: '46 Hester store sales' },
+          'veda': { paid: 287, status: 'sent', items: '46 Hester store sales' },
+          'zoe': { paid: 180, status: 'sent', items: '46 Hester store sales' }
         };
         var changed = false;
         inv.vendors.forEach(function(v) {
@@ -705,20 +705,21 @@ window.addEventListener('beforeunload', function() {
           var match = Object.keys(payouts).find(function(k) { return name.indexOf(k) >= 0; });
           if (match) {
             var p = payouts[match];
-            if (p.paid > 0 && v.previouslyPaid !== p.paid) {
+            if (p.paid > 0 && (!v.paymentHistory || !v.paymentHistory.length)) {
+              v.paymentHistory = [{ date: '2026-09-01', amount: p.paid, items: p.items }];
               v.previouslyPaid = p.paid;
               changed = true;
             }
-            if (p.status && v.paymentStatus !== p.status && v.paymentStatus !== 'received') {
+            if (p.status && v.paymentStatus !== 'received') {
               v.paymentStatus = p.status;
               changed = true;
             }
           }
         });
         if (changed) {
-          inv._payoutFix2 = true;
+          inv._payHistSeed = true;
           localStorage.setItem('popup_inv_new_v1', JSON.stringify(inv));
-          console.log('[data] Set previouslyPaid from sales reports');
+          console.log('[data] Seeded payment history from sales reports');
         }
       } catch(e) {}
     }, 3500);
