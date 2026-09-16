@@ -3249,23 +3249,15 @@ function plShowTab(tab, btn) {
 }
 
 function switchPLSubTab(tab) {
-  var budgetPanel = document.getElementById('pl-budget-panel');
-  var costsPanel = document.getElementById('pl-costs-panel');
-  var btnBudget = document.getElementById('pl-subtab-budget');
-  var btnCosts = document.getElementById('pl-subtab-costs');
-  if (tab === 'budget') {
-    if (budgetPanel) budgetPanel.style.display = '';
-    if (costsPanel) costsPanel.style.display = 'none';
-    if (btnBudget) btnBudget.classList.add('active');
-    if (btnCosts) btnCosts.classList.remove('active');
-  } else {
-    if (budgetPanel) budgetPanel.style.display = 'none';
-    if (costsPanel) costsPanel.style.display = '';
-    if (btnBudget) btnBudget.classList.remove('active');
-    if (btnCosts) btnCosts.classList.add('active');
-    initPLData();
-    renderCostSummary();
-  }
+  var panels = ['budget', 'costs', 'learnings'];
+  panels.forEach(function(p) {
+    var panel = document.getElementById('pl-' + p + '-panel');
+    var btn = document.getElementById('pl-subtab-' + p);
+    if (panel) panel.style.display = (p === tab) ? '' : 'none';
+    if (btn) { if (p === tab) btn.classList.add('active'); else btn.classList.remove('active'); }
+  });
+  if (tab === 'costs') { initPLData(); renderCostSummary(); }
+  if (tab === 'learnings') { initPLData(); renderLearnings(); }
 }
 
 // ============================================
@@ -3560,6 +3552,110 @@ function renderCostSummary() {
     html += '</tbody></table></div></div>';
   });
 
+
+  el.innerHTML = html;
+}
+
+// ============================================
+// LEARNINGS TAB
+// ============================================
+
+function renderLearnings() {
+  var el = document.getElementById('learnings-content');
+  if (!el) return;
+
+  var data = getPLData() || initPLData();
+  var scenario = data.scenarios.find(function(s) { return s.id === 'popup' || s.type === 'popup'; }) || data.scenarios[0];
+  if (!scenario) { el.innerHTML = '<p>No data.</p>'; return; }
+
+  var liveInv = inventoryToPLItems();
+  var actualCalc = calcPL(scenario, liveInv);
+  var actualCosts = actualCalc.totalFixed + actualCalc.totalVariable + (actualCalc.totalDesignerCosts || 0);
+
+  var inv = (typeof getInvNew === 'function') ? getInvNew() : null;
+
+  function calcScenarioRevenue(storePct) {
+    var storeRev = 0;
+    if (!inv || !inv.vendors) return { storeRev: 0 };
+    inv.vendors.forEach(function(v) {
+      if (v.pricingModel === 'loss-only') return;
+      if (v.pricingModel === 'wholesale') {
+        v.items.forEach(function(item) {
+          var sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0);
+          storeRev += (item.salePrice || item.costUsd || item.costEur || 0) * sold;
+        });
+        return;
+      }
+      var isFullComm = v.pricingModel === 'consignment-100' || (v.storePct != null && v.storePct === 0);
+      var useStorePct = isFullComm ? 0 : storePct;
+      v.items.forEach(function(item) {
+        var price = item.salePrice || 0;
+        var totalSold = 0, totalNoComm = 0;
+        if (item.sizes && item.sizes.length) {
+          item.sizes.forEach(function(sz) {
+            totalSold += Math.min((sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0), sz.qty || 0);
+            totalNoComm += (sz.noCommission || 0);
+          });
+        } else {
+          totalSold = Math.min((item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0), item.qty || 1);
+          totalNoComm = item.noCommission || 0;
+        }
+        storeRev += Math.round(price * Math.max(0, totalSold - totalNoComm) * (useStorePct / 100));
+      });
+    });
+    storeRev += actualCalc.cafeAllRevenue - (actualCalc.eliseShare || 0);
+    storeRev += actualCalc.otherRevenueTotal || 0;
+    storeRev += actualCalc.spaceRevenueTotal || 0;
+    return { storeRev: storeRev };
+  }
+
+  var actual = calcScenarioRevenue(30);
+  var s65_35 = calcScenarioRevenue(35);
+  var s60_40 = calcScenarioRevenue(40);
+  var actualPL = actual.storeRev - actualCosts;
+  var pl65 = s65_35.storeRev - actualCosts;
+  var pl60 = s60_40.storeRev - actualCosts;
+
+  var html = '';
+  html += '<div style="padding:20px 0 24px">';
+  html += '<div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:600;color:var(--text)">Learnings</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px">What-if scenarios based on actual sales data</div>';
+  html += '</div>';
+
+  html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:16px">Commission Split Scenarios</div>';
+
+  var thS = 'padding:10px 16px;font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);border-bottom:2px solid var(--border)';
+  var tdS = 'padding:12px 16px;font-family:DM Mono,monospace;font-size:13px;border-bottom:1px solid var(--faint)';
+
+  html += '<table style="width:100%;border-collapse:collapse;background:var(--surface2);border-radius:8px;overflow:hidden">';
+  html += '<thead><tr>';
+  html += '<th style="' + thS + ';text-align:left">Scenario</th>';
+  html += '<th style="' + thS + ';text-align:right">Total Costs</th>';
+  html += '<th style="' + thS + ';text-align:right">Our Revenue</th>';
+  html += '<th style="' + thS + ';text-align:right">Net P/L</th>';
+  html += '<th style="' + thS + ';text-align:right">vs Actual</th>';
+  html += '</tr></thead><tbody>';
+
+  function plRow(label, note, costs, rev, pl, diff, highlight) {
+    var bg = highlight ? 'background:var(--surface)' : '';
+    var diffCell = diff == null ? '<span style="color:var(--muted)">\u2014</span>' : '<span style="color:#88c98a;font-weight:700">+$' + fmt(diff) + '</span>';
+    return '<tr style="' + bg + '">' +
+      '<td style="' + tdS + ';font-weight:700;color:var(--text)">' + label + ' <span style="font-size:9px;color:var(--muted);font-weight:400">' + note + '</span></td>' +
+      '<td style="' + tdS + ';text-align:right;color:var(--muted)">$' + fmt(costs) + '</td>' +
+      '<td style="' + tdS + ';text-align:right;color:var(--text)">$' + fmt(rev) + '</td>' +
+      '<td style="' + tdS + ';text-align:right;color:' + (pl >= 0 ? '#88c98a' : '#e07070') + ';font-weight:700">' + (pl >= 0 ? '+' : '-') + '$' + fmt(Math.abs(pl)) + '</td>' +
+      '<td style="' + tdS + ';text-align:right">' + diffCell + '</td></tr>';
+  }
+
+  html += plRow('Actual \u2014 70/30', '(designer / store)', actualCosts, actual.storeRev, actualPL, null, true);
+  html += plRow('What if \u2014 65/35', '(designer / store)', actualCosts, s65_35.storeRev, pl65, pl65 - actualPL, false);
+  html += plRow('What if \u2014 60/40', '(designer / store)', actualCosts, s60_40.storeRev, pl60, pl60 - actualPL, false);
+
+  html += '</tbody></table>';
+
+  html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:12px">';
+  html += 'Based on $' + fmt(actualCalc.consignGross) + ' consignment gross. Only standard consignment splits change \u2014 100% commission vendors, wholesale, and cafe unchanged. Costs held constant.';
+  html += '</div>';
 
   el.innerHTML = html;
 }
