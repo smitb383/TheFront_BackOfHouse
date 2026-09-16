@@ -240,7 +240,7 @@ localStorage.setItem = function(key, value) {
 
 // ── Merge logic for array-based keys (vendors, etc.) ──
 // Instead of last-write-wins, merge by item id so neither founder's additions get lost.
-var MERGEABLE_KEYS = ['popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1'];
+var MERGEABLE_KEYS = ['popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1', 'pl_data_v1'];
 
 function _mergeArrayById(localArr, remoteArr, key) {
   if (!Array.isArray(localArr) || !Array.isArray(remoteArr)) return remoteArr;
@@ -361,12 +361,57 @@ function _mergeInvNew(local, remote) {
   return { vendors: merged };
 }
 
+function _mergePLData(local, remote) {
+  // Merge who/subItems.who fields from local into remote (preserve purchased-by data)
+  if (!remote || !remote.scenarios) return remote || local;
+  if (!local || !local.scenarios) return remote;
+  remote.scenarios.forEach(function(rScenario) {
+    var lScenario = local.scenarios.find(function(s) { return s.id === rScenario.id; });
+    if (!lScenario) return;
+    // Merge fixedCosts who fields
+    (rScenario.fixedCosts || []).forEach(function(rCost) {
+      var lCost = (lScenario.fixedCosts || []).find(function(c) { return c.id === rCost.id; });
+      if (!lCost) return;
+      if (lCost.who && !rCost.who) rCost.who = lCost.who;
+      // Merge sub-item who fields
+      if (lCost.subItems && rCost.subItems) {
+        rCost.subItems.forEach(function(rSub, si) {
+          var lSub = lCost.subItems[si];
+          if (lSub && lSub.who && !rSub.who) rSub.who = lSub.who;
+        });
+      }
+      // If local has subItems but remote doesn't, preserve them
+      if (lCost.subItems && lCost.subItems.length && (!rCost.subItems || !rCost.subItems.length)) {
+        rCost.subItems = lCost.subItems;
+        // Recalc amount from sub-items
+        var total = 0;
+        rCost.subItems.forEach(function(s) { total += (s.amount || 0); });
+        if (total > 0) rCost.amount = total;
+      }
+    });
+    // Merge cafeVariable who fields
+    (rScenario.cafeVariable || []).forEach(function(rCv) {
+      var lCv = (lScenario.cafeVariable || []).find(function(c) { return c.id === rCv.id; });
+      if (!lCv) return;
+      if (lCv.who && !rCv.who) rCv.who = lCv.who;
+      if (lCv.subItems && rCv.subItems) {
+        rCv.subItems.forEach(function(rSub, si) {
+          var lSub = lCv.subItems[si];
+          if (lSub && lSub.who && !rSub.who) rSub.who = lSub.who;
+        });
+      }
+    });
+  });
+  return remote;
+}
+
 function _mergeKey(key, localStr, remoteVal) {
   if (MERGEABLE_KEYS.indexOf(key) < 0) return remoteVal;
   try {
     var local = JSON.parse(localStr);
     var remote = typeof remoteVal === 'string' ? JSON.parse(remoteVal) : remoteVal;
     if (key === 'popup_inv_new_v1') return _mergeInvNew(local, remote);
+    if (key === 'pl_data_v1') return _mergePLData(local, remote);
     if (Array.isArray(local) && Array.isArray(remote)) return _mergeArrayById(local, remote, key);
   } catch(e) {}
   return remoteVal;
