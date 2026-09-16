@@ -2190,7 +2190,6 @@ function showTab(project, tab, btn) {
   if (tab === 'archive') renderArchive(project);
   if (tab === 'popup-revenue') setTimeout(function(){ initRevProj(); renderRevProj(); }, 20);
   if (tab === 'popup-pl') setTimeout(function(){ initPLData(); renderPL(); }, 20);
-  if (tab === 'cost-summary') setTimeout(function(){ initPLData(); renderCostSummary(); }, 20);
   if (tab === 'popup-inventory') setTimeout(function(){ initPLData(); renderInventory(); }, 20);
   if (tab === 'popup-inventory-new') setTimeout(function(){ renderInvNew(); }, 20);
   if (tab === 'web-inventory') setTimeout(function(){ renderWebInventory(); }, 20);

@@ -3248,6 +3248,26 @@ function plShowTab(tab, btn) {
   if (tab === 'inventory') renderInventory();
 }
 
+function switchPLSubTab(tab) {
+  var budgetPanel = document.getElementById('pl-budget-panel');
+  var costsPanel = document.getElementById('pl-costs-panel');
+  var btnBudget = document.getElementById('pl-subtab-budget');
+  var btnCosts = document.getElementById('pl-subtab-costs');
+  if (tab === 'budget') {
+    if (budgetPanel) budgetPanel.style.display = '';
+    if (costsPanel) costsPanel.style.display = 'none';
+    if (btnBudget) btnBudget.classList.add('active');
+    if (btnCosts) btnCosts.classList.remove('active');
+  } else {
+    if (budgetPanel) budgetPanel.style.display = 'none';
+    if (costsPanel) costsPanel.style.display = '';
+    if (btnBudget) btnBudget.classList.remove('active');
+    if (btnCosts) btnCosts.classList.add('active');
+    initPLData();
+    renderCostSummary();
+  }
+}
+
 // ============================================
 // COST SUMMARY TAB
 // ============================================
