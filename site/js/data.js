@@ -705,6 +705,12 @@ window.addEventListener('beforeunload', function() {
             v.paymentStatus = 'sent';
             changed = true;
           }
+          // Set lastSettled from payment history date
+          if (!v.lastSettled && v.paymentHistory && v.paymentHistory.length) {
+            var latestDate = '';
+            v.paymentHistory.forEach(function(p) { if (p.date && p.date > latestDate) latestDate = p.date; });
+            if (latestDate) { v.lastSettled = latestDate; changed = true; }
+          }
           // Ugly Hot: add second payment for online rings (Del paid)
           if (name.indexOf('ugly') >= 0) {
             var hasOnlinePay = v.paymentHistory && v.paymentHistory.some(function(p) { return p.items && p.items.indexOf('online') >= 0; });

@@ -9793,13 +9793,13 @@ function openSalesReport(vi) {
         }
       });
       if (cherrySoldCount > 0) {
-        var cherryEntry = makeSoldEntry(item.name || '' + ' (Cherry Bomb)', price, cherrySoldCount, 0, item.photo || '');
+        var cherryEntry = makeSoldEntry((item.name || '') + ' — Cherry Bomb', price, cherrySoldCount, 0, item.photo || '');
         cherryEntry.venue = 'cherry';
         soldItemsCurrent.push(cherryEntry);
         soldItemsAll.push(cherryEntry);
       }
       if (onlineSoldCount > 0) {
-        var onlineEntry = makeSoldEntry(item.name || '' + ' (Online)', price, onlineSoldCount, 0, item.photo || '');
+        var onlineEntry = makeSoldEntry((item.name || '') + ' — Online', price, onlineSoldCount, 0, item.photo || '');
         onlineEntry.venue = 'online';
         // If there's a payment covering online, put in settled
         if (paidCherryOnline > 0) {
