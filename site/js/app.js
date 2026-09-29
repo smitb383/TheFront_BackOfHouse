@@ -9926,8 +9926,20 @@ function openSalesReport(vi) {
   // Build period-split tables
   var soldTable = '';
   if (lastSettled && mergedSettledList.length > 0) {
-    soldTable += buildSoldTable('Previous Period (Settled ' + lastSettled + ')', mergedSettledList, settledSoldQty, settledRevenue, settledDesigner, '#ddd8d0');
-    soldTable += buildSoldTable('Current Period (New Sales)', mergedCurrentList, currentSoldQty, currentRevenue, currentDesigner, '#d4ecd5');
+    // New sales first
+    if (mergedCurrentList.length > 0) {
+      soldTable += buildSoldTable('New Sales (Unpaid)', mergedCurrentList, currentSoldQty, currentRevenue, currentDesigner, '#d4ecd5');
+    } else {
+      soldTable += '<div style="font-family:Cormorant Garamond,serif;font-size:16px;color:#888;font-style:italic;margin:16px 0">No new sales since last payment.</div>';
+    }
+    // Previously paid as collapsed summary
+    soldTable += '<div style="margin-top:24px;border:1px solid #ccc;border-radius:6px;overflow:hidden">' +
+      '<div onclick="var el=this.nextElementSibling;el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#eee;cursor:pointer;font-family:DM Mono,monospace;font-size:11px">' +
+        '<span style="color:#666">Previously Paid (' + lastSettled + ')</span>' +
+        '<span style="color:#666">' + settledSoldQty + ' items · $' + settledRevenue.toLocaleString() + ' revenue · $' + settledDesigner.toLocaleString() + ' paid ›</span>' +
+      '</div>' +
+      '<div style="display:none">' + buildSoldTable('Previously Paid', mergedSettledList, settledSoldQty, settledRevenue, settledDesigner, '#ddd8d0') + '</div>' +
+    '</div>';
   } else {
     soldTable += buildSoldTable('Sales Summary', mergedSoldList, totalSoldQty, totalRevenue, totalDesigner, '#e8e4dc');
   }

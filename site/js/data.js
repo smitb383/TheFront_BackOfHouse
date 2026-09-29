@@ -723,6 +723,16 @@ window.addEventListener('beforeunload', function() {
             }
           }
         });
+        // Fix: Deposit Unknown Grid Orange Mug qty should be 2
+        var depUnk = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('deposit') >= 0; });
+        if (depUnk) {
+          depUnk.items.forEach(function(item) {
+            if ((item.name || '').toLowerCase().indexOf('grid orange') >= 0 && (item.qty || 1) === 1) {
+              item.qty = 2;
+              changed = true;
+            }
+          });
+        }
         // Fix: Dalmatina Cobalt/Brown tank bought at 70% (noCommission)
         var dalm = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('dalmatina') >= 0; });
         if (dalm) {
