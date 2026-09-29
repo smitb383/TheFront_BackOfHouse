@@ -705,6 +705,17 @@ window.addEventListener('beforeunload', function() {
             v.paymentStatus = 'sent';
             changed = true;
           }
+          // Ugly Hot: add second payment for online rings (Del paid)
+          if (name.indexOf('ugly') >= 0) {
+            var hasOnlinePay = v.paymentHistory && v.paymentHistory.some(function(p) { return p.items && p.items.indexOf('online') >= 0; });
+            if (!hasOnlinePay) {
+              if (!v.paymentHistory) v.paymentHistory = [];
+              v.paymentHistory.push({ date: '2026-09-25', amount: 133, items: '4 online rings (Del paid)' });
+              v.previouslyPaid = 0;
+              v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
+              changed = true;
+            }
+          }
         });
         if (changed) {
           localStorage.setItem('popup_inv_new_v1', JSON.stringify(inv));
