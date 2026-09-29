@@ -9736,8 +9736,14 @@ function openSalesReport(vi) {
     if (lossCount > 0) {
       var lossRevenue = price * lossCount;
       var lossDesignerCut = Math.floor(lossRevenue * (dPct / 100));
-      var lossEntry = { name: item.name || '' + (lossCount > 1 ? ' (x' + lossCount + ')' : ''), price: price, qtySold: lossCount, noComm: 0, revenue: lossRevenue, designerCut: lossDesignerCut, storeCut: 0, photo: item.photo || '' };
-      soldItemsCurrent.push(lossEntry);
+      var lossLabel = (item.name || '') + (missingC > 0 ? ' (missing)' : '') + (brokenC > 0 && !vendor.brokenNotPaidByStore ? ' (broken)' : '');
+      var lossEntry = { name: lossLabel, price: price, qtySold: lossCount, noComm: 0, revenue: lossRevenue, designerCut: lossDesignerCut, storeCut: 0, photo: item.photo || '' };
+      // If already settled (has lastSettled date), put losses in settled period
+      if (lastSettled) {
+        soldItemsSettled.push(lossEntry);
+      } else {
+        soldItemsCurrent.push(lossEntry);
+      }
       soldItemsAll.push(lossEntry);
     }
 
