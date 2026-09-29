@@ -723,6 +723,16 @@ window.addEventListener('beforeunload', function() {
             }
           }
         });
+        // Fix: Dalmatina Cobalt/Brown tank bought at 70% (noCommission)
+        var dalm = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('dalmatina') >= 0; });
+        if (dalm) {
+          dalm.items.forEach(function(item) {
+            if ((item.name || '').toLowerCase().indexOf('cobalt') >= 0 && (item.onlineSold || 0) > 0 && !item.noCommission) {
+              item.noCommission = 1;
+              changed = true;
+            }
+          });
+        }
         if (changed) {
           localStorage.setItem('popup_inv_new_v1', JSON.stringify(inv));
           console.log('[data] Seeded payment history from sales reports');
