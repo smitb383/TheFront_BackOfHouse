@@ -9767,18 +9767,47 @@ function openSalesReport(vi) {
       });
     } else {
       tQty = item.qty || 1;
-      tSold = Math.min((item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0), tQty);
+      var storeSoldCount = item.sold || 0;
+      var cherrySoldCount = item.cherrySold || 0;
+      var onlineSoldCount = item.onlineSold || 0;
+      tSold = storeSoldCount + cherrySoldCount + onlineSoldCount;
       tNoComm = item.noCommission || 0;
-      if (tSold > 0) {
-        var split = splitSoldDates(item.soldDates, tSold);
+      // Store sales: use settlement dates
+      if (storeSoldCount > 0) {
+        var split = splitSoldDates(item.soldDates, storeSoldCount);
         var settledNoComm = Math.min(tNoComm, split.settled);
-        var currentNoComm = tNoComm - settledNoComm;
+        var currentNoComm = Math.min(tNoComm - settledNoComm, split.current);
         if (split.settled > 0) {
           soldItemsSettled.push(makeSoldEntry(item.name || '', price, split.settled, settledNoComm, item.photo || ''));
         }
         if (split.current > 0) {
           soldItemsCurrent.push(makeSoldEntry(item.name || '', price, split.current, currentNoComm, item.photo || ''));
         }
+      }
+      // Cherry/online sales: always current (unpaid) unless covered by payment history
+      var paidCherryOnline = 0;
+      (vendor.paymentHistory || []).forEach(function(ph) {
+        if (ph.items && (ph.items.indexOf('cherry') >= 0 || ph.items.indexOf('Cherry') >= 0 || ph.items.indexOf('online') >= 0)) {
+          // This payment covers cherry/online — count those as settled
+          paidCherryOnline++;
+        }
+      });
+      if (cherrySoldCount > 0) {
+        var cherryEntry = makeSoldEntry(item.name || '' + ' (Cherry Bomb)', price, cherrySoldCount, 0, item.photo || '');
+        cherryEntry.venue = 'cherry';
+        soldItemsCurrent.push(cherryEntry);
+        soldItemsAll.push(cherryEntry);
+      }
+      if (onlineSoldCount > 0) {
+        var onlineEntry = makeSoldEntry(item.name || '' + ' (Online)', price, onlineSoldCount, 0, item.photo || '');
+        onlineEntry.venue = 'online';
+        // If there's a payment covering online, put in settled
+        if (paidCherryOnline > 0) {
+          soldItemsSettled.push(onlineEntry);
+        } else {
+          soldItemsCurrent.push(onlineEntry);
+        }
+        soldItemsAll.push(onlineEntry);
       }
     }
     // All items combined for totals — include per-size entries for sized items
@@ -9790,8 +9819,8 @@ function openSalesReport(vi) {
           soldItemsAll.push(makeSoldEntry(item.name || '', price, szSold, szNoComm, item.photo || '', sz.size || ''));
         }
       });
-    } else if (tSold > 0) {
-      soldItemsAll.push(makeSoldEntry(item.name || '', price, tSold, tNoComm, item.photo || ''));
+    } else if (storeSoldCount > 0) {
+      soldItemsAll.push(makeSoldEntry(item.name || '', price, storeSoldCount, tNoComm, item.photo || ''));
     }
     if (hasSz) {
       item.sizes.forEach(function(sz) {
@@ -10094,21 +10123,7 @@ function openSalesReport(vi) {
       soldTable +
       dedSection +
       extraSection +
-      // Broken items for designer to mend
-      (brokenForMendItems.length > 0 ? (function() {
-        var bh = '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Broken — For Designer to Mend</div>';
-        bh += '<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4">';
-        bh += '<thead><tr style="background:#e8e4dc;font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">';
-        bh += '<th style="' + tdStyle + ';width:30px">#</th><th style="' + tdStyle + ';width:48px"></th><th style="' + tdStyle + ';text-align:left">Item</th><th style="' + tdStyle + ';width:40px">Qty</th></tr></thead><tbody>';
-        brokenForMendItems.forEach(function(b, bi) {
-          bh += '<tr><td style="text-align:center;' + tdStyle + '">' + (bi+1) + '</td>';
-          bh += '<td style="text-align:center;' + tdStyle + ';width:48px">' + (b.photo ? '<img src="' + esc(b.photo) + '" style="width:40px;height:40px;object-fit:cover;border-radius:3px">' : '') + '</td>';
-          bh += '<td style="' + tdStyle + '">' + esc(b.name) + '</td>';
-          bh += '<td style="text-align:center;' + tdStyle + '">' + b.qty + '</td></tr>';
-        });
-        bh += '</tbody></table>';
-        return bh;
-      })() : '') +
+      '' +
       // Extra inventory (no price items)
       (extraInventoryItems.length > 0 ? (function() {
         var eh = '<div style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px">Extra Inventory</div>';
