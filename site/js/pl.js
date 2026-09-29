@@ -280,7 +280,8 @@ function inventoryToPLItems() {
         // Calculate actual store revenue accounting for no-commission and missing/broken
         var missingCount = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
         var brokenCount = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
-        var lossCount = missingCount + brokenCount;
+        // Only count broken as loss if store pays for it (not brokenNotPaidByStore)
+        var lossCount = missingCount + (vendor.brokenNotPaidByStore ? 0 : brokenCount);
         var lossCost = Math.round(price * lossCount * (dPct / 100)); // we pay designer for losses
         var recovered = item.recovered || 0;
         var commSold = Math.max(0, totalSold - totalNoComm);
