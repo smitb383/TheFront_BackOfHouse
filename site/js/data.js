@@ -743,8 +743,18 @@ window.addEventListener('beforeunload', function() {
             v.lastSettled = '2026-09-30';
           }
         });
+        // Fix: Sticky Glass Bubble Glass III was NOT sold — clear sold count
+        var stickyV = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('sticky') >= 0; });
+        if (stickyV) {
+          stickyV.items.forEach(function(item) {
+            if ((item.name||'').toLowerCase().indexOf('bubble') >= 0 && (item.name||'').toLowerCase().indexOf('iii') >= 0 && (item.sold||0) > 0) {
+              item.sold = 0;
+              changed = true;
+            }
+          });
+        }
         // Mark fully settled vendors
-        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana'];
+        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana', 'sticky'];
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
           if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
