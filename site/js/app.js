@@ -8683,14 +8683,18 @@ function renderInvNew() {
     } else {
       var vendorDeductions = vendor.deductions || [];
       var vendorExtras = vendor.extraPayments || [];
-      var totalVendorDed = 0, totalVendorExtras = 0;
+      var totalVendorDed = 0, totalVendorExtras = 0, totalDesignerOwedExtras = 0;
       vendorDeductions.forEach(function(d) { totalVendorDed += (d.amount || 0); });
-      vendorExtras.forEach(function(e) { totalVendorExtras += (e.amount || 0); });
+      vendorExtras.forEach(function(e) {
+        totalVendorExtras += (e.amount || 0);
+        if (e.designerOwed) totalDesignerOwedExtras += (e.amount || 0);
+      });
       var wePayShipping = vendor.shippingCoveredBy === 'us' && shipCostNum > 0;
       // Deductions come back to us, extra payments go out from us, recoveries offset losses
       var actualLoss = Math.max(0, vendorLossCost - vendorRecovered);
       var netStoreCalc = vendorStore + totalVendorDed - totalVendorExtras - actualLoss - (wePayShipping ? shipCostNum : 0);
-      var netDesignerCalc = vendorDesigner - totalVendorDed + totalVendorExtras;
+      // Their Net only includes designer-owed extras, not internal costs
+      var netDesignerCalc = vendorDesigner - totalVendorDed + totalDesignerOwedExtras;
       var hasAdj = totalVendorDed > 0 || totalVendorExtras > 0 || vendorLossCost > 0 || wePayShipping;
       statsHtml = statBlock('Total Value', vendorMerchValue) +
         statBlock('Sold', vendorTotal) +
