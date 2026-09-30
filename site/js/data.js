@@ -741,6 +741,24 @@ window.addEventListener('beforeunload', function() {
               changed = true;
             }
           }
+          // Emily: $108 Chrome Star already in $1,015 payment, clear extra
+          if (name.indexOf('emily') >= 0) {
+            v.paymentHistory = [
+              { date: '2026-09-01', amount: 1015, items: '46 Hester store sales (incl. $108 broken Chrome Star)' }
+            ];
+            v.previouslyPaid = 1015;
+            v.extraPayments = [];
+            changed = true;
+          }
+          // Madeline: Del paid mirror directly ($1,260), chair through us ($1,680)
+          if (name.indexOf('madeline') >= 0) {
+            v.paymentHistory = [
+              { date: '2026-09-01', amount: 1680, items: 'Chair sale (70% commission)' },
+              { date: '2026-09-01', amount: 1260, items: 'Mirror — Del paid directly (noCommission purchase)' }
+            ];
+            v.previouslyPaid = 2940;
+            changed = true;
+          }
           // Nora: fix payments and clear extra payments (already in prices/payments)
           if (name.indexOf('nora') >= 0) {
             v.paymentHistory = [
@@ -777,7 +795,7 @@ window.addEventListener('beforeunload', function() {
             changed = true;
           }
         }
-        var settledNames = ['dev', 'eerie', 'eventyr', 'conner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot', 'tori', 'nora'];
+        var settledNames = ['dev', 'eerie', 'eventyr', 'conner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot', 'tori', 'nora', 'emily'];
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
           if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
