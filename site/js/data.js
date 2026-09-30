@@ -673,10 +673,10 @@ window.addEventListener('beforeunload', function() {
           'minena': 2366, 'nora': 992, 'ogbff': 952, 'orchard': 402,
           'oscr': 392, 'ossinger': 106, 'pote': 385, 'sagitta': 322,
           'salteye': 599, 'sticky': 1414, 'svetlana': 1531,
-          'twinker': 355, 'ugly': 714, 'veda': 287, 'zoe': 180,
+          'tori': 252, 'twinker': 355, 'ugly': 714, 'veda': 287, 'zoe': 180,
           'chunky': 39
         };
-        var noPay = ['taotao', 'taottao', 'tori'];
+        var noPay = ['taotao', 'taottao'];
         var changed = false;
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
@@ -767,7 +767,7 @@ window.addEventListener('beforeunload', function() {
             changed = true;
           }
         }
-        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot'];
+        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot', 'tori'];
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
           if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
