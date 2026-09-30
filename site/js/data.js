@@ -839,6 +839,24 @@ window.addEventListener('beforeunload', function() {
             }
           });
         }
+        // Fix: Svetlana Mug set I and VI have extra sold marks (should be 1 each, not 2)
+        // Also add second payment ($81.50 for online mug, overpaid by $15)
+        var svetV = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('svetlana') >= 0; });
+        if (svetV) {
+          svetV.items.forEach(function(item) {
+            var n = (item.name||'').toLowerCase();
+            if (n === 'mug + saucer set i' && (item.sold||0) > 1) { item.sold = 1; changed = true; }
+            if (n === 'mug + saucer set vi' && (item.sold||0) > 1) { item.sold = 1; changed = true; }
+          });
+          var hasSvetPay2 = svetV.paymentHistory && svetV.paymentHistory.some(function(p) { return p.amount === 81.5; });
+          if (!hasSvetPay2) {
+            if (!svetV.paymentHistory) svetV.paymentHistory = [];
+            svetV.paymentHistory.push({ date: '2026-09-15', amount: 81.5, items: 'Online mug+saucer III (overpaid $15 — should have been $66.50)' });
+            svetV.previouslyPaid = 0;
+            svetV.paymentHistory.forEach(function(p) { svetV.previouslyPaid += (p.amount || 0); });
+            changed = true;
+          }
+        }
         // Fix: Dalmatina — tank paid out, fully settled
         var dalm = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('dalmatina') >= 0; });
         if (dalm) {
