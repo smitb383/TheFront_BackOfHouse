@@ -709,36 +709,48 @@ window.addEventListener('beforeunload', function() {
             v.paymentHistory.forEach(function(p) { if (p.date && p.date > latestDate) latestDate = p.date; });
             if (latestDate) { v.lastSettled = latestDate; changed = true; }
           }
-          // Ugly Hot: add payments for online rings + cherry bomb ring
+          // Ugly Hot: fix to exactly 3 payments, deduplicate
           if (name.indexOf('ugly') >= 0) {
-            var hasOnlinePay = v.paymentHistory && v.paymentHistory.some(function(p) { return p.items && p.items.indexOf('online') >= 0; });
-            if (!hasOnlinePay) {
-              if (!v.paymentHistory) v.paymentHistory = [];
-              v.paymentHistory.push({ date: '2026-09-25', amount: 133, items: '4 online rings (Del paid)' });
-              changed = true;
-            }
-            var hasCherryPay = v.paymentHistory && v.paymentHistory.some(function(p) { return p.items && p.items.indexOf('cherry') >= 0; });
-            if (!hasCherryPay) {
-              v.paymentHistory.push({ date: '2026-09-30', amount: 28, items: 'Cherry Bomb basic ring' });
-              changed = true;
-            }
-            v.previouslyPaid = 0;
-            v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
+            v.paymentHistory = [
+              { date: '2026-09-01', amount: 714, items: '46 Hester store sales' },
+              { date: '2026-09-25', amount: 133, items: '4 online rings (Del paid)' },
+              { date: '2026-09-30', amount: 28, items: 'Cherry Bomb basic ring' }
+            ];
+            v.previouslyPaid = 875;
             v.paymentStatus = 'received';
             v.lastSettled = '2026-09-30';
           }
-          // Veda Sun: fully settled
+          // Veda Sun: fix to exactly 2 payments, deduplicate
           if (name.indexOf('veda') >= 0) {
-            var hasVedaCherry = v.paymentHistory && v.paymentHistory.some(function(p) { return p.items && p.items.indexOf('cherry') >= 0; });
-            if (!hasVedaCherry) {
-              if (!v.paymentHistory) v.paymentHistory = [];
-              v.paymentHistory.push({ date: '2026-09-30', amount: 28, items: 'Cherry Bomb cup' });
-              changed = true;
-            }
-            v.previouslyPaid = 0;
-            v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
+            v.paymentHistory = [
+              { date: '2026-09-01', amount: 287, items: '46 Hester store sales' },
+              { date: '2026-09-30', amount: 28, items: 'Cherry Bomb cup' }
+            ];
+            v.previouslyPaid = 315;
             v.paymentStatus = 'received';
             v.lastSettled = '2026-09-30';
+          }
+          // Eventyr: add $25 second payment
+          if (name.indexOf('eventyr') >= 0) {
+            var hasEventyr25 = v.paymentHistory && v.paymentHistory.some(function(p) { return p.amount === 25; });
+            if (!hasEventyr25) {
+              if (!v.paymentHistory) v.paymentHistory = [];
+              v.paymentHistory.push({ date: '2026-09-15', amount: 25, items: 'Juvederm necklace (period 2)' });
+              v.previouslyPaid = 0;
+              v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
+              changed = true;
+            }
+          }
+          // Nora: add $24 second payment
+          if (name.indexOf('nora') >= 0) {
+            var hasNora24 = v.paymentHistory && v.paymentHistory.some(function(p) { return p.amount === 24; });
+            if (!hasNora24) {
+              if (!v.paymentHistory) v.paymentHistory = [];
+              v.paymentHistory.push({ date: '2026-09-15', amount: 24, items: 'Updated sales balance' });
+              v.previouslyPaid = 0;
+              v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
+              changed = true;
+            }
           }
         });
         // Fix: Sticky Glass Bubble Glass III was NOT sold — clear sold count
@@ -764,7 +776,7 @@ window.addEventListener('beforeunload', function() {
             changed = true;
           }
         }
-        var settledNames = ['dev', 'eerie', 'eventyr', 'conner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot', 'tori'];
+        var settledNames = ['dev', 'eerie', 'eventyr', 'conner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot', 'tori', 'nora'];
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
           if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
@@ -775,6 +787,17 @@ window.addEventListener('beforeunload', function() {
             }
           }
         });
+        // Fix: Orchard Lace Pant qty:3, sold:3 (sales report shows 3 sold)
+        var orchardV = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('orchard') >= 0; });
+        if (orchardV) {
+          orchardV.items.forEach(function(item) {
+            if ((item.name||'').toLowerCase().indexOf('lace pant') >= 0) {
+              if ((item.qty||1) !== 3 || (item.sold||0) !== 3) {
+                item.qty = 3; item.sold = 3; changed = true;
+              }
+            }
+          });
+        }
         // Fix: Deposit Unknown Grid Orange Mug qty should be 2
         var depUnk = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('deposit') >= 0; });
         if (depUnk) {
