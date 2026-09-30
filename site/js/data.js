@@ -665,9 +665,10 @@ window.addEventListener('beforeunload', function() {
         if (!inv || !inv.vendors) return;
         var payouts = {
           'aric': 385, 'ceramicism': 1035, 'dalmatina': 1596,
-          'deposit unknown': 355, 'dev': 1728, 'eerie': 1832,
+          'deconner': 280, 'deposit unknown': 355, 'dev': 1728, 'eerie': 1832,
           'emily': 1015, 'eventyr': 2556, 'gigi': 1466.50,
-          'harlot': 2629, 'isa': 56, 'sucre': 56, 'ivey': 669,
+          'harlot': 2629, 'isa /': 56, 'sucre': 56, 'ivey': 669,
+          'madeline': 1680,
           'konsensuss': 529, 'leonie': 937, 'medea': 753,
           'minena': 2366, 'nora': 992, 'ogbff': 952, 'orchard': 402,
           'oscr': 392, 'ossinger': 106, 'pote': 385, 'sagitta': 322,
@@ -675,7 +676,7 @@ window.addEventListener('beforeunload', function() {
           'twinker': 355, 'ugly': 714, 'veda': 287, 'zoe': 180,
           'chunky': 39
         };
-        var noPay = ['taotao', 'taottao', 'deconner', 'tori'];
+        var noPay = ['taotao', 'taottao', 'tori'];
         var changed = false;
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
@@ -754,7 +755,7 @@ window.addEventListener('beforeunload', function() {
           });
         }
         // Mark fully settled vendors
-        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana', 'sticky'];
+        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss'];
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
           if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
