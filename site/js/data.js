@@ -741,13 +741,13 @@ window.addEventListener('beforeunload', function() {
               changed = true;
             }
           }
-          // Tori: $60 price correction is designer-owed, shipping is internal
+          // Tori: paid $420 total. $60 price correction owed to designer (we undercharged).
+          // Shipping is our internal cost, not part of their net.
           if (name.indexOf('tori') >= 0 && name.indexOf('tori tea') >= 0) {
             v.paymentHistory = [
               { date: '2026-09-01', amount: 420, items: 'All sales (store + cherry) + $60 price correction' }
             ];
             v.previouslyPaid = 420;
-            // Mark price correction as designer-owed, keep shipping as internal
             v.extraPayments = [
               { id: 'ext_price', amount: 60, description: 'Price correction ($30 vs $35 per tin)', designerOwed: true },
               { id: 'ext_ship', amount: 22.9, description: 'Shipping of extra stock back to them' }
