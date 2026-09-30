@@ -741,16 +741,17 @@ window.addEventListener('beforeunload', function() {
               changed = true;
             }
           }
-          // Nora: add $24 second payment
+          // Nora: fix payments and clear extra payments (already in prices/payments)
           if (name.indexOf('nora') >= 0) {
-            var hasNora24 = v.paymentHistory && v.paymentHistory.some(function(p) { return p.amount === 24; });
-            if (!hasNora24) {
-              if (!v.paymentHistory) v.paymentHistory = [];
-              v.paymentHistory.push({ date: '2026-09-15', amount: 24, items: 'Updated sales balance' });
-              v.previouslyPaid = 0;
-              v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
-              changed = true;
-            }
+            v.paymentHistory = [
+              { date: '2026-09-01', amount: 992, items: '46 Hester store sales (incl. $30 rush fee)' },
+              { date: '2026-09-15', amount: 24, items: 'Updated price corrections balance' }
+            ];
+            v.previouslyPaid = 1016;
+            // Rush fee is in the $992 payment, price corrections are in updated prices
+            // Clear extra payments so they don't double-count
+            v.extraPayments = [];
+            changed = true;
           }
         });
         // Fix: Sticky Glass Bubble Glass III was NOT sold — clear sold count
