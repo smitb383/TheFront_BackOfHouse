@@ -673,7 +673,7 @@ window.addEventListener('beforeunload', function() {
           'minena': 2366, 'nora': 992, 'ogbff': 952, 'orchard': 402,
           'oscr': 392, 'ossinger': 106, 'pote': 385, 'sagitta': 322,
           'salteye': 599, 'sticky': 1414, 'svetlana': 1531,
-          'tori': 252, 'twinker': 355, 'ugly': 714, 'veda': 287, 'zoe': 180,
+          'tori': 420, 'twinker': 355, 'ugly': 714, 'veda': 287, 'zoe': 180,
           'chunky': 39
         };
         var noPay = ['taotao', 'taottao'];
@@ -741,6 +741,19 @@ window.addEventListener('beforeunload', function() {
               changed = true;
             }
           }
+          // Tori: $60 price correction is designer-owed, shipping is internal
+          if (name.indexOf('tori') >= 0 && name.indexOf('tori tea') >= 0) {
+            v.paymentHistory = [
+              { date: '2026-09-01', amount: 420, items: 'All sales (store + cherry) + $60 price correction' }
+            ];
+            v.previouslyPaid = 420;
+            // Mark price correction as designer-owed, keep shipping as internal
+            v.extraPayments = [
+              { id: 'ext_price', amount: 60, description: 'Price correction ($30 vs $35 per tin)', designerOwed: true },
+              { id: 'ext_ship', amount: 22.9, description: 'Shipping of extra stock back to them' }
+            ];
+            changed = true;
+          }
           // Emily: $108 Chrome Star already in $1,015 payment, clear extra
           if (name.indexOf('emily') >= 0) {
             v.paymentHistory = [
@@ -759,16 +772,15 @@ window.addEventListener('beforeunload', function() {
             v.previouslyPaid = 2940;
             changed = true;
           }
-          // Nora: fix payments and clear extra payments (already in prices/payments)
+          // Nora: fix payments, keep rush fee (paid to her), clear price corrections (in updated prices)
           if (name.indexOf('nora') >= 0) {
             v.paymentHistory = [
               { date: '2026-09-01', amount: 992, items: '46 Hester store sales (incl. $30 rush fee)' },
               { date: '2026-09-15', amount: 24, items: 'Updated price corrections balance' }
             ];
             v.previouslyPaid = 1016;
-            // Rush fee is in the $992 payment, price corrections are in updated prices
-            // Clear extra payments so they don't double-count
-            v.extraPayments = [];
+            // Keep only the rush fee — price corrections already in updated item prices
+            v.extraPayments = [{ id: 'ext_rush', amount: 30, description: 'Rush Fee For Dress', designerOwed: true }];
             changed = true;
           }
         });

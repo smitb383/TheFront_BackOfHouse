@@ -8738,7 +8738,9 @@ function renderInvNew() {
       (function() {
         var dedsCalc = 0;
         (vendor.deductions || []).forEach(function(d) { dedsCalc += (d.amount || 0); });
-        var totalOwedCalc = vendorDesigner - dedsCalc;
+        var designerOwedExtras = 0;
+        (vendor.extraPayments || []).forEach(function(e) { if (e.designerOwed) designerOwedExtras += (e.amount || 0); });
+        var totalOwedCalc = vendorDesigner - dedsCalc + designerOwedExtras;
         var totalPaidCalc = 0;
         (vendor.paymentHistory || []).forEach(function(p) { totalPaidCalc += (p.amount || 0); });
         var outstandingCalc = totalOwedCalc - totalPaidCalc;
@@ -8779,10 +8781,11 @@ function renderInvNew() {
     var inputFieldStyle = 'background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:160px';
 
     // Calculate designer's owed amount for payout section
-    // Extra payments are internal costs (already paid separately), not part of owed
     var vendorDeductionsForPO = 0;
     (vendor.deductions || []).forEach(function(d) { vendorDeductionsForPO += (d.amount || 0); });
-    var designerOwed = isWholesale ? 0 : (vendorDesigner - vendorDeductionsForPO);
+    var designerOwedExtrasForPO = 0;
+    (vendor.extraPayments || []).forEach(function(e) { if (e.designerOwed) designerOwedExtrasForPO += (e.amount || 0); });
+    var designerOwed = isWholesale ? 0 : (vendorDesigner - vendorDeductionsForPO + designerOwedExtrasForPO);
     var payments = vendor.paymentHistory || [];
     var totalPaid = 0;
     payments.forEach(function(p) { totalPaid += (p.amount || 0); });
