@@ -8735,11 +8735,11 @@ function renderInvNew() {
         '</select>' +
       '</div>' +
       (function() {
-        // Use vendorDesigner (already computed above with losses) + deductions/extras
-        var dedsCalc = 0, extrasCalc = 0;
+        // Use vendorDesigner (already computed above with losses) + deductions only
+        // Extra payments are internal costs we already paid — not part of designer owed
+        var dedsCalc = 0;
         (vendor.deductions || []).forEach(function(d) { dedsCalc += (d.amount || 0); });
-        (vendor.extraPayments || []).forEach(function(e) { extrasCalc += (e.amount || 0); });
-        var totalOwedCalc = vendorDesigner - dedsCalc + extrasCalc;
+        var totalOwedCalc = vendorDesigner - dedsCalc;
         var totalPaidCalc = 0;
         (vendor.paymentHistory || []).forEach(function(p) { totalPaidCalc += (p.amount || 0); });
         var outstandingCalc = totalOwedCalc - totalPaidCalc;
@@ -8774,11 +8774,11 @@ function renderInvNew() {
     var payDetails = vendor.payDetails || '';
     var inputFieldStyle = 'background:var(--surface2);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:5px 8px;border-radius:3px;width:160px';
 
-    // Calculate designer's owed amount for payout section (matches "Their Net" stat)
-    var vendorDeductionsForPO = 0, vendorExtrasForPO = 0;
+    // Calculate designer's owed amount for payout section
+    // Extra payments are internal costs (already paid separately), not part of owed
+    var vendorDeductionsForPO = 0;
     (vendor.deductions || []).forEach(function(d) { vendorDeductionsForPO += (d.amount || 0); });
-    (vendor.extraPayments || []).forEach(function(e) { vendorExtrasForPO += (e.amount || 0); });
-    var designerOwed = isWholesale ? 0 : (vendorDesigner - vendorDeductionsForPO + vendorExtrasForPO);
+    var designerOwed = isWholesale ? 0 : (vendorDesigner - vendorDeductionsForPO);
     var payments = vendor.paymentHistory || [];
     var totalPaid = 0;
     payments.forEach(function(p) { totalPaid += (p.amount || 0); });
@@ -9941,11 +9941,12 @@ function openSalesReport(vi) {
     } else {
       soldTable += '<div style="font-family:Cormorant Garamond,serif;font-size:16px;color:#888;font-style:italic;margin:16px 0">No new sales since last payment.</div>';
     }
-    // Previously paid as collapsed summary
+    // Previously paid as collapsed summary — use actual payment amount, not recalculated
+    var actualPrevPaid = vendor.previouslyPaid || 0;
     soldTable += '<div style="margin-top:24px;border:1px solid #ccc;border-radius:6px;overflow:hidden">' +
       '<div onclick="var el=this.nextElementSibling;el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#eee;cursor:pointer;font-family:DM Mono,monospace;font-size:11px">' +
         '<span style="color:#666">Previously Paid (' + lastSettled + ')</span>' +
-        '<span style="color:#666">' + settledSoldQty + ' items · $' + settledRevenue.toLocaleString() + ' revenue · $' + settledDesigner.toLocaleString() + ' paid ›</span>' +
+        '<span style="color:#666">\u2713 $' + actualPrevPaid.toLocaleString() + ' paid ›</span>' +
       '</div>' +
       '<div style="display:none">' + buildSoldTable('Previously Paid', mergedSettledList, settledSoldQty, settledRevenue, settledDesigner, '#ddd8d0') + '</div>' +
     '</div>';
@@ -10107,14 +10108,13 @@ function openSalesReport(vi) {
               '<div style="' + lineItem + ';color:#888">Previous period settled</div>' +
               '<div style="font-size:16px;font-weight:700;color:#2a7d2e">✓ Paid: $' + prevPaid.toLocaleString() + '</div>' +
             '</div>';
-            // New balance owed (includes new sales + extra payments - deductions)
-            var newBalance = currentDesigner + totalExtras - totalDed;
+            // New balance owed (new sales - deductions only, extras are internal)
+            var newBalance = currentDesigner - totalDed;
             if (newBalance > 0) {
               payoutHtml += '<div style="margin-top:8px;padding:12px;background:#fff;border:3px solid #e07845;border-radius:6px">' +
                 '<div style="' + lineItem + ';color:#888">Outstanding since last payment</div>' +
                 '<div style="margin-top:4px;text-align:left;padding:0 4px">';
               if (currentDesigner > 0) payoutHtml += '<div style="' + lineItem + '">New sales commission (' + dPct + '%): <strong>$' + currentDesigner.toLocaleString() + '</strong></div>';
-              if (totalExtras > 0) payoutHtml += '<div style="' + lineItem + '">Additional payments: <strong>+$' + totalExtras.toLocaleString() + '</strong></div>';
               if (totalDed > 0) payoutHtml += '<div style="' + lineItem + ';color:#c0392b">Deductions: <strong>-$' + totalDed.toLocaleString() + '</strong></div>';
               payoutHtml += '</div>' +
                 '<div style="font-size:22px;font-weight:700;color:#e07845;margin-top:6px">Balance Due: $' + newBalance.toLocaleString() + '</div>' +

@@ -744,7 +744,7 @@ window.addEventListener('beforeunload', function() {
           }
         });
         // Mark fully settled vendors
-        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner'];
+        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana'];
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
           if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
