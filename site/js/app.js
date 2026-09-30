@@ -8735,27 +8735,30 @@ function renderInvNew() {
         '</select>' +
       '</div>' +
       (function() {
-        // Use vendorDesigner (already computed above with losses) + deductions only
-        // Extra payments are internal costs we already paid — not part of designer owed
         var dedsCalc = 0;
         (vendor.deductions || []).forEach(function(d) { dedsCalc += (d.amount || 0); });
         var totalOwedCalc = vendorDesigner - dedsCalc;
         var totalPaidCalc = 0;
         (vendor.paymentHistory || []).forEach(function(p) { totalPaidCalc += (p.amount || 0); });
         var outstandingCalc = totalOwedCalc - totalPaidCalc;
-        // paymentStatus 'received' is a manual override for fully settled
         var isSettled = vendor.paymentStatus === 'received' || (outstandingCalc <= 0 && totalPaidCalc > 0);
         var noSales = vendorTotal === 0;
-        var badge = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em';
+        var badge = 'font-family:DM Mono,monospace;font-size:11px;padding:5px 10px;border-radius:3px;font-weight:700;letter-spacing:0.02em;display:inline-flex;align-items:center;gap:8px';
 
         if (noSales) {
           return '<span style="' + badge + ';color:#5c5870;background:#5c587022;border:2px solid #5c5870">N/A</span>';
         } else if (isSettled) {
-          return '<span style="' + badge + ';color:#88c98a;background:#88c98a22;border:2px solid #88c98a">\u2713 Fully Settled</span>';
-        } else if (totalPaidCalc > 0) {
-          return '<span style="' + badge + ';color:#e07070;background:#e0707022;border:2px solid #e07070">Outstanding $' + fmt(outstandingCalc) + '</span>';
+          return '<span style="' + badge + ';color:#88c98a;background:#88c98a22;border:2px solid #88c98a">\u2713 Settled · $' + fmt(totalPaidCalc) + ' paid</span>';
+        } else if (outstandingCalc > 0) {
+          return '<span style="' + badge + ';color:#e07070;background:#e0707022;border:2px solid #e07070">' +
+            'Outstanding <span style="font-size:14px">$' + fmt(outstandingCalc) + '</span>' +
+            '<button onclick="event.stopPropagation();invNewMarkFullyPaid(' + vi + ',' + Math.round(outstandingCalc * 100) / 100 + ')" style="background:#88c98a;border:none;color:#fff;font-family:DM Mono,monospace;font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-left:4px">\u2713 Mark Paid</button>' +
+          '</span>';
         } else {
-          return '<span style="' + badge + ';color:#e07070;background:#e0707022;border:2px solid #e07070">Unpaid $' + fmt(totalOwedCalc) + '</span>';
+          return '<span style="' + badge + ';color:#e07070;background:#e0707022;border:2px solid #e07070">' +
+            'Unpaid <span style="font-size:14px">$' + fmt(totalOwedCalc) + '</span>' +
+            '<button onclick="event.stopPropagation();invNewMarkFullyPaid(' + vi + ',' + Math.round(totalOwedCalc * 100) / 100 + ')" style="background:#88c98a;border:none;color:#fff;font-family:DM Mono,monospace;font-size:9px;padding:3px 10px;border-radius:3px;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-left:4px">\u2713 Mark Paid</button>' +
+          '</span>';
         }
       })()
     }
@@ -9063,6 +9066,29 @@ function invNewEditVendor(vi, field, val) {
   // Only re-render for fields that affect layout; skip for text inputs like shipping
   var noRerenderFields = ['shippingCost','shippingCoveredBy','eurRate','payDetails','payPlatform','reportNote','previouslyPaid'];
   if (noRerenderFields.indexOf(field) < 0) renderInvNew();
+}
+
+function invNewMarkFullyPaid(vi, amount) {
+  var data = getInvNew();
+  if (!data || !data.vendors[vi]) return;
+  var v = data.vendors[vi];
+  if (!v.paymentHistory) v.paymentHistory = [];
+  // Add payment entry for the outstanding amount
+  v.paymentHistory.push({
+    date: new Date().toISOString().slice(0, 10),
+    amount: amount,
+    items: 'Full settlement'
+  });
+  // Update previouslyPaid total
+  var total = 0;
+  v.paymentHistory.forEach(function(p) { total += (p.amount || 0); });
+  v.previouslyPaid = total;
+  // Mark as fully settled
+  v.paymentStatus = 'received';
+  v.lastSettled = new Date().toISOString().slice(0, 10);
+  v._modified = new Date().toISOString();
+  saveInvNew(data);
+  renderInvNew();
 }
 
 function invNewAddPaymentHistory(vi) {

@@ -665,7 +665,7 @@ window.addEventListener('beforeunload', function() {
         if (!inv || !inv.vendors) return;
         var payouts = {
           'aric': 385, 'ceramicism': 1035, 'dalmatina': 1596,
-          'deconner': 280, 'deposit unknown': 355, 'dev': 1728, 'eerie': 1832,
+          'conner': 280, 'deposit unknown': 355, 'dev': 1728, 'eerie': 1832,
           'emily': 1015, 'eventyr': 2556, 'gigi': 1466.50,
           'harlot': 2629, 'isa /': 56, 'sucre': 56, 'ivey': 669,
           'madeline': 1680,
@@ -680,12 +680,9 @@ window.addEventListener('beforeunload', function() {
         var changed = false;
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
-          // Skip Tori, Taotao, Deconner
+          // Skip Taotao only
           if (noPay.some(function(n) { return name.indexOf(n) >= 0; })) {
-            if (name.indexOf('deconner') >= 0 && v.paymentStatus !== 'not-paid') {
-              v.paymentStatus = 'not-paid'; changed = true;
-            }
-            if ((name.indexOf('taotao') >= 0 || name.indexOf('taottao') >= 0) && v.paymentStatus !== 'not-paid') {
+            if (v.paymentStatus !== 'not-paid') {
               v.paymentStatus = 'not-paid'; changed = true;
             }
             return;
@@ -767,7 +764,7 @@ window.addEventListener('beforeunload', function() {
             changed = true;
           }
         }
-        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot', 'tori'];
+        var settledNames = ['dev', 'eerie', 'eventyr', 'conner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot', 'tori'];
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
           if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
