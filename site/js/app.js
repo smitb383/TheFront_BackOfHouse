@@ -8734,21 +8734,42 @@ function renderInvNew() {
           '<option value="sold-out"' + (returnPlan === 'sold-out' ? ' selected' : '') + '>N/A — Sold Out</option>' +
         '</select>' +
       '</div>' +
-      '<div style="display:flex;flex-direction:column;align-items:center" onclick="event.stopPropagation()">' +
-        '<div style="' + lblStyle + '">Payment</div>' +
-        '<select onchange="invNewEditVendor(' + vi + ',\'paymentStatus\',this.value);renderInvNew()" style="background:' + psColor + '22;border:2px solid ' + psColor + ';color:' + psColor + ';' + selBase + '">' +
-          '<option value="not-paid"' + (paymentStatus === 'not-paid' ? ' selected' : '') + '>Haven\'t Paid</option>' +
-          '<option value="sent-report"' + (paymentStatus === 'sent-report' ? ' selected' : '') + '>Sent Report</option>' +
-          '<option value="sent"' + (paymentStatus === 'sent' ? ' selected' : '') + '>Sent Payment</option>' +
-          '<option value="received"' + (paymentStatus === 'received' ? ' selected' : '') + '>\u2713 Received</option>' +
-          '<option value="na"' + (paymentStatus === 'na' ? ' selected' : '') + '>N/A — Sold Out</option>' +
-          '<option value="no-sale"' + (paymentStatus === 'no-sale' ? ' selected' : '') + '>N/A — Didn\'t Sell</option>' +
-        '</select>' +
-      '</div>' +
-      '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;accent-color:#88c98a" onclick="event.stopPropagation()">' +
-        '<input type="checkbox"' + (salesLogDone ? ' checked' : '') + ' onchange="invNewEditVendor(' + vi + ',\'salesLogDone\',this.checked);renderInvNew()">' +
-        '<span style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:' + (salesLogDone ? '#88c98a' : 'var(--muted)') + ';font-weight:' + (salesLogDone ? '700' : '400') + '">Sales Log</span>' +
-      '</label>';
+      (function() {
+        // Calculate outstanding balance for payment badge
+        var dPctCalc = vendor.designerPct != null ? vendor.designerPct : 70;
+        var totalOwedCalc = 0;
+        vendor.items.forEach(function(item) {
+          var price = item.salePrice || 0;
+          var sold = 0;
+          if (item.sizes && item.sizes.length) { item.sizes.forEach(function(sz) { sold += (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0); }); }
+          else { sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0); }
+          if (sold > 0) {
+            var noComm = 0;
+            if (item.sizes && item.sizes.length) { item.sizes.forEach(function(sz) { noComm += (sz.noCommission || 0); }); }
+            else { noComm = item.noCommission || 0; }
+            totalOwedCalc += Math.floor(price * sold * (dPctCalc / 100));
+          }
+        });
+        var dedsCalc = 0, extrasCalc = 0;
+        (vendor.deductions || []).forEach(function(d) { dedsCalc += (d.amount || 0); });
+        (vendor.extraPayments || []).forEach(function(e) { extrasCalc += (e.amount || 0); });
+        totalOwedCalc = totalOwedCalc - dedsCalc + extrasCalc;
+        var totalPaidCalc = 0;
+        (vendor.paymentHistory || []).forEach(function(p) { totalPaidCalc += (p.amount || 0); });
+        var outstandingCalc = totalOwedCalc - totalPaidCalc;
+        var isSettled = outstandingCalc <= 0 && totalPaidCalc > 0;
+        var noSales = vendorTotal === 0;
+
+        if (noSales) {
+          return '<span style="font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;color:#5c5870;background:#5c587022;border:2px solid #5c5870;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">N/A</span>';
+        } else if (isSettled) {
+          return '<span style="font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;color:#88c98a;background:#88c98a22;border:2px solid #88c98a;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">\u2713 Fully Settled</span>';
+        } else if (totalPaidCalc > 0) {
+          return '<span style="font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;color:#e07070;background:#e0707022;border:2px solid #e07070;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Outstanding $' + fmt(outstandingCalc) + '</span>';
+        } else {
+          return '<span style="font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;color:#e07070;background:#e0707022;border:2px solid #e07070;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Unpaid $' + fmt(totalOwedCalc) + '</span>';
+        }
+      })()
     }
 
     // Shipping status field (rendered inside vendor body)

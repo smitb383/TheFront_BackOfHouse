@@ -711,16 +711,36 @@ window.addEventListener('beforeunload', function() {
             v.paymentHistory.forEach(function(p) { if (p.date && p.date > latestDate) latestDate = p.date; });
             if (latestDate) { v.lastSettled = latestDate; changed = true; }
           }
-          // Ugly Hot: add second payment for online rings (Del paid)
+          // Ugly Hot: add payments for online rings + cherry bomb ring
           if (name.indexOf('ugly') >= 0) {
             var hasOnlinePay = v.paymentHistory && v.paymentHistory.some(function(p) { return p.items && p.items.indexOf('online') >= 0; });
             if (!hasOnlinePay) {
               if (!v.paymentHistory) v.paymentHistory = [];
               v.paymentHistory.push({ date: '2026-09-25', amount: 133, items: '4 online rings (Del paid)' });
-              v.previouslyPaid = 0;
-              v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
               changed = true;
             }
+            var hasCherryPay = v.paymentHistory && v.paymentHistory.some(function(p) { return p.items && p.items.indexOf('cherry') >= 0; });
+            if (!hasCherryPay) {
+              v.paymentHistory.push({ date: '2026-09-30', amount: 28, items: 'Cherry Bomb basic ring' });
+              changed = true;
+            }
+            v.previouslyPaid = 0;
+            v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
+            v.paymentStatus = 'received';
+            v.lastSettled = '2026-09-30';
+          }
+          // Veda Sun: fully settled
+          if (name.indexOf('veda') >= 0) {
+            var hasVedaCherry = v.paymentHistory && v.paymentHistory.some(function(p) { return p.items && p.items.indexOf('cherry') >= 0; });
+            if (!hasVedaCherry) {
+              if (!v.paymentHistory) v.paymentHistory = [];
+              v.paymentHistory.push({ date: '2026-09-30', amount: 28, items: 'Cherry Bomb cup' });
+              changed = true;
+            }
+            v.previouslyPaid = 0;
+            v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
+            v.paymentStatus = 'received';
+            v.lastSettled = '2026-09-30';
           }
         });
         // Fix: Deposit Unknown Grid Orange Mug qty should be 2
