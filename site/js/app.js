@@ -8405,7 +8405,8 @@ function renderInvNew() {
         lastGroup = entry.soldGroup;
         var gLabel = groupLabels[entry.soldGroup] || 'Sales';
         var gColor = groupColors[entry.soldGroup] || 'var(--muted)';
-        var unpaidTag = (entry.soldGroup === 2 || entry.soldGroup === 3) ? ' <span style="background:#e0707033;color:#e07070;font-size:8px;padding:2px 6px;border-radius:3px;margin-left:6px;font-weight:700">UNPAID</span>' : '';
+        var isVendorSettled = vendor.paymentStatus === 'received';
+        var unpaidTag = ((entry.soldGroup === 2 || entry.soldGroup === 3) && !isVendorSettled) ? ' <span style="background:#e0707033;color:#e07070;font-size:8px;padding:2px 6px;border-radius:3px;margin-left:6px;font-weight:700">UNPAID</span>' : '';
         groupHeader = '<div style="padding:10px 0 4px;margin-top:8px;border-top:2px solid ' + gColor + ';font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:' + gColor + '">' + gLabel + unpaidTag + '</div>';
       }
       var ii = entry.ii; var item = vendor.items[ii];
