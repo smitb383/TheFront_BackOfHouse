@@ -755,7 +755,19 @@ window.addEventListener('beforeunload', function() {
           });
         }
         // Mark fully settled vendors
-        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss'];
+        // Harlot: add second payment for cherry/online items
+        var harlotV = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('harlot') >= 0; });
+        if (harlotV) {
+          var hasHarlotPay2 = harlotV.paymentHistory && harlotV.paymentHistory.some(function(p) { return p.items && p.items.indexOf('cherry') >= 0; });
+          if (!hasHarlotPay2) {
+            if (!harlotV.paymentHistory) harlotV.paymentHistory = [];
+            harlotV.paymentHistory.push({ date: '2026-09-30', amount: 511, items: 'Tall Tale (online), Sword White (cherry), Sword Olive (online)' });
+            harlotV.previouslyPaid = 0;
+            harlotV.paymentHistory.forEach(function(p) { harlotV.previouslyPaid += (p.amount || 0); });
+            changed = true;
+          }
+        }
+        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner', 'svetlana', 'sticky', 'ossinger', 'orchard', 'madeline', 'konsensuss', 'harlot'];
         inv.vendors.forEach(function(v) {
           var name = (v.name || '').toLowerCase();
           if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
