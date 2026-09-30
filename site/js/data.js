@@ -743,6 +743,18 @@ window.addEventListener('beforeunload', function() {
             v.lastSettled = '2026-09-30';
           }
         });
+        // Mark fully settled vendors
+        var settledNames = ['dev', 'eerie', 'eventyr', 'deconner'];
+        inv.vendors.forEach(function(v) {
+          var name = (v.name || '').toLowerCase();
+          if (settledNames.some(function(s) { return name.indexOf(s) >= 0; })) {
+            if (v.paymentStatus !== 'received') {
+              v.paymentStatus = 'received';
+              if (!v.lastSettled) v.lastSettled = '2026-09-30';
+              changed = true;
+            }
+          }
+        });
         // Fix: Deposit Unknown Grid Orange Mug qty should be 2
         var depUnk = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('deposit') >= 0; });
         if (depUnk) {

@@ -8735,39 +8735,27 @@ function renderInvNew() {
         '</select>' +
       '</div>' +
       (function() {
-        // Calculate outstanding balance for payment badge
-        var dPctCalc = vendor.designerPct != null ? vendor.designerPct : 70;
-        var totalOwedCalc = 0;
-        vendor.items.forEach(function(item) {
-          var price = item.salePrice || 0;
-          var sold = 0;
-          if (item.sizes && item.sizes.length) { item.sizes.forEach(function(sz) { sold += (sz.sold || 0) + (sz.cherrySold || 0) + (sz.onlineSold || 0); }); }
-          else { sold = (item.sold || 0) + (item.cherrySold || 0) + (item.onlineSold || 0); }
-          if (sold > 0) {
-            var noComm = 0;
-            if (item.sizes && item.sizes.length) { item.sizes.forEach(function(sz) { noComm += (sz.noCommission || 0); }); }
-            else { noComm = item.noCommission || 0; }
-            totalOwedCalc += Math.floor(price * sold * (dPctCalc / 100));
-          }
-        });
+        // Use vendorDesigner (already computed above with losses) + deductions/extras
         var dedsCalc = 0, extrasCalc = 0;
         (vendor.deductions || []).forEach(function(d) { dedsCalc += (d.amount || 0); });
         (vendor.extraPayments || []).forEach(function(e) { extrasCalc += (e.amount || 0); });
-        totalOwedCalc = totalOwedCalc - dedsCalc + extrasCalc;
+        var totalOwedCalc = vendorDesigner - dedsCalc + extrasCalc;
         var totalPaidCalc = 0;
         (vendor.paymentHistory || []).forEach(function(p) { totalPaidCalc += (p.amount || 0); });
         var outstandingCalc = totalOwedCalc - totalPaidCalc;
-        var isSettled = outstandingCalc <= 0 && totalPaidCalc > 0;
+        // paymentStatus 'received' is a manual override for fully settled
+        var isSettled = vendor.paymentStatus === 'received' || (outstandingCalc <= 0 && totalPaidCalc > 0);
         var noSales = vendorTotal === 0;
+        var badge = 'font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em';
 
         if (noSales) {
-          return '<span style="font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;color:#5c5870;background:#5c587022;border:2px solid #5c5870;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">N/A</span>';
+          return '<span style="' + badge + ';color:#5c5870;background:#5c587022;border:2px solid #5c5870">N/A</span>';
         } else if (isSettled) {
-          return '<span style="font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;color:#88c98a;background:#88c98a22;border:2px solid #88c98a;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">\u2713 Fully Settled</span>';
+          return '<span style="' + badge + ';color:#88c98a;background:#88c98a22;border:2px solid #88c98a">\u2713 Fully Settled</span>';
         } else if (totalPaidCalc > 0) {
-          return '<span style="font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;color:#e07070;background:#e0707022;border:2px solid #e07070;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Outstanding $' + fmt(outstandingCalc) + '</span>';
+          return '<span style="' + badge + ';color:#e07070;background:#e0707022;border:2px solid #e07070">Outstanding $' + fmt(outstandingCalc) + '</span>';
         } else {
-          return '<span style="font-family:DM Mono,monospace;font-size:9px;padding:4px 8px;border-radius:3px;color:#e07070;background:#e0707022;border:2px solid #e07070;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Unpaid $' + fmt(totalOwedCalc) + '</span>';
+          return '<span style="' + badge + ';color:#e07070;background:#e0707022;border:2px solid #e07070">Unpaid $' + fmt(totalOwedCalc) + '</span>';
         }
       })()
     }
