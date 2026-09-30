@@ -753,7 +753,7 @@ window.addEventListener('beforeunload', function() {
             }
           });
         }
-        // Fix: Dalmatina Cobalt/Brown tank bought at 70% (noCommission)
+        // Fix: Dalmatina — tank paid out, fully settled
         var dalm = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('dalmatina') >= 0; });
         if (dalm) {
           dalm.items.forEach(function(item) {
@@ -762,6 +762,17 @@ window.addEventListener('beforeunload', function() {
               changed = true;
             }
           });
+          // Add tank payout and mark fully settled
+          var hasTankPay = dalm.paymentHistory && dalm.paymentHistory.some(function(p) { return p.items && p.items.indexOf('tank') >= 0; });
+          if (!hasTankPay) {
+            if (!dalm.paymentHistory) dalm.paymentHistory = [];
+            dalm.paymentHistory.push({ date: '2026-09-15', amount: 126, items: 'Online tank (bought at 70%)' });
+            dalm.previouslyPaid = 0;
+            dalm.paymentHistory.forEach(function(p) { dalm.previouslyPaid += (p.amount || 0); });
+            changed = true;
+          }
+          dalm.paymentStatus = 'received';
+          dalm.lastSettled = '2026-09-30';
         }
         if (changed) {
           localStorage.setItem('popup_inv_new_v1', JSON.stringify(inv));

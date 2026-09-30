@@ -10054,8 +10054,9 @@ function openSalesReport(vi) {
           '</table>';
       }
 
+      // Extra payments are internal costs (not shown to designer on report)
       var extraSection = '';
-      if (extras.length > 0) {
+      if (false && extras.length > 0) {
         var extraRows = extras.map(function(e) {
           return '<tr>' +
             '<td style="' + tdStyle + '">' + esc(e.description || '') + '</td>' +
@@ -10082,11 +10083,12 @@ function openSalesReport(vi) {
       var bigNum = 'font-size:22px;font-weight:700';
       var lineItem = 'font-family:DM Mono,monospace;font-size:12px;padding:2px 0';
 
-      // Designer breakdown — deductions are internal, don't show on report
+      // Designer breakdown — extra payments are internal costs, not shown to designer
+      var reportNetDesigner = totalDesigner - totalDed; // extras excluded from report
+      var reportHasAdj = totalDed > 0;
       var designerBreakdown = '<div style="' + lineItem + '">Sales commission (' + dPct + '%): <strong>$' + totalDesigner.toLocaleString() + '</strong></div>';
       if (totalDed > 0) designerBreakdown += '<div style="' + lineItem + ';color:#c0392b">Deductions: <strong>-$' + totalDed.toLocaleString() + '</strong></div>';
-      if (totalExtras > 0) designerBreakdown += '<div style="' + lineItem + ';color:#2a7d2e">Additional payments: <strong>+$' + totalExtras.toLocaleString() + '</strong></div>';
-      if (hasAdjustments) designerBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net payout: $' + netDesigner.toLocaleString() + '</div>';
+      if (reportHasAdj) designerBreakdown += '<div style="' + lineItem + ';border-top:1px solid #ccc;margin-top:4px;padding-top:4px;font-weight:700">Net payout: $' + reportNetDesigner.toLocaleString() + '</div>';
 
       // Store breakdown — deductions come back to us as recovered cost
       var netStoreReport = totalStore + totalDed - totalExtras;
@@ -10136,7 +10138,7 @@ function openSalesReport(vi) {
             }
           } else {
             // No settlement yet — show total payout
-            var totalOwed = hasAdjustments ? netDesigner : totalDesigner;
+            var totalOwed = reportHasAdj ? reportNetDesigner : totalDesigner;
             payoutHtml += '<div style="' + lbl + '">Designer Payout</div>' +
               '<div style="' + bigNum + ';color:#2a7d2e">$' + totalOwed.toLocaleString() + '</div>' +
               '<div style="margin-top:6px;text-align:left;padding:0 8px">' + designerBreakdown + '</div>';
