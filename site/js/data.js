@@ -856,6 +856,15 @@ window.addEventListener('beforeunload', function() {
             }
           });
         }
+        // Fix: Dev Spiral earring (blue) sold:2→1
+        var devV = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('dev ') >= 0; });
+        if (devV) {
+          devV.items.forEach(function(item) {
+            if ((item.name||'').toLowerCase() === 'spiral earring (blue)' && (item.sold||0) > 1) {
+              item.sold = 1; changed = true;
+            }
+          });
+        }
         // Fix: Deposit Unknown Grid Orange Mug qty should be 2
         var depUnk = inv.vendors.find(function(v) { return v.name && v.name.toLowerCase().indexOf('deposit') >= 0; });
         if (depUnk) {
