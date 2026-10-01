@@ -666,7 +666,7 @@ window.addEventListener('beforeunload', function() {
         var payouts = {
           'aric': 385, 'ceramicism': 1035, 'dalmatina': 1596,
           'conner': 280, 'deposit unknown': 355, 'dev': 1728, 'eerie': 1832,
-          'emily': 1015, 'eventyr': 2556, 'gigi': 1466.50,
+          'emily': 1015, 'eventyr': 2434, 'gigi': 1466.50,
           'harlot': 2629, 'isa /': 56, 'sucre': 56, 'ivey': 669,
           'madeline': 1680,
           'konsensuss': 529, 'leonie': 937, 'medea': 753,
@@ -737,14 +737,13 @@ window.addEventListener('beforeunload', function() {
               if (n.indexOf('corset ii') >= 0 && (item.sold||0) > 5) { item.sold = 5; changed = true; }
               if (n.indexOf('botox tank') >= 0 && n.indexOf('blue') < 0 && (item.sold||0) > 4) { item.sold = 4; changed = true; }
             });
-            var hasEventyr25 = v.paymentHistory && v.paymentHistory.some(function(p) { return p.amount === 25; });
-            if (!hasEventyr25) {
-              if (!v.paymentHistory) v.paymentHistory = [];
-              v.paymentHistory.push({ date: '2026-09-15', amount: 25, items: 'Juvederm necklace (period 2)' });
-              v.previouslyPaid = 0;
-              v.paymentHistory.forEach(function(p) { v.previouslyPaid += (p.amount || 0); });
-              changed = true;
-            }
+            // Paid $2,434 (settled period) + $25 (new necklace) = $2,459
+            v.paymentHistory = [
+              { date: '2026-09-01', amount: 2434, items: '46 Hester store sales (30 items)' },
+              { date: '2026-09-15', amount: 25, items: 'Juvederm necklace (period 2)' }
+            ];
+            v.previouslyPaid = 2459;
+            changed = true;
           }
           // Tori: paid $420 total. $60 price correction owed to designer (we undercharged).
           // Shipping is our internal cost, not part of their net.
