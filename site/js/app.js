@@ -8297,7 +8297,7 @@ function renderInvNew() {
       if (!isWholesale) {
         var missingCount = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
         var brokenCount = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
-        var lossCount = missingCount + brokenCount;
+        var lossCount = missingCount + (vendor.brokenNotPaidByStore ? 0 : brokenCount);
         if (lossCount > 0) {
           var lossPrice = item.salePrice || 0;
           var lossCost = Math.round(lossPrice * lossCount * (dPct / 100));
