@@ -883,6 +883,9 @@ window.addEventListener('beforeunload', function() {
             var n = (item.name||'').toLowerCase();
             if (n === 'mug + saucer set i' && (item.sold||0) > 1) { item.sold = 1; changed = true; }
             if (n === 'mug + saucer set vi' && (item.sold||0) > 1) { item.sold = 1; changed = true; }
+            // Single Mug VIII was not sold — IX was. Fix swap.
+            if (n === 'single mug viii' && (item.sold||0) > 0) { item.sold = 0; changed = true; }
+            if (n === 'single mug ix' && (item.sold||0) === 0) { item.sold = 1; changed = true; }
           });
           var hasSvetPay2 = svetV.paymentHistory && svetV.paymentHistory.some(function(p) { return p.amount === 81.5; });
           if (!hasSvetPay2) {
