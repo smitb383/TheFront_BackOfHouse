@@ -730,8 +730,13 @@ window.addEventListener('beforeunload', function() {
             v.paymentStatus = 'received';
             v.lastSettled = '2026-09-30';
           }
-          // Eventyr: add $25 second payment
+          // Eventyr: fix Corset II sold:6→5 and Botox tank sold:5→4
           if (name.indexOf('eventyr') >= 0) {
+            v.items.forEach(function(item) {
+              var n = (item.name||'').toLowerCase();
+              if (n.indexOf('corset ii') >= 0 && (item.sold||0) > 5) { item.sold = 5; changed = true; }
+              if (n.indexOf('botox tank') >= 0 && n.indexOf('blue') < 0 && (item.sold||0) > 4) { item.sold = 4; changed = true; }
+            });
             var hasEventyr25 = v.paymentHistory && v.paymentHistory.some(function(p) { return p.amount === 25; });
             if (!hasEventyr25) {
               if (!v.paymentHistory) v.paymentHistory = [];
