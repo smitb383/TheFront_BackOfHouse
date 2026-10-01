@@ -802,6 +802,26 @@ window.addEventListener('beforeunload', function() {
           });
         }
         // Mark fully settled vendors
+        // Harlot: fix Pearl Necklace (shoot) and add missing 1/1 Pearls
+        var harlotFix = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('harlot') >= 0; });
+        if (harlotFix && !harlotFix._pearlFix) {
+          harlotFix.items.forEach(function(item) {
+            // Pearl (shoot): price $300→$290, sold 2→1, remove noComm
+            if ((item.name||'').indexOf('shoot') >= 0) {
+              item.salePrice = 290; item.sold = 1; item.noCommission = 0;
+            }
+          });
+          // Add 1/1 Necklace (Pearls) — 2 sold at $300 each
+          var hasPearl1of1 = harlotFix.items.some(function(i) { return (i.name||'').indexOf('1/1 Necklace (Pearls)') >= 0; });
+          if (!hasPearl1of1) {
+            harlotFix.items.push({
+              id: 'inv_harlot_pearl1of1', name: '1/1 Necklace (Pearls)', salePrice: 300, qty: 2, sold: 2,
+              category: 'jewelry', photo: '', description: '', material: '', care: '', notes: ''
+            });
+          }
+          harlotFix._pearlFix = true;
+          changed = true;
+        }
         // Harlot: add second payment for cherry/online items
         var harlotV = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('harlot') >= 0; });
         if (harlotV) {
