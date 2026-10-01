@@ -758,13 +758,16 @@ window.addEventListener('beforeunload', function() {
             ];
             changed = true;
           }
-          // Emily: $108 Chrome Star already in $1,015 payment, clear extra
+          // Emily: $108 Chrome Star already in $1,015 payment
           if (name.indexOf('emily') >= 0) {
             v.paymentHistory = [
               { date: '2026-09-01', amount: 1015, items: '46 Hester store sales (incl. $108 broken Chrome Star)' }
             ];
             v.previouslyPaid = 1015;
-            v.extraPayments = [];
+            // Chrome Star was broken, we paid her full price — mark as designerOwed
+            v.extraPayments = [
+              { id: 'ext_chrome', amount: 108, description: 'Broken Chrome Star (full price owed)', designerOwed: true }
+            ];
             changed = true;
           }
           // Madeline: Del paid mirror directly ($1,260), chair through us ($1,680)
