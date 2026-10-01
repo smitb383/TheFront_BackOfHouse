@@ -808,7 +808,7 @@ window.addEventListener('beforeunload', function() {
           var hasHarlotPay2 = harlotV.paymentHistory && harlotV.paymentHistory.some(function(p) { return p.items && p.items.indexOf('cherry') >= 0; });
           if (!hasHarlotPay2) {
             if (!harlotV.paymentHistory) harlotV.paymentHistory = [];
-            harlotV.paymentHistory.push({ date: '2026-09-30', amount: 511, items: 'Tall Tale (online), Sword White (cherry), Sword Olive (online)' });
+            harlotV.paymentHistory.push({ date: '2026-09-30', amount: 510.99, items: 'Tall Tale (online), Sword White (cherry), Sword Olive (online)' });
             harlotV.previouslyPaid = 0;
             harlotV.paymentHistory.forEach(function(p) { harlotV.previouslyPaid += (p.amount || 0); });
             changed = true;
