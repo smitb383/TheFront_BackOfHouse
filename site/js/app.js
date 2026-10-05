@@ -10821,6 +10821,16 @@ function renderCherryBomb() {
   container.innerHTML = html;
 }
 
+function copyWebVendorList() {
+  var data = getInvNew();
+  if (!data || !data.vendors) return;
+  var names = data.vendors.filter(function(v) { return v.returnPlan === 'keeping' || v.returnPlan === 'hybrid'; })
+    .map(function(v) { return v.name; }).sort().join('\n');
+  navigator.clipboard.writeText(names).then(function() {
+    alert('Copied ' + names.split('\n').length + ' vendor names!');
+  });
+}
+
 function renderWebInventory() {
   var container = document.getElementById('web-inv-container');
   if (!container) return;
@@ -10943,6 +10953,34 @@ function renderWebInventory() {
   html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Items Available</span><div style="font-size:18px;font-weight:700">' + grandItems + '</div></div>';
   html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total Value</span><div style="font-size:18px;font-weight:700">$' + Math.round(grandTotal).toLocaleString() + '</div></div>';
   html += '</div>';
+
+  // Vendor quick-list for website
+  var vendorNames = Object.keys(designerSet).sort();
+  html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:16px;overflow:hidden">';
+  html += '<div onclick="var el=document.getElementById(\'web-vendor-list\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;cursor:pointer;background:var(--surface2)">';
+  html += '<span style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">Vendors for Website (' + vendorNames.length + ')</span>';
+  html += '<span style="font-size:14px;color:var(--muted)">\u203a</span>';
+  html += '</div>';
+  html += '<div id="web-vendor-list" style="display:none;padding:12px 14px">';
+  vendorNames.forEach(function(name) {
+    var v = keepingVendors.find(function(vv) { return vv.name === name; });
+    var itemCount = 0;
+    if (v) v.items.forEach(function(item) {
+      if (v.returnPlan === 'hybrid' && !item.keepingForSale) return;
+      var sold = (item.sold||0) + (item.cherrySold||0) + (item.onlineSold||0);
+      var qty = item.qty || 1;
+      var m = item.missing ? (typeof item.missing === 'number' ? item.missing : 1) : 0;
+      var b = item.broken ? (typeof item.broken === 'number' ? item.broken : 1) : 0;
+      var avail = qty - sold - m - b;
+      if (avail > 0) itemCount += avail;
+    });
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--faint)">';
+    html += '<span style="font-family:Cormorant Garamond,serif;font-size:15px;color:var(--text)">' + esc(name) + '</span>';
+    html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + itemCount + ' items</span>';
+    html += '</div>';
+  });
+  html += '<button onclick="copyWebVendorList()" style="margin-top:10px;background:none;border:1px solid var(--border);color:var(--muted);font-family:DM Mono,monospace;font-size:9px;padding:5px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em">Copy vendor names</button>';
+  html += '</div></div>';
 
   // Filter bar + view toggle
   html += '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:16px">';
