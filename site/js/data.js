@@ -658,6 +658,25 @@ window.addEventListener('beforeunload', function() {
         }
       } catch(e) {}
     }, 3000);
+    // Seed initial vendor to-do items if empty
+    setTimeout(function() {
+      try {
+        var todos = JSON.parse(localStorage.getItem('vendor_todos_v1'));
+        if (todos && todos.vendors && Object.keys(todos.vendors).length > 0) return;
+        var seed = { vendors: {
+          'Amelia Briggs': [
+            { text: 'Need dimensions for each bag', done: false, added: '2026-10-06' },
+            { text: 'Need pictures of each bag', done: false, added: '2026-10-06' }
+          ],
+          'Ceramicism': [
+            { text: 'Bio', done: false, added: '2026-10-06' },
+            { text: 'Description and dimensions for Shrine II', done: false, added: '2026-10-06' },
+            { text: 'Images of both remaining pieces', done: false, added: '2026-10-06' }
+          ]
+        }};
+        localStorage.setItem('vendor_todos_v1', JSON.stringify(seed));
+      } catch(e) {}
+    }, 3500);
     // Seed payment history from sales reports — runs until all vendors have correct data
     setTimeout(function() {
       try {

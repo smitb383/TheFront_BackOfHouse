@@ -2192,9 +2192,8 @@ function showTab(project, tab, btn) {
   if (tab === 'popup-pl') setTimeout(function(){ initPLData(); renderPL(); }, 20);
   if (tab === 'popup-inventory') setTimeout(function(){ initPLData(); renderInventory(); }, 20);
   if (tab === 'popup-inventory-new') setTimeout(function(){ renderInvNew(); }, 20);
-  if (tab === 'web-inventory') setTimeout(function(){ renderWebInventory(); }, 20);
+  if (tab === 'web-inventory') setTimeout(function(){ renderWebInventory(); renderVendorTodos(); }, 20);
   if (tab === 'cherry-bomb') setTimeout(function(){ renderCherryBomb(); }, 20);
-  if (tab === 'vendor-todos') setTimeout(function(){ renderVendorTodos(); }, 20);
   if (tab === 'schedule') setTimeout(function(){ if(typeof initTracker==='function') initTracker(); if(typeof renderTracker==='function') renderTracker(); }, 20);
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
   if (tab === 'chashama-proposal') setTimeout(function(){ loadBPData(); initChaShaMa(); }, 20);
