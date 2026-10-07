@@ -72,6 +72,7 @@
           <button class="tab active" data-tab="popup-inventory-new" onclick="showTab('front','popup-inventory-new',this)"><span class="tab-icon">📦</span>Inventory</button>
           <button class="tab" data-tab="web-inventory" onclick="showTab('front','web-inventory',this)"><span class="tab-icon">🌐</span>Web / Post-Close</button>
           <button class="tab" data-tab="cherry-bomb" onclick="showTab('front','cherry-bomb',this)"><span class="tab-icon">🍒</span>Cherry Bomb Market</button>
+          <button class="tab" data-tab="vendor-todos" onclick="showTab('front','vendor-todos',this)"><span class="tab-icon">✅</span>To-Do</button>
         </div>
         <div class="sub-bar front-side-bar" id="front-retail-bar">
           <div class="brand-switcher">
@@ -2391,6 +2392,15 @@
           <div class="view-desc">Items to bring to Cherry Bomb Market.</div></div>
         </div>
         <div id="cherry-bomb-container"></div>
+      </div>
+
+      <!-- ═══ VENDOR TO-DO LIST ═══ -->
+      <div class="ws-view pl-fullwidth" id="front-vendor-todos">
+        <div class="view-header">
+          <div><div class="view-title">Vendor To-Do</div>
+          <div class="view-desc">Per-designer tasks for web listings, photos, shipping, etc.</div></div>
+        </div>
+        <div id="vendor-todo-container"></div>
       </div>
 
       <!-- OLD BUDGET (hidden, kept for data compat) -->

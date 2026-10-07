@@ -2194,6 +2194,7 @@ function showTab(project, tab, btn) {
   if (tab === 'popup-inventory-new') setTimeout(function(){ renderInvNew(); }, 20);
   if (tab === 'web-inventory') setTimeout(function(){ renderWebInventory(); }, 20);
   if (tab === 'cherry-bomb') setTimeout(function(){ renderCherryBomb(); }, 20);
+  if (tab === 'vendor-todos') setTimeout(function(){ renderVendorTodos(); }, 20);
   if (tab === 'schedule') setTimeout(function(){ if(typeof initTracker==='function') initTracker(); if(typeof renderTracker==='function') renderTracker(); }, 20);
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
   if (tab === 'chashama-proposal') setTimeout(function(){ loadBPData(); initChaShaMa(); }, 20);
@@ -12746,5 +12747,127 @@ function scheduleIdea(id) {
   data.ideas = data.ideas.filter(function(i) { return i.id !== id; });
   saveCalData(data);
   renderCalendar();
+}
+
+// ============================================
+// VENDOR TO-DO LIST
+// ============================================
+
+var VENDOR_TODO_KEY = 'vendor_todos_v1';
+
+function getVendorTodos() {
+  try { return JSON.parse(localStorage.getItem(VENDOR_TODO_KEY)) || { vendors: {} }; } catch(e) { return { vendors: {} }; }
+}
+function saveVendorTodos(data) { localStorage.setItem(VENDOR_TODO_KEY, JSON.stringify(data)); }
+
+function renderVendorTodos() {
+  var container = document.getElementById('vendor-todo-container');
+  if (!container) return;
+  var todos = getVendorTodos();
+  var inv = getInvNew();
+
+  var vendorNames = [];
+  if (inv && inv.vendors) {
+    inv.vendors.forEach(function(v) {
+      if (v.returnPlan === 'keeping' || v.returnPlan === 'hybrid') vendorNames.push(v.name);
+    });
+  }
+  Object.keys(todos.vendors).forEach(function(name) {
+    if (vendorNames.indexOf(name) < 0) vendorNames.push(name);
+  });
+  vendorNames.sort();
+
+  var totalTasks = 0, completedTasks = 0, vendorsWithTasks = 0;
+  Object.keys(todos.vendors).forEach(function(name) {
+    var tasks = todos.vendors[name] || [];
+    if (tasks.length) vendorsWithTasks++;
+    tasks.forEach(function(t) { totalTasks++; if (t.done) completedTasks++; });
+  });
+  var pendingTasks = totalTasks - completedTasks;
+
+  var html = '';
+  html += '<div style="display:flex;gap:24px;padding:16px;background:var(--surface2);border-radius:6px;margin-bottom:16px;font-family:DM Mono,monospace">';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total Tasks</span><div style="font-size:18px;font-weight:700">' + totalTasks + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Pending</span><div style="font-size:18px;font-weight:700;color:' + (pendingTasks > 0 ? '#e07070' : '#88c98a') + '">' + pendingTasks + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Completed</span><div style="font-size:18px;font-weight:700;color:#88c98a">' + completedTasks + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Designers</span><div style="font-size:18px;font-weight:700">' + vendorsWithTasks + '</div></div>';
+  html += '</div>';
+
+  html += '<div style="display:flex;gap:8px;margin-bottom:16px">';
+  html += '<select id="todo-vendor-select" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:6px 10px;border-radius:4px">';
+  html += '<option value="">— Select designer —</option>';
+  vendorNames.forEach(function(name) { html += '<option value="' + esc(name) + '">' + esc(name) + '</option>'; });
+  html += '</select>';
+  html += '<input id="todo-new-task" placeholder="Add task..." style="flex:2;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:6px 10px;border-radius:4px" onkeydown="if(event.key===\'Enter\')addVendorTodo()">';
+  html += '<button onclick="addVendorTodo()" style="background:var(--front);border:none;color:#000;font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Add</button>';
+  html += '</div>';
+
+  var vendorsWithTodosList = vendorNames.filter(function(name) { return todos.vendors[name] && todos.vendors[name].length > 0; });
+
+  if (!vendorsWithTodosList.length) {
+    html += '<div style="text-align:center;padding:40px;color:var(--muted);font-family:Cormorant Garamond,serif;font-style:italic">No tasks yet — select a designer and add one above.</div>';
+  }
+
+  vendorsWithTodosList.forEach(function(name) {
+    var tasks = todos.vendors[name] || [];
+    var done = tasks.filter(function(t) { return t.done; }).length;
+    var pending = tasks.length - done;
+
+    html += '<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2)">';
+    html += '<span style="font-family:Cormorant Garamond,serif;font-size:17px;font-weight:600;color:var(--text)">' + esc(name) + '</span>';
+    html += '<div style="display:flex;gap:8px;align-items:center">';
+    if (pending > 0) html += '<span style="font-family:DM Mono,monospace;font-size:9px;color:#e07070;font-weight:700">' + pending + ' pending</span>';
+    if (done > 0) html += '<span style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a">' + done + ' done</span>';
+    html += '</div></div>';
+    html += '<div style="padding:8px 14px">';
+    tasks.forEach(function(t, ti) {
+      var checked = t.done ? ' checked' : '';
+      var style = t.done ? 'text-decoration:line-through;color:var(--muted)' : 'color:var(--text)';
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--faint)">';
+      html += '<input type="checkbox"' + checked + ' onchange="toggleVendorTodo(\'' + esc(name) + '\',' + ti + ')" style="accent-color:#88c98a;cursor:pointer">';
+      html += '<span style="flex:1;font-family:DM Mono,monospace;font-size:11px;' + style + '">' + esc(t.text) + '</span>';
+      html += '<button onclick="deleteVendorTodo(\'' + esc(name) + '\',' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
+      html += '</div>';
+    });
+    html += '<div style="margin-top:6px"><input placeholder="+ Add task for ' + esc(name) + '..." onkeydown="if(event.key===\'Enter\'){addVendorTodoFor(\'' + esc(name) + '\',this.value);this.value=\'\'}" style="width:100%;background:var(--surface);border:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:5px 8px;border-radius:3px"></div>';
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function addVendorTodo() {
+  var select = document.getElementById('todo-vendor-select');
+  var input = document.getElementById('todo-new-task');
+  if (!select || !input || !select.value || !input.value.trim()) return;
+  addVendorTodoFor(select.value, input.value.trim());
+  input.value = '';
+}
+
+function addVendorTodoFor(vendorName, text) {
+  if (!text) return;
+  var todos = getVendorTodos();
+  if (!todos.vendors[vendorName]) todos.vendors[vendorName] = [];
+  todos.vendors[vendorName].push({ text: text, done: false, added: new Date().toISOString() });
+  saveVendorTodos(todos);
+  renderVendorTodos();
+}
+
+function toggleVendorTodo(vendorName, ti) {
+  var todos = getVendorTodos();
+  if (!todos.vendors[vendorName] || !todos.vendors[vendorName][ti]) return;
+  todos.vendors[vendorName][ti].done = !todos.vendors[vendorName][ti].done;
+  saveVendorTodos(todos);
+  renderVendorTodos();
+}
+
+function deleteVendorTodo(vendorName, ti) {
+  var todos = getVendorTodos();
+  if (!todos.vendors[vendorName]) return;
+  todos.vendors[vendorName].splice(ti, 1);
+  if (!todos.vendors[vendorName].length) delete todos.vendors[vendorName];
+  saveVendorTodos(todos);
+  renderVendorTodos();
 }
 
