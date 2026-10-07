@@ -10716,6 +10716,7 @@ function renderCherryBomb() {
       var available = totalQty - totalSold - mc - bc;
       if (available <= 0) return;
       if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
+      if (item.webExclude) return;
       allItems.push({
         name: item.name || '',
         designer: vendor.name || '',
@@ -10863,6 +10864,7 @@ function renderWebInventory() {
       var lossCount = missingCount + brokenCount;
 
       if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
+      if (item.webExclude) return;
 
       if (hasSz) {
         var availSizes = [];

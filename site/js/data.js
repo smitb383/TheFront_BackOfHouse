@@ -663,6 +663,19 @@ window.addEventListener('beforeunload', function() {
       try {
         var todos = JSON.parse(localStorage.getItem('vendor_todos_v1')) || { vendors: {} };
         if (!todos.vendors) todos.vendors = {};
+        // Exclude Eventyr Blue Botox Tank from web listing
+        var evForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+        if (evForWeb && evForWeb.vendors) {
+          var evV = evForWeb.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('eventyr') >= 0; });
+          if (evV) {
+            evV.items.forEach(function(item) {
+              if ((item.name||'').toLowerCase().indexOf('blue botox') >= 0 && !item.webExclude) {
+                item.webExclude = true;
+                localStorage.setItem('popup_inv_new_v1', JSON.stringify(evForWeb));
+              }
+            });
+          }
+        }
         // Set web status to ready for specific vendors
         var invForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
         if (invForWeb && invForWeb.vendors && !invForWeb._webReady2) {
