@@ -663,7 +663,7 @@ window.addEventListener('beforeunload', function() {
       try {
         var todos = JSON.parse(localStorage.getItem('vendor_todos_v1')) || { vendors: {} };
         if (!todos.vendors) todos.vendors = {};
-        if (todos._seedV >= 2) return; // only seed once
+        if (todos._seedV >= 3) return;
         var seed = {
           'Amelia Briggs': [
             'Need dimensions for each bag',
@@ -673,6 +673,9 @@ window.addEventListener('beforeunload', function() {
             'Bio',
             'Description and dimensions for Shrine II',
             'Images of both remaining pieces'
+          ],
+          'Dev Rooney': [
+            'Ask about prices for feather clips — now $125-135 on her website'
           ],
           'Eva Conrad': [
             'Bio'
@@ -703,7 +706,7 @@ window.addEventListener('beforeunload', function() {
             }
           });
         });
-        todos._seedV = 2;
+        todos._seedV = 3;
         localStorage.setItem('vendor_todos_v1', JSON.stringify(todos));
       } catch(e) {}
     }, 3500);
