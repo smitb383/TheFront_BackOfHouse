@@ -661,32 +661,43 @@ window.addEventListener('beforeunload', function() {
     // Seed initial vendor to-do items if empty
     setTimeout(function() {
       try {
-        var todos = JSON.parse(localStorage.getItem('vendor_todos_v1'));
-        if (todos && todos.vendors && Object.keys(todos.vendors).length > 0) return;
-        var seed = { vendors: {
+        var todos = JSON.parse(localStorage.getItem('vendor_todos_v1')) || { vendors: {} };
+        if (!todos.vendors) todos.vendors = {};
+        var seed = {
           'Amelia Briggs': [
-            { text: 'Need dimensions for each bag', done: false, added: '2026-10-06' },
-            { text: 'Need pictures of each bag', done: false, added: '2026-10-06' }
+            'Need dimensions for each bag',
+            'Need pictures of each bag'
           ],
           'Ceramicism': [
-            { text: 'Bio', done: false, added: '2026-10-06' },
-            { text: 'Description and dimensions for Shrine II', done: false, added: '2026-10-06' },
-            { text: 'Images of both remaining pieces', done: false, added: '2026-10-06' }
+            'Bio',
+            'Description and dimensions for Shrine II',
+            'Images of both remaining pieces'
           ],
           'Deposit Unknown': [
-            { text: 'Dimensions for each item', done: false, added: '2026-10-06' }
+            'Dimensions for each item'
           ],
           'DALMATINA': [
-            { text: 'Simplify care instructions', done: false, added: '2026-10-06' },
-            { text: 'Bio', done: false, added: '2026-10-06' }
+            'Simplify care instructions',
+            'Bio'
           ],
           'Created by Nora': [
-            { text: 'Descriptions of each item', done: false, added: '2026-10-06' },
-            { text: 'Sizing for each item', done: false, added: '2026-10-06' },
-            { text: 'Bio', done: false, added: '2026-10-06' }
+            'Descriptions of each item',
+            'Sizing for each item',
+            'Bio'
           ]
-        }};
-        localStorage.setItem('vendor_todos_v1', JSON.stringify(seed));
+        };
+        var changed = false;
+        Object.keys(seed).forEach(function(vendorName) {
+          if (!todos.vendors[vendorName]) todos.vendors[vendorName] = [];
+          var existing = todos.vendors[vendorName].map(function(t) { return t.text; });
+          seed[vendorName].forEach(function(text) {
+            if (existing.indexOf(text) < 0) {
+              todos.vendors[vendorName].push({ text: text, done: false, added: '2026-10-06' });
+              changed = true;
+            }
+          });
+        });
+        if (changed) localStorage.setItem('vendor_todos_v1', JSON.stringify(todos));
       } catch(e) {}
     }, 3500);
     // Seed payment history from sales reports — runs until all vendors have correct data
