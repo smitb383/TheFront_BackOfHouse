@@ -663,6 +663,7 @@ window.addEventListener('beforeunload', function() {
       try {
         var todos = JSON.parse(localStorage.getItem('vendor_todos_v1')) || { vendors: {} };
         if (!todos.vendors) todos.vendors = {};
+        if (todos._seedV >= 2) return; // only seed once
         var seed = {
           'Amelia Briggs': [
             'Need dimensions for each bag',
@@ -702,7 +703,8 @@ window.addEventListener('beforeunload', function() {
             }
           });
         });
-        if (changed) localStorage.setItem('vendor_todos_v1', JSON.stringify(todos));
+        todos._seedV = 2;
+        localStorage.setItem('vendor_todos_v1', JSON.stringify(todos));
       } catch(e) {}
     }, 3500);
     // Seed payment history from sales reports — runs until all vendors have correct data
