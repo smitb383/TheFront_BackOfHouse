@@ -674,7 +674,9 @@ window.addEventListener('beforeunload', function() {
             'Images of both remaining pieces'
           ],
           'Deposit Unknown': [
-            'Dimensions for each item'
+            'Dimensions for each item',
+            'Double check all items are food, microwave, and dishwasher safe',
+            'Photograph all her work'
           ],
           'DALMATINA': [
             'Simplify care instructions',
