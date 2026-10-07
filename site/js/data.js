@@ -672,6 +672,11 @@ window.addEventListener('beforeunload', function() {
             { text: 'Bio', done: false, added: '2026-10-06' },
             { text: 'Description and dimensions for Shrine II', done: false, added: '2026-10-06' },
             { text: 'Images of both remaining pieces', done: false, added: '2026-10-06' }
+          ],
+          'Created by Nora': [
+            { text: 'Descriptions of each item', done: false, added: '2026-10-06' },
+            { text: 'Sizing for each item', done: false, added: '2026-10-06' },
+            { text: 'Bio', done: false, added: '2026-10-06' }
           ]
         }};
         localStorage.setItem('vendor_todos_v1', JSON.stringify(seed));
