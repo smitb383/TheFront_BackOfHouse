@@ -11089,10 +11089,34 @@ function renderWebInventory() {
         lastDesigner = a.designer;
         var designerItems = filtered.filter(function(x) { return x.designer === a.designer; });
         var designerValue = 0; designerItems.forEach(function(x) { designerValue += x.price * x.qty; });
+        // Summarize web + image status across all items
+        var webReady = 0, webLive = 0, webNotReady = 0;
+        var imgNone = 0, imgTaken = 0, imgReady = 0, imgUploaded = 0;
+        designerItems.forEach(function(di) {
+          var ws = di.webStatus || 'not-ready';
+          if (ws === 'live') webLive++; else if (ws === 'ready') webReady++; else webNotReady++;
+          var is = di.webImageStatus || 'none';
+          if (is === 'uploaded') imgUploaded++; else if (is === 'ready') imgReady++; else if (is === 'taken') imgTaken++; else imgNone++;
+        });
+        var diTotal = designerItems.length;
+        var infoBadge = '', imgBadge = '';
+        // Info status
+        if (webLive === diTotal) infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#88c98a22;color:#88c98a;border:1px solid #88c98a;font-weight:700">INFO LIVE</span>';
+        else if (webReady + webLive === diTotal) infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e;font-weight:700">INFO READY</span>';
+        else infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e0707022;color:#e07070;border:1px solid #e07070;font-weight:700">INFO ' + (webReady + webLive) + '/' + diTotal + '</span>';
+        // Image status
+        if (imgUploaded === diTotal) imgBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#88c98a22;color:#88c98a;border:1px solid #88c98a;font-weight:700">IMG UPLOADED</span>';
+        else if (imgReady + imgUploaded === diTotal) imgBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e;font-weight:700">IMG READY</span>';
+        else if (imgTaken + imgReady + imgUploaded === diTotal) imgBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e;font-weight:700">IMG TAKEN</span>';
+        else imgBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e0707022;color:#e07070;border:1px solid #e07070;font-weight:700">IMG ' + (imgTaken + imgReady + imgUploaded) + '/' + diTotal + '</span>';
+
         html += '<details style="margin-top:8px">';
-        html += '<summary style="padding:14px 0 6px;border-bottom:2px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;list-style:none">';
+        html += '<summary style="padding:14px 0 6px;border-bottom:2px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;list-style:none;gap:12px">';
         html += '<span style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600">' + esc(a.designer) + '</span>';
+        html += '<div style="display:flex;gap:6px;align-items:center">';
+        html += infoBadge + ' ' + imgBadge;
         html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">' + designerItems.reduce(function(s,x){return s+x.qty;},0) + ' items · $' + Math.round(designerValue).toLocaleString() + '</span>';
+        html += '</div>';
         html += '</summary>';
         // Column headers per designer
         html += '<div style="display:grid;grid-template-columns:48px 1fr 90px 60px 50px 70px 70px 80px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:1px solid var(--border);margin-top:4px">';
