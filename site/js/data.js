@@ -673,6 +673,10 @@ window.addEventListener('beforeunload', function() {
             { text: 'Description and dimensions for Shrine II', done: false, added: '2026-10-06' },
             { text: 'Images of both remaining pieces', done: false, added: '2026-10-06' }
           ],
+          'DALMATINA': [
+            { text: 'Simplify care instructions', done: false, added: '2026-10-06' },
+            { text: 'Bio', done: false, added: '2026-10-06' }
+          ],
           'Created by Nora': [
             { text: 'Descriptions of each item', done: false, added: '2026-10-06' },
             { text: 'Sizing for each item', done: false, added: '2026-10-06' },
