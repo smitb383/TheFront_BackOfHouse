@@ -673,6 +673,9 @@ window.addEventListener('beforeunload', function() {
             'Description and dimensions for Shrine II',
             'Images of both remaining pieces'
           ],
+          'Eva Conrad': [
+            'Bio'
+          ],
           'Deposit Unknown': [
             'Dimensions for each item',
             'Double check all items are food, microwave, and dishwasher safe',
