@@ -663,6 +663,24 @@ window.addEventListener('beforeunload', function() {
       try {
         var todos = JSON.parse(localStorage.getItem('vendor_todos_v1')) || { vendors: {} };
         if (!todos.vendors) todos.vendors = {};
+        // Set web status to ready for specific vendors
+        var invForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+        if (invForWeb && invForWeb.vendors && !invForWeb._webReady2) {
+          var webReadyNames = ['dalmatina', 'amelia'];
+          var webChanged = false;
+          invForWeb.vendors.forEach(function(v) {
+            var vn = (v.name||'').toLowerCase();
+            if (webReadyNames.some(function(n) { return vn.indexOf(n) >= 0; })) {
+              v.items.forEach(function(item) {
+                if (item.webStatus !== 'ready') { item.webStatus = 'ready'; webChanged = true; }
+              });
+            }
+          });
+          if (webChanged) {
+            invForWeb._webReady2 = true;
+            localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForWeb));
+          }
+        }
         if (todos._seedV >= 4) return;
         var seed = {
           'Amelia Briggs': [
