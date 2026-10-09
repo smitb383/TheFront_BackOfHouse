@@ -686,15 +686,18 @@ window.addEventListener('beforeunload', function() {
         var uglyForDesc = invForExclude || JSON.parse(localStorage.getItem('popup_inv_new_v1'));
         if (uglyForDesc && uglyForDesc.vendors) {
           var uglyV2 = uglyForDesc.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('ugly') >= 0; });
-          if (uglyV2 && !uglyV2._ringDescSet2) {
+          if (uglyV2 && !uglyV2._ringDescSet3) {
+            var uglyChanged = false;
             uglyV2.items.forEach(function(item) {
               var n = (item.name||'').toLowerCase();
               if (n.indexOf('basic ring') >= 0 || n.indexOf('multicolor ring') >= 0 || n.indexOf('complex ring') >= 0) {
-                if (!item.webDescription) item.webDescription = '1 of 1 hand blown glass ring';
-                if (!item.description) item.description = '1 of 1 hand blown glass ring';
+                item.webDescription = '1 of 1 hand blown glass ring';
+                item.description = '1 of 1 hand blown glass ring';
+                uglyChanged = true;
               }
             });
-            uglyV2._ringDescSet2 = true;
+            uglyV2._ringDescSet3 = true;
+            if (uglyChanged) localStorage.setItem('popup_inv_new_v1', JSON.stringify(uglyForDesc));
             localStorage.setItem('popup_inv_new_v1', JSON.stringify(uglyForDesc));
           }
         }
