@@ -11166,10 +11166,10 @@ function renderWebInventory() {
         html += '</div>';
         html += '</summary>';
         // Column headers per designer
-        html += '<div style="display:grid;grid-template-columns:48px 1fr 90px 60px 50px 70px 70px 80px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:1px solid var(--border);margin-top:4px">';
-        html += '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div><div>Web</div><div>Images</div><div style="text-align:right">Value</div></div>';
+        html += '<div style="display:grid;grid-template-columns:48px 1fr 90px 60px 50px 70px 70px 80px 24px;gap:8px;padding:6px 0;font-family:DM Mono,monospace;font-size:8px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em;border-bottom:1px solid var(--border);margin-top:4px">';
+        html += '<div></div><div>Item</div><div>Category</div><div>Price</div><div>Qty</div><div>Web</div><div>Images</div><div style="text-align:right">Value</div><div></div></div>';
       }
-      html += '<div style="display:grid;grid-template-columns:48px 1fr 90px 60px 50px 70px 70px 80px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
+      html += '<div style="display:grid;grid-template-columns:48px 1fr 90px 60px 50px 70px 70px 80px 24px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--faint)">';
       // Thumb
       html += '<div style="width:42px;height:42px;border-radius:4px;overflow:hidden;background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:' + (a.photo ? 'zoom-in' : 'default') + '"' +
         (a.photo ? ' onclick="openLightbox(\'' + esc(a.photo).replace(/'/g, "\\'") + '\')"' : '') + '>';
@@ -11212,6 +11212,8 @@ function renderWebInventory() {
       })();
       // Value
       html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-align:right;font-weight:600">$' + (a.price * a.qty) + '</div>';
+      // Exclude button
+      html += '<div><button onclick="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webExclude\',true);renderWebInventory()" title="Remove from web listing" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0">✕</button></div>';
       html += '</div>';
       // Expandable detail row
       html += '<details style="padding:0 0 8px 56px;border-bottom:1px solid var(--faint)">';

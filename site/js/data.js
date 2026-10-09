@@ -669,12 +669,17 @@ window.addEventListener('beforeunload', function() {
           var gigiV = invForExclude.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('gigi') >= 0; });
           if (gigiV) {
             gigiV.items.forEach(function(item) {
-              if ((item.name||'').toLowerCase().indexOf('top e') >= 0 && !item.webExclude) {
+              var n = (item.name||'').toLowerCase();
+              if (n.indexOf('top e') >= 0 && !item.webExclude) {
                 item.webExclude = true;
                 item.webExcludeReason = 'Needs to be fixed first';
-                localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForExclude));
+              }
+              if (n.indexOf('printed bra top') >= 0 && !item.webExclude) {
+                item.webExclude = true;
+                item.webExcludeReason = 'Not for sale right now';
               }
             });
+            localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForExclude));
           }
         }
         // Exclude Eventyr Blue Botox Tank from web listing
