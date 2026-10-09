@@ -10915,6 +10915,7 @@ function renderWebInventory() {
             webCare: item.webCare || '',
             webStatus: item.webStatus || 'not-ready',
             webImageStatus: item.webImageStatus || 'none',
+            webName: item.webName || '',
             designerInfo: vendor.webDesignerInfo || '',
             vi: vi,
             ii: ii
@@ -10941,6 +10942,7 @@ function renderWebInventory() {
             webCare: item.webCare || '',
             webStatus: item.webStatus || 'not-ready',
             webImageStatus: item.webImageStatus || 'none',
+            webName: item.webName || '',
             designerInfo: vendor.webDesignerInfo || '',
             vi: vi,
             ii: ii
@@ -11179,8 +11181,10 @@ function renderWebInventory() {
         html += '<span style="color:var(--muted);font-size:10px">--</span>';
       }
       html += '</div>';
-      // Name (editable, syncs two-way with main inventory)
-      html += '<div><input value="' + esc(a.name) + '" onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:14px;background:none;border:none;border-bottom:1px solid transparent;color:var(--text);width:100%;padding:2px 0;outline:none" onfocus="this.style.borderBottomColor=\'var(--border)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
+      // Name (editable) + web name
+      html += '<div>';
+      html += '<input value="' + esc(a.name) + '" onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'name\',this.value)" style="font-family:Cormorant Garamond,serif;font-size:14px;background:none;border:none;border-bottom:1px solid transparent;color:var(--text);width:100%;padding:2px 0;outline:none" onfocus="this.style.borderBottomColor=\'var(--border)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
+      html += '<input value="' + esc(a.webName || '') + '" placeholder="Website name..." onchange="invNewEditItem(' + a.vi + ',' + a.ii + ',\'webName\',this.value)" style="font-family:DM Mono,monospace;font-size:9px;background:none;border:none;border-bottom:1px dashed transparent;color:#82bfbb;width:100%;padding:1px 0;outline:none" onfocus="this.style.borderBottomColor=\'#82bfbb\'" onblur="this.style.borderBottomColor=\'transparent\'">';
       if (a.sizes && a.sizes.length > 0) {
         html += '<div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted);margin-top:1px">Sizes: ' + a.sizes.map(function(s) { return s.size + ' (' + s.qty + ')'; }).join(', ') + '</div>';
       }
