@@ -12914,12 +12914,14 @@ function renderVendorTodos() {
       var checked = t.done ? ' checked' : '';
       var style = t.done ? 'text-decoration:line-through;color:var(--muted)' : 'color:var(--text)';
       html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--faint)">';
-      html += '<input type="checkbox"' + checked + ' onchange="toggleVendorTodo(\'' + esc(name) + '\',' + ti + ')" style="accent-color:#88c98a;cursor:pointer">';
+      var sn = esc(name).replace(/'/g, "\\'");
+      html += '<input type="checkbox"' + checked + ' onchange="toggleVendorTodo(\'' + sn + '\',' + ti + ')" style="accent-color:#88c98a;cursor:pointer">';
       html += '<span style="flex:1;font-family:DM Mono,monospace;font-size:11px;' + style + '">' + esc(t.text) + '</span>';
-      html += '<button onclick="deleteVendorTodo(\'' + esc(name) + '\',' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
+      html += '<button onclick="deleteVendorTodo(\'' + sn + '\',' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
       html += '</div>';
     });
-    html += '<div style="margin-top:6px"><input placeholder="+ Add task for ' + esc(name) + '..." onkeydown="if(event.key===\'Enter\'){addVendorTodoFor(\'' + esc(name) + '\',this.value);this.value=\'\'}" style="width:100%;background:var(--surface);border:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:5px 8px;border-radius:3px"></div>';
+    var safeName = esc(name).replace(/'/g, "\\'");
+    html += '<div style="margin-top:6px"><input placeholder="+ Add task for ' + esc(name) + '..." onkeydown="if(event.key===\'Enter\'){addVendorTodoFor(\'' + safeName + '\',this.value);this.value=\'\'}" style="width:100%;background:var(--surface);border:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:5px 8px;border-radius:3px"></div>';
     html += '</div></div>';
   });
 
