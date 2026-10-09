@@ -11117,6 +11117,10 @@ function renderWebInventory() {
             html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#e07070;margin-bottom:8px;font-weight:700">Not Listing on Website</div>';
             prevExcluded.forEach(function(ex) {
               html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--faint)">';
+              html += '<div style="width:36px;height:36px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center">';
+              if (ex.photo) html += '<img src="' + esc(ex.photo) + '" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
+              else html += '<span style="color:var(--muted);font-size:9px">--</span>';
+              html += '</div>';
               html += '<span style="font-family:Cormorant Garamond,serif;font-size:13px;color:var(--muted)">' + esc(ex.name) + '</span>';
               html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">$' + ex.price + '</span>';
               html += '<input value="' + esc(ex.webExcludeReason || '') + '" placeholder="Reason..." onchange="invNewEditItem(' + ex.vi + ',' + ex.ii + ',\'webExcludeReason\',this.value)" style="flex:1;background:var(--surface);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px">';
