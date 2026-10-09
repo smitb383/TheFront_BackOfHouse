@@ -663,6 +663,20 @@ window.addEventListener('beforeunload', function() {
       try {
         var todos = JSON.parse(localStorage.getItem('vendor_todos_v1')) || { vendors: {} };
         if (!todos.vendors) todos.vendors = {};
+        // Exclude specific items from web listing
+        var invForExclude = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+        if (invForExclude && invForExclude.vendors) {
+          var gigiV = invForExclude.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('gigi') >= 0; });
+          if (gigiV) {
+            gigiV.items.forEach(function(item) {
+              if ((item.name||'').toLowerCase().indexOf('top e') >= 0 && !item.webExclude) {
+                item.webExclude = true;
+                item.webExcludeReason = 'Needs to be fixed first';
+                localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForExclude));
+              }
+            });
+          }
+        }
         // Exclude Eventyr Blue Botox Tank from web listing
         var evForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
         if (evForWeb && evForWeb.vendors) {

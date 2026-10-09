@@ -10716,7 +10716,18 @@ function renderCherryBomb() {
       var available = totalQty - totalSold - mc - bc;
       if (available <= 0) return;
       if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
-      if (item.webExclude) return;
+      if (item.webExclude) {
+        var exQty = item.qty || 1;
+        var exSold = 0;
+        if (hasSz) { item.sizes.forEach(function(sz) { exSold += Math.min((sz.sold||0)+(sz.cherrySold||0)+(sz.onlineSold||0), sz.qty||0); }); }
+        else { exSold = Math.min((item.sold||0)+(item.cherrySold||0)+(item.onlineSold||0), exQty); }
+        var exAvail = exQty - exSold - lossCount;
+        if (exAvail > 0) {
+          allItems.push({ name: item.name||'', designer: vendor.name, price: item.salePrice||0, qty: exAvail, photo: item.photo||'', vi: vi, ii: ii, excluded: true, webExcludeReason: item.webExcludeReason||'' });
+          designerSet[vendor.name] = true;
+        }
+        return;
+      }
       allItems.push({
         name: item.name || '',
         designer: vendor.name || '',
@@ -10864,7 +10875,18 @@ function renderWebInventory() {
       var lossCount = missingCount + brokenCount;
 
       if (vendor.returnPlan === 'hybrid' && !item.keepingForSale) return;
-      if (item.webExclude) return;
+      if (item.webExclude) {
+        var exQty = item.qty || 1;
+        var exSold = 0;
+        if (hasSz) { item.sizes.forEach(function(sz) { exSold += Math.min((sz.sold||0)+(sz.cherrySold||0)+(sz.onlineSold||0), sz.qty||0); }); }
+        else { exSold = Math.min((item.sold||0)+(item.cherrySold||0)+(item.onlineSold||0), exQty); }
+        var exAvail = exQty - exSold - lossCount;
+        if (exAvail > 0) {
+          allItems.push({ name: item.name||'', designer: vendor.name, price: item.salePrice||0, qty: exAvail, photo: item.photo||'', vi: vi, ii: ii, excluded: true, webExcludeReason: item.webExcludeReason||'' });
+          designerSet[vendor.name] = true;
+        }
+        return;
+      }
 
       if (hasSz) {
         var availSizes = [];
@@ -10937,9 +10959,9 @@ function renderWebInventory() {
   });
 
   // Apply category filter
-  var filtered = webInvFilter === 'all' ? allItems : allItems.filter(function(a) {
+  var filtered = (webInvFilter === 'all' ? allItems : allItems.filter(function(a) {
     return (a.category || '').toLowerCase() === webInvFilter;
-  });
+  })).filter(function(a) { return !a.excluded; });
 
   // Totals (from all items, not filtered)
   var grandTotal = 0, grandItems = 0;
@@ -11087,11 +11109,30 @@ function renderWebInventory() {
     filtered.forEach(function(a) {
       // Designer group header (collapsible)
       if (a.designer !== lastDesigner) {
-        if (lastDesigner !== '') html += '</details>'; // close previous group
+        if (lastDesigner !== '') {
+          // Add excluded items for previous designer
+          var prevExcluded = allItems.filter(function(x) { return x.designer === lastDesigner && x.excluded; });
+          if (prevExcluded.length) {
+            html += '<div style="margin-top:12px;padding:10px;background:#e0707008;border:1px dashed #e0707044;border-radius:6px">';
+            html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#e07070;margin-bottom:8px;font-weight:700">Not Listing on Website</div>';
+            prevExcluded.forEach(function(ex) {
+              html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--faint)">';
+              html += '<span style="font-family:Cormorant Garamond,serif;font-size:13px;color:var(--muted)">' + esc(ex.name) + '</span>';
+              html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">$' + ex.price + '</span>';
+              html += '<input value="' + esc(ex.webExcludeReason || '') + '" placeholder="Reason..." onchange="invNewEditItem(' + ex.vi + ',' + ex.ii + ',\'webExcludeReason\',this.value)" style="flex:1;background:var(--surface);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px">';
+              html += '<button onclick="invNewEditItem(' + ex.vi + ',' + ex.ii + ',\'webExclude\',false);renderWebInventory()" style="background:none;border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:3px;cursor:pointer;white-space:nowrap">Restore</button>';
+              html += '</div>';
+            });
+            html += '</div>';
+          }
+          html += '</details>'; // close previous group
+        }
         lastDesigner = a.designer;
         var designerItems = filtered.filter(function(x) { return x.designer === a.designer; });
+        // Get excluded items for this designer from the full allItems list
+        var excludedItems = allItems.filter(function(x) { return x.designer === a.designer && x.excluded; });
         var designerValue = 0; designerItems.forEach(function(x) { designerValue += x.price * x.qty; });
-        // Summarize web + image status across all items
+        // Summarize web + image status across all items (excludes webExclude items since they're filtered out)
         var webReady = 0, webLive = 0, webNotReady = 0;
         var imgNone = 0, imgTaken = 0, imgReady = 0, imgUploaded = 0;
         designerItems.forEach(function(di) {
@@ -11185,7 +11226,24 @@ function renderWebInventory() {
       html += '</div>';
       html += '</details>';
     });
-    if (lastDesigner !== '') html += '</details>'; // close last designer group
+    if (lastDesigner !== '') {
+      // Add excluded items section for last designer
+      var lastExcluded = allItems.filter(function(x) { return x.designer === lastDesigner && x.excluded; });
+      if (lastExcluded.length) {
+        html += '<div style="margin-top:12px;padding:10px;background:#e0707008;border:1px dashed #e0707044;border-radius:6px">';
+        html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#e07070;margin-bottom:8px;font-weight:700">Not Listing on Website</div>';
+        lastExcluded.forEach(function(ex) {
+          html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--faint)">';
+          html += '<span style="font-family:Cormorant Garamond,serif;font-size:13px;color:var(--muted)">' + esc(ex.name) + '</span>';
+          html += '<span style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted)">$' + ex.price + '</span>';
+          html += '<input value="' + esc(ex.webExcludeReason || '') + '" placeholder="Reason..." onchange="invNewEditItem(' + ex.vi + ',' + ex.ii + ',\'webExcludeReason\',this.value)" style="flex:1;background:var(--surface);border:1px solid var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:3px 6px;border-radius:3px">';
+          html += '<button onclick="invNewEditItem(' + ex.vi + ',' + ex.ii + ',\'webExclude\',false);renderWebInventory()" style="background:none;border:1px solid #88c98a;color:#88c98a;font-family:DM Mono,monospace;font-size:8px;padding:2px 6px;border-radius:3px;cursor:pointer;white-space:nowrap">Restore</button>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</details>'; // close last designer group
+    }
   }
 
   container.innerHTML = html;
