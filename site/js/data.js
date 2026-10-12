@@ -715,22 +715,22 @@ window.addEventListener('beforeunload', function() {
           }
         }
         // Set web status to ready for specific vendors
+        // Set web status for specific vendors — only runs once per version
         var invForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
-        if (invForWeb && invForWeb.vendors && !invForWeb._webReady2) {
-          var webReadyNames = ['dalmatina', 'amelia'];
-          var webChanged = false;
+        if (invForWeb && invForWeb.vendors && !invForWeb._webReady4) {
           invForWeb.vendors.forEach(function(v) {
             var vn = (v.name||'').toLowerCase();
-            if (webReadyNames.some(function(n) { return vn.indexOf(n) >= 0; })) {
-              v.items.forEach(function(item) {
-                if (item.webStatus !== 'ready') { item.webStatus = 'ready'; webChanged = true; }
-              });
+            // Dalmatina: all items LIVE
+            if (vn.indexOf('dalmatina') >= 0) {
+              v.items.forEach(function(item) { item.webStatus = 'live'; });
+            }
+            // Amelia: all items ready
+            if (vn.indexOf('amelia') >= 0) {
+              v.items.forEach(function(item) { if (!item.webStatus || item.webStatus === 'not-ready') item.webStatus = 'ready'; });
             }
           });
-          if (webChanged) {
-            invForWeb._webReady2 = true;
-            localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForWeb));
-          }
+          invForWeb._webReady4 = true;
+          localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForWeb));
         }
         if (todos._seedV >= 4) return;
         var seed = {
