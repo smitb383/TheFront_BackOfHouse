@@ -715,6 +715,22 @@ window.addEventListener('beforeunload', function() {
           }
         }
         // Set web status to ready for specific vendors
+        // Move Ugly Hot Glass Blown Pipe II next to Pipe I
+        var uglyForPipe = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+        if (uglyForPipe && uglyForPipe.vendors && !uglyForPipe._pipeMoved) {
+          var uglyPV = uglyForPipe.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('ugly') >= 0; });
+          if (uglyPV) {
+            var pipe2Idx = uglyPV.items.findIndex(function(i) { return (i.name||'').indexOf('Glass Blown Pipe II') >= 0; });
+            var pipe1Idx = uglyPV.items.findIndex(function(i) { return (i.name||'').indexOf('Glass Blown Pipe I') >= 0 && (i.name||'').indexOf('II') < 0; });
+            if (pipe2Idx >= 0 && pipe1Idx >= 0 && Math.abs(pipe2Idx - pipe1Idx) > 1) {
+              var pipe2 = uglyPV.items.splice(pipe2Idx, 1)[0];
+              var newPipe1Idx = uglyPV.items.findIndex(function(i) { return (i.name||'').indexOf('Glass Blown Pipe I') >= 0 && (i.name||'').indexOf('II') < 0; });
+              uglyPV.items.splice(newPipe1Idx + 1, 0, pipe2);
+              uglyForPipe._pipeMoved = true;
+              localStorage.setItem('popup_inv_new_v1', JSON.stringify(uglyForPipe));
+            }
+          }
+        }
         // Set web status for specific vendors — only runs once per version
         var invForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
         if (invForWeb && invForWeb.vendors && !invForWeb._webReady4) {
