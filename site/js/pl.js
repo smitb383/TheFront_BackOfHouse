@@ -3935,7 +3935,7 @@ function renderDiscrepancies() {
   html += '<thead><tr><th style="' + thS + '">Date</th><th style="' + thS + '">Description</th><th style="' + thR + '">Amount</th></tr></thead>';
   html += '<tbody>';
   html += '<tr><td style="' + tdS + '">05/04</td><td style="' + tdS + '">Account opening deposit</td><td style="' + tdR + ';' + green + '">+$100</td></tr>';
-  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Initial capital (branch deposit)</td><td style="' + tdR + ';' + green + '">+$2,000</td></tr>';
+  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Initial capital (branch deposit)<div style="font-size:9px;color:var(--muted);margin-top:2px">↳ $2,000 sent to Amir Badawi same day (see Not Counted below)</div></td><td style="' + tdR + ';' + green + '">+$2,000</td></tr>';
   html += '<tr><td style="' + tdS + '">05/28</td><td style="' + tdS + '">Operating capital (Zelle)</td><td style="' + tdR + ';' + green + '">+$2,000</td></tr>';
   html += '<tr><td style="' + tdS + '">07/13</td><td style="' + tdS + '">Build-out → Benjamin Piascik (now a Front cost)</td><td style="' + tdR + ';' + green + '">+$3,000</td></tr>';
   html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="2"><span style="font-weight:700">Total contributions</span></td><td style="' + tdR + ';font-weight:700;' + green + ';font-size:14px">$7,100</td></tr>';
@@ -3962,7 +3962,7 @@ function renderDiscrepancies() {
   html += '<tbody>';
   html += '<tr><td style="' + tdS + '">06/22</td><td style="' + tdS + '">Rent → PRIV.Y Creative (deposit)</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Del fronted. Not in P&L budget.</td><td style="' + tdR + '">$3,500</td></tr>';
   html += '<tr><td style="' + tdS + '">06/23</td><td style="' + tdS + '">Rent → PRIV.Y Creative (remaining)</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Del fronted. Not in P&L budget.</td><td style="' + tdR + '">$1,000</td></tr>';
-  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Amir Badawi (previous space deposit)</td><td style="' + tdS + ';font-size:9px;' + warn + '">⚠ Was this refunded to Del directly?</td><td style="' + tdR + '">$2,000</td></tr>';
+  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Amir Badawi — deposit for previous space that fell through<div style="font-size:9px;color:var(--muted);margin-top:2px">Linked to Del\'s $2K branch deposit same day</div></td><td style="' + tdS + ';font-size:9px;' + warn + '">⚠ Refund was NOT returned to Front account.<br>If refunded to Del\'s personal account, this was a pass-through — Del deposited $2K and it went straight to Amir, then Amir refunded Del directly. <br><strong>☐ Confirm: returned to Del?</strong></td><td style="' + tdR + '">-$2,000</td></tr>';
   html += '<tr><td style="' + tdS + '">08/31</td><td style="' + tdS + '">6× personal purchase reimbursements</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Del paying Front back for personal items</td><td style="' + tdR + '">$763.50</td></tr>';
   html += '<tr><td style="' + tdS + '">09/15</td><td style="' + tdS + '">Small reimbursement</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Personal item</td><td style="' + tdR + '">$23.32</td></tr>';
   html += '</tbody></table>';
