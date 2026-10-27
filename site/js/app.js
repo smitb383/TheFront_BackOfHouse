@@ -2187,6 +2187,7 @@ function showTab(project, tab, btn) {
   ws.querySelectorAll('.sub-bar .tab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
   showView(project, tab);
+  if (tab === 'popup') setTimeout(function(){ renderOverviewTasks(); }, 20);
   if (tab === 'archive') renderArchive(project);
   if (tab === 'popup-revenue') setTimeout(function(){ initRevProj(); renderRevProj(); }, 20);
   if (tab === 'popup-pl') setTimeout(function(){ initPLData(); renderPL(); }, 20);
@@ -12845,6 +12846,129 @@ function scheduleIdea(id) {
 // ============================================
 // VENDOR TO-DO LIST
 // ============================================
+
+// ============================================
+// OVERVIEW TASKS
+// ============================================
+
+var OV_TASKS_KEY = 'overview_tasks_v1';
+var OV_CATEGORIES = ['Website', 'Future Store', 'Admin / Org', 'Other'];
+
+function getOvTasks() {
+  try { return JSON.parse(localStorage.getItem(OV_TASKS_KEY)) || { categories: {} }; } catch(e) { return { categories: {} }; }
+}
+function saveOvTasks(data) { localStorage.setItem(OV_TASKS_KEY, JSON.stringify(data)); }
+
+function renderOverviewTasks() {
+  var container = document.getElementById('overview-tasks-container');
+  if (!container) return;
+  var data = getOvTasks();
+  if (!data.categories) data.categories = {};
+
+  // Also pull vendor to-dos for the website section
+  var vendorTodos = getVendorTodos ? getVendorTodos() : { vendors: {} };
+  var vendorPending = 0, vendorTotal = 0;
+  Object.keys(vendorTodos.vendors || {}).forEach(function(name) {
+    (vendorTodos.vendors[name] || []).forEach(function(t) { vendorTotal++; if (!t.done) vendorPending++; });
+  });
+
+  // Summary stats
+  var totalTasks = 0, totalPending = 0;
+  OV_CATEGORIES.forEach(function(cat) {
+    (data.categories[cat] || []).forEach(function(t) { totalTasks++; if (!t.done) totalPending++; });
+  });
+
+  var html = '';
+
+  // Summary bar
+  html += '<div style="display:flex;gap:20px;padding:16px;background:var(--surface2);border-radius:6px;margin-bottom:16px;font-family:DM Mono,monospace;align-items:center">';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Total Tasks</span><div style="font-size:18px;font-weight:700">' + (totalTasks + vendorTotal) + '</div></div>';
+  html += '<div><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Pending</span><div style="font-size:18px;font-weight:700;color:' + ((totalPending + vendorPending) > 0 ? '#e07070' : '#88c98a') + '">' + (totalPending + vendorPending) + '</div></div>';
+  if (vendorPending > 0) {
+    html += '<div style="cursor:pointer" onclick="showTab(\'front\',\'web-inventory\',document.querySelector(\'[data-tab=web-inventory]\'))"><span style="font-size:9px;text-transform:uppercase;color:var(--muted);letter-spacing:0.04em">Vendor To-Dos</span><div style="font-size:18px;font-weight:700;color:#e07070">' + vendorPending + '</div></div>';
+  }
+  html += '</div>';
+
+  // Quick add
+  html += '<div style="display:flex;gap:8px;margin-bottom:16px">';
+  html += '<select id="ov-task-cat" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:6px 10px;border-radius:4px">';
+  OV_CATEGORIES.forEach(function(cat) { html += '<option value="' + esc(cat) + '">' + esc(cat) + '</option>'; });
+  html += '</select>';
+  html += '<input id="ov-task-input" placeholder="Add task..." style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:DM Mono,monospace;font-size:11px;padding:6px 10px;border-radius:4px" onkeydown="if(event.key===\'Enter\')addOvTask()">';
+  html += '<button onclick="addOvTask()" style="background:var(--front);border:none;color:#000;font-family:DM Mono,monospace;font-size:10px;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Add</button>';
+  html += '</div>';
+
+  // Category sections
+  OV_CATEGORIES.forEach(function(cat) {
+    var tasks = data.categories[cat] || [];
+    var pending = tasks.filter(function(t) { return !t.done; }).length;
+    var done = tasks.length - pending;
+
+    // For Website category, also show vendor to-do summary
+    var isWebsite = cat === 'Website';
+
+    html += '<div style="border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2)">';
+    html += '<span style="font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:var(--text)">' + esc(cat) + '</span>';
+    html += '<div style="display:flex;gap:8px;align-items:center">';
+    if (pending > 0) html += '<span style="font-family:DM Mono,monospace;font-size:9px;color:#e07070;font-weight:700">' + pending + ' pending</span>';
+    if (done > 0) html += '<span style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a">' + done + ' done</span>';
+    if (isWebsite && vendorPending > 0) html += '<span style="font-family:DM Mono,monospace;font-size:9px;color:#e2c97e;cursor:pointer" onclick="showTab(\'front\',\'web-inventory\',document.querySelector(\'[data-tab=web-inventory]\'))">' + vendorPending + ' vendor to-dos →</span>';
+    html += '</div></div>';
+
+    html += '<div style="padding:8px 14px">';
+    tasks.forEach(function(t, ti) {
+      var checked = t.done ? ' checked' : '';
+      var style = t.done ? 'text-decoration:line-through;color:var(--muted)' : 'color:var(--text)';
+      var safeCat = esc(cat).replace(/'/g, "\\'");
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--faint)">';
+      html += '<input type="checkbox"' + checked + ' onchange="toggleOvTask(\'' + safeCat + '\',' + ti + ')" style="accent-color:#88c98a;cursor:pointer">';
+      html += '<span style="flex:1;font-family:DM Mono,monospace;font-size:11px;' + style + '">' + esc(t.text) + '</span>';
+      html += '<button onclick="deleteOvTask(\'' + safeCat + '\',' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
+      html += '</div>';
+    });
+
+    // Quick add per category
+    var safeCatAdd = esc(cat).replace(/'/g, "\\'");
+    html += '<div style="margin-top:6px"><input placeholder="+ Add to ' + esc(cat) + '..." onkeydown="if(event.key===\'Enter\'){addOvTaskTo(\'' + safeCatAdd + '\',this.value);this.value=\'\'}" style="width:100%;background:var(--surface);border:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:5px 8px;border-radius:3px"></div>';
+    html += '</div></div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function addOvTask() {
+  var select = document.getElementById('ov-task-cat');
+  var input = document.getElementById('ov-task-input');
+  if (!select || !input || !input.value.trim()) return;
+  addOvTaskTo(select.value, input.value.trim());
+  input.value = '';
+}
+
+function addOvTaskTo(cat, text) {
+  if (!text) return;
+  var data = getOvTasks();
+  if (!data.categories[cat]) data.categories[cat] = [];
+  data.categories[cat].push({ text: text, done: false, added: new Date().toISOString() });
+  saveOvTasks(data);
+  renderOverviewTasks();
+}
+
+function toggleOvTask(cat, ti) {
+  var data = getOvTasks();
+  if (!data.categories[cat] || !data.categories[cat][ti]) return;
+  data.categories[cat][ti].done = !data.categories[cat][ti].done;
+  saveOvTasks(data);
+  renderOverviewTasks();
+}
+
+function deleteOvTask(cat, ti) {
+  var data = getOvTasks();
+  if (!data.categories[cat]) return;
+  data.categories[cat].splice(ti, 1);
+  saveOvTasks(data);
+  renderOverviewTasks();
+}
 
 var VENDOR_TODO_KEY = 'vendor_todos_v1';
 

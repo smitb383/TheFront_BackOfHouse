@@ -2198,65 +2198,16 @@
           </div>
         </div>
 
-        <!-- STATUS CARDS -->
-        <div class="ov-status-grid" id="ov-status-grid">
-          <div class="ov-stat-card" onclick="showTab('front','popup-inventory-new',document.querySelector('[data-tab=popup-inventory-new]'))">
-            <div class="ov-stat-label">Designer Payouts</div>
-            <div class="ov-stat-val" id="ov-vendor-count">—</div>
-            <div class="ov-stat-hint">tap to open →</div>
-          </div>
-          <div class="ov-stat-card" onclick="showTab('front','web-inventory',document.querySelector('[data-tab=web-inventory]'))">
-            <div class="ov-stat-label">Web Inventory</div>
-            <div class="ov-stat-val" id="ov-mkt-count">—</div>
-            <div class="ov-stat-hint">tap to open →</div>
-          </div>
-        </div>
+        <!-- TASK OVERVIEW -->
+        <div id="overview-tasks-container"></div>
 
         <!-- KEY LINKS & INFO -->
         <div class="today-card" style="margin-top:16px">
-          <div class="today-card-label">Key Links & Info</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">
-            <a href="https://drive.google.com/drive/u/0/folders/1VoRFE_batxAGHM5t9jIAGRsOJjr0ucPq" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:13px;transition:border-color 0.2s">
-              <span style="font-size:16px">📁</span> Google Drive
-            </a>
-            <a href="https://www.figma.com/design/ohbUkWbqCmfDnyTpZZoEST/Vendor-Deck-the-Front?node-id=36-2&t=0b3W9QeircrcT5Pt-1" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:13px;transition:border-color 0.2s">
-              <span style="font-size:16px">🎨</span> Vendor Deck (Figma)
-            </a>
-            <a href="https://www.pinterest.com/dellikethecomputer/the-front-pop-up/" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:13px;transition:border-color 0.2s">
-              <span style="font-size:16px">📌</span> Pinterest
-            </a>
-            <a href="https://www.instagram.com/thefrontnyc/" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:13px;transition:border-color 0.2s">
-              <span style="font-size:16px">📸</span> @thefrontnyc
-            </a>
-            <a href="https://github.com/smitb383/TheFront_BackOfHouse" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-family:'Cormorant Garamond',serif;font-size:13px;transition:border-color 0.2s">
-              <span style="font-size:16px">💻</span> GitHub (Back of House)
-            </a>
-            <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--muted)">
-              <span style="font-size:16px">🌐</span> thefront.nyc <span style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.08em;color:var(--muted)">(not hosted yet)</span>
-            </div>
-          </div>
-        </div>
-
-
-        <!-- THIS WEEK FOCUS — pulls from schedule -->
-        <div class="ov-week-section">
-          <div class="ov-week-label">This week — post-close priorities</div>
-          <div id="ov-week-from-schedule"></div>
-        </div>
-
-        <!-- ACTION ITEMS -->
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
-          <div class="today-card" style="flex:1;min-width:200px" id="ov-meeting-items">
-            <div class="today-card-label">Next Steps</div>
-            <div id="ov-meeting-list"></div>
-          </div>
-          <div class="today-card" style="flex:1;min-width:200px" id="ov-action-items">
-            <div class="today-card-label">Action Items</div>
-            <div id="ov-action-list"></div>
-          </div>
-          <div class="today-card" style="flex:1;min-width:200px" id="ov-open-questions">
-            <div class="today-card-label">Open Questions</div>
-            <div id="ov-questions-list"></div>
+          <div class="today-card-label">Key Links</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <a href="https://drive.google.com/drive/u/0/folders/1VoRFE_batxAGHM5t9jIAGRsOJjr0ucPq" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-family:'DM Mono',monospace;font-size:10px">📁 Drive</a>
+            <a href="https://www.instagram.com/thefrontnyc/" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-family:'DM Mono',monospace;font-size:10px">📸 @thefrontnyc</a>
+            <a href="https://github.com/smitb383/TheFront_BackOfHouse" target="_blank" style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;text-decoration:none;color:var(--text);font-family:'DM Mono',monospace;font-size:10px">💻 GitHub</a>
           </div>
         </div>
 
