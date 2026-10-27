@@ -10836,6 +10836,20 @@ function renderCherryBomb() {
   container.innerHTML = html;
 }
 
+function webBulkImageStatus(viList, status) {
+  var data = getInvNew();
+  if (!data) return;
+  viList.split(';').forEach(function(pair) {
+    var parts = pair.split(',');
+    var vi = parseInt(parts[0]), ii = parseInt(parts[1]);
+    if (data.vendors[vi] && data.vendors[vi].items[ii]) {
+      data.vendors[vi].items[ii].webImageStatus = status;
+    }
+  });
+  saveInvNew(data);
+  renderWebInventory();
+}
+
 function copyWebVendorList() {
   var data = getInvNew();
   if (!data || !data.vendors) return;
@@ -11156,11 +11170,13 @@ function renderWebInventory() {
         if (webLive === diTotal) infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#88c98a22;color:#88c98a;border:1px solid #88c98a;font-weight:700">INFO LIVE</span>';
         else if (webReady + webLive === diTotal) infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e;font-weight:700">INFO READY</span>';
         else infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e0707022;color:#e07070;border:1px solid #e07070;font-weight:700">INFO ' + (webReady + webLive) + '/' + diTotal + '</span>';
-        // Image status
-        if (imgUploaded === diTotal) imgBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#88c98a22;color:#88c98a;border:1px solid #88c98a;font-weight:700">IMG UPLOADED</span>';
-        else if (imgReady + imgUploaded === diTotal) imgBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e;font-weight:700">IMG READY</span>';
-        else if (imgTaken + imgReady + imgUploaded === diTotal) imgBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e;font-weight:700">IMG TAKEN</span>';
-        else imgBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e0707022;color:#e07070;border:1px solid #e07070;font-weight:700">IMG ' + (imgTaken + imgReady + imgUploaded) + '/' + diTotal + '</span>';
+        // Image status — clickable to cycle all items
+        var imgViList = designerItems.map(function(di) { return di.vi + ',' + di.ii; }).join(';');
+        var imgBadgeStyle = 'font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700;cursor:pointer';
+        if (imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'none\')" style="' + imgBadgeStyle + ';background:#88c98a22;color:#88c98a;border:1px solid #88c98a" title="Click to reset">IMG UPLOADED</span>';
+        else if (imgReady + imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'uploaded\')" style="' + imgBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all uploaded">IMG READY</span>';
+        else if (imgTaken + imgReady + imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'ready\')" style="' + imgBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all ready">IMG TAKEN</span>';
+        else imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'taken\')" style="' + imgBadgeStyle + ';background:#e0707022;color:#e07070;border:1px solid #e07070" title="Click to mark all taken">IMG ' + (imgTaken + imgReady + imgUploaded) + '/' + diTotal + '</span>';
 
         html += '<details style="margin-top:8px">';
         html += '<summary style="padding:14px 0 6px;border-bottom:2px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;list-style:none;gap:12px">';
