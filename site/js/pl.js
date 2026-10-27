@@ -3361,9 +3361,17 @@ function renderCostSummary() {
   var frontTotal = (people['The Front'] || { total: 0 }).total;
 
   // Del's capital account (separate from spend — does not affect cost totals)
-  var delInjected = 10000;
+  // Actual injections with dates
+  var delInjections = [
+    { date: '05/04', amount: 100, desc: 'Account opening deposit' },
+    { date: '05/14', amount: 2000, desc: 'Initial capital (branch deposit)' },
+    { date: '05/28', amount: 2000, desc: 'Operating capital' },
+    { date: '07/13', amount: 3000, desc: 'Transferred for Benji build-out (now Front cost)' }
+  ];
+  var delInjected = 0;
+  delInjections.forEach(function(inj) { delInjected += inj.amount; });
   var delWithdrawn = 5000;
-  var delRemainingInAccount = delInjected - delWithdrawn; // $5K still in Front account
+  var delRemainingInAccount = delInjected - delWithdrawn;
 
   // Owed back: personal spend + remaining injection balance
   var delTotalOwed = delTotal + delRemainingInAccount;
@@ -3479,10 +3487,14 @@ function renderCostSummary() {
   // Del card
   html += '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px">';
   html += '<div style="font-family:DM Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#c9a2e2;margin-bottom:8px">Del</div>';
-  html += '<div style="margin-top:4px;font-family:DM Mono,monospace;font-size:11px;display:flex;flex-direction:column;gap:6px">';
+  html += '<div style="margin-top:4px;font-family:DM Mono,monospace;font-size:11px;display:flex;flex-direction:column;gap:4px">';
   html += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Personal spend</span><span style="color:var(--text);font-weight:600">$' + fmt(delTotal) + '</span></div>';
-  html += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Injected into company</span><span style="color:#88c98a">$' + fmt(delInjected) + '</span></div>';
-  html += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Withdrew</span><span style="color:#e07070">-$' + fmt(delWithdrawn) + '</span></div>';
+  html += '<div style="color:var(--muted);font-size:9px;margin-top:4px;margin-bottom:2px">Injected into Front account:</div>';
+  delInjections.forEach(function(inj) {
+    html += '<div style="display:flex;justify-content:space-between;padding-left:8px"><span style="color:var(--muted);font-size:9px">' + inj.date + ' — ' + inj.desc + '</span><span style="color:#88c98a;font-size:10px">+$' + fmt(inj.amount) + '</span></div>';
+  });
+  html += '<div style="display:flex;justify-content:space-between;padding-left:8px;border-top:1px solid var(--faint);margin-top:2px;padding-top:2px"><span style="color:var(--muted);font-size:9px;font-weight:700">Total injected</span><span style="color:#88c98a;font-weight:700">$' + fmt(delInjected) + '</span></div>';
+  html += '<div style="display:flex;justify-content:space-between;margin-top:4px"><span style="color:var(--muted)">Withdrew</span><span style="color:#e07070">-$' + fmt(delWithdrawn) + '</span></div>';
   html += '<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;border-top:1px solid var(--border)"><span style="color:var(--muted);font-weight:700">Owed back</span><span style="color:#e07070;font-size:16px;font-weight:700">$' + fmt(delTotalOwed) + '</span></div>';
   html += '</div></div>';
 
@@ -3925,7 +3937,7 @@ function renderDiscrepancies() {
   html += '<tr><td style="' + tdS + '">05/04</td><td style="' + tdS + '">Account opening deposit</td><td style="' + tdR + ';' + green + '">$' + fmt(100) + '</td></tr>';
   html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Initial capital (branch deposit)</td><td style="' + tdR + ';' + green + '">$' + fmt(2000) + '</td></tr>';
   html += '<tr><td style="' + tdS + '">05/28</td><td style="' + tdS + '">Operating capital (Zelle)</td><td style="' + tdR + ';' + green + '">$' + fmt(2000) + '</td></tr>';
-  html += '<tr><td style="' + tdS + '">07/13</td><td style="' + tdS + '">Benjamin Piascik build-out</td><td style="' + tdR + ';' + green + '">$' + fmt(3000) + '</td></tr>';
+  html += '<tr><td style="' + tdS + '">07/13</td><td style="' + tdS + '">Transferred for Benji build-out <span style="font-size:9px;color:var(--muted)">(now counted as Front cost, funded by Del)</span></td><td style="' + tdR + ';' + green + '">$' + fmt(3000) + '</td></tr>';
   html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="2"><span style="font-weight:700">Subtotal Contributions</span></td><td style="' + tdR + ';font-weight:700;' + green + '">$' + fmt(7100) + '</td></tr>';
   html += '</tbody></table>';
   html += '</div>';
@@ -3949,17 +3961,17 @@ function renderDiscrepancies() {
   html += '<div style="' + noteS + ';margin-top:6px">$' + fmt(7100) + ' in &minus; $' + fmt(5000) + ' out = $' + fmt(2100) + '</div>';
   html += '</div>';
 
-  // 3d: CC spending
-  html += '<div style="' + subH + '">Del\'s Personal Card Spending (Front Business CC)</div>';
+  // 3d: Front Business Credit Card
+  html += '<div style="' + subH + '">The Front Business Credit Card</div>';
   html += '<div style="' + cardS + '">';
   html += '<table style="width:100%;border-collapse:collapse">';
   html += '<tbody>';
-  html += '<tr><td style="' + tdS + '">Total CC charges</td><td style="' + tdR + ';font-weight:700">~$' + fmt(6150) + '</td></tr>';
+  html += '<tr><td style="' + tdS + '">Total CC charges (4 months)</td><td style="' + tdR + ';font-weight:700">~$' + fmt(6150) + '</td></tr>';
   html += '<tr><td style="' + tdS + '">Major items</td><td style="' + tdR + '">Alibaba orders (~$' + fmt(2200) + '), insurance ($' + fmt(723) + '), hardware/build-out, Amazon</td></tr>';
-  html += '<tr><td style="' + tdS + '">CC paid off from Front account</td><td style="' + tdR + ';' + green + '">$' + fmt(4256) + ' in payments</td></tr>';
-  html += '<tr><td style="' + tdS + '">Credit remaining on card</td><td style="' + tdR + ';' + green + '">$120.65</td></tr>';
+  html += '<tr><td style="' + tdS + '">Paid off from Front checking account</td><td style="' + tdR + ';' + green + '">$' + fmt(4256) + '</td></tr>';
+  html += '<tr><td style="' + tdS + '">Remaining credit balance (overpaid)</td><td style="' + tdR + ';' + green + '">+$120.65</td></tr>';
   html += '</tbody></table>';
-  html += '<div style="' + noteS + ';margin-top:8px">Charges spanned ~4 months of Front operations.</div>';
+  html += '<div style="' + noteS + ';margin-top:8px">Card is paid off. $120.65 overpayment sitting as credit.</div>';
   html += '</div>';
 
   // 3e: Other items through account
@@ -3977,7 +3989,7 @@ function renderDiscrepancies() {
   html += '<div style="' + cardS + '">';
   html += '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted);margin-bottom:4px">Del\'s personal spend (tracked in P&L Cost Summary)</div>';
   html += '<div style="font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--text)">~$' + fmt(875) + '</div>';
-  html += '<div style="' + noteS + ';margin-top:4px">Excluding Benji $' + fmt(3000) + ' which is counted in contributions above.</div>';
+  html += '<div style="' + noteS + ';margin-top:4px">Benji $' + fmt(3000) + ' is now a Front operating cost. The $3K Del transferred on 07/13 funded this — counted as her contribution to the account.</div>';
   html += '</div>';
 
   // ── Section 4: Account Reconciliation ──
