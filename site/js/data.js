@@ -733,6 +733,17 @@ window.addEventListener('beforeunload', function() {
         }
         // Set web status for specific vendors — only runs once per version
         var invForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+        // Ugly Hot: mark all items as images taken
+        if (invForWeb && invForWeb.vendors && !invForWeb._uglyImgTaken) {
+          var uglyWeb = invForWeb.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('ugly') >= 0; });
+          if (uglyWeb) {
+            uglyWeb.items.forEach(function(item) {
+              if (!item.webImageStatus || item.webImageStatus === 'none') item.webImageStatus = 'taken';
+            });
+            invForWeb._uglyImgTaken = true;
+            localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForWeb));
+          }
+        }
         if (invForWeb && invForWeb.vendors && !invForWeb._webReady4) {
           invForWeb.vendors.forEach(function(v) {
             var vn = (v.name||'').toLowerCase();
