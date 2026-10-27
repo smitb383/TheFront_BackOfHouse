@@ -3917,12 +3917,47 @@ function renderDiscrepancies() {
   html += '</div>';
 
   // ── Section 2: Brooke's Costs Owed Back ──
+  // Pull Brooke's items from P&L data
+  var brookeItems = [];
+  var plData = getPLData();
+  var plScenario = plData ? (plData.scenarios.find(function(s) { return s.id === 'popup' || s.type === 'popup'; }) || plData.scenarios[0]) : null;
+  if (plScenario) {
+    (plScenario.fixedCosts || []).forEach(function(c) {
+      if (c.subItems && c.subItems.length) {
+        c.subItems.forEach(function(sub) { if (sub.who === 'Brooke') brookeItems.push({ name: sub.name || c.name, amount: sub.amount || 0, category: c.category || '' }); });
+      } else if (c.who === 'Brooke') {
+        brookeItems.push({ name: c.name, amount: (c.amount||0) - (c.refund||0), category: c.category || '' });
+      }
+    });
+    (plScenario.cafeVariable || []).forEach(function(cv) {
+      if (cv.subItems && cv.subItems.length) {
+        cv.subItems.forEach(function(sub) { if (sub.who === 'Brooke') brookeItems.push({ name: sub.name || cv.name, amount: sub.amount || 0, category: 'cafe' }); });
+      } else if (cv.who === 'Brooke') {
+        brookeItems.push({ name: cv.name, amount: cv.amount || 0, category: 'cafe' });
+      }
+    });
+  }
+  var brookeSpendTotal = 0;
+  brookeItems.forEach(function(bi) { brookeSpendTotal += bi.amount; });
+
   html += '<div style="' + sH + '">2. Brooke\'s Costs Owed Back</div>';
   html += '<div style="' + cardS + '">';
-  html += '<div style="font-family:DM Mono,monospace;font-size:13px;color:var(--text)">';
-  html += 'Personal spend on Front costs tracked in P&L: <span style="font-weight:700;' + red + '">~$' + fmt(1410) + '</span>';
+  html += '<div onclick="var el=document.getElementById(\'disc-brooke-items\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer">';
+  html += '<span style="font-family:DM Mono,monospace;font-size:13px;color:var(--text)">Personal card purchases for the business</span>';
+  html += '<span style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;' + red + '">$' + fmt(brookeSpendTotal) + ' <span style="font-size:12px;color:var(--muted);font-weight:400">' + brookeItems.length + ' items ›</span></span>';
   html += '</div>';
-  html += '<div style="' + noteS + ';margin-top:8px">These were personal card purchases for the business (not through the Front bank account).</div>';
+  html += '<div id="disc-brooke-items" style="display:none;margin-top:10px">';
+  html += '<table style="width:100%;border-collapse:collapse">';
+  html += '<thead><tr><th style="' + thS + '">Item</th><th style="' + thS + '">Category</th><th style="' + thR + '">Amount</th></tr></thead>';
+  html += '<tbody>';
+  brookeItems.sort(function(a,b) { return b.amount - a.amount; });
+  brookeItems.forEach(function(bi) {
+    html += '<tr><td style="' + tdS + '">' + esc(bi.name) + '</td><td style="' + tdS + ';font-size:9px;text-transform:uppercase;color:var(--muted)">' + esc(bi.category) + '</td><td style="' + tdR + '">$' + fmt(bi.amount) + '</td></tr>';
+  });
+  html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="2"><span style="font-weight:700">Total</span></td><td style="' + tdR + ';font-weight:700;' + red + '">$' + fmt(brookeSpendTotal) + '</td></tr>';
+  html += '</tbody></table>';
+  html += '</div>';
+  html += '<div style="' + noteS + ';margin-top:8px">Not through the Front bank account — Brooke paid on personal card.</div>';
   html += '</div>';
 
   // ── Section 3: Del's Financial Activity ──
@@ -3979,7 +4014,40 @@ function renderDiscrepancies() {
   html += '<tr><td style="' + tdS + '">Personal purchases reimbursed</td><td style="' + tdR + ';color:var(--muted)">$786.82</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Net zero — Del paid herself back</td></tr>';
   html += '<tr><td style="' + tdS + '">Amir Badawi</td><td style="' + tdR + ';color:var(--muted)">$0</td><td style="' + tdS + ';font-size:9px;' + warn + '">⚠ Refunded to Del — not a Front cost</td></tr>';
   html += '<tr><td style="' + tdS + ';' + red + '">Withdrew back</td><td style="' + tdR + ';' + red + '">-$5,000</td><td style="' + tdS + '"></td></tr>';
-  html += '<tr><td style="' + tdS + ';' + red + '">Del personal spend (P&L items)</td><td style="' + tdR + '">~$875</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Tracked in Costs tab</td></tr>';
+  // Del personal card spends — pull from P&L
+  var delPItems = [];
+  if (plScenario) {
+    (plScenario.fixedCosts || []).forEach(function(c) {
+      if (c.subItems && c.subItems.length) {
+        c.subItems.forEach(function(sub) { if (sub.who === 'Del') delPItems.push({ name: sub.name || c.name, amount: sub.amount || 0, category: c.category || '' }); });
+      } else if (c.who === 'Del') {
+        delPItems.push({ name: c.name, amount: (c.amount||0) - (c.refund||0), category: c.category || '' });
+      }
+    });
+    (plScenario.cafeVariable || []).forEach(function(cv) {
+      if (cv.subItems && cv.subItems.length) {
+        cv.subItems.forEach(function(sub) { if (sub.who === 'Del') delPItems.push({ name: sub.name || cv.name, amount: sub.amount || 0, category: 'cafe' }); });
+      } else if (cv.who === 'Del') {
+        delPItems.push({ name: cv.name, amount: cv.amount || 0, category: 'cafe' });
+      }
+    });
+  }
+  var delPSpendTotal = 0;
+  delPItems.forEach(function(di) { delPSpendTotal += di.amount; });
+  delPItems.sort(function(a,b) { return b.amount - a.amount; });
+
+  html += '<tr><td style="' + tdS + '" colspan="2">';
+  html += '<div onclick="var el=document.getElementById(\'disc-del-personal\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center">';
+  html += '<span style="' + red + '">Del\'s personal card spends</span>';
+  html += '<span style="font-size:10px;color:var(--muted)">' + delPItems.length + ' items ›</span>';
+  html += '</div>';
+  html += '<div id="disc-del-personal" style="display:none;margin-top:8px">';
+  html += '<table style="width:100%;border-collapse:collapse">';
+  delPItems.forEach(function(di) {
+    html += '<tr><td style="padding:3px 6px;font-size:10px;color:var(--text)">' + esc(di.name) + '</td><td style="padding:3px 6px;font-size:9px;color:var(--muted);text-transform:uppercase">' + esc(di.category) + '</td><td style="padding:3px 6px;text-align:right;font-size:10px">$' + fmt(di.amount) + '</td></tr>';
+  });
+  html += '</table></div>';
+  html += '</td><td style="' + tdR + '">$' + fmt(delPSpendTotal) + '</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Tracked in Costs tab</td></tr>';
   html += '<tr style="background:var(--surface)"><td style="' + tdS + ';font-weight:700">Net owed to Del</td><td style="' + tdR + ';font-weight:700;font-size:16px;' + red + '">$2,975</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">$7,100 contributions + $875 spend − $5,000 withdrew</td></tr>';
   html += '</tbody></table>';
   html += '</div>';
