@@ -3364,7 +3364,7 @@ function renderCostSummary() {
   // Actual injections with dates
   var delInjections = [
     { date: '05/04', amount: 100, desc: 'Account opening deposit' },
-    { date: '05/14', amount: 2000, desc: 'Initial capital (branch deposit)' },
+    { date: '05/14', amount: 0, desc: 'Branch deposit → Amir pass-through (refunded to Del)' },
     { date: '05/28', amount: 2000, desc: 'Operating capital' },
     { date: '07/13', amount: 3000, desc: 'Transferred for Benji build-out (now Front cost)' }
   ];
@@ -3909,9 +3909,9 @@ function renderDiscrepancies() {
   html += '<table style="width:100%;border-collapse:collapse">';
   html += '<thead><tr><th style="' + thS + '">Vendor</th><th style="' + thR + '">Amount</th><th style="' + thS + '">Status</th></tr></thead>';
   html += '<tbody>';
-  html += '<tr><td style="' + tdS + '">Taotao</td><td style="' + tdR + ';font-weight:700;' + red + '">$' + fmt(2056) + '</td><td style="' + tdS + '">Wire kept bouncing &mdash; need Del to confirm alternative payment method</td></tr>';
+  html += '<tr><td style="' + tdS + '">Taotao</td><td style="' + tdR + ';font-weight:700;' + green + '">$' + fmt(2056) + '</td><td style="' + tdS + ';' + green + '">✓ Paid</td></tr>';
   html += '<tr><td style="' + tdS + '">Elise (Chez Elise)</td><td style="' + tdR + ';font-weight:700;' + red + '">~$' + fmt(71) + '</td><td style="' + tdS + '">30% cafe profit share, not yet paid</td></tr>';
-  html += '<tr style="background:var(--surface)"><td style="' + tdS + ';font-weight:700" colspan="2">Total Outstanding</td><td style="' + tdR + ';font-weight:700;' + red + '">$' + fmt(2127) + '</td></tr>';
+  html += '<tr style="background:var(--surface)"><td style="' + tdS + ';font-weight:700" colspan="2">Total Outstanding</td><td style="' + tdR + ';font-weight:700;' + red + '">~$' + fmt(71) + '</td></tr>';
   html += '</tbody></table>';
   html += '<div style="' + noteS + ';margin-top:10px">All other designers have been fully settled.</div>';
   html += '</div>';
@@ -3970,10 +3970,10 @@ function renderDiscrepancies() {
   html += '<thead><tr><th style="' + thS + '">Date</th><th style="' + thS + '">Description</th><th style="' + thR + '">Amount</th></tr></thead>';
   html += '<tbody>';
   html += '<tr><td style="' + tdS + '">05/04</td><td style="' + tdS + '">Account opening deposit</td><td style="' + tdR + ';' + green + '">+$100</td></tr>';
-  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Initial capital (branch deposit)<div style="font-size:9px;color:var(--muted);margin-top:2px">↳ $2,000 sent to Amir Badawi same day (see Not Counted below)</div></td><td style="' + tdR + ';' + green + '">+$2,000</td></tr>';
+  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Branch deposit<div style="font-size:9px;color:var(--muted);margin-top:2px">↳ Went to Amir Badawi same day — Amir refunded Del directly. Pass-through, not counted.</div></td><td style="' + tdR + ';color:var(--muted);text-decoration:line-through">+$2,000</td></tr>';
   html += '<tr><td style="' + tdS + '">05/28</td><td style="' + tdS + '">Operating capital (Zelle)</td><td style="' + tdR + ';' + green + '">+$2,000</td></tr>';
   html += '<tr><td style="' + tdS + '">07/13</td><td style="' + tdS + '">Build-out → Benjamin Piascik (now a Front cost)</td><td style="' + tdR + ';' + green + '">+$3,000</td></tr>';
-  html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="2"><span style="font-weight:700">Total contributions</span></td><td style="' + tdR + ';font-weight:700;' + green + ';font-size:14px">$7,100</td></tr>';
+  html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="2"><span style="font-weight:700">Total contributions</span> <span style="font-size:9px;color:var(--muted);font-weight:400">(excl. Amir pass-through)</span></td><td style="' + tdR + ';font-weight:700;' + green + ';font-size:14px">$5,100</td></tr>';
   html += '</tbody></table>';
   html += '</div>';
 
@@ -3997,7 +3997,7 @@ function renderDiscrepancies() {
   html += '<tbody>';
   html += '<tr><td style="' + tdS + '">06/22</td><td style="' + tdS + '">Rent → PRIV.Y Creative (deposit)</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Del fronted. Not in P&L budget.</td><td style="' + tdR + '">$3,500</td></tr>';
   html += '<tr><td style="' + tdS + '">06/23</td><td style="' + tdS + '">Rent → PRIV.Y Creative (remaining)</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Del fronted. Not in P&L budget.</td><td style="' + tdR + '">$1,000</td></tr>';
-  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Amir Badawi — deposit for previous space that fell through<div style="font-size:9px;color:var(--muted);margin-top:2px">Linked to Del\'s $2K branch deposit same day</div></td><td style="' + tdS + ';font-size:9px;color:#e07070">⚠ Refund was NOT returned to Front account.<br>If refunded to Del\'s personal account, this was a pass-through — Del deposited $2K, it went to Amir, then Amir refunded Del directly.<br><strong style="color:var(--text)">☐ Confirm: returned to Del?</strong></td><td style="' + tdR + '">-$2,000</td></tr>';
+  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Amir Badawi — deposit for previous space that fell through<div style="font-size:9px;color:var(--muted);margin-top:2px">Linked to Del\'s $2K branch deposit same day</div></td><td style="' + tdS + ';font-size:9px;color:#88c98a">✓ Confirmed: Amir Zelled refund back to Del\'s personal account.<br>This was a pass-through — Del deposited $2K, it went to Amir, Amir refunded Del directly. Net $0 to The Front.</td><td style="' + tdR + '">-$2,000</td></tr>';
   html += '<tr><td style="' + tdS + '">08/31</td><td style="' + tdS + '">6× personal purchase reimbursements</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Del paying Front back for personal items</td><td style="' + tdR + '">$763.50</td></tr>';
   html += '<tr><td style="' + tdS + '">09/15</td><td style="' + tdS + '">Small reimbursement</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Personal item</td><td style="' + tdR + '">$23.32</td></tr>';
   html += '</tbody></table>';
@@ -4008,11 +4008,11 @@ function renderDiscrepancies() {
   html += '<div style="' + cardS + ';border-left:3px solid var(--front)">';
   html += '<table style="width:100%;border-collapse:collapse;font-family:DM Mono,monospace;font-size:12px">';
   html += '<tbody>';
-  html += '<tr><td style="' + tdS + '">Capital contributions (account opening + operating)</td><td style="' + tdR + ';' + green + '">$4,100</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">$100 + $2,000 + $2,000</td></tr>';
+  html += '<tr><td style="' + tdS + '">Capital contributions (account opening + operating)</td><td style="' + tdR + ';' + green + '">$2,100</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">$100 + $2,000</td></tr>';
   html += '<tr><td style="' + tdS + '">Benji build-out transfer</td><td style="' + tdR + ';' + green + '">$3,000</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Now a Front cost, Del funded it</td></tr>';
-  html += '<tr><td style="' + tdS + '">Rent fronted (not in P&L)</td><td style="' + tdR + '">$4,500</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Separate from operating costs</td></tr>';
-  html += '<tr><td style="' + tdS + '">Personal purchases reimbursed</td><td style="' + tdR + ';color:var(--muted)">$786.82</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Net zero — Del paid herself back</td></tr>';
-  html += '<tr><td style="' + tdS + '">Amir Badawi</td><td style="' + tdR + ';color:var(--muted)">$0</td><td style="' + tdS + ';font-size:9px;' + warn + '">⚠ Refunded to Del — not a Front cost</td></tr>';
+  html += '<tr><td style="' + tdS + ';color:var(--muted)">Amir Badawi pass-through</td><td style="' + tdR + ';color:var(--muted)">$0</td><td style="' + tdS + ';font-size:9px;color:#88c98a">✓ Confirmed refunded to Del</td></tr>';
+  html += '<tr><td style="' + tdS + ';color:var(--muted)">Rent fronted (not in P&L)</td><td style="' + tdR + ';color:var(--muted)">$4,500</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Separate — not counted in contributions</td></tr>';
+  html += '<tr><td style="' + tdS + ';color:var(--muted)">Personal purchases reimbursed</td><td style="' + tdR + ';color:var(--muted)">$786.82</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Net zero — Del paid herself back</td></tr>';
   html += '<tr><td style="' + tdS + ';' + red + '">Withdrew back</td><td style="' + tdR + ';' + red + '">-$5,000</td><td style="' + tdS + '"></td></tr>';
   // Del personal card spends — pull from P&L
   var delPItems = [];
@@ -4048,7 +4048,7 @@ function renderDiscrepancies() {
   });
   html += '</table></div>';
   html += '</td><td style="' + tdR + '">$' + fmt(delPSpendTotal) + '</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Tracked in Costs tab</td></tr>';
-  html += '<tr style="background:var(--surface)"><td style="' + tdS + ';font-weight:700">Net owed to Del</td><td style="' + tdR + ';font-weight:700;font-size:16px;' + red + '">$2,975</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">$7,100 contributions + $875 spend − $5,000 withdrew</td></tr>';
+  html += '<tr style="background:var(--surface)"><td style="' + tdS + ';font-weight:700">Net owed to Del</td><td style="' + tdR + ';font-weight:700;font-size:16px;' + red + '">$' + fmt(delPSpendTotal + 100) + '</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">$5,100 contributions + ~$' + fmt(delPSpendTotal) + ' personal spend − $5,000 withdrew</td></tr>';
   html += '</tbody></table>';
   html += '</div>';
 
@@ -4073,7 +4073,7 @@ function renderDiscrepancies() {
   html += '<tr><td style="' + tdS + '">Bank balance</td><td style="' + tdR + ';font-weight:700">$11,136.83</td></tr>';
   html += '<tr><td style="' + tdS + '">CC credit</td><td style="' + tdR + ';' + green + '">+$120.65</td></tr>';
   html += '<tr style="background:var(--surface)"><td style="' + tdS + ';font-weight:700">Total available</td><td style="' + tdR + ';font-weight:700">~$' + fmt(11257) + '</td></tr>';
-  html += '<tr><td style="' + tdS + '">Outstanding payments (Taotao + Elise)</td><td style="' + tdR + ';' + red + '">-$' + fmt(2127) + '</td></tr>';
+  html += '<tr><td style="' + tdS + '">Outstanding payments (Elise)</td><td style="' + tdR + ';' + red + '">-$' + fmt(71) + '</td></tr>';
   html += '<tr><td style="' + tdS + '">Owe Brooke</td><td style="' + tdR + ';' + red + '">-$' + fmt(1410) + '</td></tr>';
   html += '<tr><td style="' + tdS + '">Owe Del ($' + fmt(2100) + ' contributions + $' + fmt(875) + ' personal spend)</td><td style="' + tdR + ';' + red + '">-$' + fmt(2975) + '</td></tr>';
   html += '<tr style="background:var(--surface)"><td style="' + tdS + ';font-weight:700">Cash remaining after all payouts</td><td style="' + tdR + ';font-weight:700;font-size:16px;' + green + '">~$' + fmt(4745) + '</td></tr>';
@@ -4085,8 +4085,8 @@ function renderDiscrepancies() {
   html += '<div style="' + sH + '">5. Items Needing Confirmation from Del</div>';
   html += '<div style="' + cardS + '">';
   var questions = [
-    'Amir Badawi $' + fmt(2000) + ' &mdash; was this refunded to you? If so it doesn\'t count as a Front contribution.',
-    'Taotao $' + fmt(2056) + ' &mdash; need alternative payment method (wire keeps bouncing).',
+    '<span style="text-decoration:line-through;color:var(--muted)">Amir Badawi $' + fmt(2000) + '</span> &mdash; <span style="' + green + '">✓ Confirmed: Zelled back to Del\'s personal</span>',
+    '<span style="text-decoration:line-through;color:var(--muted)">Taotao $' + fmt(2056) + '</span> &mdash; <span style="' + green + '">✓ Paid</span>',
     'The 6 deposits on 08/31 ($232.50, $171, $108, $102, $88, $62) &mdash; what were these for? Personal purchases?',
     '09/15 deposit of $23.32 &mdash; what was this for?',
     'Benjamin Piascik $' + fmt(3000) + ' &mdash; should this stay as Del\'s contribution or move to Front operating cost?',
