@@ -3900,7 +3900,7 @@ function renderDiscrepancies() {
   // ── Header ──
   html += '<div style="padding:20px 0 8px">';
   html += '<div style="font-family:Cormorant Garamond,serif;font-size:28px;font-weight:600;color:var(--text)">Discrepancies & Settlement Summary</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px">For Del &mdash; as of September 15, 2026</div>';
+  html += '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px">For Del &mdash; as of September 30, 2026 (bank statement date)</div>';
   html += '</div>';
 
   // ── Section 1: Outstanding Payments ──
