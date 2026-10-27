@@ -3928,68 +3928,58 @@ function renderDiscrepancies() {
   // ── Section 3: Del's Financial Activity ──
   html += '<div style="' + sH + '">3. Del\'s Financial Activity</div>';
 
-  // 3a: Contributions
-  html += '<div style="' + subH + '">Contributions to Front Account</div>';
+  // Full ledger: all Del's activity with the Front account
+  html += '<div style="' + subH + '">Del\'s Full Account Activity</div>';
   html += '<div style="' + cardS + '">';
   html += '<table style="width:100%;border-collapse:collapse">';
-  html += '<thead><tr><th style="' + thS + '">Date</th><th style="' + thS + '">Description</th><th style="' + thR + '">Amount</th></tr></thead>';
+  html += '<thead><tr><th style="' + thS + '">Date</th><th style="' + thS + '">Activity</th><th style="' + thS + '">What it funded</th><th style="' + thR + '">Amount</th></tr></thead>';
   html += '<tbody>';
-  html += '<tr><td style="' + tdS + '">05/04</td><td style="' + tdS + '">Account opening deposit</td><td style="' + tdR + ';' + green + '">$' + fmt(100) + '</td></tr>';
-  html += '<tr><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Initial capital (branch deposit)</td><td style="' + tdR + ';' + green + '">$' + fmt(2000) + '</td></tr>';
-  html += '<tr><td style="' + tdS + '">05/28</td><td style="' + tdS + '">Operating capital (Zelle)</td><td style="' + tdR + ';' + green + '">$' + fmt(2000) + '</td></tr>';
-  html += '<tr><td style="' + tdS + '">07/13</td><td style="' + tdS + '">Transferred for Benji build-out <span style="font-size:9px;color:var(--muted)">(now counted as Front cost, funded by Del)</span></td><td style="' + tdR + ';' + green + '">$' + fmt(3000) + '</td></tr>';
-  html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="2"><span style="font-weight:700">Subtotal Contributions</span></td><td style="' + tdR + ';font-weight:700;' + green + '">$' + fmt(7100) + '</td></tr>';
+  // Deposits in
+  html += '<tr style="background:#88c98a08"><td style="' + tdS + '">05/04</td><td style="' + tdS + '">Deposit — account opening</td><td style="' + tdS + ';color:var(--muted);font-size:10px">Initial capital</td><td style="' + tdR + ';' + green + '">+$100</td></tr>';
+  html += '<tr style="background:#88c98a08"><td style="' + tdS + '">05/14</td><td style="' + tdS + '">Branch deposit</td><td style="' + tdS + ';color:var(--muted);font-size:10px">Initial capital → $2K went to Amir same day</td><td style="' + tdR + ';' + green + '">+$2,000</td></tr>';
+  html += '<tr style="background:#e0707008"><td style="' + tdS + '">05/14</td><td style="' + tdS + '">→ Amir Badawi (previous space deposit)</td><td style="' + tdS + ';' + warn + ';font-size:10px">⚠ Not a Front cost. Was this refunded to Del?</td><td style="' + tdR + ';color:var(--muted)">-$2,000</td></tr>';
+  html += '<tr style="background:#88c98a08"><td style="' + tdS + '">05/28</td><td style="' + tdS + '">Zelle deposit — operating capital</td><td style="' + tdS + ';color:var(--muted);font-size:10px">General business operations</td><td style="' + tdR + ';' + green + '">+$2,000</td></tr>';
+  html += '<tr style="background:#88c98a08"><td style="' + tdS + '">06/22</td><td style="' + tdS + '">Zelle deposit — rent</td><td style="' + tdS + ';color:var(--muted);font-size:10px">→ PRIV.Y Creative lease deposit</td><td style="' + tdR + ';' + green + '">+$3,500</td></tr>';
+  html += '<tr style="background:#88c98a08"><td style="' + tdS + '">06/23</td><td style="' + tdS + '">Zelle deposit — rent</td><td style="' + tdS + ';color:var(--muted);font-size:10px">→ PRIV.Y Creative remaining rent</td><td style="' + tdR + ';' + green + '">+$1,000</td></tr>';
+  html += '<tr style="background:#88c98a08"><td style="' + tdS + '">07/13</td><td style="' + tdS + '">Zelle deposit</td><td style="' + tdS + ';color:var(--muted);font-size:10px">→ Benjamin Piascik build-out (now Front cost)</td><td style="' + tdR + ';' + green + '">+$3,000</td></tr>';
+  html += '<tr style="background:#e2c97e11"><td style="' + tdS + '">08/31</td><td style="' + tdS + '">6× Zelle deposits (personal purchases)</td><td style="' + tdS + ';color:var(--muted);font-size:10px">Del paying Front back for items bought on biz account</td><td style="' + tdR + ';color:var(--muted)">+$763.50</td></tr>';
+  html += '<tr style="background:#e2c97e11"><td style="' + tdS + '">09/15</td><td style="' + tdS + '">Zelle deposit</td><td style="' + tdS + ';color:var(--muted);font-size:10px">Small reimbursement</td><td style="' + tdR + ';color:var(--muted)">+$23.32</td></tr>';
+  // Withdrawals
+  html += '<tr style="background:#e0707008"><td style="' + tdS + '">09/11</td><td style="' + tdS + '">Withdrawal</td><td style="' + tdS + ';color:var(--muted);font-size:10px">Cash out</td><td style="' + tdR + ';' + red + '">-$4,000</td></tr>';
+  html += '<tr style="background:#e0707008"><td style="' + tdS + '">09/15</td><td style="' + tdS + '">Withdrawal</td><td style="' + tdS + ';color:var(--muted);font-size:10px">Cash out</td><td style="' + tdR + ';' + red + '">-$1,000</td></tr>';
+  // Totals
+  html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="3"><span style="font-weight:700">Total deposited</span></td><td style="' + tdR + ';font-weight:700;' + green + '">+$12,386.82</td></tr>';
+  html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="3"><span style="font-weight:700">Total withdrew</span></td><td style="' + tdR + ';font-weight:700;' + red + '">-$5,000</td></tr>';
   html += '</tbody></table>';
   html += '</div>';
 
-  // 3b: Withdrew
-  html += '<div style="' + subH + '">Withdrew</div>';
-  html += '<div style="' + cardS + '">';
-  html += '<table style="width:100%;border-collapse:collapse">';
-  html += '<thead><tr><th style="' + thS + '">Date</th><th style="' + thS + '">Description</th><th style="' + thR + '">Amount</th></tr></thead>';
-  html += '<tbody>';
-  html += '<tr><td style="' + tdS + '">09/11</td><td style="' + tdS + '">Withdrawal</td><td style="' + tdR + ';' + red + '">-$' + fmt(4000) + '</td></tr>';
-  html += '<tr><td style="' + tdS + '">09/15</td><td style="' + tdS + '">Withdrawal</td><td style="' + tdR + ';' + red + '">-$' + fmt(1000) + '</td></tr>';
-  html += '<tr style="background:var(--surface)"><td style="' + tdS + '" colspan="2"><span style="font-weight:700">Subtotal Withdrawals</span></td><td style="' + tdR + ';font-weight:700;' + red + '">-$' + fmt(5000) + '</td></tr>';
-  html += '</tbody></table>';
-  html += '</div>';
-
-  // 3c: Net owed
+  // Net owed breakdown
+  html += '<div style="' + subH + '">What The Front Owes Del</div>';
   html += '<div style="' + cardS + ';border-left:3px solid var(--front)">';
-  html += '<div style="font-family:DM Mono,monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:4px">Net owed back to Del from contributions</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:22px;font-weight:700;' + green + '">$' + fmt(2100) + '</div>';
-  html += '<div style="' + noteS + ';margin-top:6px">$' + fmt(7100) + ' in &minus; $' + fmt(5000) + ' out = $' + fmt(2100) + '</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-family:DM Mono,monospace;font-size:12px">';
+  html += '<tbody>';
+  html += '<tr><td style="' + tdS + '">Capital contributions (account opening + operating)</td><td style="' + tdR + ';' + green + '">$4,100</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">$100 + $2,000 + $2,000</td></tr>';
+  html += '<tr><td style="' + tdS + '">Benji build-out transfer</td><td style="' + tdR + ';' + green + '">$3,000</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Now a Front cost, Del funded it</td></tr>';
+  html += '<tr><td style="' + tdS + '">Rent fronted (not in P&L)</td><td style="' + tdR + '">$4,500</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Separate from operating costs</td></tr>';
+  html += '<tr><td style="' + tdS + '">Personal purchases reimbursed</td><td style="' + tdR + ';color:var(--muted)">$786.82</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Net zero — Del paid herself back</td></tr>';
+  html += '<tr><td style="' + tdS + '">Amir Badawi</td><td style="' + tdR + ';color:var(--muted)">$0</td><td style="' + tdS + ';font-size:9px;' + warn + '">⚠ Refunded to Del — not a Front cost</td></tr>';
+  html += '<tr><td style="' + tdS + ';' + red + '">Withdrew back</td><td style="' + tdR + ';' + red + '">-$5,000</td><td style="' + tdS + '"></td></tr>';
+  html += '<tr><td style="' + tdS + ';' + red + '">Del personal spend (P&L items)</td><td style="' + tdR + '">~$875</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">Tracked in Costs tab</td></tr>';
+  html += '<tr style="background:var(--surface)"><td style="' + tdS + ';font-weight:700">Net owed to Del</td><td style="' + tdR + ';font-weight:700;font-size:16px;' + red + '">$2,975</td><td style="' + tdS + ';font-size:9px;color:var(--muted)">$7,100 contributions + $875 spend − $5,000 withdrew</td></tr>';
+  html += '</tbody></table>';
   html += '</div>';
 
-  // 3d: Front Business Credit Card
+  // Front Business Credit Card
   html += '<div style="' + subH + '">The Front Business Credit Card</div>';
   html += '<div style="' + cardS + '">';
   html += '<table style="width:100%;border-collapse:collapse">';
   html += '<tbody>';
   html += '<tr><td style="' + tdS + '">Total CC charges (4 months)</td><td style="' + tdR + ';font-weight:700">~$' + fmt(6150) + '</td></tr>';
-  html += '<tr><td style="' + tdS + '">Major items</td><td style="' + tdR + '">Alibaba orders (~$' + fmt(2200) + '), insurance ($' + fmt(723) + '), hardware/build-out, Amazon</td></tr>';
-  html += '<tr><td style="' + tdS + '">Paid off from Front checking account</td><td style="' + tdR + ';' + green + '">$' + fmt(4256) + '</td></tr>';
-  html += '<tr><td style="' + tdS + '">Remaining credit balance (overpaid)</td><td style="' + tdR + ';' + green + '">+$120.65</td></tr>';
+  html += '<tr><td style="' + tdS + '">Major items</td><td style="' + tdR + '">Alibaba (~$2,200), insurance ($723), hardware, Amazon</td></tr>';
+  html += '<tr><td style="' + tdS + '">Paid off from Front checking</td><td style="' + tdR + ';' + green + '">$' + fmt(4256) + '</td></tr>';
+  html += '<tr><td style="' + tdS + '">Credit balance remaining</td><td style="' + tdR + ';' + green + '">+$120.65</td></tr>';
   html += '</tbody></table>';
   html += '<div style="' + noteS + ';margin-top:8px">Card is paid off. $120.65 overpayment sitting as credit.</div>';
-  html += '</div>';
-
-  // 3e: Other items through account
-  html += '<div style="' + subH + '">Other Items Through Account (Not Front Costs)</div>';
-  html += '<div style="' + cardS + '">';
-  html += '<table style="width:100%;border-collapse:collapse">';
-  html += '<tbody>';
-  html += '<tr><td style="' + tdS + '">Amir Badawi deposit (previous space)</td><td style="' + tdR + ';font-weight:700">$' + fmt(2000) + '</td><td style="' + tdS + ';' + warn + '"><span style="font-size:14px">&#9888;</span> Was this refunded to Del directly? Not returned to Front account.</td></tr>';
-  html += '<tr><td style="' + tdS + '">Rent to PRIV.Y Creative</td><td style="' + tdR + ';font-weight:700">$' + fmt(4500) + '</td><td style="' + tdS + '">Del fronted. Currently NOT in P&L budget.</td></tr>';
-  html += '<tr><td style="' + tdS + '">Personal purchase reimbursements</td><td style="' + tdR + '">$786.82</td><td style="' + tdS + '">Del paying Front back for personal items bought on business account.</td></tr>';
-  html += '</tbody></table>';
-  html += '</div>';
-
-  // 3f: Del personal spend in P&L
-  html += '<div style="' + cardS + '">';
-  html += '<div style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted);margin-bottom:4px">Del\'s personal spend (tracked in P&L Cost Summary)</div>';
-  html += '<div style="font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--text)">~$' + fmt(875) + '</div>';
-  html += '<div style="' + noteS + ';margin-top:4px">Benji $' + fmt(3000) + ' is now a Front operating cost. The $3K Del transferred on 07/13 funded this — counted as her contribution to the account.</div>';
   html += '</div>';
 
   // ── Section 4: Account Reconciliation ──
