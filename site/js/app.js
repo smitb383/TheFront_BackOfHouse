@@ -7968,6 +7968,8 @@ function initAutoExpand() {
 }
 document.addEventListener('DOMContentLoaded', function() {
   initAutoExpand();
+  // Render overview tasks on initial load
+  setTimeout(function() { if (typeof renderOverviewTasks === 'function') renderOverviewTasks(); }, 100);
   // Re-run when tabs switch (new textareas may become visible)
   var origShowTab = window.showTab;
   if (origShowTab) {
