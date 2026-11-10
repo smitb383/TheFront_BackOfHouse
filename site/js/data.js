@@ -733,11 +733,14 @@ window.addEventListener('beforeunload', function() {
         }
         // Set web status for specific vendors — only runs once per version
         var invForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
-        // Twinker Fairy: no longer listing, remove from web
-        var twinkerV = invForExclude && invForExclude.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('twinker') >= 0; });
-        if (twinkerV && twinkerV.returnPlan === 'keeping') {
-          twinkerV.returnPlan = 'tbd';
-          localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForExclude));
+        // Twinker Fairy: no longer have inventory, not listing
+        var invForTwinker = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+        if (invForTwinker && invForTwinker.vendors) {
+          var twinkerV = invForTwinker.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('twinker') >= 0; });
+          if (twinkerV && twinkerV.returnPlan === 'keeping') {
+            twinkerV.returnPlan = 'shipping-back';
+            localStorage.setItem('popup_inv_new_v1', JSON.stringify(invForTwinker));
+          }
         }
         // Ugly Hot: mark all items as images taken
         if (invForWeb && invForWeb.vendors && !invForWeb._uglyImgTaken) {
