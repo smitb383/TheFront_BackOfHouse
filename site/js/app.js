@@ -10836,6 +10836,20 @@ function renderCherryBomb() {
   container.innerHTML = html;
 }
 
+function webBulkInfoStatus(viList, status) {
+  var data = getInvNew();
+  if (!data) return;
+  viList.split(';').forEach(function(pair) {
+    var parts = pair.split(',');
+    var vi = parseInt(parts[0]), ii = parseInt(parts[1]);
+    if (data.vendors[vi] && data.vendors[vi].items[ii]) {
+      data.vendors[vi].items[ii].webStatus = status;
+    }
+  });
+  saveInvNew(data);
+  renderWebInventory();
+}
+
 function webBulkImageStatus(viList, status) {
   var data = getInvNew();
   if (!data) return;
@@ -11166,10 +11180,12 @@ function renderWebInventory() {
         });
         var diTotal = designerItems.length;
         var infoBadge = '', imgBadge = '';
-        // Info status
-        if (webLive === diTotal) infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#88c98a22;color:#88c98a;border:1px solid #88c98a;font-weight:700">INFO LIVE</span>';
-        else if (webReady + webLive === diTotal) infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e;font-weight:700">INFO READY</span>';
-        else infoBadge = '<span style="font-size:8px;padding:2px 6px;border-radius:3px;background:#e0707022;color:#e07070;border:1px solid #e07070;font-weight:700">INFO ' + (webReady + webLive) + '/' + diTotal + '</span>';
+        // Info status — clickable to cycle all items
+        var infoViList = designerItems.map(function(di) { return di.vi + ',' + di.ii; }).join(';');
+        var infoBadgeStyle = 'font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700;cursor:pointer';
+        if (webLive === diTotal) infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'not-ready\')" style="' + infoBadgeStyle + ';background:#88c98a22;color:#88c98a;border:1px solid #88c98a" title="Click to reset">INFO LIVE</span>';
+        else if (webReady + webLive === diTotal) infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'live\')" style="' + infoBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all live">INFO READY</span>';
+        else infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'ready\')" style="' + infoBadgeStyle + ';background:#e0707022;color:#e07070;border:1px solid #e07070" title="Click to mark all ready">INFO ' + (webReady + webLive) + '/' + diTotal + '</span>';
         // Image status — clickable to cycle all items
         var imgViList = designerItems.map(function(di) { return di.vi + ',' + di.ii; }).join(';');
         var imgBadgeStyle = 'font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700;cursor:pointer';
