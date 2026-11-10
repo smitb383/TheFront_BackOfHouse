@@ -999,14 +999,14 @@ window.addEventListener('beforeunload', function() {
             }
           }
         });
-        // Fix: Orchard Lace Pant qty:3, sold:3 (sales report shows 3 sold)
+        // Fix: Orchard Lace Pant qty:4, sold:3 (3 sold, 1 remaining)
         var orchardV = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('orchard') >= 0; });
         if (orchardV) {
           orchardV.items.forEach(function(item) {
             if ((item.name||'').toLowerCase().indexOf('lace pant') >= 0) {
-              if ((item.qty||1) !== 3 || (item.sold||0) !== 3) {
-                item.qty = 3; item.sold = 3; changed = true;
-              }
+              if ((item.qty||1) !== 4) { item.qty = 4; changed = true; }
+              if ((item.sold||0) !== 3) { item.sold = 3; changed = true; }
+              if (item.webExclude) { delete item.webExclude; changed = true; }
             }
           });
         }
