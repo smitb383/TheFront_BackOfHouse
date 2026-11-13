@@ -10996,6 +10996,23 @@ function renderWebInventory() {
     return (a.category || '').toLowerCase() === webInvFilter;
   })).filter(function(a) { return !a.excluded; });
 
+  // Sort by completion: most complete first (img status > web status)
+  var imgOrder = { 'uploaded': 0, 'ready': 1, 'taken': 2, 'none': 3 };
+  var webOrder = { 'live': 0, 'ready': 1, 'not-ready': 2 };
+  filtered.sort(function(a, b) {
+    // Group by designer first
+    var dCmp = (a.designer || '').localeCompare(b.designer || '');
+    if (dCmp !== 0) return dCmp;
+    // Then by img status (most complete first)
+    var aImg = imgOrder[a.webImageStatus || 'none'] || 3;
+    var bImg = imgOrder[b.webImageStatus || 'none'] || 3;
+    if (aImg !== bImg) return aImg - bImg;
+    // Then by web status
+    var aWeb = webOrder[a.webStatus || 'not-ready'] || 2;
+    var bWeb = webOrder[b.webStatus || 'not-ready'] || 2;
+    return aWeb - bWeb;
+  });
+
   // Totals (from all items, not filtered)
   var grandTotal = 0, grandItems = 0;
   allItems.forEach(function(a) { grandTotal += a.price * a.qty; grandItems += a.qty; });
