@@ -10997,19 +10997,16 @@ function renderWebInventory() {
   })).filter(function(a) { return !a.excluded; });
 
   // Sort by completion: most complete first (img status > web status)
-  var imgOrder = { 'uploaded': 0, 'ready': 1, 'taken': 2, 'none': 3 };
-  var webOrder = { 'live': 0, 'ready': 1, 'not-ready': 2 };
+  var imgOrder = { 'uploaded': 1, 'ready': 2, 'taken': 3, 'none': 4 };
+  var webOrder = { 'live': 1, 'ready': 2, 'not-ready': 3 };
   filtered.sort(function(a, b) {
-    // Group by designer first
     var dCmp = (a.designer || '').localeCompare(b.designer || '');
     if (dCmp !== 0) return dCmp;
-    // Then by img status (most complete first)
-    var aImg = imgOrder[a.webImageStatus || 'none'] || 3;
-    var bImg = imgOrder[b.webImageStatus || 'none'] || 3;
+    var aImg = imgOrder[a.webImageStatus || 'none'] || 4;
+    var bImg = imgOrder[b.webImageStatus || 'none'] || 4;
     if (aImg !== bImg) return aImg - bImg;
-    // Then by web status
-    var aWeb = webOrder[a.webStatus || 'not-ready'] || 2;
-    var bWeb = webOrder[b.webStatus || 'not-ready'] || 2;
+    var aWeb = webOrder[a.webStatus || 'not-ready'] || 3;
+    var bWeb = webOrder[b.webStatus || 'not-ready'] || 3;
     return aWeb - bWeb;
   });
 
