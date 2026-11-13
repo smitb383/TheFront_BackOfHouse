@@ -10992,14 +10992,10 @@ function renderWebInventory() {
   });
 
   // Apply category filter
-  var filtered = (webInvFilter === 'all' ? allItems : allItems.filter(function(a) {
-    return (a.category || '').toLowerCase() === webInvFilter;
-  })).filter(function(a) { return !a.excluded; });
-
-  // Sort by completion: most complete first (img status > web status)
+  // Sort allItems by completion before filtering
   var imgOrder = { 'uploaded': 1, 'ready': 2, 'taken': 3, 'none': 4 };
   var webOrder = { 'live': 1, 'ready': 2, 'not-ready': 3 };
-  filtered.sort(function(a, b) {
+  allItems.sort(function(a, b) {
     var dCmp = (a.designer || '').localeCompare(b.designer || '');
     if (dCmp !== 0) return dCmp;
     var aImg = imgOrder[a.webImageStatus || 'none'] || 4;
@@ -11009,6 +11005,10 @@ function renderWebInventory() {
     var bWeb = webOrder[b.webStatus || 'not-ready'] || 3;
     return aWeb - bWeb;
   });
+
+  var filtered = (webInvFilter === 'all' ? allItems : allItems.filter(function(a) {
+    return (a.category || '').toLowerCase() === webInvFilter;
+  })).filter(function(a) { return !a.excluded; });
 
   // Totals (from all items, not filtered)
   var grandTotal = 0, grandItems = 0;
