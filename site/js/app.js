@@ -10984,19 +10984,12 @@ function renderWebInventory() {
     });
   });
 
-  // Sort by designer name, then price high to low within each designer
-  allItems.sort(function(a, b) {
-    var dCmp = (a.designer || '').toLowerCase().localeCompare((b.designer || '').toLowerCase());
-    if (dCmp !== 0) return dCmp;
-    return b.price - a.price;
-  });
-
   // Apply category filter
   // Sort allItems by completion before filtering
   var imgOrder = { 'uploaded': 1, 'ready': 2, 'taken': 3, 'none': 4 };
   var webOrder = { 'live': 1, 'ready': 2, 'not-ready': 3 };
   allItems.sort(function(a, b) {
-    var dCmp = (a.designer || '').localeCompare(b.designer || '');
+    var dCmp = (a.designer || '').toLowerCase().localeCompare((b.designer || '').toLowerCase());
     if (dCmp !== 0) return dCmp;
     var aImg = imgOrder[a.webImageStatus || 'none'] || 4;
     var bImg = imgOrder[b.webImageStatus || 'none'] || 4;
