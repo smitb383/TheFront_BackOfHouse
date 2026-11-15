@@ -7968,8 +7968,9 @@ function initAutoExpand() {
 }
 document.addEventListener('DOMContentLoaded', function() {
   initAutoExpand();
-  // Render overview tasks on initial load
+  // Render overview tasks and web inventory on initial load
   setTimeout(function() { if (typeof renderOverviewTasks === 'function') renderOverviewTasks(); }, 100);
+  setTimeout(function() { if (typeof renderWebInventory === 'function') { renderWebInventory(); if (typeof renderVendorTodos === 'function') renderVendorTodos(); } }, 150);
   // Re-run when tabs switch (new textareas may become visible)
   var origShowTab = window.showTab;
   if (origShowTab) {
@@ -11200,7 +11201,11 @@ function renderWebInventory() {
         if (imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'none\')" style="' + imgBadgeStyle + ';background:#88c98a22;color:#88c98a;border:1px solid #88c98a" title="Click to reset">IMG UPLOADED</span>';
         else if (imgReady + imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'uploaded\')" style="' + imgBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all uploaded">IMG READY</span>';
         else if (imgTaken + imgReady + imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'ready\')" style="' + imgBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all ready">IMG TAKEN</span>';
-        else imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'taken\')" style="' + imgBadgeStyle + ';background:#e0707022;color:#e07070;border:1px solid #e07070" title="Click to mark all taken">IMG ' + (imgTaken + imgReady + imgUploaded) + '/' + diTotal + '</span>';
+        else {
+          var imgLabel = 'IMG ' + (imgTaken + imgReady + imgUploaded) + '/' + diTotal;
+          if (imgUploaded > 0) imgLabel += ' (' + imgUploaded + ' uploaded)';
+          imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'taken\')" style="' + imgBadgeStyle + ';background:#e0707022;color:#e07070;border:1px solid #e07070" title="Click to mark all taken">' + imgLabel + '</span>';
+        }
 
         var dKey = (a.designer||'').replace(/[^a-zA-Z0-9]/g,'_');
         var isOpen = webInvOpenDesigners[dKey];
