@@ -10692,6 +10692,7 @@ function invNewSort(sortBy) {
 
 var webInvFilter = 'all';
 var webInvView = 'list';
+var webInvOpenDesigners = {};
 
 // ═══ CHERRY BOMB MARKET ═══
 var cherryBombFilter = 'all'; // 'all', 'yes', 'maybe', 'no'
@@ -11201,7 +11202,9 @@ function renderWebInventory() {
         else if (imgTaken + imgReady + imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'ready\')" style="' + imgBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all ready">IMG TAKEN</span>';
         else imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'taken\')" style="' + imgBadgeStyle + ';background:#e0707022;color:#e07070;border:1px solid #e07070" title="Click to mark all taken">IMG ' + (imgTaken + imgReady + imgUploaded) + '/' + diTotal + '</span>';
 
-        html += '<details style="margin-top:8px">';
+        var dKey = (a.designer||'').replace(/[^a-zA-Z0-9]/g,'_');
+        var isOpen = webInvOpenDesigners[dKey];
+        html += '<details style="margin-top:8px"' + (isOpen ? ' open' : '') + ' ontoggle="webInvOpenDesigners[\'' + dKey + '\']=this.open">';
         html += '<summary style="padding:14px 0 6px;border-bottom:2px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;list-style:none;gap:12px">';
         html += '<span style="font-family:Cormorant Garamond,serif;font-size:18px;font-weight:600">' + esc(a.designer) + '</span>';
         html += '<div style="display:flex;gap:6px;align-items:center">';
