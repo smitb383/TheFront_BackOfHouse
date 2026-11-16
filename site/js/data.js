@@ -733,8 +733,8 @@ window.addEventListener('beforeunload', function() {
         }
         // Set web status for specific vendors — only runs once per version
         var invForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
-        // Split Eventyr Ruffled Unicorn Bikini into two items
-        (function() {
+        // Split Eventyr bikini — delayed to run after Supabase pull
+        setTimeout(function() {
           try {
             var invBikini = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
             if (!invBikini || !invBikini.vendors) return;
@@ -760,8 +760,10 @@ window.addEventListener('beforeunload', function() {
             evSplit.items.splice(bikiniIdx, 1, hotPink, lightPink);
             evSplit._bikiniSplit = true;
             localStorage.setItem('popup_inv_new_v1', JSON.stringify(invBikini));
-          } catch(e) {}
-        })();
+            console.log('[data] Split Ruffled Unicorn Bikini into Hot Pink + Light Pink Glitter');
+            if (typeof renderWebInventory === 'function') renderWebInventory();
+          } catch(e) { console.error('[data] Bikini split error:', e); }
+        }, 5000);
         // Twinker Fairy: no longer have inventory, not listing
         var invForTwinker = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
         if (invForTwinker && invForTwinker.vendors) {
