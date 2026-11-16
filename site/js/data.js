@@ -739,18 +739,22 @@ window.addEventListener('beforeunload', function() {
           var bikiniIdx = evSplit.items.findIndex(function(i) { return (i.name||'').toLowerCase().indexOf('ruffled unicorn bikini') >= 0 && !(i.name||'').toLowerCase().indexOf('hot pink') >= 0 && !(i.name||'').toLowerCase().indexOf('light pink') >= 0; });
           if (bikiniIdx >= 0) {
             var orig = evSplit.items[bikiniIdx];
-            // Hot Pink - XS/S (XS was sold)
+            // Hot Pink - XS/S is the size, 1 qty, XS was sold so 0 available
             var hotPink = JSON.parse(JSON.stringify(orig));
             hotPink.id = 'inv_ev_hotpink_' + Date.now();
             hotPink.name = 'Ruffled Unicorn Bikini - Hot Pink';
-            hotPink.sizes = [{ qty: 1, size: 'XS', sold: 1 }, { qty: 1, size: 'S', sold: 0 }];
-            hotPink.qty = 2;
-            // Light Pink Glitter - S/M
+            hotPink.sizes = [];
+            hotPink.qty = 1;
+            hotPink.sold = 1;
+            hotPink.webSizeDetails = 'XS/S';
+            // Light Pink Glitter - S/M is the size, 1 qty, available
             var lightPink = JSON.parse(JSON.stringify(orig));
             lightPink.id = 'inv_ev_lightpink_' + Date.now();
             lightPink.name = 'Ruffled Unicorn Bikini - Light Pink Glitter';
-            lightPink.sizes = [{ qty: 1, size: 'S', sold: 0 }, { qty: 1, size: 'M', sold: 0 }];
-            lightPink.qty = 2;
+            lightPink.sizes = [];
+            lightPink.qty = 1;
+            lightPink.sold = 0;
+            lightPink.webSizeDetails = 'S/M';
             // Replace original with both
             evSplit.items.splice(bikiniIdx, 1, hotPink, lightPink);
             evSplit._bikiniSplit = true;
