@@ -734,12 +734,15 @@ window.addEventListener('beforeunload', function() {
         // Set web status for specific vendors — only runs once per version
         var invForWeb = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
         // Split Eventyr Ruffled Unicorn Bikini into two items
-        var evSplit = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('eventyr') >= 0; });
-        if (evSplit && !evSplit._bikiniSplit) {
-          var bikiniIdx = evSplit.items.findIndex(function(i) { var n = (i.name||'').toLowerCase(); return n.indexOf('ruffled unicorn bikini') >= 0 && n.indexOf('hot pink') < 0 && n.indexOf('light pink') < 0; });
-          if (bikiniIdx >= 0) {
+        (function() {
+          try {
+            var invBikini = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
+            if (!invBikini || !invBikini.vendors) return;
+            var evSplit = invBikini.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('eventyr') >= 0; });
+            if (!evSplit || evSplit._bikiniSplit) return;
+            var bikiniIdx = evSplit.items.findIndex(function(i) { var n = (i.name||'').toLowerCase(); return n.indexOf('ruffled unicorn bikini') >= 0 && n.indexOf('hot pink') < 0 && n.indexOf('light pink') < 0; });
+            if (bikiniIdx < 0) return;
             var orig = evSplit.items[bikiniIdx];
-            // Hot Pink - XS/S is the size, 1 qty, XS was sold so 0 available
             var hotPink = JSON.parse(JSON.stringify(orig));
             hotPink.id = 'inv_ev_hotpink_' + Date.now();
             hotPink.name = 'Ruffled Unicorn Bikini - Hot Pink';
@@ -747,7 +750,6 @@ window.addEventListener('beforeunload', function() {
             hotPink.qty = 1;
             hotPink.sold = 1;
             hotPink.webSizeDetails = 'XS/S';
-            // Light Pink Glitter - S/M is the size, 1 qty, available
             var lightPink = JSON.parse(JSON.stringify(orig));
             lightPink.id = 'inv_ev_lightpink_' + Date.now();
             lightPink.name = 'Ruffled Unicorn Bikini - Light Pink Glitter';
@@ -755,12 +757,11 @@ window.addEventListener('beforeunload', function() {
             lightPink.qty = 1;
             lightPink.sold = 0;
             lightPink.webSizeDetails = 'S/M';
-            // Replace original with both
             evSplit.items.splice(bikiniIdx, 1, hotPink, lightPink);
             evSplit._bikiniSplit = true;
-            changed = true;
-          }
-        }
+            localStorage.setItem('popup_inv_new_v1', JSON.stringify(invBikini));
+          } catch(e) {}
+        })();
         // Twinker Fairy: no longer have inventory, not listing
         var invForTwinker = JSON.parse(localStorage.getItem('popup_inv_new_v1'));
         if (invForTwinker && invForTwinker.vendors) {
