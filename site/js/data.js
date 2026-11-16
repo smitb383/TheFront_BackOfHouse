@@ -736,7 +736,7 @@ window.addEventListener('beforeunload', function() {
         // Split Eventyr Ruffled Unicorn Bikini into two items
         var evSplit = inv.vendors.find(function(v) { return (v.name||'').toLowerCase().indexOf('eventyr') >= 0; });
         if (evSplit && !evSplit._bikiniSplit) {
-          var bikiniIdx = evSplit.items.findIndex(function(i) { return (i.name||'').toLowerCase().indexOf('ruffled unicorn bikini') >= 0 && !(i.name||'').toLowerCase().indexOf('hot pink') >= 0 && !(i.name||'').toLowerCase().indexOf('light pink') >= 0; });
+          var bikiniIdx = evSplit.items.findIndex(function(i) { var n = (i.name||'').toLowerCase(); return n.indexOf('ruffled unicorn bikini') >= 0 && n.indexOf('hot pink') < 0 && n.indexOf('light pink') < 0; });
           if (bikiniIdx >= 0) {
             var orig = evSplit.items[bikiniIdx];
             // Hot Pink - XS/S is the size, 1 qty, XS was sold so 0 available
