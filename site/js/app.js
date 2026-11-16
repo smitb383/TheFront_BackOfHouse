@@ -11191,13 +11191,13 @@ function renderWebInventory() {
         var infoBadge = '', imgBadge = '';
         // Info status — clickable to cycle all items
         var infoViList = designerItems.map(function(di) { return di.vi + ',' + di.ii; }).join(';');
-        var infoBadgeStyle = 'font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700;cursor:pointer';
+        var infoBadgeStyle = 'font-size:11px;padding:4px 10px;border-radius:4px;font-weight:700;cursor:pointer';
         if (webLive === diTotal) infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'not-ready\')" style="' + infoBadgeStyle + ';background:#88c98a22;color:#88c98a;border:1px solid #88c98a" title="Click to reset">INFO LIVE</span>';
         else if (webReady + webLive === diTotal) infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'live\')" style="' + infoBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all live">INFO READY</span>';
         else infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'ready\')" style="' + infoBadgeStyle + ';background:#e0707022;color:#e07070;border:1px solid #e07070" title="Click to mark all ready">INFO ' + (webReady + webLive) + '/' + diTotal + '</span>';
         // Image status — clickable to cycle all items
         var imgViList = designerItems.map(function(di) { return di.vi + ',' + di.ii; }).join(';');
-        var imgBadgeStyle = 'font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700;cursor:pointer';
+        var imgBadgeStyle = 'font-size:11px;padding:4px 10px;border-radius:4px;font-weight:700;cursor:pointer';
         if (imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'none\')" style="' + imgBadgeStyle + ';background:#88c98a22;color:#88c98a;border:1px solid #88c98a" title="Click to reset">IMG UPLOADED</span>';
         else if (imgReady + imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'uploaded\')" style="' + imgBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all uploaded">IMG READY</span>';
         else if (imgTaken + imgReady + imgUploaded === diTotal) imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'ready\')" style="' + imgBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all ready">IMG TAKEN</span>';
