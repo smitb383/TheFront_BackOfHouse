@@ -155,8 +155,28 @@ function _flushWrites() {
 
   console.log('[data] Flushing ' + rows.length + ' keys to Supabase:', rows.map(function(r){ return r.key; }));
   sb.from('kv_store').upsert(rows, { onConflict: 'key' }).then(function(res) {
-    if (res.error) { console.error('[data] Sync error:', res.error.message, res.error); return; }
+    if (res.error) {
+      console.error('[data] Sync error:', res.error.message, res.error);
+      // Re-queue failed writes for retry
+      rows.forEach(function(r) { _writeQueue[r.key] = JSON.stringify(r.value); });
+      // Show visual warning
+      var warn = document.getElementById('sync-warning');
+      if (!warn) {
+        warn = document.createElement('div');
+        warn.id = 'sync-warning';
+        warn.style.cssText = 'position:fixed;top:10px;right:10px;background:#e07070;color:#fff;padding:10px 16px;border-radius:6px;font-family:DM Mono,monospace;font-size:11px;z-index:9999;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.3)';
+        warn.textContent = '⚠ Changes not synced — click to retry';
+        warn.onclick = function() { _flushWrites(); warn.remove(); };
+        document.body.appendChild(warn);
+      }
+      // Auto-retry in 5s
+      setTimeout(_flushWrites, 5000);
+      return;
+    }
     console.log('[data] Successfully synced ' + rows.length + ' keys to Supabase');
+    // Clear warning if it exists
+    var warn = document.getElementById('sync-warning');
+    if (warn) warn.remove();
     // Daily snapshot: for any critical key we just wrote, mirror to a dated snapshot row.
     // Caps automatically because the key includes YYYY-MM-DD (one snapshot per day, max).
     var SNAPSHOT_KEYS = ['tracker_data_v1', 'pl_data_v1', 'front_bp_v1', 'popup_vendors_v1', 'front_vendors_v1', 'popup_inv_new_v1', 'popup_graphic_scope_v1'];
