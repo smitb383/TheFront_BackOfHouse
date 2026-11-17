@@ -11194,7 +11194,11 @@ function renderWebInventory() {
         var infoBadgeStyle = 'font-size:11px;padding:4px 10px;border-radius:4px;font-weight:700;cursor:pointer';
         if (webLive === diTotal) infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'not-ready\')" style="' + infoBadgeStyle + ';background:#88c98a22;color:#88c98a;border:1px solid #88c98a" title="Click to reset">INFO LIVE</span>';
         else if (webReady + webLive === diTotal) infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'live\')" style="' + infoBadgeStyle + ';background:#e2c97e22;color:#e2c97e;border:1px solid #e2c97e" title="Click to mark all live">INFO READY</span>';
-        else infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'ready\')" style="' + infoBadgeStyle + ';background:#e0707022;color:#e07070;border:1px solid #e07070" title="Click to mark all ready">INFO ' + (webReady + webLive) + '/' + diTotal + '</span>';
+        else {
+          var infoPartial = (webReady + webLive) > 0;
+          var infoColor = infoPartial ? '#e2c97e' : '#e07070';
+          infoBadge = '<span onclick="event.stopPropagation();webBulkInfoStatus(\'' + infoViList + '\',\'ready\')" style="' + infoBadgeStyle + ';background:' + infoColor + '22;color:' + infoColor + ';border:1px solid ' + infoColor + '" title="Click to mark all ready">INFO ' + (webReady + webLive) + '/' + diTotal + '</span>';
+        }
         // Image status — clickable to cycle all items
         var imgViList = designerItems.map(function(di) { return di.vi + ',' + di.ii; }).join(';');
         var imgBadgeStyle = 'font-size:11px;padding:4px 10px;border-radius:4px;font-weight:700;cursor:pointer';
@@ -11204,7 +11208,9 @@ function renderWebInventory() {
         else {
           var imgLabel = 'IMG ' + (imgTaken + imgReady + imgUploaded) + '/' + diTotal;
           if (imgUploaded > 0) imgLabel += ' (' + imgUploaded + ' uploaded)';
-          imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'taken\')" style="' + imgBadgeStyle + ';background:#e0707022;color:#e07070;border:1px solid #e07070" title="Click to mark all taken">' + imgLabel + '</span>';
+          var imgPartial = (imgTaken + imgReady + imgUploaded) > 0;
+          var imgPartialColor = imgPartial ? '#e2c97e' : '#e07070';
+          imgBadge = '<span onclick="event.stopPropagation();webBulkImageStatus(\'' + imgViList + '\',\'taken\')" style="' + imgBadgeStyle + ';background:' + imgPartialColor + '22;color:' + imgPartialColor + ';border:1px solid ' + imgPartialColor + '" title="Click to mark all taken">' + imgLabel + '</span>';
         }
 
         var dKey = (a.designer||'').replace(/[^a-zA-Z0-9]/g,'_');
