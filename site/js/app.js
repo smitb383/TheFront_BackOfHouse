@@ -2193,7 +2193,7 @@ function showTab(project, tab, btn) {
   if (tab === 'popup-pl') setTimeout(function(){ initPLData(); renderPL(); }, 20);
   if (tab === 'popup-inventory') setTimeout(function(){ initPLData(); renderInventory(); }, 20);
   if (tab === 'popup-inventory-new') setTimeout(function(){ renderInvNew(); }, 20);
-  if (tab === 'web-inventory') setTimeout(function(){ renderWebGeneralTodos(); renderWebInventory(); renderVendorTodos(); }, 20);
+  if (tab === 'web-inventory') setTimeout(function(){ renderWebGeneralTodos(); renderWebShootList(); renderWebInventory(); renderVendorTodos(); }, 20);
   if (tab === 'cherry-bomb') setTimeout(function(){ renderCherryBomb(); }, 20);
   if (tab === 'schedule') setTimeout(function(){ if(typeof initTracker==='function') initTracker(); if(typeof renderTracker==='function') renderTracker(); }, 20);
   if (tab === 'popup-marketing') setTimeout(function(){ mktShowTab('overview', document.querySelector('#front-popup-marketing .mkt-tab')); }, 20);
@@ -7970,7 +7970,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initAutoExpand();
   // Render overview tasks and web inventory on initial load
   setTimeout(function() { if (typeof renderOverviewTasks === 'function') renderOverviewTasks(); }, 100);
-  setTimeout(function() { if (typeof renderWebGeneralTodos === 'function') renderWebGeneralTodos(); if (typeof renderWebInventory === 'function') { renderWebInventory(); if (typeof renderVendorTodos === 'function') renderVendorTodos(); } }, 150);
+  setTimeout(function() { if (typeof renderWebGeneralTodos === 'function') renderWebGeneralTodos(); if (typeof renderWebShootList === 'function') renderWebShootList(); if (typeof renderWebInventory === 'function') { renderWebInventory(); if (typeof renderVendorTodos === 'function') renderVendorTodos(); } }, 150);
   // Re-run when tabs switch (new textareas may become visible)
   var origShowTab = window.showTab;
   if (origShowTab) {
@@ -13090,6 +13090,73 @@ function deleteWebGeneralTodo(ti) {
   tasks.splice(ti, 1);
   saveOvTasks(data);
   renderWebGeneralTodos();
+}
+
+function renderWebShootList() {
+  var container = document.getElementById('web-shoot-list');
+  if (!container) return;
+  var data = getOvTasks();
+  if (!data.categories) data.categories = {};
+  var cat = 'Shoot / Re-shoot';
+  var tasks = data.categories[cat] || [];
+  var pending = tasks.filter(function(t) { return !t.done; }).length;
+  var done = tasks.length - pending;
+
+  var html = '';
+  html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2)">';
+  html += '<span style="font-family:DM Mono,monospace;font-size:12px;font-weight:700;color:var(--text)">Shoot / Re-shoot</span>';
+  html += '<div style="display:flex;gap:8px;align-items:center">';
+  if (pending > 0) html += '<span style="font-family:DM Mono,monospace;font-size:9px;color:#e07070;font-weight:700">' + pending + ' pending</span>';
+  if (done > 0) html += '<span style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a">' + done + ' done</span>';
+  html += '</div></div>';
+  html += '<div style="padding:8px 14px">';
+  tasks.forEach(function(t, ti) {
+    var checked = t.done ? ' checked' : '';
+    var style = t.done ? 'text-decoration:line-through;color:var(--muted)' : 'color:var(--text)';
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--faint)">';
+    html += '<input type="checkbox"' + checked + ' onchange="toggleShootItem(' + ti + ')" style="accent-color:#88c98a;cursor:pointer">';
+    html += '<input value="' + esc(t.text) + '" onchange="editShootItem(' + ti + ',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:11px;background:none;border:none;border-bottom:1px solid transparent;padding:2px 0;outline:none;' + style + '" onfocus="this.style.borderBottomColor=\'var(--border)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
+    html += '<button onclick="deleteShootItem(' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
+    html += '</div>';
+  });
+  html += '<div style="margin-top:6px"><input placeholder="+ Add shoot item..." onkeydown="if(event.key===\'Enter\'){addShootItem(this.value);this.value=\'\'}" style="width:100%;background:var(--surface);border:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:5px 8px;border-radius:3px"></div>';
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function addShootItem(text) {
+  if (!text) return;
+  var data = getOvTasks();
+  if (!data.categories['Shoot / Re-shoot']) data.categories['Shoot / Re-shoot'] = [];
+  data.categories['Shoot / Re-shoot'].push({ text: text, done: false, added: new Date().toISOString() });
+  saveOvTasks(data);
+  renderWebShootList();
+}
+
+function toggleShootItem(ti) {
+  var data = getOvTasks();
+  var tasks = data.categories['Shoot / Re-shoot'] || [];
+  if (!tasks[ti]) return;
+  tasks[ti].done = !tasks[ti].done;
+  saveOvTasks(data);
+  renderWebShootList();
+}
+
+function editShootItem(ti, text) {
+  var data = getOvTasks();
+  var tasks = data.categories['Shoot / Re-shoot'] || [];
+  if (!tasks[ti]) return;
+  tasks[ti].text = text;
+  saveOvTasks(data);
+}
+
+function deleteShootItem(ti) {
+  var data = getOvTasks();
+  var tasks = data.categories['Shoot / Re-shoot'] || [];
+  tasks.splice(ti, 1);
+  saveOvTasks(data);
+  renderWebShootList();
 }
 
 var VENDOR_TODO_KEY = 'vendor_todos_v1';
