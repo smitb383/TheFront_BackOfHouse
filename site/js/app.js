@@ -13092,15 +13092,43 @@ function deleteWebGeneralTodo(ti) {
   renderWebGeneralTodos();
 }
 
+var SHOOT_LIST_KEY = 'web_shoot_list_v1';
+
+function getShootList() {
+  try { return JSON.parse(localStorage.getItem(SHOOT_LIST_KEY)) || { items: [] }; } catch(e) { return { items: [] }; }
+}
+function saveShootList(data) { localStorage.setItem(SHOOT_LIST_KEY, JSON.stringify(data)); }
+
 function renderWebShootList() {
   var container = document.getElementById('web-shoot-list');
   if (!container) return;
-  var data = getOvTasks();
-  if (!data.categories) data.categories = {};
-  var cat = 'Shoot / Re-shoot';
-  var tasks = data.categories[cat] || [];
-  var pending = tasks.filter(function(t) { return !t.done; }).length;
-  var done = tasks.length - pending;
+  var data = getShootList();
+  var items = data.items || [];
+  var pending = items.filter(function(t) { return !t.done; }).length;
+  var done = items.length - pending;
+
+  // Get designer names for dropdown
+  var inv = getInvNew();
+  var designerNames = [];
+  if (inv && inv.vendors) {
+    inv.vendors.forEach(function(v) {
+      if (v.returnPlan === 'keeping' || v.returnPlan === 'hybrid') designerNames.push(v.name);
+    });
+  }
+  designerNames.sort();
+
+  // Group by designer
+  var grouped = {};
+  var noDesigner = [];
+  items.forEach(function(t, ti) {
+    t._idx = ti;
+    if (t.designer) {
+      if (!grouped[t.designer]) grouped[t.designer] = [];
+      grouped[t.designer].push(t);
+    } else {
+      noDesigner.push(t);
+    }
+  });
 
   var html = '';
   html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
@@ -13111,51 +13139,75 @@ function renderWebShootList() {
   if (done > 0) html += '<span style="font-family:DM Mono,monospace;font-size:9px;color:#88c98a">' + done + ' done</span>';
   html += '</div></div>';
   html += '<div style="padding:8px 14px">';
-  tasks.forEach(function(t, ti) {
-    var checked = t.done ? ' checked' : '';
-    var style = t.done ? 'text-decoration:line-through;color:var(--muted)' : 'color:var(--text)';
-    html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--faint)">';
-    html += '<input type="checkbox"' + checked + ' onchange="toggleShootItem(' + ti + ')" style="accent-color:#88c98a;cursor:pointer">';
-    html += '<input value="' + esc(t.text) + '" onchange="editShootItem(' + ti + ',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:11px;background:none;border:none;border-bottom:1px solid transparent;padding:2px 0;outline:none;' + style + '" onfocus="this.style.borderBottomColor=\'var(--border)\'" onblur="this.style.borderBottomColor=\'transparent\'">';
-    html += '<button onclick="deleteShootItem(' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>';
-    html += '</div>';
+
+  // Add form with designer dropdown
+  html += '<div style="display:flex;gap:6px;margin-bottom:10px">';
+  html += '<select id="shoot-designer-select" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:4px 6px;border-radius:3px">';
+  html += '<option value="">General</option>';
+  designerNames.forEach(function(n) { html += '<option value="' + esc(n) + '">' + esc(n) + '</option>'; });
+  html += '</select>';
+  html += '<input id="shoot-new-input" placeholder="+ Add shoot item..." onkeydown="if(event.key===\'Enter\')addShootItem()" style="flex:1;background:var(--surface);border:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:5px 8px;border-radius:3px">';
+  html += '</div>';
+
+  // Render grouped by designer
+  var designerOrder = Object.keys(grouped).sort();
+  designerOrder.forEach(function(designer) {
+    var dItems = grouped[designer];
+    html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-top:8px;margin-bottom:4px;font-weight:700">' + esc(designer) + '</div>';
+    dItems.forEach(function(t) { html += _shootItemRow(t); });
   });
-  html += '<div style="margin-top:6px"><input placeholder="+ Add shoot item..." onkeydown="if(event.key===\'Enter\'){addShootItem(this.value);this.value=\'\'}" style="width:100%;background:var(--surface);border:1px dashed var(--faint);color:var(--text);font-family:DM Mono,monospace;font-size:10px;padding:5px 8px;border-radius:3px"></div>';
+
+  // Ungrouped
+  if (noDesigner.length) {
+    if (designerOrder.length) html += '<div style="font-family:DM Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-top:8px;margin-bottom:4px;font-weight:700">General</div>';
+    noDesigner.forEach(function(t) { html += _shootItemRow(t); });
+  }
+
   html += '</div></div>';
   container.innerHTML = html;
 }
 
-function addShootItem(text) {
-  if (!text) return;
-  var data = getOvTasks();
-  if (!data.categories['Shoot / Re-shoot']) data.categories['Shoot / Re-shoot'] = [];
-  data.categories['Shoot / Re-shoot'].push({ text: text, done: false, added: new Date().toISOString() });
-  saveOvTasks(data);
+function _shootItemRow(t) {
+  var ti = t._idx;
+  var checked = t.done ? ' checked' : '';
+  var style = t.done ? 'text-decoration:line-through;color:var(--muted)' : 'color:var(--text)';
+  return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--faint)">' +
+    '<input type="checkbox"' + checked + ' onchange="toggleShootItem(' + ti + ')" style="accent-color:#88c98a;cursor:pointer">' +
+    '<input value="' + esc(t.text) + '" onchange="editShootItem(' + ti + ',\'text\',this.value)" style="flex:1;font-family:DM Mono,monospace;font-size:11px;background:none;border:none;border-bottom:1px solid transparent;padding:2px 0;outline:none;' + style + '" onfocus="this.style.borderBottomColor=\'var(--border)\'" onblur="this.style.borderBottomColor=\'transparent\'">' +
+    '<button onclick="deleteShootItem(' + ti + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">x</button>' +
+  '</div>';
+}
+
+function addShootItem() {
+  var select = document.getElementById('shoot-designer-select');
+  var input = document.getElementById('shoot-new-input');
+  if (!input || !input.value.trim()) return;
+  var data = getShootList();
+  data.items.push({ text: input.value.trim(), designer: select ? select.value : '', done: false, added: new Date().toISOString() });
+  saveShootList(data);
+  input.value = '';
   renderWebShootList();
 }
 
 function toggleShootItem(ti) {
-  var data = getOvTasks();
-  var tasks = data.categories['Shoot / Re-shoot'] || [];
-  if (!tasks[ti]) return;
-  tasks[ti].done = !tasks[ti].done;
-  saveOvTasks(data);
+  var data = getShootList();
+  if (!data.items[ti]) return;
+  data.items[ti].done = !data.items[ti].done;
+  saveShootList(data);
   renderWebShootList();
 }
 
-function editShootItem(ti, text) {
-  var data = getOvTasks();
-  var tasks = data.categories['Shoot / Re-shoot'] || [];
-  if (!tasks[ti]) return;
-  tasks[ti].text = text;
-  saveOvTasks(data);
+function editShootItem(ti, field, val) {
+  var data = getShootList();
+  if (!data.items[ti]) return;
+  data.items[ti][field] = val;
+  saveShootList(data);
 }
 
 function deleteShootItem(ti) {
-  var data = getOvTasks();
-  var tasks = data.categories['Shoot / Re-shoot'] || [];
-  tasks.splice(ti, 1);
-  saveOvTasks(data);
+  var data = getShootList();
+  data.items.splice(ti, 1);
+  saveShootList(data);
   renderWebShootList();
 }
 
